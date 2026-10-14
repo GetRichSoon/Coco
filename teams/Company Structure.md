@@ -151,3 +151,6 @@ Hand-off order: Lola → Lili → Vivi designs → Remy / Margot / Cleo → Elis
 Kiki grows it → Didi looks after users → Bibi counts the money.
 Rules: members only work when a House asks; cheapest model that can do the job; Kiki and Didi never
 send or post anything themselves; Elise is always someone other than the maker.
+
+## Tools
+All tools belong to the Bonbon Club (support team), each assigned to one member; free only. Full list: teams/Bonbon Club Toolkit.md.
