@@ -1,4 +1,4 @@
-﻿# Coco Cloud
+# Coco Cloud
 
 The live, private board of Good Space for all four devices. Supabase (free plan), project **Good Space**,
 region Mumbai (ap-south-1), project id `bfnhnkxvppqmklfpslfm`. Opened 2026-10-15.
@@ -15,9 +15,13 @@ region Mumbai (ap-south-1), project id `bfnhnkxvppqmklfpslfm`. Opened 2026-10-15
 | rules | Company Structure, Toolkit, Token Treasury, Quality Promise, Privacy, Devices |
 | activity | who did what, from which device |
 
-## Privacy
-Row level security on every table: only founders' logins can read or write. Keys are never stored here.
-Open item: move the founder check function into a private schema (security advisor warning, low risk).
+## Privacy: four devices only
+- Every table needs a founder login AND one of the 4 paired device keys (header `x-device-key`; only the hash is stored).
+- Max 4 active devices: one PC and one phone per founder; a 5th is refused.
+- New device: one-time pairing code (10 minutes) from a trusted device, then `pair_device`. Lost device: set `active = false`.
+- Live updates use the `pulse` table (no data); devices refetch with their key.
+- First pairing codes are created by Coco from the PC (admin) because no device has a key yet.
+- Security advisor: clean except `pair_device` (intended).
 
 ## Not in the cloud (on purpose)
 Blender, Ollama local AI and other installed programs run on the PCs; the tools table records where.
