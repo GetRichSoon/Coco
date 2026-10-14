@@ -154,3 +154,6 @@ send or post anything themselves; Elise is always someone other than the maker.
 
 ## Tools
 All tools belong to the Bonbon Club (support team), each assigned to one member; free only. Full list: teams/Bonbon Club Toolkit.md.
+
+## Tokens
+The Claude plan is spent by the rules in teams/Token Treasury.md (Pro now, Max soon; strongest model only when needed).
