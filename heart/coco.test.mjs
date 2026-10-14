@@ -31,11 +31,14 @@ test('import keeps every Nova record', () => {
   assert.equal(b.approvals.length, 2);
   assert.equal(b.approvals[0].state, 'waiting');
   assert.equal(b.approvals[1].decidedBy, 'Mangesh');
-  assert.equal(b.decisions.length, 2); // Nova's one + "company is Good Space"
+  assert.equal(b.decisions.length, 3); // Nova's one + "Good Space" + "Support Team"
   assert.equal(b.company, 'Good Space');
   assert.equal(b.tasks.length, 1);
   assert.equal(b.youtube.videos[0].published.url, 'https://youtube.com/shorts/x');
   assert.equal(b.agents[0].model, 'haiku');
+  assert.equal(b.agents[0].name, 'Scout');
+  assert.ok(b.teams.every(t => t.support.includes('Scout')), 'Scout supports every main team');
+  assert.deepEqual(b.teams.find(t => t.id === 'android').support.includes('Video Producer'), false);
   assert.match(b.teams.find(t => t.id === 'youtube').recent, /Phone Charging/);
 });
 

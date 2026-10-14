@@ -2,7 +2,7 @@
   "name": "Coco",
   "company": "Good Space",
   "importedFrom": "C:/Users/Lenovo/nova-hq",
-  "importedAt": "2026-10-14T18:04:43.644Z",
+  "importedAt": "2026-10-14T18:20:35.689Z",
   "founders": [
     {
       "id": "mangesh",
@@ -19,9 +19,9 @@
     {
       "id": "youtube",
       "name": "YouTube Studio",
-      "emoji": "ðŸŽ¬",
+      "emoji": "🎬",
       "state": "active",
-      "doing": "1 Short a day on The Flow Â· long video \"Phone Battery Myths\" ready, waiting for YES",
+      "doing": "1 Short a day on The Flow · long video \"Phone Battery Myths\" ready, waiting for YES",
       "recent": "Posted \"Why Space Is Black\" on 2026-10-14 (4 videos live)",
       "blocked": "",
       "next": "Next Short in the Kai and Orbi style (QUALITY_V2 rule 0)",
@@ -33,12 +33,19 @@
       },
       "cadence": "1 Short every day, 1 long video every week",
       "publishRule": "Shorts post automatically (A-006). Long videos need a YES.",
-      "playbook": "teams/YouTube Studio.md"
+      "playbook": "teams/YouTube Studio.md",
+      "support": [
+        "Content Writer",
+        "Growth",
+        "Release QA",
+        "Scout",
+        "Video Producer"
+      ]
     },
     {
       "id": "extensions",
       "name": "Extension Atelier",
-      "emoji": "ðŸ§©",
+      "emoji": "🧩",
       "state": "active",
       "doing": "Researching 3 directions (Amazon seller, privacy auditor, ATS autofill)",
       "recent": "Research saved (company/research/)",
@@ -46,12 +53,19 @@
       "next": "Read recent reviews for the Amazon direction",
       "cadence": "Ideas Mon to Thu, shortlist Friday, one release a week",
       "publishRule": "Every Web Store release needs a YES.",
-      "playbook": "teams/Extension Atelier.md"
+      "playbook": "teams/Extension Atelier.md",
+      "support": [
+        "Builder",
+        "Content Writer",
+        "Growth",
+        "Release QA",
+        "Scout"
+      ]
     },
     {
       "id": "android",
       "name": "App Garden",
-      "emoji": "ðŸ“±",
+      "emoji": "📱",
       "state": "active",
       "doing": "Nova Island and CleanBar builds on the PC",
       "recent": "Fuselist parked (A-001 on hold)",
@@ -59,12 +73,19 @@
       "next": "Pick the next app to polish",
       "cadence": "One app polished at a time",
       "publishRule": "Every Play Store release needs a YES.",
-      "playbook": "teams/App Garden.md"
+      "playbook": "teams/App Garden.md",
+      "support": [
+        "Builder",
+        "Content Writer",
+        "Growth",
+        "Release QA",
+        "Scout"
+      ]
     },
     {
       "id": "social",
       "name": "Social Lounge",
-      "emoji": "ðŸ’¬",
+      "emoji": "💬",
       "state": "paused",
       "doing": "Paused by the founder (2026-10-09)",
       "recent": "Nothing new",
@@ -72,37 +93,88 @@
       "next": "Starts again when the founder says so",
       "cadence": "Paused",
       "publishRule": "Every post needs a YES.",
-      "playbook": "teams/Social Lounge.md"
+      "playbook": "teams/Social Lounge.md",
+      "support": [
+        "Content Writer",
+        "Growth",
+        "Release QA",
+        "Scout",
+        "Video Producer"
+      ]
     }
   ],
   "agents": [
     {
       "id": "builder",
+      "name": "Builder",
+      "job": "Designs and builds extensions, apps and websites",
+      "serves": [
+        "extensions",
+        "android"
+      ],
       "description": "Core team. Designs AND builds Chrome extensions, Android apps and websites from a scored idea or spec. Use after scout.",
       "model": "inherit"
     },
     {
       "id": "content-writer",
+      "name": "Content Writer",
+      "job": "Scripts, captions, titles, store listing text",
+      "serves": [
+        "youtube",
+        "social",
+        "extensions",
+        "android"
+      ],
       "description": "Core team. Plans content and writes scripts, captions, titles and posting calendars for YouTube, Instagram and Facebook.",
       "model": "inherit"
     },
     {
       "id": "growth",
+      "name": "Growth",
+      "job": "Marketing plans, replies and outreach (drafts only)",
+      "serves": [
+        "youtube",
+        "extensions",
+        "android",
+        "social"
+      ],
       "description": "Core team. Marketing plans, support replies and outreach drafts. Drafts only — never sends or posts.",
       "model": "inherit"
     },
     {
       "id": "release-qa",
+      "name": "Release QA",
+      "job": "Tests the work and packs the release (never the one who built it)",
+      "serves": [
+        "youtube",
+        "extensions",
+        "android",
+        "social"
+      ],
       "description": "Core team. Tests and reviews what builder made, then prepares the release package (zip, store listing, screenshots). Never publishes.",
       "model": "inherit"
     },
     {
       "id": "scout",
+      "name": "Scout",
+      "job": "Finds and scores ideas, trends and topics",
+      "serves": [
+        "youtube",
+        "extensions",
+        "android",
+        "social"
+      ],
       "description": "Core team. Finds and scores ideas — Chrome extensions, Play apps, video topics, competitors, metrics. Use first in any pipeline.",
       "model": "inherit"
     },
     {
       "id": "video-producer",
+      "name": "Video Producer",
+      "job": "Turns scripts into finished videos",
+      "serves": [
+        "youtube",
+        "social"
+      ],
       "description": "Social Media team. Turns scripts into renderable video projects (Remotion or ffmpeg code, captions, voiceover script) in the cloud sandbox. Use after script-writer.",
       "model": "inherit"
     }
@@ -578,6 +650,12 @@
       "date": "2026-10-14",
       "by": "Mangesh",
       "text": "The company is called Good Space. Coco (rebuilt from Nova) manages it.",
+      "from": "coco"
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "The 6 AI members (Scout, Builder, Release QA, Content Writer, Video Producer, Growth) are one Support Team shared by all main teams.",
       "from": "coco"
     }
   ],
@@ -1417,5 +1495,5 @@
     }
   ],
   "notes": [],
-  "savedAt": "2026-10-14T18:04:43.674Z"
+  "savedAt": "2026-10-14T18:20:35.769Z"
 }

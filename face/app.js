@@ -53,6 +53,7 @@ function teamCard(t) {
       <dt>Next</dt><dd>${esc(t.next) || '—'}</dd>
       <dt>Rhythm</dt><dd>${esc(t.cadence)}</dd>
       <dt>Publish</dt><dd>${esc(t.publishRule)}</dd>
+      <dt>Support</dt><dd>${(t.support || []).map(esc).join(', ') || '—'}</dd>
     </dl>
     <form class="ask" data-team="${t.id}"><input name="t" placeholder="Give ${esc(t.name)} a task…" required><button class="tonal">Send</button></form>
   </div>`;
@@ -91,8 +92,8 @@ const VIEWS = {
   teams() {
     const tasks = (brain.tasks || []).slice(0, 12);
     return `<div class="grid">${(brain.teams || []).map(teamCard).join('')}</div>
-      <h2 style="margin-top:24px">Team members (AI agents)</h2>
-      <div class="card">${(brain.agents || []).map(a => `<div class="row"><div class="grow"><h3>${esc(a.id.replace(/-/g, ' ').replace(/\b\w/g, m => m.toUpperCase()))}</h3><div class="muted">${esc(a.description)}</div></div><span class="chip soft">${esc(a.model)}</span></div>`).join('')}</div>
+      <h2 style="margin-top:24px">🤝 Support Team <span class="muted">· shared by every main team</span></h2>
+      <div class="card">${(brain.agents || []).map(a => `<div class="row"><div class="grow"><h3>${esc(a.name || a.id)}</h3><div>${esc(a.job || a.description)}</div><div class="muted">Helps: ${(a.serves || []).map(id => esc(((brain.teams || []).find(t => t.id === id) || {}).name || id)).join(', ')}</div></div><span class="chip soft">${esc(a.model)}</span></div>`).join('')}</div>
       <h2 style="margin-top:24px">Latest tasks</h2>
       <div class="card">${tasks.map(t => `<div class="row"><div class="grow"><div>${esc(t.title)}</div><div class="muted">${esc(t.team || t.agent || '')} · ${day(t.created)}</div></div><span class="chip soft">${esc(t.status)}</span></div>`).join('') || '<div class="empty">No tasks yet.</div>'}</div>`;
   },

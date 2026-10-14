@@ -40,11 +40,23 @@ function tasks() {
   }));
 }
 
+// The 6 AI members are one shared Support Team; every main team calls on them (founder, 2026-10-14).
+export const SUPPORT = {
+  scout:            { name: 'Scout',          job: 'Finds and scores ideas, trends and topics',        serves: ['youtube', 'extensions', 'android', 'social'] },
+  builder:          { name: 'Builder',        job: 'Designs and builds extensions, apps and websites', serves: ['extensions', 'android'] },
+  'release-qa':     { name: 'Release QA',     job: 'Tests the work and packs the release (never the one who built it)', serves: ['youtube', 'extensions', 'android', 'social'] },
+  'content-writer': { name: 'Content Writer', job: 'Scripts, captions, titles, store listing text',    serves: ['youtube', 'social', 'extensions', 'android'] },
+  'video-producer': { name: 'Video Producer', job: 'Turns scripts into finished videos',               serves: ['youtube', 'social'] },
+  growth:           { name: 'Growth',         job: 'Marketing plans, replies and outreach (drafts only)', serves: ['youtube', 'extensions', 'android', 'social'] },
+};
+
 function agents() {
   return ls('.claude/agents').filter(f => f.endsWith('.md')).map(f => {
     const md = read(`.claude/agents/${f}`);
     const field = (k) => (md.match(new RegExp(`^${k}:\\s*(.+)$`, 'm')) || [])[1] || '';
-    return { id: f.replace('.md', ''), description: tidy(field('description')), model: field('model') || 'inherit' };
+    const id = f.replace('.md', '');
+    const s = SUPPORT[id] || { name: id, job: '', serves: [] };
+    return { id, name: s.name, job: s.job, serves: s.serves, description: tidy(field('description')), model: field('model') || 'inherit' };
   });
 }
 
@@ -173,6 +185,9 @@ export function importNova() {
   };
   if (!brain.decisions.some(d => /Good Space/.test(d.text)))
     brain.decisions.push({ date: '2026-10-14', by: 'Mangesh', text: 'The company is called Good Space. Coco (rebuilt from Nova) manages it.', from: 'coco' });
+  if (!brain.decisions.some(d => /Support Team/.test(d.text)))
+    brain.decisions.push({ date: '2026-10-14', by: 'Mangesh', text: 'The 6 AI members (Scout, Builder, Release QA, Content Writer, Video Producer, Growth) are one Support Team shared by all main teams.', from: 'coco' });
+  for (const t of brain.teams) t.support = brain.agents.filter(a => a.serves.includes(t.id)).map(a => a.name);
   saveBrain(brain);
   return brain;
 }
