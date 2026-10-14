@@ -1,0 +1,278 @@
+<title>The Design Atelier</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..800,100&family=Nunito:wght@400;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=swap">
+<style>
+/* Layout: an atelier lookbook. A gilded title plate, then swatch rails, a type specimen, a live component board and the tool register */
+:root {
+  --primary: #7b4f6b; --on-primary: #ffffff; --primary-c: #ffd8ee; --on-primary-c: #30092a;
+  --secondary-c: #dcebd2; --on-secondary-c: #1a3016; --tertiary: #9a5a3c; --tertiary-c: #ffdbcd;
+  --gold: #b48a33; --gold-soft: #e7cf96;
+  --surface: #fdf7f4; --surface-1: #f7eeee; --surface-2: #f0e4e6; --surface-3: #e9dadd;
+  --on-surface: #22191d; --muted: #6e5e64; --outline: #d6c2c8;
+  --good: #2f6b40; --good-c: #cdeed5; --warn: #7a5a00; --warn-c: #ffe6a3; --bad: #9c2b33; --bad-c: #ffdad8;
+  --gigi: #f3a3be; --lulu: #9fc0f2; --fifi: #f6cd7a; --zaza: #b39cf0;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif; --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --secondary-c: #34482d; --on-secondary-c: #d6ecc9; --tertiary: #ffb898; --tertiary-c: #6e3b26;
+  --gold: #e3c06c; --gold-soft: #5e4a1f;
+  --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --surface-3: #332939;
+  --on-surface: #f2e6ea; --muted: #cbbac4; --outline: #4f4250;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --bad: #ffb3ae; --bad-c: #6f1d23;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --secondary-c: #34482d; --on-secondary-c: #d6ecc9; --tertiary: #ffb898; --tertiary-c: #6e3b26;
+  --gold: #e3c06c; --gold-soft: #5e4a1f;
+  --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --surface-3: #332939;
+  --on-surface: #f2e6ea; --muted: #cbbac4; --outline: #4f4250;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --bad: #ffb3ae; --bad-c: #6f1d23;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--surface); color: var(--on-surface); font: 16px/1.55 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); font-variation-settings: "SOFT" 100; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(38px, 7vw, 68px); line-height: 1; font-weight: 700; background: linear-gradient(100deg, var(--on-surface) 48%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 650; }
+h3 { font-size: 18px; font-weight: 650; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.lede { color: var(--muted); max-width: 64ch; }
+.ms { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal; font-size: 22px; line-height: 1; display: inline-block; -webkit-font-feature-settings: "liga"; font-feature-settings: "liga"; font-variation-settings: "FILL" 0, "wght" 400; }
+.plate { border-radius: 36px; padding: 2px; background: linear-gradient(135deg, var(--gold-soft), transparent 40%, var(--gold-soft)); }
+.plate-in { border-radius: 34px; background: var(--surface-1); padding: clamp(22px, 4vw, 40px); display: grid; gap: 14px; }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: flex-end; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; color: var(--on-surface); font: 700 14px var(--body); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.sect { display: grid; gap: 16px; }
+
+/* swatches */
+.swatches { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); }
+.sw { border-radius: 22px; overflow: hidden; background: var(--surface-1); border: 1px solid var(--outline); text-align: left; padding: 0; cursor: pointer; color: var(--on-surface); font: inherit; }
+.sw .chipcol { height: 76px; }
+.sw .meta { padding: 10px 12px; display: grid; gap: 2px; }
+.sw b { font-size: 14px; }
+.sw code { font: 600 12px ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--muted); }
+
+/* type */
+.specimen { background: var(--surface-1); border-radius: 28px; padding: 24px; display: grid; gap: 12px; }
+.row { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: baseline; }
+.row .k { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+@media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* components board */
+.board { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.tile { background: var(--surface-1); border-radius: 28px; padding: 20px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.tile .k { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.b { border: 0; border-radius: 999px; padding: 10px 22px; font: 700 15px var(--body); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.b.filled { background: var(--primary); color: var(--on-primary); }
+.b.tonal { background: var(--primary-c); color: var(--on-primary-c); }
+.b.outlined { background: transparent; color: var(--primary); box-shadow: inset 0 0 0 1px var(--outline); }
+.b.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 4px 12px; font-size: 13px; font-weight: 700; background: var(--surface-2); }
+.chip.good { background: var(--good-c); color: var(--good); } .chip.warn { background: var(--warn-c); color: var(--warn); } .chip.bad { background: var(--bad-c); color: var(--bad); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 13px; font-weight: 700; color: var(--muted); }
+.field input { background: var(--surface-2); border: 1px solid var(--outline); border-radius: 14px; padding: 12px 14px; font: 600 15px var(--body); color: var(--on-surface); }
+.switch { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.switch input { appearance: none; width: 52px; height: 32px; border-radius: 999px; background: var(--surface-3); box-shadow: inset 0 0 0 2px var(--outline); position: relative; cursor: pointer; transition: background .2s; margin: 0; flex: none; }
+.switch input::after { content: ""; position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: all .2s; }
+.switch input:checked { background: var(--primary); box-shadow: none; }
+.switch input:checked::after { left: 26px; top: 4px; width: 24px; height: 24px; background: var(--on-primary); }
+.card { background: var(--surface); border-radius: 24px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--gold-soft); }
+.card .art { height: 96px; background: linear-gradient(135deg, var(--primary-c), var(--tertiary-c)); display: grid; place-items: center; color: var(--on-primary-c); }
+.card .art .ms { font-size: 40px; }
+.card .in { padding: 14px 16px; display: grid; gap: 6px; }
+.phone { background: var(--surface); border-radius: 28px; box-shadow: inset 0 0 0 1px var(--outline); overflow: hidden; }
+.phone .bar { display: flex; justify-content: space-around; background: var(--surface-2); padding: 10px 6px 12px; }
+.phone .bar span { display: grid; justify-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.phone .bar span.on { color: var(--on-surface); }
+.phone .bar span.on .pill { background: var(--primary-c); color: var(--on-primary-c); }
+.pill { width: 56px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+.phone .screen { padding: 16px; display: grid; gap: 10px; }
+.icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
+.icons span { display: grid; justify-items: center; gap: 4px; font-size: 11px; color: var(--muted); padding: 10px 4px; border-radius: 16px; background: var(--surface-2); }
+.icons .ms { font-size: 28px; color: var(--on-surface); }
+.houses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.houses span { border-radius: 16px; padding: 14px 8px 10px; text-align: center; font-weight: 800; color: #2b1f26; font-size: 14px; }
+@media (max-width: 480px) { .houses { grid-template-columns: repeat(2, 1fr); } }
+
+/* tools */
+.tools { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.tool { background: var(--surface-1); border-radius: 22px; padding: 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.tool .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tool p { color: var(--muted); font-size: 14px; }
+.tool a { color: var(--primary); font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+.flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.step { background: var(--surface-1); border-radius: 18px; padding: 10px 14px; font-weight: 700; display: grid; line-height: 1.25; }
+.step small { font-weight: 600; color: var(--muted); }
+.arrow { color: var(--gold); font-weight: 800; }
+.rules { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.rule { background: var(--secondary-c); color: var(--on-secondary-c); border-radius: 20px; padding: 14px 16px; font-weight: 600; }
+.rule b { font-family: var(--display); font-size: 19px; display: block; }
+#toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--on-surface); color: var(--surface); padding: 10px 18px; border-radius: 12px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast.show { opacity: 1; }
+footer { color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="plate"><div class="plate-in">
+    <div class="top">
+      <div style="display:grid;gap:10px;min-width:0">
+        <span class="eyebrow">Good Space · Vivi's studio</span>
+        <h1>The Design Atelier</h1>
+        <p class="lede">One look for everything we make: every app, extension and website follows this page. Material You underneath, luxury on top. Tap a colour to copy it.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Preview theme">
+        <button type="button" data-t="" aria-pressed="true">System</button>
+        <button type="button" data-t="light" aria-pressed="false">Light</button>
+        <button type="button" data-t="dark" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+  </div></div>
+
+  <section class="sect">
+    <span class="eyebrow">Palette</span>
+    <h2>The house colours</h2>
+    <div class="swatches" id="brand"></div>
+    <div class="houses" aria-label="House colours">
+      <span style="background:var(--gigi)">Gigi</span><span style="background:var(--lulu)">Lulu</span><span style="background:var(--fifi)">Fifi</span><span style="background:var(--zaza)">Zaza</span>
+    </div>
+  </section>
+
+  <section class="sect">
+    <span class="eyebrow">Typography</span>
+    <h2>Two typefaces, one voice</h2>
+    <div class="specimen">
+      <div class="row"><span class="k">Display · Fraunces</span><span style="font-family:var(--display);font-variation-settings:'SOFT' 100;font-size:clamp(28px,5vw,44px);font-weight:700;line-height:1.05">The Grand Estate</span></div>
+      <div class="row"><span class="k">Title · Fraunces</span><span style="font-family:var(--display);font-variation-settings:'SOFT' 100;font-size:24px;font-weight:650">Lulu House, 33 extensions</span></div>
+      <div class="row"><span class="k">Body · Nunito</span><span style="max-width:60ch">Every free thing points to something paid. Every idea reaches at least three platforms before Coco calls it done.</span></div>
+      <div class="row"><span class="k">Label · Nunito 800</span><span style="font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)">Working now</span></div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <span class="eyebrow">Components</span>
+    <h2>Pieces every product reuses</h2>
+    <div class="board">
+      <div class="tile">
+        <span class="k">Buttons</span>
+        <div class="btns">
+          <button type="button" class="b filled"><span class="ms">rocket_launch</span>Publish</button>
+          <button type="button" class="b tonal">Save draft</button>
+          <button type="button" class="b outlined">Cancel</button>
+          <button type="button" class="b gold"><span class="ms">workspace_premium</span>Go Pro</button>
+        </div>
+        <span class="k">Status chips</span>
+        <div class="chips"><span class="chip good"><i class="dot"></i>Working</span><span class="chip warn"><i class="dot"></i>Needs your YES</span><span class="chip bad"><i class="dot"></i>Upload failed</span><span class="chip">Paused</span></div>
+      </div>
+      <div class="tile">
+        <span class="k">Inputs</span>
+        <div class="field"><label for="f1">Extension name</label><input id="f1" value="Focus Timer"></div>
+        <label class="switch"><input id="s1" type="checkbox" checked>Remind me every 25 minutes</label>
+        <label class="switch"><input id="s2" type="checkbox">Dark popup</label>
+      </div>
+      <div class="tile">
+        <span class="k">Product card</span>
+        <div class="card"><div class="art"><span class="ms">timer</span></div><div class="in"><h3>Focus Timer</h3><p style="color:var(--muted);font-size:14px">Lulu · Productivity · Chrome and Play Store</p><div class="chips"><span class="chip good"><i class="dot"></i>Live</span><span class="chip">Free + Pro</span></div></div></div>
+      </div>
+      <div class="tile">
+        <span class="k">Phone navigation</span>
+        <div class="phone">
+          <div class="screen"><h3>Good morning, Boss</h3><p style="color:var(--muted);font-size:14px">2 things wait for your YES.</p><button type="button" class="b filled" style="justify-self:start">Review</button></div>
+          <div class="bar"><span class="on"><i class="pill"><span class="ms">home</span></i>Home</span><span><i class="pill"><span class="ms">groups</span></i>Teams</span><span><i class="pill"><span class="ms">verified</span></i>Approvals</span><span><i class="pill"><span class="ms">monitoring</span></i>Results</span></div>
+        </div>
+      </div>
+      <div class="tile">
+        <span class="k">Icons · Material Symbols Rounded</span>
+        <div class="icons" id="icons"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <span class="eyebrow">The register</span>
+    <h2>Vivi's tools</h2>
+    <p class="lede">Free tools only. Connected tools Coco can use directly; the rest open in the browser or install for free. Nothing paid is used without your YES.</p>
+    <div class="tools" id="tools"></div>
+  </section>
+
+  <section class="sect">
+    <span class="eyebrow">How a design is made</span>
+    <h2>From brief to store page</h2>
+    <div class="flow" id="flow"></div>
+  </section>
+
+  <section class="sect">
+    <span class="eyebrow">House rules</span>
+    <h2>What every screen must do</h2>
+    <div class="rules">
+      <div class="rule"><b>Material You first</b>tonal surfaces, rounded 16 to 28 px corners, the 8 px grid</div>
+      <div class="rule"><b>Gold is jewellery</b>accents and frames only, never a full background</div>
+      <div class="rule"><b>Light and dark</b>every screen designed for both, from the same tokens</div>
+      <div class="rule"><b>Readable</b>text passes the contrast check before release</div>
+      <div class="rule"><b>No emoji, no dashes</b>luxury names with capital letters, drawn icons only</div>
+      <div class="rule"><b>Original</b>no copied screens, logos or art from other products</div>
+    </div>
+  </section>
+
+  <footer>Kept in Good Space › Coco › Design Atelier, with the colour file Good Space Tokens.css for builders.</footer>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const BRAND = [
+  ['Coco Rose', '--primary', '#7b4f6b', '#f1b6d8'], ['Rose Veil', '--primary-c', '#ffd8ee', '#633856'],
+  ['Estate Gold', '--gold', '#b48a33', '#e3c06c'], ['Bonbon Peach', '--tertiary-c', '#ffdbcd', '#6e3b26'],
+  ['Garden Sage', '--secondary-c', '#dcebd2', '#34482d'], ['Pearl Surface', '--surface', '#fdf7f4', '#141018'],
+  ['Silk Surface', '--surface-2', '#f0e4e6', '#28202c'], ['Velvet Ink', '--on-surface', '#22191d', '#f2e6ea'],
+];
+const isDark = () => { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1800); }
+function renderBrand() {
+  document.getElementById('brand').innerHTML = BRAND.map(([n, v, l, d]) => { const hex = isDark() ? d : l; return `<button type="button" class="sw" data-hex="${hex}" aria-label="Copy ${n} ${hex}"><div class="chipcol" style="background:var(${v})"></div><div class="meta"><b>${n}</b><code>${hex}</code></div></button>`; }).join('');
+}
+document.addEventListener('click', e => {
+  const s = e.target.closest('.sw'); if (!s) return;
+  const hex = s.dataset.hex;
+  if (navigator.clipboard) navigator.clipboard.writeText(hex).then(() => toast(`Copied ${hex}`), () => toast(hex)); else toast(hex);
+});
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  if (b.dataset.t) document.documentElement.dataset.theme = b.dataset.t; else delete document.documentElement.dataset.theme;
+  renderBrand();
+}));
+document.getElementById('icons').innerHTML = [['home', 'Home'], ['movie', 'Gigi'], ['extension', 'Lulu'], ['menu_book', 'Fifi'], ['sports_esports', 'Zaza'], ['verified', 'Approve'], ['savings', 'Money'], ['lightbulb', 'Idea'], ['palette', 'Design'], ['rocket_launch', 'Launch'], ['diamond', 'Pro'], ['support_agent', 'Care']]
+  .map(([i, n]) => `<span><i class="ms" aria-hidden="true">${i}</i>${n}</span>`).join('');
+const TOOLS = [
+  ['Figma', 'good', 'Connected', 'Screen designs and the Material 3 kit. Free Starter plan; switch your seat to an editor seat so Coco can edit files.', 'https://www.figma.com'],
+  ['Canva', 'good', 'Connected', 'Store banners, YouTube thumbnails, social posts. Free plan; brand kits need Canva Pro.', 'https://www.canva.com'],
+  ['Blender', 'good', 'Installed', 'Version 4.2.3 on this PC. 3D scenes, product shots and the Grand Estate film.', 'https://www.blender.org'],
+  ['Material Theme Builder', 'warn', 'Free web tool', 'Builds the full Material You colour set and exports it for Android, web and Figma.', 'https://material-foundation.github.io/material-theme-builder/'],
+  ['Material Symbols', 'warn', 'Free web tool', 'Google icon set used on this page. Rounded style for Good Space.', 'https://fonts.google.com/icons'],
+  ['Google Fonts', 'warn', 'Free web tool', 'Fraunces and Nunito come from here.', 'https://fonts.google.com'],
+  ['Realtime Colors', 'warn', 'Free web tool', 'Try a palette on a real page layout before using it.', 'https://www.realtimecolors.com'],
+  ['WebAIM Contrast Checker', 'warn', 'Free web tool', 'Checks every text colour is readable.', 'https://webaim.org/resources/contrastchecker/'],
+  ['Lucide Icons', 'warn', 'Free web tool', 'Line icons for extension popups and websites.', 'https://lucide.dev'],
+  ['LottieFiles', 'warn', 'Free web tool', 'Small free animations for apps and sites.', 'https://lottiefiles.com'],
+  ['Rive', 'warn', 'Free web tool', 'Interactive animated buttons and characters.', 'https://rive.app'],
+  ['Shots.so', 'warn', 'Free web tool', 'Device mockups for store screenshots.', 'https://shots.so'],
+  ['Unsplash', 'warn', 'Free web tool', 'Free photos with a clear licence.', 'https://unsplash.com'],
+  ['Lighthouse', 'warn', 'Built into Chrome', 'Scores speed, accessibility and best practice for every website.', 'https://developer.chrome.com/docs/lighthouse'],
+  ['Penpot', 'warn', 'Free web tool', 'Open-source Figma alternative if a free editor seat is needed.', 'https://penpot.app'],
+  ['Figma Community', 'good', 'Free with Figma', 'Free UI kits, Material 3 files and screen ideas to learn from. Used as reference, never copied.', 'https://www.figma.com/community'],
+  ['Material Web', 'warn', 'Free code library', 'Official Material You buttons, fields and menus for websites and extension popups.', 'https://material-web.dev'],
+  ['Jetpack Compose Material 3', 'warn', 'Free code library', 'Material You for our Android apps, built into Android Studio.', 'https://developer.android.com/jetpack/compose/designsystems/material3'],
+];
+document.getElementById('tools').innerHTML = TOOLS.map(([n, s, l, d, u]) => `<div class="tool"><div class="head"><h3>${n}</h3><span class="chip ${s}"><i class="dot"></i>${l}</span></div><p>${d}</p><a href="${u}" target="_blank" rel="noopener">${u.replace(/^https:\/\//, '').replace(/\/$/, '')}</a></div>`).join('');
+document.getElementById('flow').innerHTML = [['Brief', 'Lola and Lili say what and for whom'], ['Moodboard', 'Vivi collects references'], ['Design', 'Figma, light and dark'], ['Tokens', 'Good Space Tokens.css'], ['Build', 'Remy'], ['Check', 'Elise: contrast and Lighthouse'], ['Store art', 'Canva and Shots.so'], ['Your YES', 'then it goes live']]
+  .map((s, i) => `${i ? '<span class="arrow" aria-hidden="true">→</span>' : ''}<div class="step">${s[0]}<small>${s[1]}</small></div>`).join('');
+renderBrand();
+</script>

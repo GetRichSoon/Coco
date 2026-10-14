@@ -167,12 +167,14 @@ def figure(color, s, loc, rot=0.0, crown=False, parcel=False):
     if crown: cyl(0.34 * s, 0.32 * s, M['gold'], (0, 0, 2.25 * s), g, v=6, r2=0.4 * s)
     if parcel: cube((0.6 * s, 0.45 * s, 0.45 * s), M['gold'], (0, 0, 2.15 * s), g, 0.06)
     return g
-figure('#f3c3a8', 1.25, (0, -3.4, 4.7), crown=True)
+coco_fig = figure('#f3c3a8', 1.25, (0, -3.4, 4.7), crown=True)
 helper_cols = ['#f3a3be', '#8fd3bd', '#9fc0f2', '#eec0e6', '#f6cd7a', '#f6b19a', '#c4d8a0', '#b39cf0', '#f2b8c8', '#f3d9a4']
-for i, c in enumerate(helper_cols[:6]): figure(c, 0.62, (-3.6 + i * 1.45, -17.6, 0.05), rot=(i - 2.5) * 0.12)
+idlers = [figure(c, 0.62, (-3.6 + i * 1.45, -17.6, 0.05), rot=(i - 2.5) * 0.12) for i, c in enumerate(helper_cols[:6])]
+walkers = []
 for i, (k, pts) in enumerate(roads.items()):
     (x0, y0), (x1, y1) = pts[1], pts[2]; t = 0.35 + 0.1 * (i % 3)
-    figure(helper_cols[(i * 3) % 10], 0.7, (pts[1][0] + (x1 - pts[1][0]) * t, pts[1][1] + (y1 - pts[1][1]) * t, 0.1), rot=math.atan2(x1 - x0, -(y1 - y0)), parcel=True)
+    w = figure(helper_cols[(i * 3) % 10], 0.7, (pts[1][0] + (x1 - pts[1][0]) * t, pts[1][1] + (y1 - pts[1][1]) * t, 0.1), rot=math.atan2(x1 - x0, -(y1 - y0)), parcel=True)
+    walkers.append((w, pts, i / len(roads)))
 
 # ---------- trees ----------
 for i, (x, y) in enumerate([(-23, 1), (23, 1), (-8, -16), (8, -17), (-6, 11), (6, 11), (-22, -13), (22, -13), (-11, 14), (11, 14)]):
@@ -182,12 +184,14 @@ for i, (x, y) in enumerate([(-23, 1), (23, 1), (-8, -16), (8, -17), (-6, 11), (6
 
 # ---------- platform balloons ----------
 plats = [('YouTube', '#f3a3be'), ('Play Store', '#8fd3bd'), ('Chrome Store', '#9fc0f2'), ('Roblox', '#b39cf0'), ('Website', '#f6cd7a'), ('Insta / FB', '#f6b19a')]
+balloons = []
 for i, (name, c) in enumerate(plats):
     a = i / len(plats) * math.tau + 0.3; loc = (math.cos(a) * 31, math.sin(a) * 26, 10 + (i % 2) * 1.5)
     b = empty('Balloon ' + name, loc); b.scale = (0.8, 0.8, 0.8); env = sphere(1.7, roof(c), (0, 0, 0), b, 40); env.scale = (1, 1, 1.22)
     torus(1.7, 0.07, M['gold'], (0, 0, 0), b); cube((0.9, 0.9, 0.6), M['basket'], (0, 0, -2.9), b, 0.1)
     for x in (-0.35, 0.35): cyl(0.02, 1.4, M['ink'], (x, 0, -2.1), b, v=6)
     anchors['p:' + name] = (loc[0], loc[1], loc[2] + 2.4)
+    balloons.append((b, loc))
 
 # ---------- light, sky, camera ----------
 world = bpy.data.worlds.new('Sky'); scene.world = world; world.use_nodes = True
@@ -226,6 +230,65 @@ scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_pe
 scene.render.image_settings.file_format = 'JPEG'; scene.render.image_settings.quality = 86
 scene.view_settings.view_transform = 'AgX'; scene.view_settings.look = 'AgX - Medium High Contrast'
 scene.render.film_transparent = False
+
+MODE = argv[4] if len(argv) > 4 else 'turntable'
+
+# ---------- film: a seamless loop of the team at work ----------
+def film(N):
+    """Keyframes N frames that loop perfectly: helpers walk the roads, parcels fly to the balloons."""
+    scene.frame_start, scene.frame_end = 0, N - 1; scene.render.fps = 24
+    TAU = math.tau
+    def bez(p, t):
+        (x0, y0), (x1, y1), (x2, y2) = p; u = 1 - t
+        return (u * u * x0 + 2 * u * t * x1 + t * t * x2, u * u * y0 + 2 * u * t * y1 + t * t * y2)
+    for f in range(0, N + 1, 2):
+        ph = f / N
+        for w, pts, off in walkers:
+            q = (ph + off) % 1.0; t = 1 - abs(2 * q - 1)            # 0 → 1 → 0, loops cleanly
+            x, y = bez(pts, t); ahead = bez(pts, min(1, t + 0.02)) if q < 0.5 else bez(pts, max(0, t - 0.02))
+            w.location = (x, y, 0.1 + 0.16 * abs(math.sin(TAU * 6 * ph + off * 9)))
+            w.rotation_euler = (0, 0, math.atan2(ahead[0] - x, -(ahead[1] - y)))
+            w.keyframe_insert('location', frame=f); w.keyframe_insert('rotation_euler', frame=f)
+        for i, d in enumerate(idlers):
+            d.rotation_euler = (0, 0, (i - 2.5) * 0.12 + 0.35 * math.sin(TAU * 2 * ph + i))
+            d.location.z = 0.05 + 0.08 * max(0, math.sin(TAU * 4 * ph + i * 1.3))
+            d.keyframe_insert('rotation_euler', frame=f); d.keyframe_insert('location', frame=f)
+        coco_fig.rotation_euler = (0, 0, 0.45 * math.sin(TAU * ph)); coco_fig.keyframe_insert('rotation_euler', frame=f)
+        for i, (b, loc) in enumerate(balloons):
+            b.location = (loc[0], loc[1], loc[2] + 0.7 * math.sin(TAU * ph + i)); b.rotation_euler = (0, 0, TAU * ph * (1 if i % 2 else -1))
+            b.keyframe_insert('location', frame=f); b.keyframe_insert('rotation_euler', frame=f)
+    # gold parcels launched from each House up to a platform balloon, twice per loop
+    gold_parcel_routes = [('gigi', 0), ('lulu', 2), ('fifi', 4), ('zaza', 3), ('club', 5)]
+    for j, (h, bi) in enumerate(gold_parcel_routes):
+        p = cube((0.7, 0.7, 0.7), M['gold'], anchors[h], None, 0.1); start = Vector(anchors[h]); end = Vector(balloons[bi][1]) + Vector((0, 0, -2.6))
+        for f in range(0, N + 1, 2):
+            q = (2 * f / N + j / len(gold_parcel_routes)) % 1.0
+            pos = start.lerp(end, q); pos.z += math.sin(math.pi * q) * 6
+            s = math.sin(math.pi * q) ** 0.5
+            p.location = pos; p.scale = (s, s, s); p.rotation_euler = (0, 0, TAU * q)
+            for prop in ('location', 'scale', 'rotation_euler'): p.keyframe_insert(prop, frame=f)
+    for o in bpy.data.objects:
+        if o.animation_data and o.animation_data.action:
+            for fc in o.animation_data.action.fcurves:
+                for k in fc.keyframe_points: k.interpolation = 'LINEAR'
+    # camera: a fixed three-quarter view so the name plates stay put
+    a = -math.pi / 2 + 0.55; cam.location = (math.cos(a) * 64, math.sin(a) * 64, 34); cam_d.lens = 42
+    scene.frame_set(0); bpy.context.view_layer.update()
+    spots = {k: [round(v.x, 4), round(1 - v.y, 4), round(v.z, 2)] for k, v in ((k, world_to_camera_view(scene, cam, Vector(p))) for k, p in anchors.items())}
+    with open(os.path.join(OUT, 'motion_hotspots.json'), 'w') as fh: json.dump({'width': W, 'height': H, 'frames': N, 'fps': 24, 'hotspots': spots}, fh)
+    set_time(False)
+    scene.render.filepath = os.path.join(OUT, 'Estate in Motion poster.jpg'); bpy.ops.render.render(write_still=True)
+    rs = scene.render; rs.image_settings.file_format = 'FFMPEG'; rs.ffmpeg.format = 'MPEG4'; rs.ffmpeg.codec = 'H264'
+    rs.ffmpeg.constant_rate_factor = 'HIGH'; rs.ffmpeg.ffmpeg_preset = 'GOOD'; rs.ffmpeg.gopsize = 24; rs.ffmpeg.audio_codec = 'NONE'
+    rs.filepath = os.path.join(OUT, 'Estate in Motion.mp4'); rs.use_file_extension = False
+    bpy.ops.render.render(animation=True)
+    print('FILM DONE', flush=True)
+
+if MODE == 'film':
+    ee.taa_render_samples = 32
+    film(FRAMES)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Grand Estate in Motion.blend'))
+    sys.exit(0)
 
 # ---------- turntable ----------
 data = {'frames': FRAMES, 'width': W, 'height': H, 'hotspots': {}}

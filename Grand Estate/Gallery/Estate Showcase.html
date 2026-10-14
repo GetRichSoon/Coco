@@ -41,6 +41,9 @@ button:focus-visible, .plate:focus-visible { outline: 3px solid var(--primary); 
 .stage.dragging { cursor: grabbing; }
 .stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .5s; pointer-events: none; }
 .stage img.hide { opacity: 0; }
+.stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.stage.live { cursor: default; }
+.play { position: absolute; right: 14px; bottom: 14px; z-index: 120; border: 1px solid var(--gold-soft); background: var(--plate-bg); color: var(--plate-fg); border-radius: 999px; padding: 8px 16px; font: 800 13px var(--body); cursor: pointer; }
 .plate { position: absolute; transform: translate(-50%, -100%); background: var(--plate-bg); color: var(--plate-fg); border: 1px solid var(--gold); border-radius: 12px; padding: 3px 10px; font: 800 13px var(--body); white-space: nowrap; text-align: center; line-height: 1.2; box-shadow: 0 6px 16px rgba(0, 0, 0, .14); cursor: pointer; transition: opacity .25s; }
 .plate small { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .72; font-weight: 700; }
 .plate.sky { font-size: 11px; padding: 2px 8px; border-radius: 8px; border-color: var(--gold-soft); }
@@ -69,7 +72,11 @@ footer { color: var(--muted); font-size: 13px; }
       <h1>The Grand Estate</h1>
       <p class="lede">Our whole company as one private island, rendered in Blender. Drag the picture to walk around it, switch to night to see the windows glow, and tap a golden name plate to meet the team inside.</p>
     </div>
-    <div class="controls" role="group" aria-label="Time of day">
+    <div class="controls" role="group" aria-label="View">
+      <button type="button" id="live" aria-pressed="true">Live</button>
+      <button type="button" id="walk" aria-pressed="false">Walk around</button>
+    </div>
+    <div class="controls" role="group" aria-label="Time of day" id="timeCtl" hidden>
       <button type="button" id="day" aria-pressed="true">Day</button>
       <button type="button" id="night" aria-pressed="false">Night</button>
       <button type="button" id="spin" aria-pressed="false">Slow turn</button>
@@ -79,8 +86,9 @@ footer { color: var(--muted); font-size: 13px; }
     <div class="stage" id="stage" aria-label="The Grand Estate, drag to turn">
       <img id="imgA" alt="The Grand Estate, rendered in Blender">
       <img id="imgB" class="hide" alt="">
+      <video id="film" muted loop playsinline preload="auto" poster="Motion/Estate in Motion poster.jpg" aria-label="The team at work across the estate, an 8 second loop"><source src="Motion/Estate in Motion.mp4" type="video/mp4"></video>
       <div id="plates"></div>
-      <div class="turn"><button type="button" id="prev" aria-label="Turn left">‹</button><span id="angle">View 1 of 24</span><button type="button" id="next" aria-label="Turn right">›</button></div>
+      <div class="turn" id="turn" hidden><button type="button" id="prev" aria-label="Turn left">‹</button><span id="angle">View 1 of 24</span><button type="button" id="next" aria-label="Turn right">›</button></div>
       <div class="loading" id="loading">Opening the estate…</div>
     </div>
   </div>
@@ -162,10 +170,46 @@ $('#day').onclick = () => setTime('day'); $('#night').onclick = () => setTime('n
 function stopSpin() { clearInterval(timer); timer = null; $('#spin').setAttribute('aria-pressed', 'false'); }
 $('#spin').onclick = () => { if (timer) return stopSpin(); timer = setInterval(() => show(frame + 1), 900); $('#spin').setAttribute('aria-pressed', 'true'); };
 
-fetch('Portraits/hotspots.json').then(r => r.json()).then(j => {
-  data = j; buildPlates();
-  const dark = document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light');
-  front.src = src(dark ? 'night' : 'day', 0); front.onload = () => $('#loading').hidden = true;
-  setTime(dark ? 'night' : 'day'); select('coco'); preload();
-}).catch(() => { $('#loading').textContent = 'The estate pictures could not be loaded.'; });
+// ---------- Live film vs Walk around ----------
+const film = $('#film'); let mode = 'live', motion = null, walkReady = false;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const playBtn = document.createElement('button'); playBtn.type = 'button'; playBtn.className = 'play';
+const syncPlay = () => { playBtn.textContent = film.paused ? 'Play' : 'Pause'; };
+playBtn.onclick = () => { film.paused ? film.play().catch(() => {}) : film.pause(); syncPlay(); };
+film.addEventListener('play', syncPlay); film.addEventListener('pause', syncPlay);
+stage.appendChild(playBtn);
+
+function placePlates(spots) {
+  const depths = Object.values(spots).map(v => v[2]); const near = Math.min(...depths), far = Math.max(...depths);
+  document.querySelectorAll('.plate').forEach(n => {
+    const v = spots[n.dataset.key]; if (!v) { n.hidden = true; return; } n.hidden = false;
+    n.style.left = (v[0] * 100) + '%'; n.style.top = (v[1] * 100) + '%';
+    const d = (v[2] - near) / ((far - near) || 1); n.style.zIndex = String(100 - Math.round(d * 90)); n.style.opacity = String(1 - d * 0.35);
+  });
+}
+function setMode(m) {
+  mode = m; const live = m === 'live';
+  $('#live').setAttribute('aria-pressed', String(live)); $('#walk').setAttribute('aria-pressed', String(!live));
+  $('#timeCtl').hidden = live; $('#turn').hidden = live; film.hidden = !live; playBtn.hidden = !live; stage.classList.toggle('live', live);
+  front.hidden = back.hidden = live;
+  if (live) { stopSpin(); if (motion) placePlates(motion.hotspots); if (!reduceMotion) film.play().catch(() => {}); syncPlay(); }
+  else { film.pause(); if (walkReady) show(frame); else startWalk(); }
+}
+$('#live').onclick = () => setMode('live'); $('#walk').onclick = () => setMode('walk');
+// dragging only turns the estate in Walk around mode
+const guard = (e) => { if (mode === 'live') e.stopImmediatePropagation(); };
+stage.addEventListener('pointerdown', guard, true); stage.addEventListener('pointermove', guard, true); stage.addEventListener('keydown', guard, true);
+
+function startWalk() {
+  fetch('Portraits/hotspots.json').then(r => r.json()).then(j => {
+    data = j; walkReady = true;
+    const dark = document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light');
+    setTime(dark ? 'night' : 'day'); preload();
+  }).catch(() => { $('#loading').hidden = false; $('#loading').textContent = 'The estate pictures could not be loaded.'; });
+}
+
+fetch('Motion/motion_hotspots.json').then(r => r.json()).then(j => {
+  motion = j; data = data || { hotspots: { '0': j.hotspots } }; buildPlates(); placePlates(j.hotspots);
+  $('#loading').hidden = true; select('coco'); setMode('live');
+}).catch(() => { setMode('walk'); });
 </script>

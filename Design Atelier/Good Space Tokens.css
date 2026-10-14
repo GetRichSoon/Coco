@@ -1,0 +1,47 @@
+/* Good Space design tokens (Material You, luxury). Used by every app, extension and website.
+   Kept by Vivi in Coco/Design Atelier. Light values first, dark values below. */
+:root {
+  /* Brand */
+  --gs-primary: #7b4f6b;        /* Coco Rose */
+  --gs-on-primary: #ffffff;
+  --gs-primary-container: #ffd8ee;
+  --gs-on-primary-container: #30092a;
+  --gs-secondary-container: #dcebd2; /* Sage */
+  --gs-on-secondary-container: #1a3016;
+  --gs-tertiary: #9a5a3c;       /* Bonbon Peach */
+  --gs-tertiary-container: #ffdbcd;
+  --gs-gold: #b48a33;           /* Estate Gold: accents only */
+  --gs-gold-soft: #e7cf96;
+  /* Surfaces */
+  --gs-surface: #fdf7f4;
+  --gs-surface-1: #f7eeee;
+  --gs-surface-2: #f0e4e6;
+  --gs-surface-3: #e9dadd;
+  --gs-on-surface: #22191d;
+  --gs-muted: #6e5e64;
+  --gs-outline: #d6c2c8;
+  /* Status */
+  --gs-good: #2f6b40; --gs-good-container: #cdeed5;
+  --gs-warn: #7a5a00; --gs-warn-container: #ffe6a3;
+  --gs-bad: #9c2b33;  --gs-bad-container: #ffdad8;
+  /* Houses */
+  --gs-gigi: #f3a3be; --gs-lulu: #9fc0f2; --gs-fifi: #f6cd7a; --gs-zaza: #b39cf0;
+  /* Type */
+  --gs-font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --gs-font-body: "Nunito", "Segoe UI", Roboto, system-ui, sans-serif;
+  /* Shape and space */
+  --gs-radius-s: 8px; --gs-radius-m: 16px; --gs-radius-l: 28px; --gs-radius-full: 999px;
+  --gs-space: 8px; /* everything on the 8 px grid */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --gs-primary: #f1b6d8; --gs-on-primary: #4a1c3f; --gs-primary-container: #633856; --gs-on-primary-container: #ffd8ee;
+    --gs-secondary-container: #34482d; --gs-on-secondary-container: #d6ecc9;
+    --gs-tertiary: #ffb898; --gs-tertiary-container: #6e3b26;
+    --gs-gold: #e3c06c; --gs-gold-soft: #5e4a1f;
+    --gs-surface: #141018; --gs-surface-1: #1e1822; --gs-surface-2: #28202c; --gs-surface-3: #332939;
+    --gs-on-surface: #f2e6ea; --gs-muted: #cbbac4; --gs-outline: #4f4250;
+    --gs-good: #a9dcb6; --gs-good-container: #1f4a2b; --gs-warn: #f3cd5f; --gs-warn-container: #5a4300; --gs-bad: #ffb3ae; --gs-bad-container: #6f1d23;
+    color-scheme: dark;
+  }
+}
