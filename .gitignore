@@ -1,0 +1,4 @@
+node_modules/
+memory/Daily Copies/
+*.tmp
+*.env

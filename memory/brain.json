@@ -1,0 +1,1422 @@
+{
+  "name": "Coco",
+  "importedFrom": "C:/Users/Lenovo/nova-hq",
+  "importedAt": "2026-10-14T18:02:27.334Z",
+  "founders": [
+    {
+      "id": "mangesh",
+      "name": "Mangesh",
+      "callMe": "Boss"
+    },
+    {
+      "id": "shreya",
+      "name": "Shreya",
+      "callMe": "Big Boss"
+    }
+  ],
+  "teams": [
+    {
+      "id": "youtube",
+      "name": "YouTube Studio",
+      "emoji": "🎬",
+      "state": "active",
+      "doing": "1 Short a day on The Flow · long video \"Style Reference\" ready, waiting for YES",
+      "recent": "Posted \"Why Space Is Black\" on 2026-10-14 (4 videos live)",
+      "blocked": "",
+      "next": "Next Short in the Kai and Orbi style (QUALITY_V2 rule 0)",
+      "longForm": {
+        "doing": "Idle until its weekly day",
+        "recent": "Kai & Orbi reference reviewed",
+        "blocked": "Needs YES per video",
+        "next": "Plan next long video when its day comes"
+      },
+      "cadence": "1 Short every day, 1 long video every week",
+      "publishRule": "Shorts post automatically (A-006). Long videos need a YES.",
+      "playbook": "teams/YouTube Studio.md"
+    },
+    {
+      "id": "extensions",
+      "name": "Extension Atelier",
+      "emoji": "🧩",
+      "state": "active",
+      "doing": "Researching 3 directions (Amazon seller, privacy auditor, ATS autofill)",
+      "recent": "Research saved (company/research/)",
+      "blocked": "Waiting for a direction to lock",
+      "next": "Read recent reviews for the Amazon direction",
+      "cadence": "Ideas Mon to Thu, shortlist Friday, one release a week",
+      "publishRule": "Every Web Store release needs a YES.",
+      "playbook": "teams/Extension Atelier.md"
+    },
+    {
+      "id": "android",
+      "name": "App Garden",
+      "emoji": "📱",
+      "state": "active",
+      "doing": "Nova Island and CleanBar builds on the PC",
+      "recent": "Fuselist parked (A-001 on hold)",
+      "blocked": "Play Console not connected (upload is manual)",
+      "next": "Pick the next app to polish",
+      "cadence": "One app polished at a time",
+      "publishRule": "Every Play Store release needs a YES.",
+      "playbook": "teams/App Garden.md"
+    },
+    {
+      "id": "social",
+      "name": "Social Lounge",
+      "emoji": "💬",
+      "state": "paused",
+      "doing": "Paused by the founder (2026-10-09)",
+      "recent": "Nothing new",
+      "blocked": "Instagram and Facebook not connected",
+      "next": "Starts again when the founder says so",
+      "cadence": "Paused",
+      "publishRule": "Every post needs a YES.",
+      "playbook": "teams/Social Lounge.md"
+    }
+  ],
+  "agents": [
+    {
+      "id": "builder",
+      "description": "Core team. Designs AND builds Chrome extensions, Android apps and websites from a scored idea or spec. Use after scout.",
+      "model": "inherit"
+    },
+    {
+      "id": "content-writer",
+      "description": "Core team. Plans content and writes scripts, captions, titles and posting calendars for YouTube, Instagram and Facebook.",
+      "model": "inherit"
+    },
+    {
+      "id": "growth",
+      "description": "Core team. Marketing plans, support replies and outreach drafts. Drafts only — never sends or posts.",
+      "model": "inherit"
+    },
+    {
+      "id": "release-qa",
+      "description": "Core team. Tests and reviews what builder made, then prepares the release package (zip, store listing, screenshots). Never publishes.",
+      "model": "inherit"
+    },
+    {
+      "id": "scout",
+      "description": "Core team. Finds and scores ideas — Chrome extensions, Play apps, video topics, competitors, metrics. Use first in any pipeline.",
+      "model": "inherit"
+    },
+    {
+      "id": "video-producer",
+      "description": "Social Media team. Turns scripts into renderable video projects (Remotion or ffmpeg code, captions, voiceover script) in the cloud sandbox. Use after script-writer.",
+      "model": "inherit"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "title": "Research 15 trending funny-family Short topics for Channel 1 (NYC/USA, all ages), max 4 searches",
+      "agent": "core.scout",
+      "status": "done",
+      "priority": 2,
+      "created": "2026-10-07T10:41:10.772Z",
+      "result": "15 trending family-comedy topics in studio/channel1/RESEARCH-2026-10.md",
+      "from": "nova"
+    },
+    {
+      "id": "t2",
+      "title": "Shreya PC onboarding: resume from setup.md checkpoint when Shreya Terminal 1 is connected",
+      "agent": "core.nova",
+      "status": "queued",
+      "priority": 3,
+      "created": "2026-10-09T18:06:28.743Z",
+      "result": "",
+      "from": "nova"
+    },
+    {
+      "id": "t3",
+      "title": "Send company/shreya-brief.txt to Shreya Terminal 1 as soon as it is connected (watch every 10 min)",
+      "agent": "core.nova",
+      "status": "queued",
+      "priority": 3,
+      "created": "2026-10-09T18:32:56.417Z",
+      "result": "",
+      "from": "nova"
+    }
+  ],
+  "approvals": [
+    {
+      "key": "A-001#0",
+      "id": "A-001",
+      "date": "2026-10-07",
+      "team": "Play Apps",
+      "what": "Fuselist (subscription tracker, com.novahq.fuselist): founders create the Play Console listing and upload the AAB, ONLY after building it locally (release/fuselist/BUILD.md), device-testing it and giving YES. Nova uploads nothing. Pricing ($1.99/mo, $11.99/yr, $24.99 lifetime), privacy-policy hosting and Play product creation each still need an explicit founder YES. Honest state: QA first run failed (fixed in a982429); analyze clean, 86 tests pass; no AAB built, no device test.",
+      "files": "release/fuselist/",
+      "status": "ON HOLD (later)",
+      "state": "on-hold",
+      "decidedBy": null
+    },
+    {
+      "key": "A-002#1",
+      "id": "A-002",
+      "date": "2026-10-07",
+      "team": "Social Media",
+      "what": "YouTube Short 'Chrome Tab Search' (~33s, no product). Founders create channel, record real Chrome clips + voiceover, verify shortcut, then upload. Nova posts nothing. Reply YES A-002 only when the draft is finished and you want it published.",
+      "files": "content/2026-10-07-chrome-tab-search/",
+      "status": "PENDING",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-003#2",
+      "id": "A-003",
+      "date": "2026-10-07",
+      "team": "Social Media",
+      "what": "Instagram Reel 'Android app timer' (~36s, mentions our Screen Time Tracker once). Needs real Android recordings, a real hook number, live store link, then post. Nova posts nothing. Reply YES A-003 only when the draft is finished and you want it published.",
+      "files": "content/2026-10-08-android-app-timer/",
+      "status": "PENDING",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-004#3",
+      "id": "A-004",
+      "date": "2026-10-07",
+      "team": "Social Media",
+      "what": "YouTube long-form 'Better AI answers' (~5 min) + Facebook 60-90s cut. Needs real chatbot recordings (labelled), voiceover (AI-voice disclosure if synthetic), live store links, then post. Nova posts nothing. Reply YES A-004 only when the draft is finished and you want it published.",
+      "files": "content/2026-10-09-better-ai-answers/",
+      "status": "PENDING",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-005#4",
+      "id": "A-005",
+      "date": "2026-10-07",
+      "team": "Social Media",
+      "what": "YouTube Short 'Subway at 8 AM be like' (ep03). Founder decided: 2D flat style (like the Habit reference), post when the PC is on (A-006 Shorts rule, no per-Short YES needed). Not rendered yet, YouTube not connected in cloud.",
+      "files": "studio/shorts/ep03-subway-at-8am/",
+      "status": "APPROVED (style 2D, timing = PC on)",
+      "state": "approved",
+      "decidedBy": null
+    },
+    {
+      "key": "A-006#5",
+      "id": "A-006",
+      "date": "2026-10-07",
+      "team": "Social Media",
+      "what": "APPROVED in chat by Mangesh (scope: SHORTS only). Nova makes 1 original Short per day and uploads/posts it to the YouTube channel automatically whenever the PC Terminal session is online, with no per-Short YES. Long-form videos still need a YES per video. Conditions: YouTube connection confirmed by whoami first; each Short must be new, original content (no repeated template); if a Short gets a policy strike, Nova stops auto-posting and tells the founder.",
+      "files": "company/BRAIN.md",
+      "status": "APPROVED (shorts only)",
+      "state": "approved",
+      "decidedBy": null
+    },
+    {
+      "key": "A-007#6",
+      "id": "A-007",
+      "date": "2026-10-07",
+      "team": "Build",
+      "what": "APK delivery to the Boss: fast-nova-release.apk (48.3 MB, PC Downloads). APPROVED by Boss YES in chat (Cloud session). Route: any connected private route, no public posting.",
+      "files": "C:\\Users\\Lenovo\\Downloads\\fast-nova-release.apk",
+      "status": "APPROVED",
+      "state": "approved",
+      "decidedBy": null
+    },
+    {
+      "key": "A-008#7",
+      "id": "A-008",
+      "date": "2026-10-07",
+      "team": "Ops",
+      "what": "Deploy Nova Control (private Vercel dashboard, read-only, noindex). Code is built and tested in nova-control/. Deploy creates a Vercel project (account-level). Boss YES needed.",
+      "files": "nova-control/",
+      "status": "PENDING",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-009#8",
+      "id": "A-009",
+      "date": "2026-10-08",
+      "team": "Extensions",
+      "what": "Chrome Web Store submission of 'Page-to-AI Context Grabber' v0.1.0 (free + Pro placeholder). Founder first decides Pro UI: hide locked Pro features in v0.1.0 (QA recommends) / ship as is / wait for payments. Founder fills support email + hosted privacy URL + final store name, does one manual toolbar-click test, then YES. Nova uploads nothing and spends nothing; $5 dev fee/account steps are the founders'.",
+      "files": "release/page-to-ai-context-grabber/ (branch ext/page-to-ai-context-grabber)",
+      "status": "PENDING",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-010#9",
+      "id": "A-010",
+      "date": "2026-10-13",
+      "team": "YouTube",
+      "what": "The Flow long video 01 \"7 Phone Battery Myths You Probably Believe (Busted)\" (about 6 min 16 s, 16:9, 60 fps, Volt mascot, chapters + sources in the description). Boss asked for it in chat on 2026-10-13. Nova uploads it as PRIVATE from the Laptop Terminal; on YES A-010 Nova makes that video public, nothing more.",
+      "files": "content/2026-10-13-phone-battery-myths/",
+      "status": "PENDING (private upload first)",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-011#10",
+      "id": "A-011",
+      "date": "2026-10-13",
+      "team": "YouTube",
+      "what": "The Flow channel logo, icon only, no text (three flowing waves on a dark orb). The YouTube API cannot change a channel picture, so the founder sets it: YouTube Studio > Customization > Branding > Picture > upload studio/the-flow/brand/logo-800.png. Reply YES A-011 if you want Nova to also put the icon into every video's corner mark.",
+      "files": "studio/the-flow/brand/",
+      "status": "PENDING",
+      "state": "waiting",
+      "decidedBy": null
+    },
+    {
+      "key": "A-010#11",
+      "id": "A-010",
+      "date": "2026-10-14",
+      "team": "Shreya setup",
+      "what": "Mutual remote access between Mangesh's PC and Shreya's PC (Big Boss PC 1), so each founder can handle the other's PC. Shreya's 3 Nova terminals kept always connected (watchdog). Latest Nova Desktop installed on her PC from branch desktop/nova-pc. Secrets are never sent by chat or git; only the pen drive route. Approved by Mangesh (Boss) in chat, 2026-10-14.",
+      "files": "scripts/setup-pc.ps1, company/SHREYA-TERMINAL.md",
+      "status": "APPROVED (Mangesh)",
+      "state": "approved",
+      "decidedBy": "Mangesh"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-10-06",
+      "by": "Mangesh",
+      "text": "Company runs as AI teams in the cloud (routines), works while laptops and phones are off."
+    },
+    {
+      "date": "2026-10-06",
+      "by": "Mangesh",
+      "text": "Teams: Chrome extensions, Google Play apps, social media (YouTube shorts + long, Instagram, Facebook), plus growth and ops."
+    },
+    {
+      "date": "2026-10-01",
+      "by": "Mangesh",
+      "text": "Code repos private; only <name>-website legal/static page repos are public."
+    },
+    {
+      "date": "2026-10-01",
+      "by": "Mangesh",
+      "text": "Each extension uses its own Gmail + Vercel + Supabase accounts."
+    },
+    {
+      "date": "2026-10-07",
+      "by": "Mangesh",
+      "text": "Park Fuselist (subscription tracker) for later; not worth prioritising now. Work on other projects. A-001 on hold."
+    },
+    {
+      "date": "2026-10-07",
+      "by": "Mangesh",
+      "text": "Pro plan this week + next, then Max. Pro schedule: 1 Short daily (template), 1 long Kai & Orbi video weekly (Sat), 1 small extension weekly (Mon). On upgrade run: node scripts/os.mjs plan-set max5 (or max20)."
+    },
+    {
+      "date": "2026-10-07",
+      "by": "Mangesh",
+      "text": "Only 2 Claude sessions: Laptop Terminal 1 (PC) and Cloude 1 (cloud), always in sync. Mangesh will not tell Nova to \"open the terminal and do X\". Anything that must run on the PC (open YouTube, run yt_upload.py, local files) Nova sends to Terminal 1 on its own. If the PC is off, Nova retries when it is back on. Approval gate (publish, spend, delete) and \"never paste secrets\" still apply."
+    },
+    {
+      "date": "2026-10-07",
+      "by": "Mangesh",
+      "text": "One brain: Nova. Laptop Terminal, cloud Claude and the phone app (Pip / APK) are all the same Nova. Shared memory lives in this repo on main (company/, os/memory/, data/nova.json in Analaysis-). Every session must git pull --rebase origin main before acting and push its memory changes back to main, so nothing is lost between sessions."
+    },
+    {
+      "date": "2026-10-07",
+      "by": "Mangesh",
+      "text": "YouTube Shorts: no YES needed. Nova makes 1 original Short per day and posts it automatically when the PC Terminal is on. Long-form videos: YES needed per video. Scope recorded as A-006."
+    },
+    {
+      "date": "2026-10-07",
+      "by": "Mangesh",
+      "text": "Ep03 Short: 2D flat style. Post time: whenever the PC is on (no fixed time). Covered by the Shorts rule A-006."
+    },
+    {
+      "date": "2026-10-08",
+      "by": "Mangesh",
+      "text": "PC control (lock, sleep, restart, shutdown, wake/power-on, unlock-without-password setup) must live entirely inside Nova: the desktop app command bar and Nova scripts in this repo. No separate third-party remote tools. Unlock cannot be done by software on the Windows lock screen; plan is sleep + \"Require sign-in: Never\" (needs founder YES for the security change). Wake-on-LAN needs wired LAN or sleep-wake plus an always-on sender on the home/office network."
+    },
+    {
+      "date": "2026-10-08",
+      "by": "Mangesh",
+      "text": "Do more than the literal request: finish the whole job, add the obvious useful extras, and move fast (\"Haa jitna bola use jyada kro\"; \"koi bhi task bohot jaldi hona chahiye\"). The approval gate (publish, spend, message non-family, delete, security changes) still applies. Saved in the Brain as USER/preference:do-more-than-asked."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "YouTube team (channel \"The Flow – Daily Science\"): format follows the shared reference (Kurzgesagt-style flat 2D, reference only, clean-room). One trending-science Short per day published on the channel with thumbnail, title, description, tags A to Z (A-006, no per-video YES); one long video per week (YES per video). Spec: company/youtube/THE_FLOW.md."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Extension team: research ideas all week, send the founder the shortlist on Friday, publish ONE extension per week after the founder says it is final (YES per release). Credentials saved at ~/.nova-secrets; Web Store API still needs the one-time Google login."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Nova checks every day: YouTube and Chrome Web Store connected? Keeps them connected by itself (retry, self-heal) and gives the founder a daily report with a line from every team. scripts/daily-status.mjs, Windows task NovaDailyStatus 08:05."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "YouTube team and Extension team are separate; Nova manages both. Track every video posted (views, likes, comments, topics, what is trending) and make more videos like the winners; Nova monitors and reports daily (scripts/yt-track.mjs, company/youtube/PERFORMANCE.md). Everything in The Flow format, original, no copyright. The founder said: everything is allowed, do not ask permission, Nova handles it (money, deleting the founder files and messaging non-family stay off-limits). First Short published 2026-10-09: https://youtube.com/shorts/lXw1F8FpLCA"
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Publishing is done ONLY from the Laptop Terminal (credentials live there); cloud sessions never publish and only send the command, which must reach Terminal 1. Every video must be as high on motion graphics and animation as possible so viewers like it (studio/the-flow/motion.py + stack.py). Saved in the YouTube team notes and memory."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Feedback on Short 001 and the two YT team reference videos (kai_orbi_theme, habit_tired): voice was irritating (now Piper neural voice), captions were hidden by the Shorts Subscribe/channel UI (safe zone y 230-1330, captions y 1215), animation must be smoother and more alive in EVERY video (60 fps, motion stack). Video is made on Opus, then Sonnet 5.5 low for upload and reports. Nova and the YouTube team lead (video-producer) monitor it. Spec: company/youtube/QUALITY_V2.md."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Extension team runs a daily research loop: a little research each day, best ideas sent to the founder daily. Nova may pick and LOCK the best idea itself after 2-3 days (this replaces \"never lock without YES\" for locking only), then build, QA and prepare the store release so it can go live by the weekend, with a short daily update. Publishing to the Chrome Web Store still needs the founder's one-tap YES (approval gate, and the store account/fee are the founder's). Activity is saved in this repo (company/STATUS.md, company/ideas/, os/automations.json: extension-ideas-weekly daily + extension-sprint)."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "RULE 0: upload ONLY videos made like the two reference videos (kai_orbi_theme_60fps_4k, habit_tired_4k): Kai and Orbi cairo style, not abstract diagrams. Video is made on Opus 5.5 (medium effort), then Sonnet 5.5 low for upload and reports. Saved with the YouTube team in company/youtube/QUALITY_V2.md; Nova and the team lead (video-producer) monitor it, and the daily status flags any off-reference video. Short 001 (lXw1F8FpLCA) is off-reference and still live."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "New videos EXACTLY like the two reference videos, only improved (more amazing graphics, better voice). Captions are the references own animation (words light up one by one), no separate caption style. ALL YouTube work from any terminal or cloud session is saved under the YouTube team (company/youtube, content, studio, shown in the Nova desktop app) and goes through the YT Brain (scripts/yt-brain.mjs), which talks to the Nova Brain."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "FINAL: new videos exactly like the two reference videos AS THEY ARE (same caption look and position; y=1215 and the safe zone are cancelled). Add nothing new. Only higher-quality animation, interesting stories, backgrounds that change beat to beat, and a better voice."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Nova coordinates every team and its brain: Nova Brain (parent) > YT Brain (child); YouTube team and Extension team separate; publishing only on the Laptop Terminal; map in company/COORDINATION.md and CLAUDE.md."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Only the YouTube team and the Extension team for now (social media paused). Each team has its own brain (yt-brain, ext-brain), both children of the Nova Brain, all sessions save team work there, cloud work is passed to the Laptop Terminal via the team inbox, and the Extension team publishes from the Terminal exactly like the YouTube team. Nova processes both inboxes daily."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Shreya setup, collected from the founder other sessions (2026-10-08): GitHub org GetRichSoon (private, Mangesh owner, Shreya second owner), one shared system with separate PCs, her new device to be attached to Nova with remote control, using his Claude Pro account for both (terms risk flagged). Open: did her device log in; which Claude account. Details in the Nova memory project_shreya_setup."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "RULE: before saying \"I do not know\" or asking him to repeat, search ALL his sessions history (list_sessions + list_events on each), the repo and the Brain first (skill recall), then answer with the source and save what was found. Saved in the Nova Brain and in Nova actions (CLAUDE.md, .claude/skills/recall)."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Shreya Terminal 1 (session_01KLHdmGWu66pPAwaSwSCvu4) is connected. Nova sets it up as Nova on her device and addresses her as Big Boss (Mangesh = Boss). Her own GitHub sign-in and her own ~/.nova-secrets; no copying of his credentials; her new features need Mangesh YES first."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "ONE Nova Brain and the same teams/agents for both founders; only the operating sessions and the repos are separate. Repos in the private GetRichSoon org: nova-hq (Mangesh + shared Brain home) and shreya-nova-hq (Shreya). Shreya has Shreya Terminal 1/2/3 like Mangesh has Laptop Terminal 1/2/3. Details in company/COORDINATION.md."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "One company, two owners, separate PCs only. Mangesh (Mangesh347) and Shreya (shreyaahiremath) are both owners of the GetRichSoon organization. Nova, agents, teams, company memory, Brain and approval rules are the same for both. What differs per founder: the PC, that PC's Terminal 1, 2 and 3, and 3 cloud sessions each. Nova Desktop on each PC shows that founder's own GitHub profile. Every session defaults to Sonnet 5.5 low effort (.claude/settings.json). Setup for a PC: scripts/setup-pc.ps1 -Operator mangesh | shreya; per-PC terminal list in os/state/local/terminals.json (git-ignored). Credentials are never in git; founders copy them to ~/.nova-secrets themselves."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Execution rule: all real work (build, publish, files) runs on the Terminals of a founder's PC. A cloud session never does the work itself: whatever a founder tells a cloud session is passed to that founder's Terminals (cloud only talks, plans and sends the task). Shared teams (YouTube, Extensions) run on the PC that holds their credentials in ~/.nova-secrets. Sessions per founder: Terminal 1, 2, 3 on their PC plus 3 cloud sessions (6 each; count to be confirmed by Mangesh)."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "SIMPLIFIED (replaces the \"3 cloud sessions each / 6 each\" lines above): exactly 4 sessions per founder = Terminal 1, 2, 3 on their PC + 1 cloud session. 8 sessions in total. The cloud session only talks and passes every task to that founder's Terminals; the Terminals do all the work. Extra cloud sessions are archived by the founder."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Credentials: Shreya's PC gets the SAME credentials as Boss's PC (husband and wife, one home, one company). Copied by hand with scripts/export-secrets.ps1 then setup-pc.ps1 -SecretsFrom (pen drive or home network), never through git, email, chat or cloud. Publishing safety: only ONE PC publishes a given item. Boss's PC is the default publisher; a task sent from Shreya's sessions runs on her Terminals only if that PC is chosen as publisher for it, so nothing is posted twice."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Shreya's PC setup is automatic from one file: scripts/bootstrap-shreya.ps1 (copied with the credentials by scripts/export-secrets.ps1). Her GitHub sign-in (shreyaahiremath) is the only manual step. Her existing \"Shreya Terminal 1\" session waits for Mangesh's confirmation before acting."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Connect YouTube and Chrome Web Store on Shreya's PC from her own files C:\\Users\\Hp\\Desktop\\sassytrick\\yt_env.txt and cws_env.txt (names: CLIENT_ID, CLIENT_SECRET, YT_REFRESH_TOKEN / PUBLISHER_ID into ~/.nova-secrets). Done by her Terminal with Big Boss's yes; connection checked read-only (daily-status, yt_upload whoami). One publisher PC per item; Boss's PC is the default."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Nova (correction)",
+      "text": "The line above is only Boss's INSTRUCTION. It has NOT been done: the message asking Shreya Terminal 1 to import her yt_env.txt / cws_env.txt was blocked by the permission classifier and was not sent by any other route. YouTube and Chrome Web Store are NOT connected on her PC yet. Boss decides how to proceed (type it himself in her session, or Big Boss runs it)."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Shreya's PC is already connected to the GetRichSoon organization on GitHub: setup uses the saved login and does NOT ask her to sign in (fallback only if clone fails). Forms of address in every chat: Mangesh = \"Boss\", Shreya = \"Big Boss\", in her chats and in his chats about her."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Office Mode must be re-applied after the PC is unlocked. Done as a separate scheduled task 'Nova Office Mode on Unlock' (session-unlock trigger, runs desktop-placement.ps1 -Unlock); the logon task is unchanged. Skips if the logon placement has not run since boot (desktop 2 would not exist yet). Office Wi-Fi only; at home it only ensures Cursor."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Daily playlist rotates: 06:00 and 07:00 devotional songs of different gods (famous), night random Bollywood/Hollywood hits 2014-2018. scripts/playlist-rotate.mjs, tasks at 05:50 and 21:30."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Home Mode: on home Wi-Fi Nova opens a NEW virtual desktop with a VS Code window (workspace os/state/local/home-mode) whose terminal starts Claude Code in the nova-hq folder; it never opens a second one. At home nothing from the office is closed. The office session (browsers, Explorer folders; Cursor restores itself) is saved every 15 min and on lock while on office Wi-Fi, and reopened on the next office logon. User VS Code setting task.allowAutomaticTasks=on was added for this (backup next to settings.json)."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Shreya PC onboarding runs from setup.md: audit saved, check script scripts/shreya-setup-check.mjs every 30 min (task NovaShreyaSetupCheck), resume when Shreya Terminal 1 is connected. Nothing on her PC is claimed done without evidence."
+    },
+    {
+      "date": "2026-10-09",
+      "by": "Mangesh",
+      "text": "Home/Office switching v2 (SAVED, not yet built). HOME: desktop 1 = Brave YouTube app (playing, fullscreen, highest quality); desktop 2 = VS Code with its terminal open in the background (Claude Code, as built in 552049c). Must re-apply after lock/unlock and after restart. OFFICE -> HOME: first save ALL office tabs/paths/folders (office snapshot kept only for office, see office-session.json), then close the office browser tabs. HOME -> OFFICE (next time office Wi-Fi is set): save the home state (Brave YT, VS Code home), close the home tabs/windows, then run office mode as usual (Cursor alone on desktop 2). Replaces the older rule \"at home nothing from the office is closed\". Home state goes in os/state/local/home-session.json."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "Keep monitoring: when Shreya Terminal 1 is connected, Nova sends company/shreya-brief.txt to it (watch every 10 minutes in the Terminal session, plus the 30 min GitHub check NovaShreyaSetupCheck). Task saved in the ledger."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "Build queue for Home/Office v2 (save now, build when the founder starts the new working session): (1) Brave YouTube on desktop 1 at home, (2) home-session.json saves home state, (3) close tabs on every switch. Rebuild office-mode.exe and run --dry first."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "YouTube team idea: a NEW separate channel of 8 to 10 hour sleeping-music videos (original music only). Saved as an idea in the YT Brain (yt:idea-sleep-music-channel); nothing built until Boss says go."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "Daily Short publishing time is now 5:53 PM (was 6:53 PM). Set as a Terminal session job (expires after 7 days, re-set then). The old 6:53 PM cloud routine could not be edited from here; if it still exists it may make a second Short, pause it."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "Pillow Short feedback: fix scenes animate well, the OPENING does not; fix the start of every Short. YouTube team monitors continuously (best topics, best posting time, trending, new ideas from trends). Audience-active-hours and retention need the YouTube Analytics permission (one more Google login)."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "Shreya setup: stop the 10-minute watch; check again on Tuesday 2026-10-13 at 11 PM; after that, start the setup (send company/shreya-brief.txt) whenever Shreya Terminal 1 connects. Saved as a Terminal-session job (needs this session open) and in setup.md."
+    },
+    {
+      "date": "2026-10-10",
+      "by": "Mangesh",
+      "text": "YouTube Shorts timing changed: post the day's Short as soon as the PC is first started that day (before anything else), then the next day the same way. No fixed 08:00 time. Still one Short per day, no YES per Short (A-006)."
+    },
+    {
+      "date": "2026-10-13",
+      "by": "Mangesh",
+      "text": "YouTube: one channel per category (14 categories, list in company/youtube/channels.json, Nova's proposal, founder can swap), every channel connected and gets videos. Later 5-10 channels per category. Claude Max later. One Cloud project + one OAuth client for all channels, no multi-project quota trick. Setup: company/youtube/MULTI_CHANNEL.md."
+    },
+    {
+      "date": "2026-10-13",
+      "by": "Mangesh",
+      "text": "YouTube categories final (founder chart): 13 categories, each a sub-team under the YouTube team in company/youtube/categories/<slug>/. Founder will send per category: first channel name, reference videos, prompts. Production starts per category only after those arrive. The Flow stays as the existing Science channel."
+    },
+    {
+      "date": "2026-10-13",
+      "by": "Mangesh",
+      "text": "The Flow Shorts: try many different topic categories, not only battery/phone, to find what viewers like. Eight categories (space, body, mind, animals, tech, food, earth, physics) are tracked in scripts/yt-track.mjs and shown in company/youtube/PERFORMANCE.md with a \"Next category\". Explore untested ones first, 2 Shorts each, then every 4th Short returns to the best. Next Short: space."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "Saver rule for The Flow Shorts: if the last 2 test Shorts in new categories both get under 40% of the best category views/day, the next Short is a battery/phone (best category) Short, then exploring continues. Built into scripts/yt-track.mjs."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "Shorts are the test lab for The Flow: whichever topic category wins in Shorts becomes the next weekly long video (deeper on that topic). Shown as \"Next long video topic\" in company/youtube/PERFORMANCE.md by scripts/yt-track.mjs. Goal: find the audience interest the channel should own."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "Home/Office Mode v3 (built in office-mode.exe): at the office Nova is never opened, desktop 1 = Cursor with its last project, desktop 2 = the PowerShell watchdog windows. Home and office each keep their own saved session (every desktop: browsers, Cursor/VS Code projects, Excel/Word/PowerPoint file paths, folders, apps), saved every 15 min and on lock. On a switch the old place is saved and closed and only the new place's last session opens; no saved office session yet = default Cursor on desktop 1."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "Morning playlist: 5 to 7 AM popular morning songs of two different gods each day (Swami Samarth Tarak Mantra, Ganpati morning aarti, Maa Durga, Shiv stuti, Vitthal), 7 AM onwards English morning songs (weighted to The Weeknd, his most played English artist). The song set changes every week (new set each Monday, random days inside the week). scripts/playlist-rotate.mjs, task \"Nova YT 05 God Songs\" at 05:00, rotation at 04:50."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "Animation theme rule: every The Flow video, Shorts AND long videos, follows the animation theme of the latest 2 Shorts (pillow-charging and contagious-yawn = \"habit-beats\": flat vector drawn with cairo, hero Kai, one bold full-screen colour per beat, big short titles, props that pop with bounce, 60 fps; renderers in studio/faceless/pillow-charging/ and studio/faceless/yawn-contagious/). The long-video Volt style (studio/the-flow/long) is not the house style; port long videos to habit-beats next time."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "Video template saved for ALL future The Flow Shorts and long videos: studio/the-flow/habit/TEMPLATE.md (habit-beats, Kai + Orbi, THEME palette, camera push, dust, light, vignette, sparkles, colour wipes, Orbi lip-sync, Kokoro af_heart voice, music ducking). Reference clips: content/2026-10-14-style-reference/short.mp4 and long.mp4."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "YouTube channels final (YOUTUBE.pdf): The Flow first, then BodyDecode (biology-health), PastWoven (history-geography), DreamFrame (stories), QuiteMindFiles (human-behaviour), MindSpark (study), SuccessHasal (money), UntoldUniverse (mixed, book summaries), UnveilAI (ai-software), TasteOdessey (food), SanatanEchoes (devotional), Streebellion (feminism). Playbooks in company/youtube/categories/<slug>/PROMPTS.md, shared rules in categories/README.md. Next: founder creates each channel on YouTube, Nova connects it, then first uploads."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "YES to A-010: mutual remote access between the two PCs, Shreya's 3 terminals always connected, latest Nova installed on her PC. Secrets only by pen drive."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "YES: The Flow posts exactly 1 Short per day (not 2 yet). It posts at the first PC start of the day, which is usually about 10:30-11:00 IST on this PC. Growth plan in company/youtube/GROWTH-PLAN.md. A second Short per day only after a 30-day test and a new YES."
+    }
+  ],
+  "youtube": {
+    "channels": [
+      {
+        "slug": "the-flow",
+        "category": "Science (existing)",
+        "status": "connected",
+        "title": "The Flow – Daily Science",
+        "nameIdeas": [],
+        "finalName": null
+      },
+      {
+        "slug": "biology-health",
+        "category": "Biology / Health",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "Biopulse",
+          "BodyLore",
+          "BodyDecode",
+          "InsideScience"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "history-geography",
+        "category": "History / Geography",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "ChronicleLore",
+          "PastUncovered",
+          "EpochExplorer",
+          "Mythograph"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "stories",
+        "category": "Stories",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "NarrativeX",
+          "DreamFrame"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "human-behaviour",
+        "category": "Human Behaviour",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "MindMosaic",
+          "MindTreeStudio",
+          "QuietMindFiles",
+          "MindRaze"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "study",
+        "category": "Study",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "FourFoundry",
+          "NeuralNotes",
+          "QuietProgress"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "human-info",
+        "category": "Human Information",
+        "status": "waiting-founder",
+        "title": "",
+        "nameIdeas": [
+          "UnfilteredWorld"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "money",
+        "category": "Money",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "BusinessEquation",
+          "BeyondBalance",
+          "FinanceFootprints",
+          "SentNotes",
+          "CashHunt",
+          "NoteAlchemy"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "mixed",
+        "category": "Mixed Content",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "Curiosphere",
+          "UntoldOnce",
+          "UnboundWorld"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "ai-software",
+        "category": "AI / Software",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "Techverse",
+          "ToolVerse",
+          "DigitalOrbit"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "app-web",
+        "category": "App / Web / Product",
+        "status": "waiting-founder",
+        "title": "",
+        "nameIdeas": [
+          "PickTheory",
+          "ClickTheory",
+          "DigitalScout"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "food",
+        "category": "Food",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "CraveCulture",
+          "FoodDora",
+          "BiteLogic"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "devotional",
+        "category": "God / Devotional",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "Aradhyaverse",
+          "SanatanEchoes",
+          "TrilokiX",
+          "OmKrypt",
+          "TandavBeats"
+        ],
+        "finalName": null
+      },
+      {
+        "slug": "feminism",
+        "category": "Feminism",
+        "status": "name-final-create-channel",
+        "title": "",
+        "nameIdeas": [
+          "RebelRani",
+          "StreeRebellion",
+          "SanskariRebel",
+          "SareeNotSorry"
+        ],
+        "finalName": null
+      }
+    ],
+    "videos": [
+      {
+        "slug": "2026-10-14-why-space-is-black",
+        "date": "2026-10-14",
+        "title": "Why Space Is Black",
+        "kind": "short",
+        "rendered": true,
+        "published": {
+          "url": "https://youtube.com/shorts/Dx3SQuKFZ_c",
+          "privacy": "public",
+          "at": "2026-10-13T23:08:45.278Z"
+        }
+      },
+      {
+        "slug": "2026-10-14-style-reference",
+        "date": "2026-10-14",
+        "title": "Style Reference",
+        "kind": "long",
+        "rendered": true,
+        "published": null
+      },
+      {
+        "slug": "2026-10-13-phone-battery-myths",
+        "date": "2026-10-13",
+        "title": "Phone Battery Myths",
+        "kind": "long",
+        "rendered": true,
+        "published": null
+      },
+      {
+        "slug": "2026-10-09-pillow-charging",
+        "date": "2026-10-09",
+        "title": "Pillow Charging",
+        "kind": "short",
+        "rendered": true,
+        "published": {
+          "url": "https://youtube.com/shorts/OFl2vPRJfJ4",
+          "privacy": "public",
+          "at": "2026-10-09T18:16:07.8652317Z"
+        }
+      },
+      {
+        "slug": "2026-10-09-phone-charging",
+        "date": "2026-10-09",
+        "title": "Phone Charging",
+        "kind": "short",
+        "rendered": true,
+        "published": {
+          "url": "https://youtube.com/shorts/lXw1F8FpLCA",
+          "privacy": "public",
+          "at": "2026-10-08T19:42:12.552Z"
+        }
+      },
+      {
+        "slug": "2026-10-09-contagious-yawn",
+        "date": "2026-10-09",
+        "title": "Contagious Yawn",
+        "kind": "short",
+        "rendered": true,
+        "published": {
+          "url": "https://youtube.com/shorts/dka-Irrteec",
+          "privacy": "public",
+          "at": "2026-10-09T12:32:50.121Z"
+        }
+      },
+      {
+        "slug": "2026-10-09-better-ai-answers",
+        "date": "2026-10-09",
+        "title": "Better Ai Answers",
+        "kind": "short",
+        "rendered": true,
+        "published": null
+      },
+      {
+        "slug": "2026-10-08-android-app-timer",
+        "date": "2026-10-08",
+        "title": "Android App Timer",
+        "kind": "short",
+        "rendered": true,
+        "published": null
+      },
+      {
+        "slug": "2026-10-07-chrome-tab-search",
+        "date": "2026-10-07",
+        "title": "Chrome Tab Search",
+        "kind": "short",
+        "rendered": true,
+        "published": null
+      }
+    ]
+  },
+  "extensions": {
+    "backlog": [
+      {
+        "rank": 1,
+        "idea": "Page-to-AI Context Grabber: one click turns page/selection into clean Markdown + prompt template for any AI chat",
+        "score": "39",
+        "reason": "Ranked #1 by BigIdeasDB; activeTab only; Pro = templates, multi-page bundles, token count. Our Enhancers are site-specific, this is cross-AI."
+      },
+      {
+        "rank": 2,
+        "idea": "Human-Please: \"how to reach a real person\" cheat sheet + banner for support chats of top companies",
+        "score": "38",
+        "reason": "Newsletter idea; almost no rivals; static curated data, no permissions. Weak monetization, needs upkeep; Pro = more regions, scripts."
+      },
+      {
+        "rank": 3,
+        "idea": "Session Tab Saver: save/restore named tab groups per project, local only",
+        "score": "35",
+        "reason": "Tabs/bookmarks are the most repeated pain per BigIdeasDB, but crowded (Toby, OneTab); Pro = export, auto-sessions. Needs tabs."
+      },
+      {
+        "rank": 4,
+        "idea": "Sign-in Popup Hider: blocks \"Sign in with Google\" one-tap overlays",
+        "score": "33",
+        "reason": "Newsletter issue 208 lists the complaint; needs broad host access (review risk); some rivals."
+      },
+      {
+        "rank": 5,
+        "idea": "Streaming Home Cleaner: hide shows/rows you dislike on streaming homepages",
+        "score": "32",
+        "reason": "Newsletter issue 208; per-site selectors break often; limited host permissions."
+      },
+      {
+        "rank": 6,
+        "idea": "API Request Sidebar: capture page network calls, export to Postman",
+        "score": "28",
+        "reason": "BigIdeasDB; devs pay, but big rivals and heavy build."
+      },
+      {
+        "rank": 7,
+        "idea": "Smart History Finder: local search/organize past visits by topic",
+        "score": "26",
+        "reason": "Newsletter issue 195; history permission is sensitive, higher review risk."
+      },
+      {
+        "rank": 1,
+        "idea": "Private Offline Document Scanner + OCR + PDF tools (on-device, no account, no watermark)",
+        "score": "38",
+        "reason": "idea"
+      },
+      {
+        "rank": 2,
+        "idea": "Subscription and Free-Trial Tracker (manual entry + renewal reminders, local only)",
+        "score": "40",
+        "reason": "idea"
+      },
+      {
+        "rank": 3,
+        "idea": "Offline Encrypted Notes + Checklists vault (biometric lock, local encrypted backup file)",
+        "score": "35",
+        "reason": "idea"
+      },
+      {
+        "rank": 4,
+        "idea": "Expiry Date Tracker (food, medicine, documents, warranties) with local reminders",
+        "score": "40",
+        "reason": "idea"
+      },
+      {
+        "rank": 5,
+        "idea": "Warranty and Receipt Vault (photo + date, local export)",
+        "score": "38",
+        "reason": "idea"
+      },
+      {
+        "rank": 6,
+        "idea": "Habit/Streak Tracker, no account, home-screen widgets, one-time unlock",
+        "score": "36",
+        "reason": "idea"
+      },
+      {
+        "rank": 7,
+        "idea": "Simple Offline Expense/Split Tracker for trips and roommates (CSV export)",
+        "score": "37",
+        "reason": "idea"
+      },
+      {
+        "rank": 8,
+        "idea": "Medication and Pill Reminder, local-only (no health-data cloud)",
+        "score": "33",
+        "reason": "idea; health-policy declaration needed"
+      },
+      {
+        "rank": 9,
+        "idea": "Digital Detox / Focus Timer companion to Screen Time Tracker (timers, no Accessibility use)",
+        "score": "36",
+        "reason": "idea; links to PORTFOLIO app"
+      },
+      {
+        "rank": 10,
+        "idea": "Offline Unit/Currency/Size Converter with saved custom conversions (cooking, sewing, crafts)",
+        "score": "33",
+        "reason": "idea"
+      }
+    ],
+    "ideas": [
+      {
+        "at": "2026-10-08T20:19:25.548Z",
+        "from": "cloud-test",
+        "type": "idea",
+        "text": "Tab group saver idea from the cloud",
+        "done": true
+      }
+    ],
+    "weekly": [
+      "2026-10-09.md"
+    ]
+  },
+  "products": [
+    {
+      "name": "QuickCast",
+      "repo": "QuickCast",
+      "what": "screen/cast recording",
+      "kind": "extension"
+    },
+    {
+      "name": "Orbi",
+      "repo": "Orbi-New-Tab-Live-Wallpapers-Shortcuts",
+      "what": "new tab workspaces + live wallpapers",
+      "kind": "extension"
+    },
+    {
+      "name": "XCoda / Volume Booster",
+      "repo": "Volume-Booster (public, GitHub Pages)",
+      "what": "audio booster",
+      "kind": "extension"
+    },
+    {
+      "name": "Fenwick Recorder",
+      "repo": "voiceaudiorecorder",
+      "what": "voice/audio recorder",
+      "kind": "extension"
+    },
+    {
+      "name": "Claude Enhancer",
+      "repo": "claude-enhancer (+ Extension = payment backend)",
+      "what": "claude.ai power tools",
+      "kind": "extension"
+    },
+    {
+      "name": "ChatGPT Enhancer",
+      "repo": "chatgpt-enhancer",
+      "what": "chatgpt.com power tools",
+      "kind": "extension"
+    },
+    {
+      "name": "Gemini Enhancer",
+      "repo": "gemini-enhancer",
+      "what": "gemini power tools",
+      "kind": "extension"
+    },
+    {
+      "name": "YouTube Financer",
+      "repo": "youtube-enhancer",
+      "what": "YouTube tools",
+      "kind": "extension"
+    },
+    {
+      "name": "WhatsApp Enhancer",
+      "repo": "SpaceGuard",
+      "what": "WhatsApp Web chat spaces",
+      "kind": "extension"
+    },
+    {
+      "name": "WhatsApp Smart Assistant",
+      "repo": "whatsapp-smart-assistant",
+      "what": "WhatsApp helper",
+      "kind": "extension"
+    },
+    {
+      "name": "Applyline",
+      "repo": "applyline",
+      "what": "job application copilot",
+      "kind": "extension"
+    },
+    {
+      "name": "JobFitCheck",
+      "repo": "jobfitcheck",
+      "what": "resume vs job fit",
+      "kind": "extension"
+    },
+    {
+      "name": "HirePilot",
+      "repo": "hirepilot-extension",
+      "what": "job application copilot (older)",
+      "kind": "extension"
+    },
+    {
+      "name": "TapIn",
+      "repo": "tapin",
+      "what": "one-tap sign in",
+      "kind": "extension"
+    },
+    {
+      "name": "Typewave",
+      "repo": "typewave",
+      "what": "text expander",
+      "kind": "extension"
+    },
+    {
+      "name": "Breakwater",
+      "repo": "breakwater",
+      "what": "focus / site blocker",
+      "kind": "extension"
+    },
+    {
+      "name": "Loudleaf",
+      "repo": "loudleaf",
+      "what": "read-aloud (TTS)",
+      "kind": "extension"
+    },
+    {
+      "name": "Screen Time Tracker",
+      "repo": "screen-time-tracker (+ Screen-Time-Tracker- site)",
+      "what": "web screen time, also Android app",
+      "kind": "extension"
+    },
+    {
+      "name": "Shield",
+      "repo": "shield-ad-blocker",
+      "what": "ad blocker",
+      "kind": "extension"
+    },
+    {
+      "name": "Snapora",
+      "repo": "snapora",
+      "what": "full page capture studio",
+      "kind": "extension"
+    },
+    {
+      "name": "OhMyPDF",
+      "repo": "pdfetti",
+      "what": "PDF tools",
+      "kind": "extension"
+    },
+    {
+      "name": "Neon Converter",
+      "repo": "neon-converter",
+      "what": "file converter",
+      "kind": "extension"
+    },
+    {
+      "name": "PDF Smart Converter",
+      "repo": "pdf-smart-converter",
+      "what": "PDF to Word/PPT/Excel",
+      "kind": "extension"
+    },
+    {
+      "name": "File Converter",
+      "repo": "file-converter-extension",
+      "what": "file converter",
+      "kind": "extension"
+    },
+    {
+      "name": "Tempo Controller",
+      "repo": "video-speed-master (+ Tempo)",
+      "what": "video speed",
+      "kind": "extension"
+    },
+    {
+      "name": "YouTube Screenshot",
+      "repo": "Youtube-Screenshot",
+      "what": "YouTube frame capture",
+      "kind": "extension"
+    },
+    {
+      "name": "Meeting Recorder",
+      "repo": "meeting-extension",
+      "what": "meeting recorder",
+      "kind": "extension"
+    },
+    {
+      "name": "My Local AI",
+      "repo": "my-local-ai",
+      "what": "local LLM chat",
+      "kind": "extension"
+    },
+    {
+      "name": "DealFinder",
+      "repo": "price-compare-extension",
+      "what": "price compare MVP",
+      "kind": "extension"
+    },
+    {
+      "name": "TempLogin",
+      "repo": "templogin-extension",
+      "what": "temp login",
+      "kind": "extension"
+    },
+    {
+      "name": "CentrAlign",
+      "repo": "centralign-agent-extension",
+      "what": "reasoning agent MVP",
+      "kind": "extension"
+    },
+    {
+      "name": "Games",
+      "repo": "tictactoe-extension, game-arena, puzzle-game-extension, food-quiz-extension",
+      "what": "games",
+      "kind": "extension"
+    },
+    {
+      "name": "Motivation",
+      "repo": "motivation-extension",
+      "what": "quotes",
+      "kind": "extension"
+    },
+    {
+      "name": "Screen Time Tracker Android app (inside screen-time-tracker repo, v5.4.61 APK)",
+      "kind": "app"
+    },
+    {
+      "name": "Cleanbar",
+      "repo": "nova-hq/apps/cleanbar",
+      "kind": "app"
+    },
+    {
+      "name": "Fast Nova",
+      "repo": "nova-hq/apps/fast-nova",
+      "kind": "app"
+    },
+    {
+      "name": "Nova Island",
+      "repo": "nova-hq/apps/nova-island",
+      "kind": "app"
+    }
+  ],
+  "alerts": [
+    {
+      "at": "2026-10-14T02:35:02.829Z",
+      "say": "The latest video (2026-10-14-why-space-is-black) is style \"habit-beats-template-v1\", not like the reference videos.",
+      "todo": "The YouTube team lead must make the next video in the Kai and Orbi or habit-beats style (company/youtube/QUALITY_V2.md, RULE 0)."
+    },
+    {
+      "at": "2026-10-09T05:44:33.910Z",
+      "say": "Network problem, sir: router not answering. Wi-Fi AssetCues2, 17 devices online.",
+      "todo": "Check the router or Wi-Fi."
+    },
+    {
+      "at": "2026-10-09T02:35:01.123Z",
+      "say": "The latest video (2026-10-09-phone-charging) is style \"diagram-abstract\", not like the reference videos.",
+      "todo": "The YouTube team lead must make the next video in the Kai and Orbi or habit-beats style (company/youtube/QUALITY_V2.md, RULE 0)."
+    },
+    {
+      "at": "2026-10-08T19:21:09.601Z",
+      "say": "Chrome Web Store is not connected: saved, but the one-time Google login (refresh token) has not been done yet",
+      "todo": "Do the one-time Google login for the Chrome Web Store API. Nova will give the exact steps."
+    }
+  ],
+  "history": [
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "nova",
+      "to": "app-scout",
+      "text": "find Play app ideas"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "app-scout",
+      "to": "nova",
+      "text": "10 ideas, best Subscription Tracker 40/50"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "ext-designer",
+      "to": "nova",
+      "text": "Fuselist spec written"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "app-builder",
+      "to": "nova",
+      "text": "Fuselist v0.1.0 built, 83 tests pass, no AAB (no Android SDK)"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "app-qa",
+      "to": "nova",
+      "text": "FAIL: 2 blockers (fake widget claim, restore revoke)"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "app-builder",
+      "to": "nova",
+      "text": "blockers fixed, 86 tests pass"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "play-publisher",
+      "to": "nova",
+      "text": "release/fuselist prepared, A-001 PENDING"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "nova",
+      "to": "content-writer",
+      "text": "plan W41 + 3 scripts (short, reel, long)"
+    },
+    {
+      "at": "2026-10-07T00:00Z",
+      "from": "video-producer",
+      "to": "nova",
+      "text": "3 draft MP4s rendered, assets missing; A-002..A-004 PENDING"
+    },
+    {
+      "at": "2026-10-07T14:16Z",
+      "from": "nova",
+      "to": "shreya",
+      "text": "Shreya system setup documentation complete; awaiting GitHub account details"
+    },
+    {
+      "at": "2026-10-07T14:16Z",
+      "from": "nova",
+      "to": "mangesh",
+      "text": "Shreya infrastructure ready; multi-founder token budget rules activated"
+    },
+    {
+      "at": "2026-10-08T02:32:08Z",
+      "from": "nova",
+      "to": "founders",
+      "text": "daily brief written: reports/2026-10-08-brief.md"
+    },
+    {
+      "at": "2026-10-08T04:33:24Z",
+      "from": "nova",
+      "to": "scout",
+      "text": "find ~10 extension ideas, score /50"
+    },
+    {
+      "at": "2026-10-08T04:44:08Z",
+      "from": "scout",
+      "to": "nova",
+      "text": "7 ideas scored, best 39/50 Page-to-AI Context Grabber"
+    },
+    {
+      "at": "2026-10-08T04:44:08Z",
+      "from": "builder",
+      "to": "nova",
+      "text": "spec + v0.1.0 built on ext/page-to-ai-context-grabber, 30 tests pass"
+    },
+    {
+      "at": "2026-10-08T04:44:08Z",
+      "from": "release-qa",
+      "to": "nova",
+      "text": "PASS, 1 bug fixed, release pkg ready; Pro UI decision needed"
+    },
+    {
+      "at": "2026-10-08T04:44:08Z",
+      "from": "nova",
+      "to": "founders",
+      "text": "A-009 PENDING store submission"
+    },
+    {
+      "at": "2026-10-08T19:11:32Z",
+      "from": "nova",
+      "to": "founders",
+      "text": "YouTube team connected (channel check OK, read-only). Chrome Web Store team: credentials saved, needs one-time OAuth consent for a refresh token. Secrets live only in C:/Users/Lenovo/.nova-secrets, never in git."
+    },
+    {
+      "at": "2026-10-08T19:55:59Z",
+      "from": "nova",
+      "to": "founders",
+      "text": "desktop OS upgrade committed locally: fast router, phone link (port 7791), live UI, night loop. Report: reports/2026-10-09-nova-desktop-os-upgrade.md"
+    },
+    {
+      "at": "2026-10-09",
+      "from": "nova",
+      "to": "youtube-team",
+      "text": "RULE 0: only reference-style videos (Kai/Orbi, habit-beats); Opus makes, Sonnet publishes. Style monitor added to daily-status."
+    },
+    {
+      "at": "2026-10-09T05:00Z",
+      "from": "nova",
+      "to": "shreya-terminal-1",
+      "text": "Setup brief sent: become Nova on Shreya device, clone GetRichSoon/nova-hq with her own GitHub sign-in, own ~/.nova-secrets, address her as Big Boss, no pushes yet"
+    },
+    {
+      "at": "2026-10-09T05:10Z",
+      "from": "nova",
+      "to": "shreya-terminal-1",
+      "text": "Mirror setup brief queued: watchdog server, NovaDailyStatus task, team brains, own secrets; Terminals 2 and 3 to be created after her remote-control server is up"
+    },
+    {
+      "at": "2026-10-09T05:45Z",
+      "from": "nova",
+      "to": "shreya-terminal-1",
+      "text": "Corrected brief: one shared Brain, no private DB on her device; clone shreya-nova-hq (hers) and nova-hq (shared, read only); Terminals 2 and 3 after her remote-control server runs"
+    },
+    {
+      "at": "2026-10-09T05:55Z",
+      "from": "scout",
+      "to": "nova",
+      "text": "Extension weekly shortlist written (company/extensions-weekly/2026-10-09.md): Human-Please 38, Extension Spy-Check 34, Sign-in Popup Hider 33. Release candidate Page-to-AI v0.1.0 waits on A-009 and the Chrome Web Store login. Not live research."
+    },
+    {
+      "at": "2026-10-09T18:16:17.6935688Z",
+      "from": "video-producer",
+      "to": "nova",
+      "text": "published Stop Charging Your Phone Under Your Pillow #Shorts https://youtube.com/shorts/OFl2vPRJfJ4"
+    },
+    {
+      "at": "2026-10-13T17:05Z",
+      "from": "mangesh",
+      "to": "nova",
+      "text": "add token logging to the daily Short; make a long video for The Flow; make a text-free channel logo"
+    },
+    {
+      "at": "2026-10-13T17:20Z",
+      "from": "nova",
+      "to": "video-producer",
+      "text": "token meter live (scripts/yt-tokens.mjs, auto-closes on upload); logo in studio/the-flow/brand/"
+    },
+    {
+      "at": "2026-10-13T17:45Z",
+      "from": "release-qa",
+      "to": "nova",
+      "text": "long video 01 script QA: PASS, 5 minor fixes, all applied (content/2026-10-13-phone-battery-myths/qa.md)"
+    },
+    {
+      "at": "2026-10-13T18:29Z",
+      "from": "mangesh",
+      "to": "nova",
+      "text": "Shorts: test many different topics, not only battery; category explore rule live, next = space"
+    },
+    {
+      "at": "2026-10-13T23:08Z",
+      "from": "video-producer",
+      "to": "nova",
+      "text": "published Why Is Space Black If the Sun Is So Bright? #Shorts https://youtube.com/shorts/Dx3SQuKFZ_c"
+    }
+  ],
+  "connections": [
+    {
+      "id": "youtube",
+      "name": "YouTube",
+      "state": "connected_local",
+      "detail": "The Flow – Daily Science"
+    },
+    {
+      "id": "chrome-store",
+      "name": "Chrome Web Store",
+      "state": "credentials_saved",
+      "detail": "One-time Google login (refresh token) still pending"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "state": "connected",
+      "detail": "Routines push to Mangesh347 repos. New repos must be created by a founder (API returns 403)."
+    },
+    {
+      "id": "play",
+      "name": "Google Play Console",
+      "state": "not_connected",
+      "detail": "Releases are prepared; upload is manual."
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "state": "not_connected",
+      "detail": "Needs a business account + Meta Graph API token."
+    },
+    {
+      "id": "facebook",
+      "name": "Facebook",
+      "state": "not_connected",
+      "detail": "Needs a Page + Meta Graph API token."
+    }
+  ],
+  "notes": [],
+  "savedAt": "2026-10-14T18:02:27.367Z"
+}

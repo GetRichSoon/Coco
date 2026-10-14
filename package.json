@@ -1,0 +1,12 @@
+{
+  "name": "coco",
+  "version": "1.0.0",
+  "description": "Coco: the company's AI chief of staff (rebuilt from Nova). One core on the PC, one app for PC and phone.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node heart/server.mjs",
+    "import": "node heart/import-nova.mjs",
+    "test": "node --test heart/"
+  }
+}

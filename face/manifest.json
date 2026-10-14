@@ -1,0 +1,9 @@
+{
+  "name": "Coco",
+  "short_name": "Coco",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8f7",
+  "theme_color": "#7b4f6b",
+  "icons": [{ "src": "coco.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
