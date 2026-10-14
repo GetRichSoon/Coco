@@ -12,6 +12,7 @@ Founder decision 2026-10-15. Engine: the Resource Governor in Coco HQ (`os/resou
 1. **The right model for each job**
    | Model | Who | For |
    |---|---|---|
+   | Local AI, free and offline (Ollama: Qwen 3 8B, Gemma 3 4B) | first step for Lola, Lili, Didi, Bibi | sorting, tagging, summarising reviews, rough first drafts, Hinglish to English, reading files; internal only, never sent to users as is |
    | Haiku (cheapest) | Lola, Lili, Kiki, Didi, Bibi | research, sorting, summaries, reports, reply drafts |
    | Sonnet (middle) | Vivi, Remy, Margot, Cleo, Elise | designing, building, writing, videos, checking |
    | Opus (strongest) | anyone, rarely | only hard builds or architecture, or when Sonnet already failed; never routine work; off on Pro |
