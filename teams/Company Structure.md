@@ -74,3 +74,44 @@ LULU
 ```
 Rule: a product that does well on one platform gets a version on the next one (extension → app → web).
 Product list: Coco HQ/company/PORTFOLIO.md.
+
+## Fifi (downloads): 8 categories, each linked to a Gigi channel
+```
+FIFI
+├── Website shop (main, e.g. Gumroad or our own page)
+│   ├── 01 Study .............. notes, exam planners          ↔ Gigi Study
+│   ├── 02 Career ............. resume templates, interview guides ↔ Lulu Jobs & Career
+│   ├── 03 Money .............. budget trackers, finance sheets ↔ Gigi Money
+│   ├── 04 AI & Tech .......... prompt packs, AI how-to guides ↔ Gigi AI & Software
+│   ├── 05 Health & Fitness ... workout and meal planners     ↔ Gigi Biology & Health
+│   ├── 06 Food ............... recipe e-books                ↔ Gigi Food
+│   ├── 07 Devotional ......... mantra books, puja guides     ↔ Gigi Devotional
+│   │                           (already started: Mantra PDF Project, 94 files)
+│   └── 08 Planners ........... Notion templates, habit trackers ↔ Lulu Productivity
+├── Notion template gallery ... Planners, Study, Money templates
+├── Play Store / Chrome Store . study and planner apps, built with Lulu
+├── YouTube ................... lessons that sell the downloads, made with Gigi
+└── Etsy (later) .............. printables (listing fee, needs YES)
+```
+Rule: every download is original work, fact-checked, and sold through at least one Gigi channel.
+Selling needs a payment account: setting it up is a founder YES.
+
+## Zaza (games): 7 categories, Roblox first
+```
+ZAZA
+├── Roblox (main)
+│   ├── 01 Obby & Adventure
+│   ├── 02 Simulator & Tycoon
+│   ├── 03 Racing & Driving
+│   └── 04 Horror & Mystery (all-ages safe)
+├── Chrome Web Store (mini games, already have some)
+│   ├── 05 Puzzle & Brain ...... Puzzle Game extension
+│   ├── 06 Quiz & Trivia ....... Food Quiz extension
+│   └── 07 Classic & Board ..... TicTacToe, Game Arena
+├── Play Store ................ mobile versions of games that do well
+├── Web ....................... Game Arena (browser game site)
+└── YouTube ................... gameplay Shorts and trailers, made with Gigi
+```
+Rules: Roblox needs a Roblox account + Roblox Studio on the PC (founder sets up). Follow Roblox rules
+for kids' safety and fair in-game purchases. No copied characters or brands. A Roblox game cannot run
+elsewhere: other stores get a separate small version of the same idea.
