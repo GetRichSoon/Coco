@@ -1,0 +1,401 @@
+<title>Good Space World</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..800,100&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: one storybook island (the company) on top, then the people and rules on Material You tonal sheets */
+:root {
+  --primary: #7b4f6b; --on-primary: #ffffff; --primary-c: #ffd8ee; --on-primary-c: #30092a;
+  --secondary-c: #dcebd2; --on-secondary-c: #1a3016;
+  --tertiary: #9a5a3c; --tertiary-c: #ffdbcd;
+  --surface: #fff8f7; --surface-1: #f9eef0; --surface-2: #f3e5e8; --surface-3: #ecdde1;
+  --on-surface: #22191d; --muted: #6e5e64; --outline: #dccbd0;
+  --sky: #fde9ef; --sky-2: #f6f0ff; --sea: #cfe7f3; --grass: #c9e7bd; --grass-2: #b3dba4; --road: #f3dfc7;
+  --gigi: #f6a6c1; --lulu: #a9c8f5; --fifi: #f8d48a; --zaza: #b9a4f0; --coco: #f0c2a8; --club: #f7b9a0; --shelf: #a9dccb;
+  --wall: #fffaf6; --ink: #3b2a33; --window: #fff3c4; --gold: #b8913a; --gold-soft: #e9d29a;
+  --good: #2f6b40; --good-c: #cdeed5; --warn: #7a5a00; --warn-c: #ffe6a3; --rest: #6e5e64; --rest-c: #ece2e5;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --secondary-c: #34482d; --on-secondary-c: #d6ecc9; --tertiary: #ffb898; --tertiary-c: #6e3b26;
+  --surface: #17111a; --surface-1: #211a23; --surface-2: #2a2230; --surface-3: #342b3a;
+  --on-surface: #f0e3ea; --muted: #cbbac4; --outline: #4f4250;
+  --sky: #241b3a; --sky-2: #1a1630; --sea: #1f3446; --grass: #3d5a3a; --grass-2: #344f32; --road: #6b5a4e;
+  --wall: #f4e9e4; --ink: #2a1d25; --window: #ffd96b; --gold: #e2bf6a; --gold-soft: #6b5521;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --rest: #cbbac4; --rest-c: #3a3040;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --secondary-c: #34482d; --on-secondary-c: #d6ecc9; --tertiary: #ffb898; --tertiary-c: #6e3b26;
+  --surface: #17111a; --surface-1: #211a23; --surface-2: #2a2230; --surface-3: #342b3a;
+  --on-surface: #f0e3ea; --muted: #cbbac4; --outline: #4f4250;
+  --sky: #241b3a; --sky-2: #1a1630; --sea: #1f3446; --grass: #3d5a3a; --grass-2: #344f32; --road: #6b5a4e;
+  --wall: #f4e9e4; --ink: #2a1d25; --window: #ffd96b; --gold: #e2bf6a; --gold-soft: #6b5521;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --rest: #cbbac4; --rest-c: #3a3040;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--surface); color: var(--on-surface); font: 16px/1.55 var(--body); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); font-variation-settings: "SOFT" 100; text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: clamp(34px, 6vw, 58px); font-weight: 700; line-height: 1.02; }
+h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 650; }
+h3 { font-size: 20px; font-weight: 650; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--primary); }
+.lede { color: var(--muted); max-width: 62ch; font-size: 17px; }
+header.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; }
+header.top .title { display: grid; gap: 8px; min-width: 0; }
+.owners { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 4px 12px; font-size: 13px; font-weight: 700; background: var(--surface-2); color: var(--on-surface); }
+.chip.good { background: var(--good-c); color: var(--good); }
+.chip.warn { background: var(--warn-c); color: var(--warn); }
+.chip.rest { background: var(--rest-c); color: var(--rest); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+/* the world */
+.world { background: var(--surface-1); border-radius: 32px; padding: 14px; display: grid; gap: 14px; }
+.world-stage { border-radius: 24px; overflow: hidden; background: var(--sky); }
+.world svg { display: block; width: 100%; height: auto; }
+.place { cursor: pointer; }
+.place:focus { outline: none; }
+.place:focus-visible .halo, .place.on .halo { opacity: 1; }
+.halo { opacity: 0; transition: opacity .2s; fill: none; stroke: var(--primary); stroke-width: 4; stroke-dasharray: 10 8; }
+.place:hover .bob { transform: translateY(-4px); }
+.bob { transition: transform .25s; }
+.label-bg { fill: var(--wall); stroke: var(--gold); }
+.world-stage { box-shadow: inset 0 0 0 2px var(--gold-soft); }
+.eyebrow { color: var(--gold) !important; }
+h1 { background: linear-gradient(100deg, var(--on-surface) 55%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.house, .member, .world { box-shadow: inset 0 0 0 1px var(--gold-soft); }
+.label { font: 800 15px var(--body); fill: var(--ink); }
+.label-sub { font: 700 11px var(--body); fill: var(--ink); opacity: .7; letter-spacing: .06em; text-transform: uppercase; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 4px 8px 6px; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 4px; }
+
+.info { background: var(--surface); border-radius: 24px; padding: 20px 22px; display: grid; gap: 12px; }
+.info-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.info p { max-width: 70ch; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { background: var(--surface-2); border-radius: 10px; padding: 4px 10px; font-size: 13px; font-weight: 600; }
+
+/* houses */
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.house { border-radius: 28px; padding: 20px; display: grid; gap: 10px; align-content: start; background: var(--surface-1); min-width: 0; }
+.house .top-row { display: flex; align-items: center; gap: 12px; }
+.house .badge { width: 56px; height: 56px; flex: none; }
+.house .count { font-family: var(--display); font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.house ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.section-head { display: grid; gap: 6px; }
+
+/* club */
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--on-surface); font: 700 14px var(--body); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.seg button:focus-visible, .place:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.members { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.member { background: var(--surface-1); border-radius: 24px; padding: 16px; display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.member svg { width: 72px; height: 72px; }
+.member .group { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); }
+.member .job { color: var(--muted); font-size: 14px; }
+.member.new { background: var(--primary-c); color: var(--on-primary-c); }
+.member.new .job { color: var(--on-primary-c); }
+
+/* flow */
+.flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.step { background: var(--surface-1); border-radius: 18px; padding: 10px 14px; font-weight: 700; display: grid; line-height: 1.25; }
+.step small { font-weight: 600; color: var(--muted); }
+.arrow { color: var(--primary); font-weight: 800; }
+.rules { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.rule { background: var(--secondary-c); color: var(--on-secondary-c); box-shadow: inset 0 0 0 1px var(--gold-soft); border-radius: 20px; padding: 14px 16px; font-weight: 600; }
+.rule b { font-family: var(--display); font-size: 22px; display: block; }
+footer { color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .bob, .halo { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="title">
+      <span class="eyebrow">The company map</span>
+      <h1>Good Space World</h1>
+      <p class="lede">One island, one company. Coco runs it from the palace, four Houses make what we sell, the Bonbon Club helps all of them, and everything we make goes up in the balloons to the platforms.</p>
+    </div>
+    <div class="owners">
+      <span class="chip">Mangesh · Boss</span>
+      <span class="chip">Shreya · Big Boss</span>
+    </div>
+  </header>
+
+  <section class="world" aria-label="Good Space island map">
+    <div class="world-stage"><svg id="map" viewBox="0 0 1000 640" role="img" aria-labelledby="mapTitle"><title id="mapTitle">Good Space island: Coco in the middle, four Houses, the Bonbon Club, the Shared Shelf and six platform balloons</title></svg></div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw" style="background:var(--primary)"></i>Coco sends work</span>
+      <span><i class="sw" style="background:var(--tertiary)"></i>helpers carry it</span>
+      <span><i class="sw" style="background:var(--shelf)"></i>finished work to the shelf</span>
+      <span>Tap any building to see who works there</span>
+    </div>
+    <div class="info" id="info" aria-live="polite"></div>
+  </section>
+
+  <section class="section-head">
+    <span class="eyebrow">Houses</span>
+    <h2>Four Houses make what we sell</h2>
+    <p class="lede">Every House works the same way: House, then platform, then category, then a channel or product. Each one gives a fifth of its time to helping the others.</p>
+  </section>
+  <div class="grid" id="houses"></div>
+
+  <section class="section-head">
+    <span class="eyebrow">Bonbon Club</span>
+    <h2>Ten helpers, shared by every House</h2>
+    <p class="lede">They work only when a House asks. Light jobs use the cheaper AI model, real making uses the stronger one, and whoever checks the work never made it.</p>
+    <div class="seg" role="group" aria-label="Show helpers">
+      <button type="button" data-g="all" aria-pressed="true">All</button>
+      <button type="button" data-g="Think" aria-pressed="false">Think</button>
+      <button type="button" data-g="Make" aria-pressed="false">Make</button>
+      <button type="button" data-g="Care" aria-pressed="false">Care</button>
+    </div>
+  </section>
+  <div class="members" id="members"></div>
+
+  <section class="section-head">
+    <span class="eyebrow">How work travels</span>
+    <h2>From your goal to money in the scoreboard</h2>
+  </section>
+  <div class="flow" id="flow"></div>
+
+  <div class="rules">
+    <div class="rule"><b>3+</b>platforms for every idea</div>
+    <div class="rule"><b>Free → paid</b>every free thing points to something paid</div>
+    <div class="rule"><b>Grow · fix · pause</b>by real profit, checked every week</div>
+    <div class="rule"><b>2 or 3</b>Houses awake at a time</div>
+    <div class="rule"><b>Your YES</b>before anything goes public, costs money or gets deleted</div>
+  </div>
+
+  <footer>Good Space · managed by Coco · structure decided 15 October 2026. Full details live in Good Space › Coco › teams › Company Structure.md.</footer>
+</div>
+
+<script>
+const PLATFORMS = ['YouTube', 'Play Store', 'Chrome Store', 'Roblox', 'Website', 'Insta / FB'];
+const HOUSES = [
+  { id: 'gigi', name: 'Gigi', role: 'Content', color: 'var(--gigi)', status: ['good', 'Working'], count: 14, unit: 'categories',
+    where: 'YouTube first, then Instagram and Facebook with the same 14 categories.',
+    list: ['The Flow (Science) is live', '13 more channels ready to create', 'Shorts every day, a long video every week'],
+    platforms: ['YouTube', 'Insta / FB', 'Website'], helpers: ['Lola', 'Lili', 'Margot', 'Cleo', 'Vivi', 'Elise', 'Kiki', 'Bibi'] },
+  { id: 'lulu', name: 'Lulu', role: 'Products', color: 'var(--lulu)', status: ['good', 'Working'], count: 33, unit: 'extensions',
+    where: 'Chrome Web Store and Play Store in 10 categories, websites later.',
+    list: ['AI Tools, Productivity, Files and PDF', 'Video and Audio, Jobs and Career', 'Play Store: Screen Time Tracker, Nova Island'],
+    platforms: ['Chrome Store', 'Play Store', 'Website', 'YouTube'], helpers: ['Lola', 'Lili', 'Remy', 'Vivi', 'Margot', 'Elise', 'Kiki', 'Didi', 'Bibi'] },
+  { id: 'fifi', name: 'Fifi', role: 'Downloads', color: 'var(--fifi)', status: ['warn', 'Next'], count: 8, unit: 'categories',
+    where: 'Our website shop first, Notion gallery, study apps with Lulu.',
+    list: ['Study notes and exam planners', 'Resume templates and finance sheets', 'Mantra PDF Project already started'],
+    platforms: ['Website', 'YouTube', 'Play Store', 'Chrome Store'], helpers: ['Lola', 'Lili', 'Margot', 'Vivi', 'Elise', 'Kiki', 'Didi', 'Bibi'] },
+  { id: 'zaza', name: 'Zaza', role: 'Games', color: 'var(--zaza)', status: ['rest', 'Later'], count: 7, unit: 'categories',
+    where: 'Roblox first, small versions on Play Store, Chrome Store and the web.',
+    list: ['Obby, Simulator, Racing on Roblox', 'Puzzle, Quiz and TicTacToe mini games', 'Gameplay Shorts with Gigi'],
+    platforms: ['Roblox', 'Play Store', 'Chrome Store', 'YouTube'], helpers: ['Lola', 'Lili', 'Remy', 'Vivi', 'Cleo', 'Elise', 'Kiki', 'Didi', 'Bibi'] },
+];
+const MEMBERS = [
+  { name: 'Lola', group: 'Think', job: 'Finds ideas and trends, scores each one', color: '#f6a6c1', hat: 'flower' },
+  { name: 'Lili', group: 'Think', job: 'Checks the market, tracks views and sales', color: '#a9dccb', hat: 'glasses' },
+  { name: 'Remy', group: 'Make', job: 'Builds extensions, apps, sites and games', color: '#a9c8f5', hat: 'helmet' },
+  { name: 'Vivi', group: 'Make', job: 'UI and UX: screens, icons, store images', color: '#f0c2e6', hat: 'beret', isNew: true },
+  { name: 'Margot', group: 'Make', job: 'Writes scripts, titles, store text, e-books', color: '#f8d48a', hat: 'bow' },
+  { name: 'Cleo', group: 'Make', job: 'Makes videos, thumbnails and trailers', color: '#f7b9a0', hat: 'headphones' },
+  { name: 'Elise', group: 'Care', job: 'Checks quality and packs every release', color: '#c7d8a6', hat: 'monocle' },
+  { name: 'Kiki', group: 'Care', job: 'Growth: SEO, store pages, links, emails', color: '#b9a4f0', hat: 'star' },
+  { name: 'Didi', group: 'Care', job: 'Customer care: reviews and replies', color: '#f2b8c8', hat: 'heart', isNew: true },
+  { name: 'Bibi', group: 'Care', job: 'Money, weekly scoreboard, your approvals', color: '#f3d9a4', hat: 'coin', isNew: true },
+];
+const PLACES = {
+  coco: { title: 'Coco Palace', tag: 'The manager', status: ['good', 'Always on'], text: 'Coco takes your goal, picks the House, calls the right helpers in order, collects your YES and keeps the Shared Shelf tidy. Coco also makes sure every idea reaches at least three platforms.', tags: ['Gives work', 'Your approvals', 'Connect rule', 'Weekly profit check'] },
+  club: { title: 'Bonbon Club', tag: 'Support team · 10 helpers', status: ['good', 'On call'], text: 'The café where the helpers wait. Think: Lola, Lili. Make: Remy, Vivi, Margot, Cleo. Care: Elise, Kiki, Didi, Bibi. They go to whichever House needs them.', tags: MEMBERS.map(m => m.name) },
+  shelf: { title: 'Shared Shelf', tag: 'Everything we make', status: ['good', 'Open'], text: 'Every video, product, template and game lands here, and every House reuses it. A Gigi video points to a Lulu extension, which points to a Fifi template, which points back to a Gigi channel.', tags: ['80% own work', '20% helping others', 'Reuse everything'] },
+};
+HOUSES.forEach(h => { PLACES[h.id] = { title: `${h.name} House`, tag: h.role, status: h.status, text: `${h.where} ${h.list.join('. ')}.`, tags: ['Uses: ' + h.platforms.join(', '), 'Helpers: ' + h.helpers.join(', ')] }; });
+
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs = {}, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
+
+// a cartoon face: body blob, eyes, cheeks, smile, and a little accessory
+function face(g, cx, cy, r, color, hat, crown) {
+  el('ellipse', { cx, cy: cy + r * 0.92, rx: r * 0.8, ry: r * 0.18, fill: 'var(--ink)', opacity: .12 }, g);
+  el('circle', { cx, cy, r, fill: color, stroke: 'var(--ink)', 'stroke-width': Math.max(1.5, r * 0.07) }, g);
+  const e = r * 0.32, ey = cy - r * 0.08;
+  el('circle', { cx: cx - e, cy: ey, r: r * 0.11, fill: 'var(--ink)' }, g);
+  el('circle', { cx: cx + e, cy: ey, r: r * 0.11, fill: 'var(--ink)' }, g);
+  el('circle', { cx: cx - e + r * 0.04, cy: ey - r * 0.04, r: r * 0.035, fill: '#fff' }, g);
+  el('circle', { cx: cx + e + r * 0.04, cy: ey - r * 0.04, r: r * 0.035, fill: '#fff' }, g);
+  el('ellipse', { cx: cx - r * 0.55, cy: cy + r * 0.2, rx: r * 0.15, ry: r * 0.09, fill: '#ff7a9a', opacity: .45 }, g);
+  el('ellipse', { cx: cx + r * 0.55, cy: cy + r * 0.2, rx: r * 0.15, ry: r * 0.09, fill: '#ff7a9a', opacity: .45 }, g);
+  el('path', { d: `M${cx - r * 0.22} ${cy + r * 0.22} Q${cx} ${cy + r * 0.45} ${cx + r * 0.22} ${cy + r * 0.22}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': Math.max(1.5, r * 0.08), 'stroke-linecap': 'round' }, g);
+  const top = cy - r, sw = Math.max(1.5, r * 0.07);
+  if (crown) el('path', { d: `M${cx - r * .5} ${top + r * .1} L${cx - r * .5} ${top - r * .35} L${cx - r * .25} ${top - r * .1} L${cx} ${top - r * .45} L${cx + r * .25} ${top - r * .1} L${cx + r * .5} ${top - r * .35} L${cx + r * .5} ${top + r * .1} Z`, fill: '#f6c945', stroke: 'var(--ink)', 'stroke-width': sw, 'stroke-linejoin': 'round' }, g);
+  if (hat === 'flower') { for (let i = 0; i < 5; i++) { const a = i * 72 * Math.PI / 180; el('circle', { cx: cx + r * .45 + Math.cos(a) * r * .18, cy: top + r * .15 + Math.sin(a) * r * .18, r: r * .14, fill: '#fff6a8', stroke: 'var(--ink)', 'stroke-width': sw * .6 }, g); } el('circle', { cx: cx + r * .45, cy: top + r * .15, r: r * .1, fill: '#f3a', stroke: 'var(--ink)', 'stroke-width': sw * .6 }, g); }
+  if (hat === 'glasses') { el('circle', { cx: cx - e, cy: ey, r: r * .22, fill: 'none', stroke: 'var(--ink)', 'stroke-width': sw }, g); el('circle', { cx: cx + e, cy: ey, r: r * .22, fill: 'none', stroke: 'var(--ink)', 'stroke-width': sw }, g); el('line', { x1: cx - e + r * .22, y1: ey, x2: cx + e - r * .22, y2: ey, stroke: 'var(--ink)', 'stroke-width': sw }, g); }
+  if (hat === 'helmet') el('path', { d: `M${cx - r * .85} ${top + r * .5} Q${cx} ${top - r * .55} ${cx + r * .85} ${top + r * .5} Z`, fill: '#ffd25e', stroke: 'var(--ink)', 'stroke-width': sw }, g);
+  if (hat === 'beret') { el('ellipse', { cx: cx - r * .1, cy: top + r * .12, rx: r * .7, ry: r * .26, fill: '#7b4f6b', stroke: 'var(--ink)', 'stroke-width': sw }, g); el('circle', { cx: cx - r * .1, cy: top - r * .16, r: r * .08, fill: '#7b4f6b', stroke: 'var(--ink)', 'stroke-width': sw * .7 }, g); }
+  if (hat === 'bow') { el('path', { d: `M${cx + r * .2} ${top + r * .15} l${r * .35} ${-r * .25} l0 ${r * .5} Z M${cx + r * .2} ${top + r * .15} l${-r * .35} ${-r * .25} l0 ${r * .5} Z`, fill: '#ff8fb1', stroke: 'var(--ink)', 'stroke-width': sw * .8, 'stroke-linejoin': 'round' }, g); }
+  if (hat === 'headphones') { el('path', { d: `M${cx - r * .95} ${cy} Q${cx - r * .95} ${top - r * .25} ${cx} ${top - r * .25} Q${cx + r * .95} ${top - r * .25} ${cx + r * .95} ${cy}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': sw * 1.4 }, g); el('rect', { x: cx - r * 1.1, y: cy - r * .25, width: r * .3, height: r * .5, rx: r * .1, fill: '#8a6cf0', stroke: 'var(--ink)', 'stroke-width': sw }, g); el('rect', { x: cx + r * .8, y: cy - r * .25, width: r * .3, height: r * .5, rx: r * .1, fill: '#8a6cf0', stroke: 'var(--ink)', 'stroke-width': sw }, g); }
+  if (hat === 'monocle') { el('circle', { cx: cx + e, cy: ey, r: r * .24, fill: 'none', stroke: '#c9a227', 'stroke-width': sw * 1.2 }, g); el('path', { d: `M${cx + e + r * .2} ${ey + r * .15} q${r * .2} ${r * .4} ${r * .1} ${r * .7}`, fill: 'none', stroke: '#c9a227', 'stroke-width': sw * .7 }, g); }
+  const star = (x, y, s, fill) => el('path', { d: `M${x} ${y - s} L${x + s * .3} ${y - s * .3} L${x + s} ${y - s * .25} L${x + s * .45} ${y + s * .2} L${x + s * .6} ${y + s} L${x} ${y + s * .55} L${x - s * .6} ${y + s} L${x - s * .45} ${y + s * .2} L${x - s} ${y - s * .25} L${x - s * .3} ${y - s * .3} Z`, fill, stroke: 'var(--ink)', 'stroke-width': sw * .7, 'stroke-linejoin': 'round' }, g);
+  if (hat === 'star') star(cx + r * .5, top + r * .15, r * .3, '#ffe066');
+  if (hat === 'heart') el('path', { d: `M${cx + r * .5} ${top + r * .4} c${-r * .4} ${-r * .3} ${-r * .3} ${-r * .7} 0 ${-r * .55} c${r * .3} ${-r * .15} ${r * .4} ${r * .25} 0 ${r * .55} Z`, fill: '#ff6f91', stroke: 'var(--ink)', 'stroke-width': sw * .7 }, g);
+  if (hat === 'coin') { el('circle', { cx: cx + r * .55, cy: top + r * .1, r: r * .25, fill: '#f6c945', stroke: 'var(--ink)', 'stroke-width': sw * .8 }, g); el('text', { x: cx + r * .55, y: top + r * .19, 'text-anchor': 'middle', 'font-size': r * .3, 'font-weight': 800, fill: 'var(--ink)', 'font-family': 'Nunito, sans-serif' }, g).textContent = '₹'; }
+}
+
+function building(svg, id, x, y, w, h, color, roof, name, sub) {
+  const g = el('g', { class: 'place', tabindex: 0, role: 'button', 'aria-label': `${name}, ${sub}`, 'data-id': id }, svg);
+  el('ellipse', { class: 'halo', cx: x, cy: y + h * .55, rx: w * .78, ry: h * .45 }, g);
+  const b = el('g', { class: 'bob' }, g);
+  el('ellipse', { cx: x, cy: y + h / 2 + 8, rx: w * .62, ry: 10, fill: 'var(--ink)', opacity: .12 }, b);
+  el('rect', { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: 14, fill: 'var(--wall)', stroke: 'var(--ink)', 'stroke-width': 3 }, b);
+  if (roof === 'tri') el('path', { d: `M${x - w / 2 - 12} ${y - h / 2 + 4} L${x} ${y - h / 2 - h * .55} L${x + w / 2 + 12} ${y - h / 2 + 4} Z`, fill: color, stroke: 'var(--ink)', 'stroke-width': 3, 'stroke-linejoin': 'round' }, b);
+  if (roof === 'dome') el('path', { d: `M${x - w / 2 - 6} ${y - h / 2 + 6} Q${x} ${y - h / 2 - h * .75} ${x + w / 2 + 6} ${y - h / 2 + 6} Z`, fill: color, stroke: 'var(--ink)', 'stroke-width': 3 }, b);
+  if (roof === 'awning') { el('rect', { x: x - w / 2 - 10, y: y - h / 2 - 16, width: w + 20, height: 26, rx: 8, fill: color, stroke: 'var(--ink)', 'stroke-width': 3 }, b); for (let i = 0; i < 5; i++) el('rect', { x: x - w / 2 - 10 + i * (w + 20) / 5, y: y - h / 2 - 16, width: (w + 20) / 10, height: 26, fill: 'var(--wall)', opacity: .7 }, b); }
+  if (roof === 'flat') { el('rect', { x: x - w / 2 - 8, y: y - h / 2 - 14, width: w + 16, height: 20, rx: 6, fill: color, stroke: 'var(--ink)', 'stroke-width': 3 }, b); }
+  const ww = w * .2, wy = y - h * .18;
+  el('rect', { x: x - w * .34, y: wy, width: ww, height: ww, rx: 5, fill: 'var(--window)', stroke: 'var(--ink)', 'stroke-width': 2.5 }, b);
+  el('rect', { x: x + w * .14, y: wy, width: ww, height: ww, rx: 5, fill: 'var(--window)', stroke: 'var(--ink)', 'stroke-width': 2.5 }, b);
+  el('path', { d: `M${x - w * .1} ${y + h / 2} L${x - w * .1} ${y + h * .12} Q${x} ${y} ${x + w * .1} ${y + h * .12} L${x + w * .1} ${y + h / 2} Z`, fill: color, stroke: 'var(--ink)', 'stroke-width': 2.5 }, b);
+  const lw = Math.max(name.length * 9 + 28, sub.length * 7 + 24);
+  el('rect', { class: 'label-bg', x: x - lw / 2, y: y + h / 2 + 14, width: lw, height: 40, rx: 12, stroke: 'var(--ink)', 'stroke-width': 2 }, g);
+  el('text', { class: 'label', x, y: y + h / 2 + 32, 'text-anchor': 'middle' }, g).textContent = name;
+  el('text', { class: 'label-sub', x, y: y + h / 2 + 47, 'text-anchor': 'middle' }, g).textContent = sub;
+  return b;
+}
+
+function drawWorld() {
+  const svg = document.getElementById('map');
+  const defs = el('defs', {}, svg);
+  const sky = el('linearGradient', { id: 'skyG', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  el('stop', { offset: 0, 'stop-color': 'var(--sky-2)' }, sky); el('stop', { offset: 1, 'stop-color': 'var(--sky)' }, sky);
+  el('rect', { width: 1000, height: 640, fill: 'url(#skyG)' }, svg);
+  // sea + island
+  el('path', { d: 'M0 300 Q250 270 500 300 T1000 300 L1000 640 L0 640 Z', fill: 'var(--sea)' }, svg);
+  el('path', { d: 'M70 330 Q60 200 230 190 Q380 150 520 175 Q700 140 830 190 Q960 230 940 360 Q960 520 800 575 Q620 625 480 610 Q300 625 170 570 Q40 500 70 330 Z', fill: 'var(--grass)', stroke: 'var(--ink)', 'stroke-width': 3 }, svg);
+  el('path', { d: 'M120 360 Q140 250 260 245 Q420 220 520 235 Q690 215 800 250 Q900 290 880 390 Q880 500 760 535 Q600 575 480 560 Q320 575 210 530 Q110 470 120 360 Z', fill: 'var(--grass-2)' }, svg);
+  // roads from the palace
+  const roads = {
+    gigi: 'M500 290 Q360 250 230 250', lulu: 'M500 290 Q640 250 770 250',
+    fifi: 'M500 300 Q380 400 240 450', zaza: 'M500 300 Q620 400 760 450',
+    club: 'M500 300 L500 470', shelfL: 'M230 270 Q360 360 500 380', shelfR: 'M770 270 Q640 360 500 380',
+  };
+  for (const k in roads) el('path', { d: roads[k], fill: 'none', stroke: 'var(--road)', 'stroke-width': 18, 'stroke-linecap': 'round' }, svg);
+  for (const k in roads) el('path', { id: 'r-' + k, d: roads[k], fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5, 'stroke-dasharray': '2 10', opacity: .35 }, svg);
+  // trees
+  [[120, 330], [905, 330], [330, 520], [680, 525], [610, 205], [395, 205], [165, 470], [860, 470]].forEach(([x, y]) => {
+    el('rect', { x: x - 3, y, width: 6, height: 18, fill: '#8a5a3b' }, svg);
+    el('circle', { cx: x, cy: y - 4, r: 15, fill: '#7fbf73', stroke: 'var(--ink)', 'stroke-width': 2.5 }, svg);
+  });
+  const drawBalloons = () => PLATFORMS.forEach((p, i) => {
+    const x = 95 + i * 162, y = 40 + (i % 2) * 14;
+    const g = el('g', {}, svg);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) el('animateTransform', { attributeName: 'transform', type: 'translate', values: `0 0; 0 -8; 0 0`, dur: `${3 + i * .4}s`, repeatCount: 'indefinite' }, g);
+    const col = ['#f6a6c1', '#a9dccb', '#a9c8f5', '#b9a4f0', '#f8d48a', '#f7b9a0'][i];
+    el('path', { d: `M${x - 6} ${y + 28} L${x - 10} ${y + 46} M${x + 6} ${y + 28} L${x + 10} ${y + 46}`, stroke: 'var(--ink)', 'stroke-width': 2 }, g);
+    el('rect', { x: x - 13, y: y + 44, width: 26, height: 14, rx: 4, fill: '#d9a066', stroke: 'var(--ink)', 'stroke-width': 2 }, g);
+    el('ellipse', { cx: x, cy: y, rx: 26, ry: 31, fill: col, stroke: 'var(--ink)', 'stroke-width': 2.5 }, g);
+    el('path', { d: `M${x} ${y - 31} Q${x - 12} ${y} ${x} ${y + 31}`, fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5, opacity: .4 }, g);
+    const lw = p.length * 7.5 + 18;
+    el('rect', { class: 'label-bg', x: x - lw / 2, y: y + 62, width: lw, height: 22, rx: 8, stroke: 'var(--ink)', 'stroke-width': 1.5 }, g);
+    el('text', { class: 'label', x, y: y + 78, 'text-anchor': 'middle', style: 'font-size:12px' }, g).textContent = p;
+  });
+  // balloons = platforms (drawn later, above the roofs)
+  // buildings
+  building(svg, 'gigi', 210, 225, 120, 80, 'var(--gigi)', 'tri', 'Gigi House', 'content');
+  building(svg, 'lulu', 790, 225, 120, 80, 'var(--lulu)', 'flat', 'Lulu House', 'products');
+  building(svg, 'fifi', 225, 425, 110, 76, 'var(--fifi)', 'awning', 'Fifi House', 'downloads');
+  building(svg, 'zaza', 775, 425, 110, 76, 'var(--zaza)', 'dome', 'Zaza House', 'games');
+  building(svg, 'club', 500, 490, 120, 66, 'var(--club)', 'awning', 'Bonbon Club', '10 helpers');
+  // shelf: a little market stall
+  const sg = el('g', { class: 'place', tabindex: 0, role: 'button', 'aria-label': 'Shared Shelf, everything we make', 'data-id': 'shelf' }, svg);
+  el('ellipse', { class: 'halo', cx: 500, cy: 385, rx: 70, ry: 34 }, sg);
+  const sb = el('g', { class: 'bob' }, sg);
+  el('rect', { x: 455, y: 362, width: 90, height: 40, rx: 8, fill: 'var(--wall)', stroke: 'var(--ink)', 'stroke-width': 2.5 }, sb);
+  el('path', { d: 'M448 366 Q500 330 552 366 Z', fill: 'var(--shelf)', stroke: 'var(--ink)', 'stroke-width': 2.5 }, sb);
+  [['#f6a6c1', 470], ['#a9c8f5', 490], ['#f8d48a', 510], ['#b9a4f0', 530]].forEach(([c, x]) => el('rect', { x: x - 7, y: 376, width: 14, height: 18, rx: 3, fill: c, stroke: 'var(--ink)', 'stroke-width': 1.5 }, sb));
+  el('rect', { class: 'label-bg', x: 448, y: 408, width: 104, height: 24, rx: 10, stroke: 'var(--ink)', 'stroke-width': 2 }, sg);
+  el('text', { class: 'label', x: 500, y: 425, 'text-anchor': 'middle', style: 'font-size:13px' }, sg).textContent = 'Shared Shelf';
+  // the palace
+  const pg = el('g', { class: 'place', tabindex: 0, role: 'button', 'aria-label': 'Coco Palace, the manager', 'data-id': 'coco' }, svg);
+  el('ellipse', { class: 'halo', cx: 500, cy: 275, rx: 110, ry: 62 }, pg);
+  const pb = el('g', { class: 'bob' }, pg);
+  el('ellipse', { cx: 500, cy: 318, rx: 92, ry: 12, fill: 'var(--ink)', opacity: .12 }, pb);
+  el('rect', { x: 425, y: 235, width: 150, height: 80, rx: 16, fill: 'var(--wall)', stroke: 'var(--ink)', 'stroke-width': 3 }, pb);
+  [[425, 'var(--coco)'], [575, 'var(--coco)']].forEach(([x, c]) => { el('rect', { x: x - 20, y: 215, width: 40, height: 100, rx: 12, fill: 'var(--wall)', stroke: 'var(--ink)', 'stroke-width': 3 }, pb); el('path', { d: `M${x - 26} 219 L${x} 178 L${x + 26} 219 Z`, fill: c, stroke: 'var(--ink)', 'stroke-width': 3, 'stroke-linejoin': 'round' }, pb); el('circle', { cx: x, cy: 248, r: 7, fill: 'var(--window)', stroke: 'var(--ink)', 'stroke-width': 2 }, pb); });
+  el('path', { d: 'M440 238 Q500 160 560 238 Z', fill: 'var(--primary-c)', stroke: 'var(--ink)', 'stroke-width': 3 }, pb);
+  el('path', { d: 'M500 175 L500 150 L522 158 L500 166', fill: 'var(--gold)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' }, pb);
+  face(pb, 500, 280, 26, 'var(--coco)', null, true);
+  el('rect', { class: 'label-bg', x: 440, y: 328, width: 120, height: 26, rx: 10, stroke: 'var(--ink)', 'stroke-width': 2 }, pg);
+  el('text', { class: 'label', x: 500, y: 346, 'text-anchor': 'middle' }, pg).textContent = 'Coco Palace';
+  drawBalloons();
+  // little helpers waiting outside the club
+  MEMBERS.slice(0, 5).forEach((m, i) => face(svg, 420 + i * 40, 596, 10, m.color, m.hat));
+  // travellers: tiny helpers carrying parcels along the roads
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const trips = [['gigi', 0, 'var(--primary)'], ['lulu', 1.2, 'var(--primary)'], ['fifi', 2.1, 'var(--primary)'], ['zaza', 3, 'var(--primary)'], ['club', .6, 'var(--tertiary)'], ['shelfL', 1.8, 'var(--shelf)'], ['shelfR', 2.7, 'var(--shelf)']];
+  trips.forEach(([road, delay, col], i) => {
+    const t = el('g', {}, svg);
+    el('rect', { x: -8, y: -24, width: 16, height: 12, rx: 3, fill: col, stroke: 'var(--ink)', 'stroke-width': 1.5 }, t);
+    face(t, 0, 0, 9, MEMBERS[(i * 3) % MEMBERS.length].color, null);
+    if (reduce) { const p = document.getElementById('r-' + road); const pt = p.getPointAtLength(p.getTotalLength() * .5); t.setAttribute('transform', `translate(${pt.x} ${pt.y})`); return; }
+    el('animateMotion', { dur: '4.5s', begin: `${delay}s`, repeatCount: 'indefinite', keyPoints: '0;1;0', keyTimes: '0;0.5;1', calcMode: 'linear' }, t).appendChild(el('mpath', { href: '#r-' + road }));
+  });
+  svg.addEventListener('click', e => { const p = e.target.closest('.place'); if (p) select(p.dataset.id); });
+  svg.addEventListener('keydown', e => { const p = e.target.closest('.place'); if (p && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); select(p.dataset.id); } });
+}
+
+function select(id) {
+  const p = PLACES[id];
+  document.querySelectorAll('.place').forEach(n => n.classList.toggle('on', n.dataset.id === id));
+  document.getElementById('info').innerHTML = `<div class="info-head"><h3>${p.title}</h3><span class="chip ${p.status[0]}"><i class="dot"></i>${p.status[1]}</span><span class="chip">${p.tag}</span></div><p>${p.text}</p><div class="tags">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+}
+
+function badge(color, roof) {
+  const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 56 56'); s.setAttribute('class', 'badge'); s.setAttribute('aria-hidden', 'true');
+  el('rect', { x: 2, y: 2, width: 52, height: 52, rx: 18, fill: color }, s);
+  el('rect', { x: 14, y: 24, width: 28, height: 20, rx: 4, fill: 'var(--wall)', stroke: 'var(--ink)', 'stroke-width': 2 }, s);
+  el('path', { d: roof, fill: 'var(--wall)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' }, s);
+  el('rect', { x: 24, y: 33, width: 8, height: 11, rx: 2, fill: color, stroke: 'var(--ink)', 'stroke-width': 1.5 }, s);
+  return s;
+}
+
+function renderHouses() {
+  const roofs = { gigi: 'M10 25 L28 10 L46 25 Z', lulu: 'M11 18 H45 V25 H11 Z', fifi: 'M10 17 H46 V25 H10 Z', zaza: 'M12 25 Q28 4 44 25 Z' };
+  const box = document.getElementById('houses');
+  HOUSES.forEach(h => {
+    const c = document.createElement('article'); c.className = 'house';
+    c.innerHTML = `<div class="top-row"><div class="badge-slot"></div><div><h3>${h.name}</h3><span class="chip ${h.status[0]}"><i class="dot"></i>${h.status[1]}</span></div></div>
+      <div><span class="count">${h.count}</span> <span class="muted">${h.unit}</span></div>
+      <p><b>${h.role}.</b> ${h.where}</p><ul>${h.list.map(x => `<li>${x}</li>`).join('')}</ul>
+      <div class="tags">${h.platforms.map(p => `<span class="tag">${p}</span>`).join('')}</div>`;
+    c.querySelector('.badge-slot').replaceWith(badge(h.color, roofs[h.id]));
+    box.appendChild(c);
+  });
+}
+
+function renderMembers(group) {
+  const box = document.getElementById('members'); box.innerHTML = '';
+  MEMBERS.filter(m => group === 'all' || m.group === group).forEach(m => {
+    const c = document.createElement('article'); c.className = 'member' + (m.isNew ? ' new' : '');
+    const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '-40 -44 80 84'); s.setAttribute('aria-hidden', 'true'); face(s, 0, 0, 28, m.color, m.hat);
+    c.appendChild(s);
+    c.insertAdjacentHTML('beforeend', `<span class="group">${m.group}${m.isNew ? ' · new role' : ''}</span><h3>${m.name}</h3><p class="job">${m.job}</p>`);
+    box.appendChild(c);
+  });
+}
+
+function renderFlow() {
+  const steps = [['Your goal', 'you say it'], ['Coco', 'picks the House'], ['Lola, Lili', 'idea and market check'], ['Remy, Vivi, Margot, Cleo', 'make it'], ['Elise', 'checks it'], ['Your YES', 'nothing public without it'], ['3+ platforms', 'balloons go up'], ['Kiki, Didi', 'grow it, care for users'], ['Bibi', 'counts the money']];
+  document.getElementById('flow').innerHTML = steps.map((s, i) => `${i ? '<span class="arrow" aria-hidden="true">→</span>' : ''}<div class="step">${s[0]}<small>${s[1]}</small></div>`).join('');
+}
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  renderMembers(b.dataset.g);
+}));
+drawWorld(); renderHouses(); renderMembers('all'); renderFlow(); select('coco');
+</script>

@@ -1,0 +1,171 @@
+<title>The Grand Estate</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..800,100&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: a Blender-rendered estate in a gilded frame (the hero), Material You info sheet and controls beneath */
+:root {
+  --primary: #7b4f6b; --on-primary: #ffffff; --primary-c: #ffd8ee; --on-primary-c: #30092a;
+  --surface: #fdf7f4; --surface-1: #f7eeee; --surface-2: #f0e4e6; --on-surface: #22191d; --muted: #6e5e64;
+  --gold: #b48a33; --gold-soft: #e7cf96; --frame: #efe2d6;
+  --good: #2f6b40; --good-c: #cdeed5; --warn: #7a5a00; --warn-c: #ffe6a3; --rest: #6e5e64; --rest-c: #ece2e5;
+  --plate-bg: rgba(255, 250, 244, .94); --plate-fg: #2f2228;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif; --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --on-surface: #f2e6ea; --muted: #cbbac4;
+  --gold: #e3c06c; --gold-soft: #5e4a1f; --frame: #2a2129;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --rest: #cbbac4; --rest-c: #3a3040;
+  --plate-bg: rgba(30, 24, 34, .9); --plate-fg: #f8ecef; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --on-surface: #f2e6ea; --muted: #cbbac4;
+  --gold: #e3c06c; --gold-soft: #5e4a1f; --frame: #2a2129;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --rest: #cbbac4; --rest-c: #3a3040;
+  --plate-bg: rgba(30, 24, 34, .9); --plate-fg: #f8ecef; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--surface); color: var(--on-surface); font: 16px/1.55 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 56px; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px; }
+header .t { display: grid; gap: 6px; min-width: 0; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+h1 { font-family: var(--display); font-variation-settings: "SOFT" 100; font-size: clamp(34px, 6vw, 60px); line-height: 1; margin: 0; text-wrap: balance;
+  background: linear-gradient(100deg, var(--on-surface) 50%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { color: var(--muted); max-width: 62ch; margin: 0; }
+.controls { display: inline-flex; gap: 4px; background: var(--surface-2); border-radius: 999px; padding: 4px; flex-wrap: wrap; }
+.controls button { border: 0; background: transparent; color: var(--on-surface); font: 700 14px var(--body); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
+.controls button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+button:focus-visible, .plate:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.frame { padding: 10px; border-radius: 36px; background: linear-gradient(135deg, var(--gold-soft), var(--frame) 40%, var(--gold-soft)); }
+.stage { position: relative; border-radius: 28px; overflow: hidden; aspect-ratio: 16 / 9; max-width: 100%; background: #bcdcee; cursor: grab; touch-action: pan-y; user-select: none; }
+.stage.dragging { cursor: grabbing; }
+.stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .5s; pointer-events: none; }
+.stage img.hide { opacity: 0; }
+.plate { position: absolute; transform: translate(-50%, -100%); background: var(--plate-bg); color: var(--plate-fg); border: 1px solid var(--gold); border-radius: 12px; padding: 3px 10px; font: 800 13px var(--body); white-space: nowrap; text-align: center; line-height: 1.2; box-shadow: 0 6px 16px rgba(0, 0, 0, .14); cursor: pointer; transition: opacity .25s; }
+.plate small { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .72; font-weight: 700; }
+.plate.sky { font-size: 11px; padding: 2px 8px; border-radius: 8px; border-color: var(--gold-soft); }
+.plate.on { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.turn { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; background: var(--plate-bg); color: var(--plate-fg); border-radius: 999px; padding: 4px; border: 1px solid var(--gold-soft); }
+.turn button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: inherit; font: 800 18px var(--body); cursor: pointer; }
+.turn span { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding-inline: 4px; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; color: #2f2228; background: rgba(255, 255, 255, .35); }
+.info { background: var(--surface-1); border-radius: 28px; padding: 20px 22px; display: grid; gap: 10px; box-shadow: inset 0 0 0 1px var(--gold-soft); }
+.info-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.info h2 { font-family: var(--display); font-variation-settings: "SOFT" 100; margin: 0; font-size: 28px; }
+.info p { margin: 0; max-width: 72ch; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 4px 12px; font-size: 13px; font-weight: 700; background: var(--surface-2); }
+.chip.good { background: var(--good-c); color: var(--good); } .chip.warn { background: var(--warn-c); color: var(--warn); } .chip.rest { background: var(--rest-c); color: var(--rest); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag { background: var(--surface-2); border-radius: 10px; padding: 4px 10px; font-size: 13px; font-weight: 600; }
+footer { color: var(--muted); font-size: 13px; }
+@media (max-width: 640px) { .plate small { display: none; } .plate { font-size: 11px; padding: 2px 7px; } .plate.sky { display: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="t">
+      <span class="eyebrow">Good Space · managed by Coco</span>
+      <h1>The Grand Estate</h1>
+      <p class="lede">Our whole company as one private island, rendered in Blender. Drag the picture to walk around it, switch to night to see the windows glow, and tap a golden name plate to meet the team inside.</p>
+    </div>
+    <div class="controls" role="group" aria-label="Time of day">
+      <button type="button" id="day" aria-pressed="true">Day</button>
+      <button type="button" id="night" aria-pressed="false">Night</button>
+      <button type="button" id="spin" aria-pressed="false">Slow turn</button>
+    </div>
+  </header>
+  <div class="frame">
+    <div class="stage" id="stage" aria-label="The Grand Estate, drag to turn">
+      <img id="imgA" alt="The Grand Estate, rendered in Blender">
+      <img id="imgB" class="hide" alt="">
+      <div id="plates"></div>
+      <div class="turn"><button type="button" id="prev" aria-label="Turn left">‹</button><span id="angle">View 1 of 24</span><button type="button" id="next" aria-label="Turn right">›</button></div>
+      <div class="loading" id="loading">Opening the estate…</div>
+    </div>
+  </div>
+  <section class="info" id="info" aria-live="polite"></section>
+  <footer>Rendered in Blender 4.2 (EEVEE, AgX colour) · 24 views by day and by night · source: Good Space › Coco › Grand Estate.</footer>
+</div>
+
+<script>
+const PLACES = {
+  coco: ['Coco Palace', 'The manager', 'good', 'Always on', 'Coco takes your goal, picks the House, calls the helpers in order, collects your YES and makes sure every idea reaches at least three platforms.', ['Gives work', 'Your approvals', 'Connect rule', 'Weekly profit check']],
+  gigi: ['Gigi House', 'Content', 'good', 'Working', 'YouTube first: The Flow is live and 13 more channels are ready, one per category. Instagram and Facebook follow with the same 14 categories.', ['YouTube', 'Insta / FB', 'Lola, Lili, Margot, Cleo, Vivi, Elise, Kiki, Bibi']],
+  lulu: ['Lulu House', 'Products', 'good', 'Working', '33 Chrome extensions in 10 categories, Android apps on the Play Store, websites later. Our best extensions become apps next.', ['Chrome Store', 'Play Store', 'Lola, Lili, Remy, Vivi, Margot, Elise, Kiki, Didi, Bibi']],
+  fifi: ['Fifi House', 'Downloads', 'warn', 'Next', 'Study notes, templates, planners and e-books in 8 categories, each sold through a Gigi channel. The Mantra PDF Project is already started.', ['Website shop', 'Notion', 'Lola, Lili, Margot, Vivi, Elise, Kiki, Didi, Bibi']],
+  zaza: ['Zaza House', 'Games', 'rest', 'Later', 'Roblox games first, then small versions on the Play Store, Chrome Store and the web, with gameplay Shorts made by Gigi.', ['Roblox', 'Play Store', 'Lola, Lili, Remy, Vivi, Cleo, Elise, Kiki, Didi, Bibi']],
+  club: ['Bonbon Club', 'Support team · 10 helpers', 'good', 'On call', 'Think: Lola, Lili. Make: Remy, Vivi, Margot, Cleo. Care: Elise, Kiki, Didi, Bibi. They go to whichever House asks for them.', ['Lola', 'Lili', 'Remy', 'Vivi', 'Margot', 'Cleo', 'Elise', 'Kiki', 'Didi', 'Bibi']],
+  shelf: ['Shared Shelf', 'Everything we make', 'good', 'Open', 'Every video, product, template and game lands here and every House reuses it. Each House gives a fifth of its time to helping the others.', ['80% own work', '20% helping others', 'Reuse everything']],
+};
+const SUBS = { coco: 'the manager', gigi: 'content', lulu: 'products', fifi: 'downloads', zaza: 'games', club: '10 helpers', shelf: '' };
+const $ = (s) => document.querySelector(s);
+const stage = $('#stage'), plates = $('#plates');
+let data = null, frame = 0, time = 'day', front = $('#imgA'), back = $('#imgB'), selected = 'coco', timer = null;
+const src = (t, f) => `Portraits/${t}_${String(f).padStart(2, '0')}.jpg`;
+
+function select(id) {
+  if (!PLACES[id]) return; selected = id; const p = PLACES[id];
+  $('#info').innerHTML = `<div class="info-head"><h2>${p[0]}</h2><span class="chip ${p[2]}"><i class="dot"></i>${p[3]}</span><span class="chip">${p[1]}</span></div><p>${p[4]}</p><div class="tags">${p[5].map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+  document.querySelectorAll('.plate').forEach(n => n.classList.toggle('on', n.dataset.id === id));
+}
+
+function buildPlates() {
+  const spots = data.hotspots['0'];
+  Object.keys(spots).forEach(k => {
+    const sky = k.startsWith('p:'), id = sky ? null : k;
+    const b = document.createElement(sky ? 'div' : 'button');
+    b.className = 'plate' + (sky ? ' sky' : ''); b.dataset.id = id || '';
+    b.innerHTML = sky ? k.slice(2) : `${PLACES[k][0]}${SUBS[k] ? `<small>${SUBS[k]}</small>` : ''}`;
+    if (!sky) { b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); select(id); }); }
+    b.dataset.key = k; plates.appendChild(b);
+  });
+}
+
+function show(f, t = time) {
+  frame = (f + data.frames) % data.frames; time = t;
+  back.src = src(time, frame);
+  const swap = () => { back.classList.remove('hide'); front.classList.add('hide'); [front, back] = [back, front]; };
+  if (back.complete) swap(); else back.onload = swap;
+  const spots = data.hotspots[String(frame)];
+  const depths = Object.values(spots).map(v => v[2]); const near = Math.min(...depths), far = Math.max(...depths);
+  document.querySelectorAll('.plate').forEach(n => {
+    const v = spots[n.dataset.key]; if (!v) return;
+    n.style.left = (v[0] * 100) + '%'; n.style.top = (v[1] * 100) + '%';
+    const d = (v[2] - near) / ((far - near) || 1); n.style.zIndex = String(100 - Math.round(d * 90)); n.style.opacity = String(1 - d * 0.35);
+  });
+  $('#angle').textContent = `View ${frame + 1} of ${data.frames}`;
+}
+
+function setTime(t) {
+  $('#day').setAttribute('aria-pressed', String(t === 'day')); $('#night').setAttribute('aria-pressed', String(t === 'night'));
+  show(frame, t);
+}
+
+function preload() {
+  const all = [];
+  for (const t of ['day', 'night']) for (let f = 0; f < data.frames; f++) { const i = new Image(); i.src = src(t, f); all.push(i); }
+  return all;
+}
+
+// drag to turn: one view per 28 px
+let dragX = null, startFrame = 0;
+stage.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; dragX = e.clientX; startFrame = frame; stage.classList.add('dragging'); stage.setPointerCapture(e.pointerId); stopSpin(); });
+stage.addEventListener('pointermove', e => { if (dragX === null) return; const step = Math.round((dragX - e.clientX) / 28); if ((startFrame + step) % data.frames !== frame) show(startFrame + step); });
+const end = () => { dragX = null; stage.classList.remove('dragging'); };
+stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+$('#prev').onclick = () => { stopSpin(); show(frame - 1); };
+$('#next').onclick = () => { stopSpin(); show(frame + 1); };
+stage.tabIndex = 0;
+stage.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') { stopSpin(); show(frame - 1); } if (e.key === 'ArrowRight') { stopSpin(); show(frame + 1); } });
+$('#day').onclick = () => setTime('day'); $('#night').onclick = () => setTime('night');
+function stopSpin() { clearInterval(timer); timer = null; $('#spin').setAttribute('aria-pressed', 'false'); }
+$('#spin').onclick = () => { if (timer) return stopSpin(); timer = setInterval(() => show(frame + 1), 900); $('#spin').setAttribute('aria-pressed', 'true'); };
+
+fetch('Portraits/hotspots.json').then(r => r.json()).then(j => {
+  data = j; buildPlates();
+  const dark = document.documentElement.dataset.theme === 'dark' || (matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light');
+  front.src = src(dark ? 'night' : 'day', 0); front.onload = () => $('#loading').hidden = true;
+  setTime(dark ? 'night' : 'day'); select('coco'); preload();
+}).catch(() => { $('#loading').textContent = 'The estate pictures could not be loaded.'; });
+</script>

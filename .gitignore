@@ -2,3 +2,6 @@ node_modules/
 memory/Daily Copies/
 *.tmp
 *.env
+Grand Estate/Portraits/
+Grand Estate/*.blend
+Grand Estate/*.blend1
