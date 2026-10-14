@@ -246,6 +246,11 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
             }
         }
     }
+    // Quick command to your own PC (online one first), right on Home
+    val myPc = d.devices.filter { it.s("kind") == "pc" && it.s("id") != vm.cloud.deviceId && it.optBoolean("active", true) }
+        .sortedWith(compareBy({ !online(it) }, { !it.s("id").startsWith(vm.cloud.deviceId?.substringBefore('-') ?: "~") }))
+        .firstOrNull()
+    if (myPc != null) item(key = "quick") { Appear(1) { CommandBar(vm, myPc, "Tell ${myPc.s("name")}") } }
     item(key = "tiles") {
         Appear(1) {
             val waiting by animateIntAsState(d.approvals.count { it.s("state") == "waiting" }, tween(600), label = "w")
@@ -465,6 +470,42 @@ fun LazyListScope.remote(vm: Lounge) {
     }
 }
 
+/** One bar to command a device: type or tap the mic and speak (English or Hinglish). Used on Home and Remote. */
+@Composable
+fun CommandBar(vm: Lounge, dev: JSONObject, title: String = "Tell ${dev.optString("name")} what to do") {
+    val pc = dev.optString("kind") == "pc"
+    var say by remember(dev.optString("id")) { mutableStateOf("") }
+    val send = { text: String -> if (text.isNotBlank()) { vm.sendCommand(dev.optString("id"), "say", JSONObject().put("text", text.trim())); say = "" } }
+    val mic = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { r ->
+        r.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { heard -> say = heard; send(heard) }
+    }
+    val listen = {
+        runCatching {
+            mic.launch(Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
+                .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Tell ${dev.optString("name")}…"))
+        }.onFailure { vm.message = "Voice typing is not available on this phone" }
+    }
+    Surface(shape = RoundedCornerShape(28.dp), color = Mu.plum, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, color = Mu.cream)
+                    Text("Tap the mic and speak, or type. Runs in about a second.", style = MaterialTheme.typography.bodyMedium, color = Mu.bubblegum)
+                }
+                Spacer(Modifier.width(10.dp))
+                FilledIconButton({ listen() }, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = Mu.tomato, contentColor = Mu.cream)) { Icon(Icons.Rounded.Mic, "Speak", Modifier.size(32.dp)) }
+            }
+            OutlinedTextField(say, { say = it }, placeholder = { Text(if (pc) "play kesariya · open vs code · lock" else "play kesariya · open whatsapp · ring", color = Mu.cream.copy(alpha = 0.7f)) },
+                singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { send(say) }),
+                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Mu.cream, unfocusedTextColor = Mu.cream, focusedBorderColor = Mu.bubblegum, unfocusedBorderColor = Mu.cream.copy(alpha = 0.6f), cursorColor = Mu.cream),
+                trailingIcon = { IconButton({ send(say) }) { Icon(Icons.AutoMirrored.Rounded.Send, "Do it", tint = Mu.bubblegum) } })
+        }
+    }
+}
+
 @Composable
 fun RemotePanel(vm: Lounge, dev: JSONObject) {
     val id = dev.s("id"); val pc = dev.s("kind") == "pc"
@@ -473,20 +514,8 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
     var link by remember { mutableStateOf("") }
     val send: (String, JSONObject) -> Unit = { a, args -> vm.sendCommand(id, a, args) }
     val play = { if (song.isNotBlank()) { send("play_youtube", JSONObject().put("q", song.trim())); song = "" } }
-    var say by remember { mutableStateOf("") }
-    val doIt = { if (say.isNotBlank()) { send("say", JSONObject().put("text", say.trim())); say = "" } }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Surface(shape = RoundedCornerShape(28.dp), color = Mu.plum, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Tell ${dev.s("name")} what to do", style = MaterialTheme.typography.titleLarge, color = Mu.cream)
-                OutlinedTextField(say, { say = it }, placeholder = { Text(if (pc) "play kesariya · open vs code · lock" else "play kesariya · open whatsapp · ring", color = Mu.cream.copy(alpha = 0.7f)) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { doIt() }),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Mu.cream, unfocusedTextColor = Mu.cream, focusedBorderColor = Mu.bubblegum, unfocusedBorderColor = Mu.cream.copy(alpha = 0.6f), cursorColor = Mu.cream),
-                    trailingIcon = { IconButton(doIt) { Icon(Icons.AutoMirrored.Rounded.Send, "Do it", tint = Mu.bubblegum) } })
-                Text("Plain words, English or Hinglish. It runs on that device in about a second.", style = MaterialTheme.typography.bodyMedium, color = Mu.bubblegum)
-            }
-        }
+        CommandBar(vm, dev)
         Card {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(if (pc) Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))

@@ -34,7 +34,7 @@ object Alerts {
         if (!allowed(context, kind)) return
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
-        val n = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_coco_face).setColor(0xFF7B4F6B.toInt())
+        val n = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_coco_face).setColor(0xFFB83A12.toInt())
             .setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setContentIntent(open).setAutoCancel(true).build()
         NotificationManagerCompat.from(context).notify(id, n)
     }

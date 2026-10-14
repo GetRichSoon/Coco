@@ -15,7 +15,7 @@ app.setAppUserModelId('GoodSpace.CocoLounge');
 function createWindow() {
   win = new BrowserWindow({
     width: 1280, height: 860, minWidth: 380, minHeight: 600, show: false,
-    title: 'Coco Lounge', icon: ICON, backgroundColor: '#fdf7f4', autoHideMenuBar: true,
+    title: 'Coco Lounge', icon: ICON, backgroundColor: '#fff4e6', autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.loadFile(UI);
@@ -55,7 +55,7 @@ const local = (...p) => { const f = path.join(process.env.LOCALAPPDATA || '', ..
 const PC_APPS = {
   chrome: () => 'chrome', brave: () => 'brave', edge: () => 'msedge', notepad: () => 'notepad', calculator: () => 'calc',
   files: () => 'explorer', settings: () => 'ms-settings:', spotify: () => 'spotify:', whatsapp: () => 'whatsapp:',
-  vscode: () => local('Programs', 'Microsoft VS Code', 'Code.exe'), cursor: () => local('Programs', 'cursor', 'Cursor.exe'),
+  vscode: () => local('Programs', 'Microsoft VS Code', 'Code.exe'), cursor: () => local('Programs', 'cursor', 'Cursor.exe') || [path.join(process.env.ProgramFiles || '', 'Cursor', 'Cursor.exe')].find((f) => fs.existsSync(f)) || null,
   lounge: () => process.execPath,
 };
 // First YouTube result for a search, so "play <song>" starts the video instead of showing a list.

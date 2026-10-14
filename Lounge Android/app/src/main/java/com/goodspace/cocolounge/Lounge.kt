@@ -67,7 +67,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     fun houseName(id: String?) = data.houses.firstOrNull { it.optString("id") == id }?.optString("name") ?: "Coco"
 
     private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
-    private fun fail(e: Throwable) { message = e.message ?: "Something went wrong" }
+    private fun fail(e: Throwable) { if (e is kotlinx.coroutines.CancellationException) return; message = e.message ?: "Something went wrong" }
 
     fun signIn(mail: String, pass: String) = viewModelScope.launch {
         busy = true
@@ -151,7 +151,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
             viewModelScope.launch {
                 val id = c.optString("id")
                 runCatching { cloud.update("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "running")) }
-                val result = runCatching { PhoneRemote.run(getApplication(), c.optString("action"), c.optJSONObject("args") ?: JSONObject()) }.getOrElse { "failed: ${it.message}" }
+                val age = runCatching { java.time.Duration.between(java.time.OffsetDateTime.parse(c.optString("created_at")).toInstant(), Instant.now()).seconds }.getOrDefault(0L)
+                val result = if (age > 600) "failed: too old (over 10 minutes), not run" else runCatching { PhoneRemote.run(getApplication(), c.optString("action"), c.optJSONObject("args") ?: JSONObject()) }.getOrElse { "failed: ${it.message}" }
                 runCatching { cloud.update("commands", "id=eq.$id", JSONObject().put("status", if (result.startsWith("failed") || result.startsWith("Not understood")) "failed" else "done").put("result", result).put("done_at", Instant.now().toString())) }
             }
         }
