@@ -294,7 +294,7 @@ function connectLive() {
   clearTimeout(retryTimer);
   if (channel) { try { sb.removeChannel(channel); } catch {} channel = null; }
   channel = sb.channel('pulse-' + Date.now())
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { clearTimeout(pulseTimer); pulseTimer = setTimeout(loadAll, 400); })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { runMyCommands(); clearTimeout(pulseTimer); pulseTimer = setTimeout(loadAll, 400); })
     .subscribe((s) => {
       if (s === 'SUBSCRIBED') { tries = 0; setLive(true); loadAll(); }
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
@@ -306,8 +306,15 @@ function listen() {
   addEventListener('offline', () => setLive(false));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { heartbeat(); if (!isLive) connectLive(); else loadAll(); } });
   setInterval(() => { if (!isLive && navigator.onLine) connectLive(); }, 45000);
+  setInterval(() => { if (!isLive) runMyCommands(); }, 5000); // commands still arrive while the live link is rebuilding
 }
-async function heartbeat() { if (deviceId) await sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-1' }).eq('id', deviceId); }
+// Each device reports its own live data (battery, storage, memory) with its heartbeat, so every device sees it.
+let infoAt = 0, info = null;
+async function heartbeat() {
+  if (!deviceId) return;
+  if (window.cocoDesktop && Date.now() - infoAt > 300000) { infoAt = Date.now(); try { info = { summary: await window.cocoDesktop.pcCommand('status', {}), at: new Date().toISOString() }; } catch {} }
+  await sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2', ...(info ? { info } : {}) }).eq('id', deviceId);
+}
 const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id || '';
 const founderName = () => founder ? founder.name : (me && me.email);
 async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
@@ -405,7 +412,7 @@ const V = {
       <div class="card2" style="margin-bottom:14px"><span class="eyebrow">Tell ${esc(t.name)} what to do</span><div style="display:flex;gap:8px"><input id="rSay" placeholder="play kesariya · open chrome · volume up · lock · ring" value="${esc(rSay)}" style="flex:1"><button class="btn filled" data-rc="say"><i class="ms">send</i> Do it</button></div><span class="muted">Plain words in English or Hinglish. It runs on that device in about a second.</span></div>
       <div class="grid">
       <div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(t.name)}</h3><span class="live"><i class="dot ${online(t) ? 'on' : ''}"></i>${online(t) ? 'online' : 'offline'}</span></div>
-        <span class="muted">${t.key_hash ? (online(t) ? 'Coco Lounge connected' : 'runs when it comes back online') : 'not paired yet'}</span><div class="actions"><button class="btn text" data-rc="status">Check status</button></div></div>
+        <span class="muted">${t.key_hash ? (online(t) ? 'Coco Lounge connected' : 'runs when it comes back online within 10 minutes') : 'not paired yet'}</span>${t.info && t.info.summary ? `<span class="muted">${esc(t.info.summary)} · ${ago(t.info.at)}</span>` : ''}<div class="actions"><button class="btn text" data-rc="status">Check status</button></div></div>
       <div class="card2"><span class="eyebrow">Play on YouTube</span><div style="display:flex;gap:8px"><input id="rSong" placeholder="Song, singer or video" value="${esc(rSong)}" style="flex:1"><button class="btn filled" data-rc="play_youtube"><i class="ms">play_arrow</i> Play</button></div>
         <div class="actions">${key('prev', 'skip_previous')}${key('playpause', 'play_pause')}${key('next', 'skip_next')}${key('down', 'volume_down', 'volume')}${key('up', 'volume_up', 'volume')}${key('mute', 'volume_off', 'volume')}</div></div>
       <div class="card2"><span class="eyebrow">Open an app</span><div class="actions">${apps.map(([k, l]) => `<button class="btn tonal" data-rc="open_app" data-ra="${k}">${l}</button>`).join('')}</div>
@@ -418,7 +425,7 @@ const V = {
   devices() {
     return `<p class="muted">Only these four devices can open Good Space. A device that is switched off stops working at once.</p><div class="grid">${D.devices.map(d => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(d.name)}</h3><span class="live"><i class="dot ${online(d) ? 'on' : ''}"></i>${online(d) ? 'online' : 'offline'}</span></div>
       <span class="muted">${esc(d.kind === 'pc' ? 'PC' : 'Phone')} · ${d.key_hash ? 'paired ' + ago(d.paired_at) : 'not paired yet'} · seen ${ago(d.last_seen)}</span>${d.id === deviceId ? '<span class="chip gold" style="justify-self:start">This device</span>' : ''}
-      ${d.active ? (d.id !== deviceId ? `<div class="actions"><button class="btn tonal" data-code="${d.id}">Make pairing code</button><button class="btn text" data-off="${d.id}">Switch off</button></div>` : '') : '<span class="chip bad" style="justify-self:start">Switched off</span>'}</div>`).join('')}</div>`;
+      ${d.active ? (d.id !== deviceId ? `<div class="actions"><button class="btn tonal" data-code="${d.id}">Make pairing code</button><button class="btn text" data-off="${d.id}">Switch off</button></div>` : '') : `<div class="actions"><span class="chip bad">Switched off</span><button class="btn tonal" data-on="${d.id}">Switch on</button></div>`}</div>`).join('')}</div>`;
   },
 };
 
@@ -474,6 +481,7 @@ document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const ds = b.dataset;
   if (ds.sub) { sub = ds.sub; render(); }
+  if (ds.on) { await sb.from('devices').update({ active: true }).eq('id', ds.on); await log('device switched on', ds.on); toast('Switched on'); loadAll(); }
   if (ds.rt) { rTarget = ds.rt; render(); }
   if (ds.rc) {
     const a = ds.rc, args = {};
@@ -517,7 +525,7 @@ document.addEventListener('click', async (e) => {
     d.addEventListener('close', () => d.querySelectorAll('button').forEach(x => x.hidden = false), { once: true });
     await log('pairing code made', ds.code);
   }
-  if (ds.off) { if (ds.off === deviceId) return; await sb.from('devices').update({ active: false }).eq('id', ds.off); await log('device switched off', ds.off); toast('Switched off'); loadAll(); }
+  if (ds.off) { if (ds.off === deviceId || !confirm('Switch off ' + deviceName(ds.off) + '? It stops opening Good Space and taking commands until switched on again.')) return; await sb.from('devices').update({ active: false }).eq('id', ds.off); await log('device switched off', ds.off); toast('Switched off'); loadAll(); }
 });
 boot();
 </script>

@@ -51,9 +51,16 @@ object PhoneRemote {
         play?.groupValues?.get(1)?.takeIf { !Regex("^(music|song|gaana|video)$").matches(it) }?.let { q ->
             return a("play_youtube", "q" to q.replace(Regex("""\b(song|gaana|gana|ke gaane|gaane|on youtube|youtube pe|youtube par)\b"""), " ").replace(Regex("\\s+"), " ").trim().ifEmpty { q })
         }
+        val browser = Regex("""\b(brave|chrome|edge)\b""").find(t)?.groupValues?.get(1)
+        val web = mapOf("youtube" to "https://www.youtube.com", "ytmusic" to "https://music.youtube.com", "instagram" to "https://www.instagram.com", "gmail" to "https://mail.google.com", "maps" to "https://maps.google.com")
+        fun openIt(app: String) = if (kind == "pc" && web[app] != null) a("open_url", "url" to web[app]!!, "browser" to (browser ?: "brave")) else a("open_app", "app" to app)
+        // "youtube brave app", "youtube brave chalu kar"
+        if (r("""\b(yt|youtube)\b""") && !r("""\bmusic\b""") && (browser != null || t.split(" ").size <= 4)) return openIt("youtube")
+        if (r("""\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit)\b""") && !r("""\b(pc|laptop|computer|system)\b""")) return a("close_app")
         val open = Regex("""^(?:open|khol(?:o|do)?|start|launch|chalu kar(?:o)?)\s+(.+)$""").find(t) ?: Regex("""^(.+?)\s+(?:khol(?:o|do)?|open kar(?:o|do)?|open|chalu kar(?:o|do)?)$""").find(t)
-        open?.groupValues?.get(1)?.let { w -> appWords.firstOrNull { it.first.containsMatchIn(w) }?.let { (_, app) ->
-            return if (kind == "pc" && app == "youtube") a("open_url", "url" to "https://www.youtube.com") else a("open_app", "app" to app) } }
+        open?.groupValues?.get(1)?.let { w -> appWords.firstOrNull { it.first.containsMatchIn(w) }?.let { (_, app) -> return openIt(app) } }
+        // just an app name: "chrome", "whatsapp"
+        if (t.split(" ").size <= 3 && !r("""\b(volume|awaaz|play|chala|bajao|status|lock)\b""")) appWords.firstOrNull { it.first.containsMatchIn(t) }?.let { (_, app) -> return openIt(app) }
         if (r("""\b(volume|awaaz|awaz|aawaz|sound|louder|quieter)\b""")) {
             val steps = Regex("""\b(\d{1,2})\b""").find(t)?.groupValues?.get(1)?.toIntOrNull() ?: 3
             return when { r("""\b(mute|band|chup)\b""") -> a("volume", "key" to "mute"); r("""\b(down|kam|low|dheere|dheema|quieter)\b""") -> a("volume", "key" to "down", "steps" to steps); else -> a("volume", "key" to "up", "steps" to steps) }
@@ -76,8 +83,8 @@ object PhoneRemote {
 
     suspend fun run(ctx: Context, action: String, args: JSONObject): String = when (action) {
         "say" -> understand(args.optString("text"), "phone")?.takeIf { it.first != "say" }?.let { (a, x) -> run(ctx, a, x) }
-            ?: "Not understood. Try: play <song>, open <app>, volume up, next, pause, ring, status"
-        "lock", "sleep", "restart", "shutdown", "cancel_power" -> "A phone can't do \"$action\" from Coco; use the phone's own buttons"
+            ?: "Not understood: \"${args.optString("text").take(60)}\". Try: kesariya chalao, youtube kholo, whatsapp kholo, awaaz badhao, ring, status"
+        "lock", "sleep", "restart", "shutdown", "cancel_power", "close_app" -> "A phone can't do \"$action\" from Coco; use the phone's own buttons"
         "status" -> status(ctx)
         "notify" -> { post(ctx, "Coco", args.optString("text").take(200), null); "Shown on the phone" }
         "open_url" -> args.optString("url").let { u -> if (!u.startsWith("https://")) "Only https links" else launch(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(u)), "Open link", "Opened $u") }
@@ -119,7 +126,7 @@ object PhoneRemote {
         return "Ringing for 20 seconds"
     }
 
-    private fun status(ctx: Context): String {
+    fun status(ctx: Context): String {
         val bm = ctx.getSystemService(BatteryManager::class.java)
         val st = StatFs(Environment.getDataDirectory().path)
         val am = ctx.getSystemService(AudioManager::class.java)

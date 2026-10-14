@@ -203,7 +203,7 @@ fun LoungeApp(vm: Lounge) {
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { pad ->
-        AnimatedContent(tab to more, Modifier.padding(pad), transitionSpec = {
+        AnimatedContent(tab to more, Modifier.padding(pad).consumeWindowInsets(pad), transitionSpec = {
             (fadeIn(tween(220, delayMillis = 90)) + scaleIn(tween(220, delayMillis = 90), initialScale = 0.96f)) togetherWith fadeOut(tween(90))
         }, label = "screens") { (t, m) ->
             if (t == Tab.Chat) ChatScreen(vm)
@@ -519,7 +519,7 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
         Card {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(if (pc) Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) { Text(dev.s("name"), style = MaterialTheme.typography.titleLarge); Muted(if (online(dev)) "online · Coco Lounge connected" else if (dev.s("key_hash").isBlank()) "not paired yet" else "offline · seen ${ago(dev.s("last_seen"))} · runs when it comes back") }
+                Column(Modifier.weight(1f)) { Text(dev.s("name"), style = MaterialTheme.typography.titleLarge); Muted(if (online(dev)) "online · Coco Lounge connected" else if (dev.s("key_hash").isBlank()) "not paired yet" else "offline · seen ${ago(dev.s("last_seen"))} · runs if back within 10 min"); dev.optJSONObject("info")?.optString("summary")?.takeIf { it.isNotBlank() }?.let { Muted("$it · ${ago(dev.optJSONObject("info")?.optString("at"))}") } }
                 StatusChip(if (online(dev)) "live" else "off", if (online(dev)) "Online" else "Offline")
             }
             TextButton({ send("status", JSONObject()) }) { Icon(Icons.Rounded.MonitorHeart, null); Spacer(Modifier.width(6.dp)); Text("Check status") }
@@ -668,8 +668,10 @@ fun LazyListScope.devices(vm: Lounge) {
             }
             Muted("${if (d.s("key_hash").isNotBlank()) "paired ${ago(d.s("paired_at"))}" else "not paired yet"} · seen ${ago(d.s("last_seen"))}")
             if (mine) Text("This device", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-            else if (d.optBoolean("active", true)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilledTonalButton({ vm.makePairingCode(id) }) { Text("Make pairing code") }; TextButton({ vm.switchOff(id) }) { Text("Switch off") } }
-            else Text("Switched off", color = LocalLux.current.bad, style = MaterialTheme.typography.labelLarge)
+            else if (d.optBoolean("active", true)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilledTonalButton({ vm.makePairingCode(id) }) { Text("Make pairing code") }; var ask by remember { mutableStateOf(false) }; TextButton({ ask = true }) { Text("Switch off") }
+                if (ask) AlertDialog(onDismissRequest = { ask = false }, title = { Text("Switch off ${d.s("name")}?") }, text = { Text("It will stop opening Good Space and stop taking commands until you switch it on again.") },
+                    confirmButton = { TextButton({ vm.switchOff(id); ask = false }) { Text("Switch off") } }, dismissButton = { Button({ ask = false }) { Text("Keep it on") } }) }
+            else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { Text("Switched off", color = LocalLux.current.bad, style = MaterialTheme.typography.labelLarge); FilledTonalButton({ vm.switchOn(id) }) { Text("Switch on") } }
         }
     }
 }

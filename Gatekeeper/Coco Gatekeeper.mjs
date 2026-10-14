@@ -1,3 +1,5 @@
+// Backup only: Coco Cloud (function coco-chat) answers chat first; this local AI steps in only for messages
+// still unanswered after 45 seconds.
 // Coco Gatekeeper: the free local AI (Ollama on this PC) reads every new chat message first.
 // Easy things (greetings, status, simple questions) it answers itself; real work becomes a task
 // for the Coco Engine (Claude). Founder idea, 2026-10-15. Token Treasury rule 2.
@@ -73,7 +75,7 @@ let busy = false;
 async function tick() {
   if (busy) return; busy = true;
   try {
-    const fresh = await rest('chat?select=id,author,body,created_at&role=eq.founder&status=eq.new&order=id.asc&limit=5');
+    const fresh = await rest('chat?select=id,author,body,created_at&role=eq.founder&status=eq.new&created_at=lt.' + new Date(Date.now() - 45000).toISOString() + '&order=id.asc&limit=5');
     for (const m of fresh) await handle(m);
   } catch (e) { log('tick: ' + e.message); } finally { busy = false; }
 }

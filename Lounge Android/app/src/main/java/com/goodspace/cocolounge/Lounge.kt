@@ -100,16 +100,25 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 founder = founders.objects().firstOrNull { it.optString("email").equals(cloud.email, true) }
                 reload()
                 stopListening?.invoke()
-                stopListening = cloud.listen(onPulse = { scheduleReload() }, onState = { ok -> live = ok; if (ok) scheduleReload() })
+                stopListening = cloud.listen(onPulse = { quickCommands(); scheduleReload() }, onState = { ok -> live = ok; if (ok) scheduleReload() })
                 heartbeat?.cancel()
-                heartbeat = viewModelScope.launch { while (true) { beat(); delay(60_000) } }
+                heartbeat = viewModelScope.launch { var n = 0; while (true) { if (n % 12 == 0) beat(); if (!live) quickCommands(); n++; delay(5_000) } }
             } catch (e: Cloud.CloudError) { if (e.code == 401) gate = Gate.SignIn else fail(e) } catch (e: Exception) { fail(e) }
         }
     }
 
     fun onResume() { if (gate == Gate.Open) viewModelScope.launch { beat(); reload() } }
 
-    private suspend fun beat() { cloud.deviceId?.let { runCatching { cloud.update("devices", "id=eq.$it", JSONObject().put("last_seen", Instant.now().toString()).put("app_version", "android-1")) } } }
+    /** Heartbeat with this phone's own live data (battery, storage, volume), so every device sees it. */
+    private suspend fun beat() { cloud.deviceId?.let { runCatching {
+        val info = JSONObject().put("summary", PhoneRemote.status(getApplication())).put("at", Instant.now().toString())
+        cloud.update("devices", "id=eq.$it", JSONObject().put("last_seen", Instant.now().toString()).put("app_version", "android-2").put("info", info)) } } }
+
+    /** Fast path: on every cloud ping, fetch only the commands waiting for this phone and run them at once. */
+    private fun quickCommands() {
+        val me = cloud.deviceId ?: return
+        viewModelScope.launch { runCatching { runMyCommands(cloud.list("commands", "select=*&target_device=eq.$me&status=eq.queued&order=created_at.asc").objects()) } }
+    }
 
     private fun scheduleReload() { reloadJob?.cancel(); reloadJob = viewModelScope.launch { delay(350); reload() } }
 
@@ -209,6 +218,9 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         } catch (e: Exception) { fail(e) }
     }
 
+    fun switchOn(deviceId: String) = viewModelScope.launch {
+        try { cloud.update("devices", "id=eq.$deviceId", JSONObject().put("active", true)); log("device switched on", deviceId); reload() } catch (e: Exception) { fail(e) }
+    }
     fun switchOff(deviceId: String) = viewModelScope.launch {
         if (deviceId == cloud.deviceId) return@launch
         try { cloud.update("devices", "id=eq.$deviceId", JSONObject().put("active", false)); log("device switched off", deviceId); reload() } catch (e: Exception) { fail(e) }

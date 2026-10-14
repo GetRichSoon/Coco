@@ -9,6 +9,12 @@ const ICON = path.join(__dirname, 'coco.ico');
 const RULES_FILE = path.join(__dirname, '..', 'memory', 'Cloud Rules.md');
 let win = null, tray = null, quitting = false;
 
+// Office mode (founder rule): at the office the Lounge never pops up; it stays in the tray, connected,
+// so phone commands still run. The place comes from the Home/Office switcher.
+const PLACE_FILE = path.join(process.env.USERPROFILE || '', 'nova-hq', 'os', 'state', 'local', 'last-place.txt');
+const atOffice = () => { try { return fs.readFileSync(PLACE_FILE, 'utf8').trim().toLowerCase() === 'office'; } catch { return false; } };
+setInterval(() => { if (atOffice() && win && win.isVisible() && !win.isFocused()) win.hide(); }, 30000);
+
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 app.setAppUserModelId('GoodSpace.CocoLounge');
 
@@ -19,7 +25,7 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.loadFile(UI);
-  win.once('ready-to-show', () => { if (!process.argv.includes('--hidden')) win.show(); });
+  win.once('ready-to-show', () => { if (!process.argv.includes('--hidden') && !atOffice()) win.show(); });
   win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); } });
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('file://')) { e.preventDefault(); if (/^https:\/\//.test(url)) shell.openExternal(url); } });
@@ -58,6 +64,9 @@ const PC_APPS = {
   vscode: () => local('Programs', 'Microsoft VS Code', 'Code.exe'), cursor: () => local('Programs', 'cursor', 'Cursor.exe') || [path.join(process.env.ProgramFiles || '', 'Cursor', 'Cursor.exe')].find((f) => fs.existsSync(f)) || null,
   lounge: () => process.execPath,
 };
+// Browsers by name; YouTube opens in Brave (the founders' YouTube browser) when it is installed.
+const pf = (...p) => [process.env.ProgramFiles, process.env['ProgramFiles(x86)'], process.env.LOCALAPPDATA].filter(Boolean).map((r) => path.join(r, ...p)).find((x) => fs.existsSync(x)) || null;
+const BROWSERS = { brave: () => pf('BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe'), chrome: () => pf('Google', 'Chrome', 'Application', 'chrome.exe'), edge: () => pf('Microsoft', 'Edge', 'Application', 'msedge.exe') };
 // First YouTube result for a search, so "play <song>" starts the video instead of showing a list.
 async function firstVideo(q) {
   try {
@@ -77,8 +86,16 @@ function understand(text, kind) {
   const url = t.match(/https?:\/\/\S+/); if (url) return { action: 'open_url', args: { url: url[0].replace(/^http:/, 'https:') } };
   const play = t.match(/^(?:play|chala(?:o)?|bajao|baja|laga(?:o)?|sunao|suna)\s+(.+)$/) || t.match(/^(.+?)\s+(?:chala(?:o|do)?|bajao|baja do|laga(?:o|do)?|sunao|play kar(?:o|do)?|play)$/);
   if (play && !/^(music|song|gaana|video)$/.test(play[1])) return { action: 'play_youtube', args: { q: play[1].replace(/\b(song|gaana|gana|ke gaane|gaane|on youtube|youtube pe|youtube par)\b/g, ' ').replace(/\s+/g, ' ').trim() || play[1] } };
+  const browser = (t.match(/\b(brave|chrome|edge)\b/) || [])[1];
+  const webApp = (app) => kind === 'pc' && { youtube: 'https://www.youtube.com', ytmusic: 'https://music.youtube.com', instagram: 'https://www.instagram.com', gmail: 'https://mail.google.com', maps: 'https://maps.google.com' }[app];
+  const openIt = (app) => webApp(app) ? { action: 'open_url', args: { url: webApp(app), browser: browser || 'brave' } } : { action: 'open_app', args: { app } };
+  // "youtube brave app", "youtube brave chalu kar": YouTube in that browser
+  if (/\b(yt|youtube)\b/.test(t) && !/\bmusic\b/.test(t) && (browser || t.split(' ').length <= 4)) return openIt('youtube');
+  if (/\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit)\b/.test(t) && !/\b(pc|laptop|computer|system)\b/.test(t)) return { action: 'close_app', args: {} };
   const open = t.match(/^(?:open|khol(?:o|do)?|start|launch|chalu kar(?:o)?)\s+(.+)$/) || t.match(/^(.+?)\s+(?:khol(?:o|do)?|open kar(?:o|do)?|open|chalu kar(?:o|do)?)$/);
-  if (open) { const hit = APP_WORDS.find(([re]) => re.test(open[1])); if (hit) return kind === 'pc' && hit[1] === 'youtube' ? { action: 'open_url', args: { url: 'https://www.youtube.com' } } : { action: 'open_app', args: { app: hit[1] } }; }
+  if (open) { const hit = APP_WORDS.find(([re]) => re.test(open[1])); if (hit) return openIt(hit[1]); }
+  // Just an app name ("chrome", "vs code app")
+  if (t.split(' ').length <= 3 && !/\b(volume|awaaz|play|chala|bajao|status|lock)\b/.test(t)) { const hit = APP_WORDS.find(([re]) => re.test(t)); if (hit) return openIt(hit[1]); }
   if (/\b(volume|awaaz|awaz|aawaz|sound|louder|quieter)\b/.test(t)) {
     const steps = Number((t.match(/\b(\d{1,2})\b/) || [])[1]) || 3;
     if (/\b(mute|band|chup)\b/.test(t)) return { action: 'volume', args: { key: 'mute' } };
@@ -99,13 +116,24 @@ function understand(text, kind) {
   const say = t.match(/^(?:say|message|msg|bol(?:o)?|likho)\s+(.+)$/); if (say) return { action: 'notify', args: { text: say[1] } };
   return null;
 }
+// Media and volume keys through CocoKeys.exe (built from CocoKeys.cs): about 0.3 s, where PowerShell
+// can take over 10 s to start on a busy PC.
+const KEYS_EXE = path.join(__dirname, 'CocoKeys.exe');
+const keys = (name, times = 1) => exec(KEYS_EXE, [name, String(times)]);
+let batteryCache = 'n/a', batteryBusy = false;
+function refreshBattery() {
+  if (batteryBusy) return; batteryBusy = true;
+  exec('powershell.exe', ['-NoProfile', '-Command', '(Get-CimInstance Win32_Battery | Select-Object -First 1).EstimatedChargeRemaining']).then((b) => { if (/^\d+$/.test(b)) batteryCache = b; batteryBusy = false; });
+}
+refreshBattery(); setInterval(refreshBattery, 120000);
 ipcMain.handle('pc-command', (_e, { action, args = {} }) => runAction(action, args));
 async function runAction(action, args = {}) {
   switch (action) {
-    case 'say': { const p = understand(args.text, 'pc'); return p && p.action !== 'say' ? runAction(p.action, p.args) : 'Not understood. Try: play <song>, open <app>, volume up, next, pause, lock, restart, status'; }
+    case 'say': { const p = understand(args.text, 'pc'); return p && p.action !== 'say' ? runAction(p.action, p.args) : `Not understood: "${String(args.text || '').slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
     case 'status': {
       const disk = fs.statfsSync ? fs.statfsSync('C:\\') : null;
-      const battery = await exec('powershell.exe', ['-NoProfile', '-Command', '(Get-CimInstance Win32_Battery | Select-Object -First 1).EstimatedChargeRemaining']);
+      // Battery comes from a slow Windows query, so answer at once with the last reading and refresh it in the background.
+      const battery = batteryCache; refreshBattery();
       return `${os.hostname()} · on for ${(os.uptime() / 3600).toFixed(1)} h · battery ${/^\d+$/.test(battery) ? battery + '%' : 'n/a'} · C: free ${disk ? Math.round(disk.bavail * disk.bsize / 1e9) + ' GB' : 'n/a'} · memory free ${(os.freemem() / 1e9).toFixed(1)} of ${(os.totalmem() / 1e9).toFixed(0)} GB`;
     }
     case 'lock': await exec('rundll32.exe', ['user32.dll,LockWorkStation']); return 'Locked';
@@ -113,19 +141,25 @@ async function runAction(action, args = {}) {
     case 'restart': await exec('shutdown.exe', ['/r', '/t', '60', '/c', 'Coco: restart asked from a founder phone. Cancel from Coco Lounge within 60 seconds.']); return 'Restarting in 60 seconds';
     case 'shutdown': await exec('shutdown.exe', ['/s', '/t', '60', '/c', 'Coco: switch off asked from a founder phone. Cancel from Coco Lounge within 60 seconds.']); return 'Switching off in 60 seconds';
     case 'cancel_power': await exec('shutdown.exe', ['/a']); return 'Restart or switch off cancelled';
-    case 'open_url': if (!/^https:\/\//.test(String(args.url || ''))) return 'Only https links'; await shell.openExternal(args.url); return 'Opened ' + args.url;
+    case 'open_url': {
+      if (!/^https:\/\//.test(String(args.url || ''))) return 'Only https links';
+      const exe = BROWSERS[String(args.browser || '')] && BROWSERS[String(args.browser)]();
+      if (exe) await exec(exe, [args.url]); else await shell.openExternal(args.url);
+      return 'Opened ' + args.url + (exe ? ' in ' + args.browser : '');
+    }
+    case 'close_app': return 'Closing apps from another device is not switched on yet (it needs Boss YES for wider PC control)';
     case 'notify': { const { Notification } = require('electron'); new Notification({ title: 'Coco', body: String(args.text || '').slice(0, 200) }).show(); return 'Shown on screen'; }
     case 'play_youtube': {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
       const id = await firstVideo(q);
       const url = id ? `https://www.youtube.com/watch?v=${id}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-      await shell.openExternal(url); return id ? `Playing "${q}" on YouTube` : `Opened YouTube search for "${q}"`;
+      const brave = BROWSERS.brave(); if (brave) await exec(brave, [url]); else await shell.openExternal(url); return id ? `Playing "${q}" on YouTube` : `Opened YouTube search for "${q}"`;
     }
     case 'media': case 'volume': {
       const key = { playpause: 179, next: 176, prev: 177, mute: 173, down: 174, up: 175 }[String(args.key)];
       if (!key) return 'Unknown key';
       const times = action === 'volume' ? Math.min(10, Math.max(1, Number(args.steps) || 5)) : 1;
-      await exec('powershell.exe', ['-NoProfile', '-Command', `$w = New-Object -ComObject WScript.Shell; 1..${times} | % { $w.SendKeys([char]${key}) }`]);
+      await keys(String(args.key), times);
       return { playpause: 'Play / pause', next: 'Next track', prev: 'Previous track', mute: 'Mute toggled', down: 'Volume down', up: 'Volume up' }[args.key];
     }
     case 'open_app': {
@@ -142,7 +176,7 @@ async function runAction(action, args = {}) {
 ipcMain.handle('get-startup', () => app.getLoginItemSettings().openAtLogin);
 ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings({ openAtLogin: !!on, args: ['--hidden'] }); return !!on; });
 
-app.on('second-instance', () => { if (win) { win.show(); win.focus(); } });
+app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focus(); } }); // at the office only the tray icon opens it
 app.whenReady().then(() => {
   if (!app.getLoginItemSettings().openAtLogin) app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] });
   createWindow(); createTray();
