@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#7b4f6b">
+<title>Coco Lounge</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="coco.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..800,100&family=Nunito:wght@500;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=swap">
+<style>
+/* Coco Lounge: the private app of Good Space. Material You tones, luxury gold accents. */
+:root {
+  --primary: #7b4f6b; --on-primary: #fff; --primary-c: #ffd8ee; --on-primary-c: #30092a;
+  --gold: #b48a33; --gold-soft: #e7cf96; --sage: #dcebd2; --on-sage: #1a3016;
+  --surface: #fdf7f4; --surface-1: #f7eeee; --surface-2: #f0e4e6; --surface-3: #e9dadd;
+  --on-surface: #22191d; --muted: #6e5e64; --outline: #d6c2c8;
+  --good: #2f6b40; --good-c: #cdeed5; --warn: #7a5a00; --warn-c: #ffe6a3; --bad: #9c2b33; --bad-c: #ffdad8;
+  --display: "Fraunces", Georgia, serif; --body: "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --gold: #e3c06c; --gold-soft: #5e4a1f; --sage: #34482d; --on-sage: #d6ecc9;
+  --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --surface-3: #332939;
+  --on-surface: #f2e6ea; --muted: #cbbac4; --outline: #4f4250;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --bad: #ffb3ae; --bad-c: #6f1d23; color-scheme: dark; } }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--surface); color: var(--on-surface); font: 15px/1.5 var(--body); }
+.ms { font-family: "Material Symbols Rounded"; font-size: 22px; line-height: 1; font-weight: normal; font-style: normal; font-feature-settings: "liga"; }
+h1, h2, h3 { font-family: var(--display); font-variation-settings: "SOFT" 100; margin: 0; text-wrap: balance; }
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-left)) ; }
+.gate .card { width: min(420px, 100%); background: var(--surface-1); border-radius: 32px; padding: 28px; display: grid; gap: 14px; box-shadow: inset 0 0 0 1px var(--gold-soft); }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { width: 44px; height: 44px; }
+.brand h1 { font-size: 28px; }
+.brand small { display: block; color: var(--gold); font: 800 11px var(--body); letter-spacing: .14em; text-transform: uppercase; }
+label { font-size: 13px; font-weight: 700; color: var(--muted); display: grid; gap: 6px; }
+input, select, textarea { font: 600 15px var(--body); color: var(--on-surface); background: var(--surface-2); border: 1px solid var(--outline); border-radius: 14px; padding: 12px 14px; width: 100%; }
+textarea { min-height: 70px; resize: vertical; }
+.btn { border: 0; border-radius: 999px; padding: 11px 20px; font: 800 15px var(--body); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.filled { background: var(--primary); color: var(--on-primary); }
+.tonal { background: var(--primary-c); color: var(--on-primary-c); }
+.text { background: transparent; color: var(--primary); }
+.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .nav a:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.note { font-size: 13px; color: var(--muted); }
+.err { color: var(--bad); font-weight: 700; font-size: 14px; }
+/* app shell */
+.app { display: flex; min-height: 100vh; }
+.rail { width: 228px; flex: none; background: var(--surface-1); padding: 20px 12px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; }
+.rail .brand { padding: 4px 10px 18px; }
+.nav a { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 999px; color: var(--on-surface); text-decoration: none; font-weight: 700; position: relative; }
+.nav a.on { background: var(--primary-c); color: var(--on-primary-c); }
+.badge { margin-left: auto; background: var(--primary); color: var(--on-primary); border-radius: 999px; font-size: 11px; padding: 0 7px; font-weight: 800; }
+.me { margin-top: auto; padding: 12px; border-radius: 18px; background: var(--surface-2); font-size: 13px; display: grid; gap: 6px; }
+main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 1100px; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.top h2 { font-size: clamp(24px, 4vw, 32px); }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.dot.on { background: #3fb46a; box-shadow: 0 0 0 4px color-mix(in srgb, #3fb46a 25%, transparent); }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.card2 { background: var(--surface-1); border-radius: 26px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.hero { background: linear-gradient(135deg, var(--primary-c), color-mix(in srgb, var(--gold-soft) 60%, var(--surface-1))); color: var(--on-primary-c); border-radius: 30px; padding: 22px; display: grid; gap: 12px; margin-bottom: 16px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.stat { background: color-mix(in srgb, var(--surface) 70%, transparent); border-radius: 18px; padding: 10px 14px; }
+.stat b { display: block; font: 700 26px var(--display); }
+.stat span { font-size: 12px; color: var(--muted); }
+.row { display: flex; gap: 10px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--outline); }
+.row:first-child { border-top: 0; }
+.row .grow { flex: 1; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--surface-3); white-space: nowrap; }
+.chip.good { background: var(--good-c); color: var(--good); } .chip.warn { background: var(--warn-c); color: var(--warn); } .chip.bad { background: var(--bad-c); color: var(--bad); } .chip.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.muted { color: var(--muted); font-size: 13px; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.tabs button { border: 1px solid var(--outline); background: transparent; color: var(--on-surface); border-radius: 10px; padding: 6px 14px; font: 700 14px var(--body); cursor: pointer; }
+.tabs button.on { background: var(--primary-c); color: var(--on-primary-c); border-color: transparent; }
+.form { display: grid; gap: 10px; background: var(--surface-1); border-radius: 26px; padding: 18px; margin-bottom: 16px; }
+.form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+dialog { border: 0; border-radius: 28px; padding: 22px; background: var(--surface-2); color: var(--on-surface); width: min(480px, 92vw); }
+dialog::backdrop { background: rgba(20, 10, 16, .45); }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom)); background: var(--on-surface); color: var(--surface); padding: 10px 18px; border-radius: 12px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; }
+#toast.show { opacity: 1; }
+.bottom { display: none; }
+@media (max-width: 780px) {
+  .rail { display: none; }
+  main { padding-top: 16px; }
+  .form .two { grid-template-columns: 1fr; }
+  .bottom { display: flex; position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface-2); padding: 6px 4px calc(8px + env(safe-area-inset-bottom)); justify-content: space-around; z-index: 20; }
+  .bottom a { flex: 1; display: grid; justify-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); text-decoration: none; padding: 4px 0; position: relative; }
+  .bottom a .pill { width: 54px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+  .bottom a.on { color: var(--on-surface); }
+  .bottom a.on .pill { background: var(--primary-c); color: var(--on-primary-c); }
+  .bottom .badge { position: absolute; top: 0; right: 18%; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+<!-- 1. sign in -->
+<section class="gate" id="signin" hidden>
+  <form class="card" id="signinForm">
+    <div class="brand"><img src="coco.svg" alt=""><div><small>Good Space</small><h1>Coco Lounge</h1></div></div>
+    <p class="note">Private to the founders of Good Space, on their four devices only.</p>
+    <label for="email">Email<input id="email" type="email" autocomplete="email" required></label>
+    <label for="pass">Password<input id="pass" type="password" autocomplete="current-password" minlength="8" required></label>
+    <button class="btn filled" type="submit">Sign in</button>
+    <button class="btn text" type="button" id="firstTime">First time on Good Space? Create your password</button>
+    <p class="err" id="signinErr" role="alert"></p>
+  </form>
+</section>
+<!-- 2. pair this device -->
+<section class="gate" id="pair" hidden>
+  <form class="card" id="pairForm">
+    <div class="brand"><img src="coco.svg" alt=""><div><small>One of four</small><h1>Pair this device</h1></div></div>
+    <p class="note">Good Space opens only on your PC and your phone. Type the 8-letter pairing code for this device. Codes are made on a device that is already paired (or by Coco on the Boss PC for the first time).</p>
+    <label for="code">Pairing code<input id="code" autocomplete="one-time-code" maxlength="12" required style="letter-spacing:.2em;text-transform:uppercase"></label>
+    <button class="btn filled" type="submit">Pair device</button>
+    <button class="btn text" type="button" id="signOut1">Sign out</button>
+    <p class="err" id="pairErr" role="alert"></p>
+  </form>
+</section>
+<!-- 3. the lounge -->
+<div class="app" id="app" hidden>
+  <aside class="rail">
+    <div class="brand"><img src="coco.svg" alt=""><div><small>Good Space</small><h1 style="font-size:22px">Coco Lounge</h1></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="me" id="me"></div>
+  </aside>
+  <main>
+    <div class="top"><div><span class="eyebrow" id="who"></span><h2 id="title">Home</h2></div><span class="live"><i class="dot" id="liveDot"></i><span id="liveText">connecting</span></span></div>
+    <section id="view" aria-live="polite"></section>
+  </main>
+  <nav class="bottom" id="bottom"></nav>
+</div>
+<dialog id="dup"><form method="dialog" style="display:grid;gap:12px">
+  <h3>Already being worked on</h3><div id="dupBody"></div>
+  <div class="actions"><button class="btn tonal" value="add">Add my points to it</button><button class="btn text" value="stop">Stop that task</button><button class="btn text" value="new">Create mine anyway</button><button class="btn text" value="cancel">Cancel</button></div>
+</form></dialog>
+<div id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const URL_ = 'https://bfnhnkxvppqmklfpslfm.supabase.co';
+const KEY = 'sb_publishable_had-6h5KG1epTVwISeuWbg_IKg7IO1s';
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 2600); };
+const ago = (iso) => { if (!iso) return 'never'; const s = (Date.now() - new Date(iso)) / 1000; return s < 90 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : new Date(iso).toLocaleDateString(); };
+const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000;
+
+let sb = makeClient(store.get('gs-device-key'));
+function makeClient(deviceKey) {
+  return supabase.createClient(URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
+}
+let me = null, founder = null, deviceId = store.get('gs-device-id'), page = location.hash.slice(1) || 'home', D = {}, sub = 'houses';
+
+const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['devices', 'Devices', 'devices']];
+
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return show('signin');
+  me = session.user;
+  if (!store.get('gs-device-key')) return show('pair');
+  const { data, error } = await sb.from('founders').select('*');
+  if (error || !data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
+  founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
+  show('app'); await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000);
+}
+function show(which, msg) {
+  ['signin', 'pair', 'app'].forEach(id => $('#' + id).hidden = id !== which);
+  if (which === 'pair' && msg) $('#pairErr').textContent = msg;
+}
+
+$('#signinForm').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('#signinErr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#pass').value });
+  if (error) $('#signinErr').textContent = error.message.includes('confirm') ? 'Open the confirmation email first, then sign in.' : 'Email or password is not right.';
+  else boot();
+});
+$('#firstTime').onclick = async () => {
+  const email = $('#email').value.trim(), password = $('#pass').value;
+  if (!email || password.length < 8) { $('#signinErr').textContent = 'Type your email and a new password (8+ characters) first.'; return; }
+  const { error } = await sb.auth.signUp({ email, password });
+  $('#signinErr').textContent = error ? error.message : 'Done. Open the email from Supabase and tap the link (the page it opens may look blank, that is fine), then come back and sign in.';
+};
+$('#pairForm').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('#pairErr').textContent = '';
+  const raw = new Uint8Array(32); crypto.getRandomValues(raw);
+  const key = Array.from(raw, b => b.toString(16).padStart(2, '0')).join('');
+  const { data, error } = await sb.rpc('pair_device', { p_code: $('#code').value.trim().toUpperCase(), p_device_key: key });
+  if (error) { $('#pairErr').textContent = error.message.includes('expired') ? 'That code is wrong or expired.' : error.message; return; }
+  store.set('gs-device-key', key); store.set('gs-device-id', data); deviceId = data; sb = makeClient(key);
+  toast('This device is now one of the four'); boot();
+});
+$('#signOut1').onclick = async () => { await sb.auth.signOut(); show('signin'); };
+
+async function loadAll() {
+  const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
+  const res = await Promise.all([
+    q('houses', '*', ['sort', true]), q('categories', '*', ['code', true]), q('offerings', '*', ['name', true]), q('platforms', '*', ['sort', true]),
+    q('members', '*', ['sort', true]), q('member_houses'), q('tools', '*', ['name', true]), q('member_tools'),
+    q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
+    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'),
+  ]);
+  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders'].forEach((k, i) => D[k] = res[i].data || []);
+  render();
+}
+let pulseTimer = null;
+function listen() {
+  sb.channel('pulse').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { clearTimeout(pulseTimer); pulseTimer = setTimeout(loadAll, 400); })
+    .subscribe((s) => { const ok = s === 'SUBSCRIBED'; $('#liveDot').classList.toggle('on', ok); $('#liveText').textContent = ok ? 'live' : 'reconnecting'; if (ok) loadAll(); });
+  addEventListener('online', loadAll); document.addEventListener('visibilitychange', () => { if (!document.hidden) { heartbeat(); loadAll(); } });
+}
+async function heartbeat() { if (deviceId) await sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-1' }).eq('id', deviceId); }
+const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id || '';
+const founderName = () => founder ? founder.name : (me && me.email);
+async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
+
+const chipFor = (s) => ({ queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
+const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
+
+function nav() {
+  const wait = D.approvals.filter(a => a.state === 'waiting').length;
+  const link = ([id, name, ic]) => `<a href="#${id}" class="${id === page ? 'on' : ''}"><span class="pill"><i class="ms">${ic}</i></span><span>${name}</span>${id === 'approvals' && wait ? `<span class="badge">${wait}</span>` : ''}</a>`;
+  $('#nav').innerHTML = PAGES.map(p => link(p).replace('<span class="pill">', '').replace('</i></span>', '</i>')).join('');
+  $('#bottom').innerHTML = PAGES.slice(0, 5).map(link).join('');
+  $('#me').innerHTML = `<b>${esc(founder ? `${founder.name} · ${founder.call_me}` : me.email)}</b><span class="muted">${esc(deviceName(deviceId))}</span><button class="btn text" style="justify-self:start;padding:4px 0" id="signOut2">Sign out</button>`;
+  $('#signOut2').onclick = async () => { await sb.auth.signOut(); show('signin'); };
+}
+
+const V = {
+  home() {
+    const live = D.offerings.filter(o => o.status === 'live').length, running = D.tasks.filter(t => t.status === 'running').length, wait = D.approvals.filter(a => a.state === 'waiting').length;
+    return `<div class="hero"><h3 style="font-size:24px">Hello ${esc(founder ? founder.call_me : '')}</h3>
+      <div>${wait ? `${wait} things wait for your YES.` : 'Nothing waits for you.'} ${running ? `${running} tasks are running now.` : ''}</div>
+      <div class="stats"><div class="stat"><b>${D.houses.filter(h => h.state === 'working').length}</b><span>Houses working</span></div><div class="stat"><b>${running}</b><span>tasks running</span></div><div class="stat"><b>${D.offerings.length}</b><span>channels and products</span></div><div class="stat"><b>${D.devices.filter(online).length}/4</b><span>devices online</span></div></div></div>
+      <div class="grid">${D.houses.map(h => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(h.name)}</h3>${chip(h.state)}</div><span class="muted">${esc(h.role)}</span><div>${esc(h.doing || '')}</div><span class="muted">Next: ${esc(h.next || '')}</span></div>`).join('')}</div>
+      <h3 style="margin:22px 0 8px">Latest activity</h3><div class="card2">${D.activity.map(a => `<div class="row"><div class="grow"><b>${esc(a.action)}</b> · ${esc(a.detail || '')}<div class="muted">${esc(a.actor)} ${a.device_id ? '· ' + esc(deviceName(a.device_id)) : ''} · ${ago(a.at)}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;
+  },
+  board() {
+    const open = D.tasks.filter(t => !['done', 'stopped'].includes(t.status)), closed = D.tasks.filter(t => ['done', 'stopped'].includes(t.status)).slice(0, 15);
+    const row = (t) => { const notes = D.notes.filter(n => n.task_id === t.id); return `<div class="row"><div class="grow"><b>${esc(t.title)}</b> ${chip(t.status)}
+      <div class="muted">${esc((D.houses.find(h => h.id === t.house_id) || {}).name || 'Coco')} · by ${esc(t.created_by)}${t.created_device ? ' on ' + esc(deviceName(t.created_device)) : ''} · ${ago(t.created_at)}${t.claimed_by_device ? ` · <b>working on ${esc(deviceName(t.claimed_by_device))}</b>` : ''}</div>
+      ${t.details ? `<div>${esc(t.details)}</div>` : ''}${notes.map(n => `<div class="muted">+ ${esc(n.note)} (${esc(n.by_email)})</div>`).join('')}${t.result ? `<div class="chip gold" style="margin-top:6px">Result: ${esc(t.result)}</div>` : ''}
+      ${['queued', 'running', 'waiting_pc', 'needs_yes'].includes(t.status) ? `<div class="actions"><button class="btn tonal" data-note="${t.id}">Add points</button><button class="btn text" data-stop="${t.id}">Stop</button></div>` : ''}</div></div>`; };
+    return `<form class="form" id="newTask"><h3>Give Coco a task</h3>
+      <label for="tTitle">What should be done?<input id="tTitle" required placeholder="e.g. Make a Short about why the sky is blue"></label>
+      <div class="two"><label for="tHouse">House<select id="tHouse">${D.houses.map(h => `<option value="${h.id}">${esc(h.name)} · ${esc(h.role)}</option>`).join('')}</select></label>
+      <label for="tNeeds">Where can it run?<select id="tNeeds"><option value="any">Anywhere (cloud or PC)</option><option value="cloud">Cloud only (thinking work)</option><option value="pc">PC only (Blender, video, apps)</option></select></label></div>
+      <label for="tDetails">Details (optional)<textarea id="tDetails"></textarea></label>
+      <button class="btn filled" style="justify-self:start">Send to Coco</button></form>
+      <h3 style="margin-bottom:8px">Open (${open.length})</h3><div class="card2">${open.map(row).join('') || '<span class="muted">No open tasks.</span>'}</div>
+      <h3 style="margin:18px 0 8px">Finished</h3><div class="card2">${closed.map(row).join('') || '<span class="muted">Nothing finished yet.</span>'}</div>`;
+  },
+  approvals() {
+    const w = D.approvals.filter(a => a.state === 'waiting'), r = D.approvals.filter(a => a.state !== 'waiting');
+    const row = (a) => `<div class="row"><div class="grow"><b>${esc(a.code)} · ${esc(a.team || '')}</b> ${chip(a.state)}<div>${esc(a.what)}</div><div class="muted">${esc(a.raised_on || '')}${a.files ? ' · ' + esc(a.files) : ''}${a.decided_by ? ' · decided by ' + esc(a.decided_by) : ''}</div>
+      ${a.state === 'waiting' ? `<div class="actions"><button class="btn filled" data-yes="${a.id}">YES</button><button class="btn text" data-no="${a.id}">No</button></div>` : ''}</div></div>`;
+    return `<p class="muted">Your YES is recorded with your name and device. Nothing goes public, costs money or gets deleted without it.</p>
+      <h3 style="margin:8px 0">Waiting (${w.length})</h3><div class="card2">${w.map(row).join('') || '<span class="muted">All clear.</span>'}</div>
+      <h3 style="margin:18px 0 8px">Decided</h3><div class="card2">${r.map(row).join('')}</div>`;
+  },
+  company() {
+    const tabs = `<div class="tabs">${D.houses.map(h => `<button data-sub="${h.id}" class="${sub === h.id ? 'on' : ''}">${esc(h.name)}</button>`).join('')}<button data-sub="decisions" class="${sub === 'decisions' ? 'on' : ''}">Decisions</button></div>`;
+    if (sub === 'decisions') return tabs + `<div class="card2">${D.decisions.map(d => `<div class="row"><div class="grow">${esc(d.text)}<div class="muted">${esc(d.decided_on)} · ${esc(d.by_name)}</div></div></div>`).join('')}</div>`;
+    const h = D.houses.find(x => x.id === sub) || D.houses[0]; if (!h) return tabs;
+    const cats = D.categories.filter(c => c.house_id === h.id);
+    return tabs + `<div class="card2" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;gap:8px"><h3>${esc(h.name)} · ${esc(h.role)}</h3>${chip(h.state)}</div><div>${esc(h.cadence || '')}</div><div class="muted">${esc(h.publish_rule || '')}</div>${h.blocked ? `<div class="chip warn" style="justify-self:start">Blocked: ${esc(h.blocked)}</div>` : ''}</div>
+      <div class="grid">${cats.map(c => { const items = D.offerings.filter(o => o.category_id === c.id); return `<div class="card2"><span class="muted">${String(c.code).padStart(2, '0')}${c.linked_to ? ' · linked to ' + esc(c.linked_to) : ''}</span><h3>${esc(c.name)}</h3>${items.map(o => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(o.name)} <span class="muted">· ${esc((D.platforms.find(p => p.id === o.platform_id) || {}).name || '')}</span></span><span class="muted">${esc(o.status)}</span></div>`).join('') || '<span class="muted">Empty for now</span>'}</div>`; }).join('')}</div>`;
+  },
+  club() {
+    return ['Think', 'Make', 'Care'].map(g => `<h3 style="margin:10px 0 8px">${g}</h3><div class="grid">${D.members.filter(m => m.grp === g).map(m => {
+      const tools = D.memberTools.filter(t => t.member_id === m.id).map(t => D.tools.find(x => x.id === t.tool_id)).filter(Boolean);
+      const hs = D.memberHouses.filter(x => x.member_id === m.id).map(x => (D.houses.find(h => h.id === x.house_id) || {}).name);
+      return `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px"><h3>${esc(m.name)}</h3><span class="chip">${esc(m.model)}</span></div><div>${esc(m.job)}</div><span class="muted">Helps: ${esc(hs.join(', '))}</span><div class="actions">${tools.map(t => `<span class="chip ${t.status === 'connected' || t.status === 'installed' ? 'good' : t.status === 'to_install' ? 'warn' : ''}">${esc(t.name)}</span>`).join('')}</div></div>`; }).join('')}</div>`).join('');
+  },
+  devices() {
+    return `<p class="muted">Only these four devices can open Good Space. A device that is switched off stops working at once.</p><div class="grid">${D.devices.map(d => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(d.name)}</h3><span class="live"><i class="dot ${online(d) ? 'on' : ''}"></i>${online(d) ? 'online' : 'offline'}</span></div>
+      <span class="muted">${esc(d.kind === 'pc' ? 'PC' : 'Phone')} · ${d.key_hash ? 'paired ' + ago(d.paired_at) : 'not paired yet'} · seen ${ago(d.last_seen)}</span>${d.id === deviceId ? '<span class="chip gold" style="justify-self:start">This device</span>' : ''}
+      ${d.active ? (d.id !== deviceId ? `<div class="actions"><button class="btn tonal" data-code="${d.id}">Make pairing code</button><button class="btn text" data-off="${d.id}">Switch off</button></div>` : '') : '<span class="chip bad" style="justify-self:start">Switched off</span>'}</div>`).join('')}</div>`;
+  },
+};
+
+function render() {
+  if (!V[page]) page = 'home';
+  nav();
+  $('#title').textContent = PAGES.find(p => p[0] === page)[1];
+  $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;
+  $('#view').innerHTML = V[page]();
+  const f = $('#newTask'); if (f) f.addEventListener('submit', addTask);
+}
+addEventListener('hashchange', () => { page = location.hash.slice(1) || 'home'; render(); scrollTo(0, 0); });
+
+async function addTask(e) {
+  e.preventDefault();
+  const title = $('#tTitle').value.trim(), house_id = $('#tHouse').value, needs = $('#tNeeds').value, details = $('#tDetails').value.trim() || null;
+  const { data: similar } = await sb.rpc('similar_open_tasks', { p_title: title });
+  if (similar && similar.length) {
+    const t = similar[0];
+    $('#dupBody').innerHTML = `<p><b>${esc(t.title)}</b></p><p class="muted">${chipFor(t.status)[1]}${t.claimed_by_device ? ' on ' + esc(deviceName(t.claimed_by_device)) : ''}. Do you want to add your points to it, stop it, or still create yours?</p>`;
+    const d = $('#dup'); d.showModal();
+    const choice = await new Promise(r => d.addEventListener('close', () => r(d.returnValue), { once: true }));
+    if (choice === 'add') { await sb.from('task_notes').insert({ task_id: t.id, note: title + (details ? ': ' + details : ''), by_email: founderName(), device_id: deviceId }); toast('Added to the running task'); return loadAll(); }
+    if (choice === 'stop') { await sb.from('tasks').update({ status: 'stopped', updated_at: new Date().toISOString() }).eq('id', t.id); await log('task stopped', t.title); toast('Stopped'); return loadAll(); }
+    if (choice !== 'new') return;
+  }
+  const { error } = await sb.from('tasks').insert({ title, house_id, needs, details, created_by: founderName(), created_device: deviceId });
+  if (error) return toast(error.message);
+  await log('task added', title); toast('Sent to Coco'); loadAll();
+}
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const ds = b.dataset;
+  if (ds.sub) { sub = ds.sub; render(); }
+  if (ds.yes || ds.no) {
+    const id = ds.yes || ds.no, a = D.approvals.find(x => x.id === id), yes = !!ds.yes;
+    await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() }).eq('id', id);
+    await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `${yes ? 'YES' : 'NO'} ${a.code}: ${a.what.slice(0, 180)}` });
+    await log(yes ? 'approved' : 'declined', a.code); toast(yes ? 'YES saved' : 'No saved'); loadAll();
+  }
+  if (ds.stop) { await sb.from('tasks').update({ status: 'stopped', updated_at: new Date().toISOString() }).eq('id', ds.stop); await log('task stopped', (D.tasks.find(t => t.id === ds.stop) || {}).title); loadAll(); }
+  if (ds.note) {
+    const t = D.tasks.find(x => x.id === ds.note); $('#dupBody').innerHTML = `<p><b>${esc(t.title)}</b></p><label for="extra">Your points<textarea id="extra"></textarea></label>`;
+    const d = $('#dup'); d.querySelector('[value=stop]').hidden = d.querySelector('[value=new]').hidden = true; d.showModal();
+    const choice = await new Promise(r => d.addEventListener('close', () => r(d.returnValue), { once: true }));
+    d.querySelector('[value=stop]').hidden = d.querySelector('[value=new]').hidden = false;
+    const extra = ($('#extra') || {}).value;
+    if (choice === 'add' && extra) { await sb.from('task_notes').insert({ task_id: t.id, note: extra, by_email: founderName(), device_id: deviceId }); toast('Points added'); loadAll(); }
+  }
+  if (ds.code) {
+    const code = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[b % 31]).join('');
+    const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code))), b => b.toString(16).padStart(2, '0')).join('');
+    const { error } = await sb.from('pairing_codes').insert({ code_hash: hash, device_id: ds.code, created_by: founderName() });
+    if (error) return toast(error.message);
+    $('#dupBody').innerHTML = `<p>Pairing code for <b>${esc(deviceName(ds.code))}</b>, valid for 10 minutes:</p><p style="font:800 30px var(--display);letter-spacing:.2em">${code}</p><p class="muted">Type it on that device after signing in. It works once.</p>`;
+    const d = $('#dup'); d.querySelectorAll('button').forEach(x => x.hidden = x.value !== 'cancel'); d.showModal();
+    d.addEventListener('close', () => d.querySelectorAll('button').forEach(x => x.hidden = false), { once: true });
+    await log('pairing code made', ds.code);
+  }
+  if (ds.off) { if (ds.off === deviceId) return; await sb.from('devices').update({ active: false }).eq('id', ds.off); await log('device switched off', ds.off); toast('Switched off'); loadAll(); }
+});
+boot();
+</script>
+</body>
+</html>
