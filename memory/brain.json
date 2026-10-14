@@ -1,7 +1,8 @@
 {
   "name": "Coco",
+  "company": "Good Space",
   "importedFrom": "C:/Users/Lenovo/nova-hq",
-  "importedAt": "2026-10-14T18:02:27.334Z",
+  "importedAt": "2026-10-14T18:04:43.644Z",
   "founders": [
     {
       "id": "mangesh",
@@ -18,9 +19,9 @@
     {
       "id": "youtube",
       "name": "YouTube Studio",
-      "emoji": "🎬",
+      "emoji": "ðŸŽ¬",
       "state": "active",
-      "doing": "1 Short a day on The Flow · long video \"Style Reference\" ready, waiting for YES",
+      "doing": "1 Short a day on The Flow Â· long video \"Phone Battery Myths\" ready, waiting for YES",
       "recent": "Posted \"Why Space Is Black\" on 2026-10-14 (4 videos live)",
       "blocked": "",
       "next": "Next Short in the Kai and Orbi style (QUALITY_V2 rule 0)",
@@ -37,7 +38,7 @@
     {
       "id": "extensions",
       "name": "Extension Atelier",
-      "emoji": "🧩",
+      "emoji": "ðŸ§©",
       "state": "active",
       "doing": "Researching 3 directions (Amazon seller, privacy auditor, ATS autofill)",
       "recent": "Research saved (company/research/)",
@@ -50,7 +51,7 @@
     {
       "id": "android",
       "name": "App Garden",
-      "emoji": "📱",
+      "emoji": "ðŸ“±",
       "state": "active",
       "doing": "Nova Island and CleanBar builds on the PC",
       "recent": "Fuselist parked (A-001 on hold)",
@@ -63,7 +64,7 @@
     {
       "id": "social",
       "name": "Social Lounge",
-      "emoji": "💬",
+      "emoji": "ðŸ’¬",
       "state": "paused",
       "doing": "Paused by the founder (2026-10-09)",
       "recent": "Nothing new",
@@ -572,6 +573,12 @@
       "date": "2026-10-14",
       "by": "Mangesh",
       "text": "YES: The Flow posts exactly 1 Short per day (not 2 yet). It posts at the first PC start of the day, which is usually about 10:30-11:00 IST on this PC. Growth plan in company/youtube/GROWTH-PLAN.md. A second Short per day only after a 30-day test and a new YES."
+    },
+    {
+      "date": "2026-10-14",
+      "by": "Mangesh",
+      "text": "The company is called Good Space. Coco (rebuilt from Nova) manages it.",
+      "from": "coco"
     }
   ],
   "youtube": {
@@ -759,14 +766,6 @@
           "privacy": "public",
           "at": "2026-10-13T23:08:45.278Z"
         }
-      },
-      {
-        "slug": "2026-10-14-style-reference",
-        "date": "2026-10-14",
-        "title": "Style Reference",
-        "kind": "long",
-        "rendered": true,
-        "published": null
       },
       {
         "slug": "2026-10-13-phone-battery-myths",
@@ -1418,5 +1417,5 @@
     }
   ],
   "notes": [],
-  "savedAt": "2026-10-14T18:02:27.367Z"
+  "savedAt": "2026-10-14T18:04:43.674Z"
 }

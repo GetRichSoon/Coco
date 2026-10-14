@@ -132,7 +132,7 @@ function render() {
   if (!VIEWS[page]) page = 'home';
   nav();
   $('#title').textContent = PAGES.find(p => p.id === page).name;
-  $('#hello').textContent = `Coco for ${callName()}`;
+  $('#hello').textContent = `${brain.company || 'Good Space'} · Coco for ${callName()}`;
   $('#view').innerHTML = VIEWS[page]();
 }
 

@@ -1,6 +1,7 @@
-# Coco ✨
+# Coco ✨ — runs Good Space
 
-Coco is the company's AI chief of staff, rebuilt from Nova in a calmer, managed way.
+**Good Space** is the company (founders Mangesh and Shreya). **Coco** is its AI chief of staff
+that manages it, rebuilt from Nova in a calmer, managed way.
 One core on the PC, one app for the PC and the phone, every Nova memory kept.
 
 ## Four folders, nothing more
