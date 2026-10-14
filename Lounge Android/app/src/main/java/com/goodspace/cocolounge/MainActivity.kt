@@ -35,5 +35,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() { super.onResume(); vm.onResume() }
+    override fun onResume() { super.onResume(); PhoneRemote.foreground = true; vm.onResume() }
+    override fun onPause() { PhoneRemote.foreground = false; super.onPause() }
 }

@@ -31,8 +31,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     private val sp = app.getSharedPreferences("coco_settings", android.content.Context.MODE_PRIVATE)
     var theme by mutableStateOf(sp.getString("theme", "system")!!)
     var calm by mutableStateOf(sp.getBoolean("calm", false))
-    fun setTheme(v: String) { theme = v; sp.edit().putString("theme", v).apply() }
-    fun setCalm(v: Boolean) { calm = v; sp.edit().putBoolean("calm", v).apply() }
+    fun chooseTheme(v: String) { theme = v; sp.edit().putString("theme", v).apply() }
+    fun chooseCalm(v: Boolean) { calm = v; sp.edit().putBoolean("calm", v).apply() }
     fun notifyOn(kind: String) = sp.getBoolean("n_$kind", true)
     fun setNotify(kind: String, v: Boolean) { sp.edit().putBoolean("n_$kind", v).apply(); notifyTick++ }
     var notifyTick by mutableStateOf(0)
@@ -44,7 +44,11 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         val tools: List<JSONObject> = emptyList(), val memberTools: List<JSONObject> = emptyList(), val tasks: List<JSONObject> = emptyList(),
         val notes: List<JSONObject> = emptyList(), val approvals: List<JSONObject> = emptyList(), val devices: List<JSONObject> = emptyList(),
         val decisions: List<JSONObject> = emptyList(), val activity: List<JSONObject> = emptyList(), val rules: List<JSONObject> = emptyList(),
-    )
+        val chat: List<JSONObject> = emptyList(), val commands: List<JSONObject> = emptyList(), val controls: List<JSONObject> = emptyList(),
+        val events: List<JSONObject> = emptyList(), val pipelines: List<JSONObject> = emptyList(),
+    ) {
+        val paused get() = controls.firstOrNull { it.optString("id") == "coco_paused" }?.optString("value") == "true"
+    }
     sealed class Dialog {
         data class Merged(val title: String, val status: String, val device: String?, val by: String, val taskId: String) : Dialog()
         data class PairCode(val device: String, val code: String) : Dialog()
@@ -127,10 +131,30 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 decisions = cloud.list("decisions", "select=*&order=decided_on.desc").objects(),
                 activity = cloud.list("activity", "select=*&order=at.desc&limit=20").objects(),
                 rules = cloud.list("rules", "select=*&order=updated_at.desc").objects(),
+                chat = cloud.list("chat", "select=*&order=id.desc&limit=80").objects().reversed(),
+                commands = cloud.list("commands", "select=*&order=created_at.desc&limit=30").objects(),
+                controls = cloud.list("controls").objects(),
+                events = cloud.list("events", "select=*&order=due_at.asc.nullsfirst").objects(),
+                pipelines = cloud.list("pipelines", "select=*&order=house_id.asc").objects(),
             )
             Alerts.compareAndNotify(getApplication(), data, d, name)
             data = d
+            runMyCommands(d.commands)
         } catch (e: Exception) { fail(e) }
+    }
+
+    /** Commands a PC sent to this phone: run each once, report the result back to the cloud. */
+    private val handled = mutableSetOf<String>()
+    private fun runMyCommands(list: List<JSONObject>) {
+        val me = cloud.deviceId ?: return
+        list.filter { it.optString("target_device") == me && it.optString("status") == "queued" && handled.add(it.optString("id")) }.forEach { c ->
+            viewModelScope.launch {
+                val id = c.optString("id")
+                runCatching { cloud.update("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "running")) }
+                val result = runCatching { PhoneRemote.run(getApplication(), c.optString("action"), c.optJSONObject("args") ?: JSONObject()) }.getOrElse { "failed: ${it.message}" }
+                runCatching { cloud.update("commands", "id=eq.$id", JSONObject().put("status", if (result.startsWith("failed") || result.startsWith("Not understood")) "failed" else "done").put("result", result).put("done_at", Instant.now().toString())) }
+            }
+        }
     }
 
     private suspend fun log(action: String, detail: String?) = runCatching {
@@ -187,6 +211,27 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     fun switchOff(deviceId: String) = viewModelScope.launch {
         if (deviceId == cloud.deviceId) return@launch
         try { cloud.update("devices", "id=eq.$deviceId", JSONObject().put("active", false)); log("device switched off", deviceId); reload() } catch (e: Exception) { fail(e) }
+    }
+
+    /** Chat with Coco: the same conversation on all four devices. */
+    fun sendChat(text: String) = viewModelScope.launch {
+        try { cloud.insert("chat", JSONObject().put("role", "founder").put("author", name).put("device_id", cloud.deviceId).put("body", text)); reload() } catch (e: Exception) { fail(e) }
+    }
+
+    /** PC Control mode: send a fixed command to one PC; its Coco Lounge app runs it and reports back. */
+    fun sendCommand(target: String, action: String, args: JSONObject = JSONObject()) = viewModelScope.launch {
+        try {
+            cloud.insert("commands", JSONObject().put("target_device", target).put("action", action).put("args", args).put("created_by", name).put("created_device", cloud.deviceId))
+            log("pc command sent", "$action to ${deviceName(target)}"); message = "Sent to ${deviceName(target)}"; reload()
+        } catch (e: Exception) { fail(e) }
+    }
+
+    /** Emergency switch: pause or resume all of Coco's work on every device and in the cloud. */
+    fun setPaused(paused: Boolean) = viewModelScope.launch {
+        try {
+            cloud.update("controls", "id=eq.coco_paused", JSONObject().put("value", paused).put("updated_by", name).put("updated_at", Instant.now().toString()))
+            log(if (paused) "coco paused" else "coco resumed", name); message = if (paused) "Coco paused everywhere" else "Coco is working again"; reload()
+        } catch (e: Exception) { fail(e) }
     }
 
     override fun onCleared() { stopListening?.invoke(); super.onCleared() }

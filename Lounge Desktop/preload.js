@@ -4,5 +4,6 @@ contextBridge.exposeInMainWorld('cocoDesktop', {
   saveRules: (text) => ipcRenderer.send('save-rules', String(text)),
   getStartup: () => ipcRenderer.invoke('get-startup'),
   setStartup: (on) => ipcRenderer.invoke('set-startup', !!on),
+  pcCommand: (action, args) => ipcRenderer.invoke('pc-command', { action, args }),
   platform: 'windows',
 });

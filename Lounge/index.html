@@ -189,9 +189,12 @@ let sb = makeClient(store.get('gs-device-key'));
 function makeClient(deviceKey) {
   return supabase.createClient(URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
 }
+let rTarget = null, rSong = '', rSay = '';
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'rSay' || e.target.id === 'rSong')) { const b = document.querySelector(e.target.id === 'rSay' ? '[data-rc="say"]' : '[data-rc="play_youtube"]'); if (b) b.click(); } });
+document.addEventListener('input', (e) => { if (e.target.id === 'rSong') rSong = e.target.value; if (e.target.id === 'rSay') rSay = e.target.value; });
 let me = null, founder = null, deviceId = store.get('gs-device-id'), page = location.hash.slice(1) || 'home', D = {}, sub = 'houses';
 
-const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
+const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
@@ -252,6 +255,24 @@ function diffAndNotify() {
   seen = now;
   if (window.cocoDesktop) window.cocoDesktop.saveRules(D.rules.map(r => `## ${r.title}\n${r.body}`).join('\n\n'));
 }
+// ---------- PC Control mode: this PC runs the commands sent to it from a founder phone ----------
+let runningCmds = false;
+async function runMyCommands() {
+  if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId || runningCmds) return;
+  runningCmds = true;
+  try {
+    const { data } = await sb.from('commands').select('*').eq('target_device', deviceId).eq('status', 'queued').order('created_at', { ascending: true });
+    for (const c of data || []) {
+      const { data: got } = await sb.from('commands').update({ status: 'running' }).eq('id', c.id).eq('status', 'queued').select('id');
+      if (!got || !got.length) continue;
+      let result;
+      try { result = await window.cocoDesktop.pcCommand(c.action, c.args || {}); } catch (e) { result = 'failed: ' + e.message; }
+      const ok = !/^failed|not allowed|not understood/i.test(result);
+      await sb.from('commands').update({ status: ok ? 'done' : 'failed', result, done_at: new Date().toISOString() }).eq('id', c.id);
+      await log('pc command', `${c.action} on ${deviceName(deviceId)}: ${result}`);
+    }
+  } finally { runningCmds = false; }
+}
 async function loadAll() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
   const res = await Promise.all([
@@ -259,9 +280,10 @@ async function loadAll() {
     q('members', '*', ['sort', true]), q('member_houses'), q('tools', '*', ['name', true]), q('member_tools'),
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
     q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'), q('rules', '*', ['updated_at', false]),
+    q('commands', '*', ['created_at', false]).limit(15),
   ]);
-  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules'].forEach((k, i) => D[k] = res[i].data || []);
-  render(); diffAndNotify();
+  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands'].forEach((k, i) => D[k] = res[i].data || []);
+  render(); diffAndNotify(); runMyCommands();
 }
 let pulseTimer = null;
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
@@ -369,6 +391,29 @@ const V = {
       <div class="card2"><span class="eyebrow">About</span><h3>Coco Lounge 1.0 · ${window.cocoDesktop ? 'Windows' : 'Web'}</h3><span class="muted">Good Space, managed by Coco. Follows the Lounge Standard: the same screens, look and rules on all four devices. Private: founder login plus this device's key; keys and personal documents never pass through the app.</span></div>
     </div>`;
   },
+  remote() {
+    const targets = D.devices.filter(d => d.id !== deviceId && d.active).sort((a, b) => (a.kind === 'pc' ? 0 : 1) - (b.kind === 'pc' ? 0 : 1));
+    const t = targets.find(d => d.id === rTarget) || targets.find(d => d.kind === 'phone') || targets[0];
+    if (!t) return '<p class="muted">No other device yet.</p>';
+    rTarget = t.id; const pc = t.kind === 'pc';
+    const apps = pc ? [['chrome', 'Chrome'], ['brave', 'Brave'], ['vscode', 'VS Code'], ['cursor', 'Cursor'], ['spotify', 'Spotify'], ['whatsapp', 'WhatsApp'], ['files', 'Files'], ['settings', 'Settings']]
+      : [['youtube', 'YouTube'], ['ytmusic', 'YT Music'], ['whatsapp', 'WhatsApp'], ['instagram', 'Instagram'], ['chrome', 'Chrome'], ['maps', 'Maps'], ['spotify', 'Spotify'], ['gmail', 'Gmail'], ['camera', 'Camera']];
+    const key = (k, ic, a = 'media') => `<button class="btn tonal" data-rc="${a}" data-rk="${k}" aria-label="${k}"><i class="ms">${ic}</i></button>`;
+    return `<p class="muted">Control your other devices: play YouTube songs, music keys, volume, open apps${pc ? ', lock, restart' : ', ring the phone'}. The device runs it in its Coco Lounge app and reports back.</p>
+      <div class="actions" style="margin:10px 0">${targets.map(d => `<button class="btn ${d.id === t.id ? '' : 'tonal'}" data-rt="${d.id}"><i class="ms">${d.kind === 'pc' ? 'laptop' : 'smartphone'}</i> ${esc(d.name)}</button>`).join('')}</div>
+      <div class="card2" style="margin-bottom:14px"><span class="eyebrow">Tell ${esc(t.name)} what to do</span><div style="display:flex;gap:8px"><input id="rSay" placeholder="play kesariya · open chrome · volume up · lock · ring" value="${esc(rSay)}" style="flex:1"><button class="btn" data-rc="say"><i class="ms">send</i> Do it</button></div><span class="muted">Plain words in English or Hinglish. It runs on that device in about a second.</span></div>
+      <div class="grid">
+      <div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(t.name)}</h3><span class="live"><i class="dot ${online(t) ? 'on' : ''}"></i>${online(t) ? 'online' : 'offline'}</span></div>
+        <span class="muted">${t.key_hash ? (online(t) ? 'Coco Lounge connected' : 'runs when it comes back online') : 'not paired yet'}</span><div class="actions"><button class="btn text" data-rc="status">Check status</button></div></div>
+      <div class="card2"><span class="eyebrow">Play on YouTube</span><div style="display:flex;gap:8px"><input id="rSong" placeholder="Song, singer or video" value="${esc(rSong)}" style="flex:1"><button class="btn" data-rc="play_youtube"><i class="ms">play_arrow</i> Play</button></div>
+        <div class="actions">${key('prev', 'skip_previous')}${key('playpause', 'play_pause')}${key('next', 'skip_next')}${key('down', 'volume_down', 'volume')}${key('up', 'volume_up', 'volume')}${key('mute', 'volume_off', 'volume')}</div></div>
+      <div class="card2"><span class="eyebrow">Open an app</span><div class="actions">${apps.map(([k, l]) => `<button class="btn tonal" data-rc="open_app" data-ra="${k}">${l}</button>`).join('')}</div>
+        <div style="display:flex;gap:8px"><input id="rLink" placeholder="https:// link to open" style="flex:1"><button class="btn tonal" data-rc="open_url">Open</button></div>
+        ${pc ? '' : '<span class="muted">Android opens apps at once only while Coco Lounge is on the phone screen; otherwise the phone shows a notification to tap.</span>'}</div>
+      <div class="card2"><span class="eyebrow">${pc ? 'Power' : 'Phone'}</span><div class="actions">${pc ? `<button class="btn tonal" data-rc="lock">Lock</button><button class="btn tonal" data-rc="sleep">Sleep</button><button class="btn tonal" data-rc="restart">Restart</button><button class="btn tonal" data-rc="shutdown">Switch off</button><button class="btn text" data-rc="cancel_power">Cancel</button>` : '<button class="btn tonal" data-rc="ring"><i class="ms">notifications_active</i> Ring it</button>'}<button class="btn text" data-rc="notify">Send a hello</button></div></div>
+      </div>
+      <h3 style="margin:22px 0 8px">Recent commands</h3><div class="card2">${(D.commands || []).map(c => `<div class="row"><div class="grow"><b>${esc(c.action.replace('_', ' '))}${c.args && (c.args.q || c.args.app || c.args.key) ? ' · ' + esc(c.args.q || c.args.app || c.args.key) : ''}</b> → ${esc(deviceName(c.target_device))}<div class="muted">${esc(c.result || '')} · ${esc(c.created_by || '')} · ${ago(c.created_at)}</div></div>${chip(c.status)}</div>`).join('') || '<span class="muted">Nothing sent yet.</span>'}</div>`;
+  },
   devices() {
     return `<p class="muted">Only these four devices can open Good Space. A device that is switched off stops working at once.</p><div class="grid">${D.devices.map(d => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(d.name)}</h3><span class="live"><i class="dot ${online(d) ? 'on' : ''}"></i>${online(d) ? 'online' : 'offline'}</span></div>
       <span class="muted">${esc(d.kind === 'pc' ? 'PC' : 'Phone')} · ${d.key_hash ? 'paired ' + ago(d.paired_at) : 'not paired yet'} · seen ${ago(d.last_seen)}</span>${d.id === deviceId ? '<span class="chip gold" style="justify-self:start">This device</span>' : ''}
@@ -428,6 +473,21 @@ document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const ds = b.dataset;
   if (ds.sub) { sub = ds.sub; render(); }
+  if (ds.rt) { rTarget = ds.rt; render(); }
+  if (ds.rc) {
+    const a = ds.rc, args = {};
+    if (a === 'say') { args.text = rSay.trim(); if (!args.text) return toast('Type what to do'); }
+    if (a === 'play_youtube') { args.q = rSong.trim(); if (!args.q) return toast('Type a song first'); }
+    if (a === 'media' || a === 'volume') args.key = ds.rk;
+    if (a === 'open_app') args.app = ds.ra;
+    if (a === 'open_url') { args.url = ($('#rLink') || {}).value || ''; if (!/^https:///.test(args.url)) return toast('Use an https link'); }
+    if (a === 'notify') args.text = 'Hello from ' + (founder ? founder.call_me : 'Good Space');
+    if ((a === 'restart' || a === 'shutdown') && !confirm((a === 'restart' ? 'Restart ' : 'Switch off ') + deviceName(rTarget) + ' in 60 seconds?')) return;
+    const { error } = await sb.from('commands').insert({ target_device: rTarget, action: a, args, created_by: founderName(), created_device: deviceId });
+    if (error) return toast('Could not send: ' + error.message);
+    if (a === 'play_youtube') rSong = ''; if (a === 'say') rSay = '';
+    await log('remote command', a + ' to ' + deviceName(rTarget)); toast('Sent to ' + deviceName(rTarget)); loadAll();
+  }
   if (ds.themeSet) { store.set('gs-theme', ds.themeSet); applyLook(); render(); }
   if (ds.set === 'refresh') { await loadAll(); toast('Up to date'); }
   if (ds.set === 'signout') { await sb.auth.signOut(); show('signin'); }

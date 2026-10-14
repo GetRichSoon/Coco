@@ -16,7 +16,11 @@ Founder decision 2026-10-15. Engine: the Resource Governor in Coco HQ (`os/resou
    | Haiku (cheapest) | Lola, Lili, Kiki, Didi, Bibi | research, sorting, summaries, reports, reply drafts |
    | Sonnet (middle) | Vivi, Remy, Margot, Cleo, Elise | designing, building, writing, videos, checking |
    | Opus (strongest) | anyone, rarely | only hard builds or architecture, or when Sonnet already failed; never routine work; off on Pro |
-2. **Budget per House every day**, with the 70 / 20 / 10 split: normal work / important work / emergency reserve.
+2. **Coco Gatekeeper (founder idea, 2026-10-15)**: every new task and chat message is read first by the free local AI
+   (Qwen 3 8B on a PC). Easy work (sort, tag, summarise, status, simple reply) is done by the local AI; only work that
+   truly needs Claude (write, code, design, check, anything users will see) goes to Claude. When no PC is on, the
+   hourly cloud run sorts it (later: Groq free model as the cloud Gatekeeper).
+3. **Budget per House every day**, with the 70 / 20 / 10 split: normal work / important work / emergency reserve.
 3. **Small, exact tasks**: each helper gets only the files and facts it needs and a clear expected result.
 4. **Reuse before redo**: templates, the Shared Shelf and saved research first; nothing is made twice.
 5. **No loops**: the same task at most 3 times a day; a task using 3x its usual tokens is stopped and reported.
