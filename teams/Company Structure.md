@@ -157,3 +157,11 @@ All tools belong to the Bonbon Club (support team), each assigned to one member;
 
 ## Tokens
 The Claude plan is spent by the rules in teams/Token Treasury.md (Pro now, Max soon; strongest model only when needed).
+
+## Terminals (Claude Code, 3 on each founder PC)
+| Terminal | Job |
+|---|---|
+| 1 | Coco: manager, approvals, daily Short and playlists |
+| 2 | Make: Remy, Vivi, Margot (extensions, apps, downloads) |
+| 3 | Gigi studio: Cleo, Blender, videos |
+All terminals share the founder's Claude plan; idle terminals stay idle (no polling). Coco splits work so the two PCs never repeat a task.
