@@ -1,0 +1,16 @@
+# Daily Seal: saves Coco to GetRichSoon/Coco every night (scheduled task "Coco Daily Seal").
+# Commits only real changes, pulls Shreya's updates first, never force-pushes.
+$ErrorActionPreference = 'Continue'
+$repo = Split-Path -Parent $MyInvocation.MyCommand.Path
+$log = Join-Path (Split-Path -Parent $repo) 'Safe Keeping\Seal Log.txt'
+function Log($m) { Add-Content -LiteralPath $log "$(Get-Date -Format 'yyyy-MM-dd HH:mm')  $m" }
+Set-Location $repo
+git add -A
+if (git status --porcelain) {
+  $who = if ($env:COMPUTERNAME -match 'SHREYA') { 'Shreya' } else { 'Mangesh' }
+  git -c user.name=Mangesh347 -c user.email=lokademangesh123@gmail.com commit -q -m "Coco: daily seal $(Get-Date -Format 'yyyy-MM-dd') ($who's PC)"
+}
+git pull -q --rebase origin main 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) { git rebase --abort 2>$null; Log 'NOT SAVED: pull had a conflict, Coco will ask a founder'; exit 1 }
+git push -q origin main 2>&1 | Out-Null
+if ($LASTEXITCODE -eq 0) { Log 'saved to GetRichSoon/Coco' } else { Log 'NOT SAVED: push failed (offline?)' }
