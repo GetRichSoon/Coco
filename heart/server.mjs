@@ -5,13 +5,14 @@ import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { execFile } from 'node:child_process';
 import { networkInterfaces } from 'node:os';
-import { ROOT, loadBrain, update } from './brain.mjs';
+import { ROOT, loadBrain, update, firstHome } from './brain.mjs';
 import { importNova } from './import-nova.mjs';
 
 const PORT = +(process.env.COCO_PORT || 7777);
-const VAULT = process.env.COCO_VAULT || 'C:/Users/Lenovo/Coco Vault';
-const NOVA = process.env.NOVA_HQ || 'C:/Users/Lenovo/nova-hq';
+const VAULT = firstHome(process.env.COCO_VAULT, join(ROOT, '..', 'Coco Vault'), 'C:/Users/Lenovo/Coco Vault');
+const NOVA = firstHome(process.env.NOVA_HQ, join(ROOT, '..', 'Coco HQ'), 'C:/Users/Lenovo/nova-hq');
 const FACE = join(ROOT, 'face');
+const SECRETS = firstHome(join(VAULT, 'Nova Live Keys'), 'C:/Users/Lenovo/.nova-secrets');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.json': 'application/json', '.png': 'image/png' };
 
 export function appPin() {
@@ -27,8 +28,8 @@ function hasKey(file, name) {
 
 export function liveConnections(brain) {
   const keys = join(VAULT, 'Coco Keys');
-  const yt = existsSync(join(keys, 'YouTube The Flow.env')) || existsSync('C:/Users/Lenovo/.nova-secrets/youtube.env');
-  const cwsFile = existsSync(join(keys, 'Chrome Web Store.env')) ? join(keys, 'Chrome Web Store.env') : 'C:/Users/Lenovo/.nova-secrets/chrome-store.env';
+  const yt = existsSync(join(keys, 'YouTube The Flow.env')) || existsSync(join(SECRETS, 'youtube.env'));
+  const cwsFile = existsSync(join(keys, 'Chrome Web Store.env')) ? join(keys, 'Chrome Web Store.env') : join(SECRETS, 'chrome-store.env');
   const cwsToken = hasKey(cwsFile, '\\w*REFRESH_TOKEN');
   return (brain.connections || []).map(c => {
     if (c.id === 'youtube') return { ...c, state: yt ? 'connected' : 'missing', detail: yt ? `${c.detail || 'The Flow'} · keys in Coco Vault` : 'Keys missing' };

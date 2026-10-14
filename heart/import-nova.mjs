@@ -1,16 +1,16 @@
-﻿// Brings everything Nova knows into Coco's memory (memory/brain.json).
+// Brings everything Nova knows into Coco's memory (memory/brain.json).
 // Reads nova-hq files only; never reads secret values.
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { saveBrain, loadBrain } from './brain.mjs';
+import { saveBrain, loadBrain, firstHome, ROOT } from './brain.mjs';
 
-const NOVA = process.env.NOVA_HQ || 'C:/Users/Lenovo/nova-hq';
+const NOVA = firstHome(process.env.NOVA_HQ, join(ROOT, '..', 'Coco HQ'), 'C:/Users/Lenovo/nova-hq');
 const read = (p) => { try { return readFileSync(join(NOVA, p), 'utf8').replace(/^\uFEFF/, ''); } catch { return ''; } };
 const json = (p, fb) => { try { return JSON.parse(read(p)); } catch { return fb; } };
 const ls = (p) => { try { return readdirSync(join(NOVA, p)); } catch { return []; } };
 
-// Fix Windows-1252 mojibake that some Nova files carry (e.g. "Ã¢â‚¬â€" for "â€”").
-export const tidy = (s = '') => s.replace(/Ã¢â‚¬â€/g, 'â€”').replace(/Ã¢â‚¬â€œ/g, 'â€“').replace(/Ã¢â‚¬â„¢/g, 'â€™').replace(/Ã¢â‚¬Å“|Ã¢â‚¬\x9d|Ã¢â‚¬/g, '"').trim();
+// Fix Windows-1252 mojibake that some Nova files carry (e.g. "â€”" for "—").
+export const tidy = (s = '') => s.replace(/â€”/g, '—').replace(/â€“/g, '–').replace(/â€™/g, '’').replace(/â€œ|â€\x9d|â€/g, '"').trim();
 
 export function tableRows(md) {
   return md.split(/\r?\n/)
@@ -121,7 +121,7 @@ function connections() {
 function teamRows() {
   const rows = tableRows(read('company/TEAMS.md'));
   const find = (name) => rows.find(r => r[0].toLowerCase().startsWith(name)) || [];
-  const row = (r) => ({ doing: r[1] || '', recent: r[2] || '', blocked: r[3] === 'â€”' ? '' : (r[3] || ''), next: r[4] || '' });
+  const row = (r) => ({ doing: r[1] || '', recent: r[2] || '', blocked: r[3] === '—' ? '' : (r[3] || ''), next: r[4] || '' });
   return { ext: row(find('extensions')), yt: row(find('youtube')), long: row(find('long-form')), growth: row(find('growth')) };
 }
 
@@ -132,7 +132,7 @@ function youtubeNow(vids, row) {
   if (!live.length) return row;
   const last = live[0];
   return {
-    doing: `1 Short a day on The Flow${longOpen ? ` Â· long video "${longOpen.title}" ready, waiting for YES` : ''}`,
+    doing: `1 Short a day on The Flow${longOpen ? ` · long video "${longOpen.title}" ready, waiting for YES` : ''}`,
     recent: `Posted "${last.title}" on ${last.date} (${live.length} videos live)`,
     blocked: row.blocked && !/not connected in cloud/i.test(row.blocked) ? row.blocked : '',
     next: 'Next Short in the Kai and Orbi style (QUALITY_V2 rule 0)',
@@ -150,13 +150,13 @@ export function importNova() {
     importedAt: new Date().toISOString(),
     founders: [{ id: 'mangesh', name: 'Mangesh', callMe: 'Boss' }, { id: 'shreya', name: 'Shreya', callMe: 'Big Boss' }],
     teams: [
-      { id: 'youtube', name: 'YouTube Studio', emoji: 'ðŸŽ¬', state: 'active', ...t.yt, longForm: t.long,
+      { id: 'youtube', name: 'YouTube Studio', emoji: '🎬', state: 'active', ...t.yt, longForm: t.long,
         cadence: '1 Short every day, 1 long video every week', publishRule: 'Shorts post automatically (A-006). Long videos need a YES.', playbook: 'teams/YouTube Studio.md' },
-      { id: 'extensions', name: 'Extension Atelier', emoji: 'ðŸ§©', state: 'active', ...t.ext,
+      { id: 'extensions', name: 'Extension Atelier', emoji: '🧩', state: 'active', ...t.ext,
         cadence: 'Ideas Mon to Thu, shortlist Friday, one release a week', publishRule: 'Every Web Store release needs a YES.', playbook: 'teams/Extension Atelier.md' },
-      { id: 'android', name: 'App Garden', emoji: 'ðŸ“±', state: 'active', doing: 'Nova Island and CleanBar builds on the PC', recent: 'Fuselist parked (A-001 on hold)', blocked: 'Play Console not connected (upload is manual)', next: 'Pick the next app to polish',
+      { id: 'android', name: 'App Garden', emoji: '📱', state: 'active', doing: 'Nova Island and CleanBar builds on the PC', recent: 'Fuselist parked (A-001 on hold)', blocked: 'Play Console not connected (upload is manual)', next: 'Pick the next app to polish',
         cadence: 'One app polished at a time', publishRule: 'Every Play Store release needs a YES.', playbook: 'teams/App Garden.md' },
-      { id: 'social', name: 'Social Lounge', emoji: 'ðŸ’¬', state: 'paused', doing: 'Paused by the founder (2026-10-09)', recent: t.growth.recent || '', blocked: 'Instagram and Facebook not connected', next: 'Starts again when the founder says so',
+      { id: 'social', name: 'Social Lounge', emoji: '💬', state: 'paused', doing: 'Paused by the founder (2026-10-09)', recent: t.growth.recent || '', blocked: 'Instagram and Facebook not connected', next: 'Starts again when the founder says so',
         cadence: 'Paused', publishRule: 'Every post needs a YES.', playbook: 'teams/Social Lounge.md' },
     ],
     agents: agents(),

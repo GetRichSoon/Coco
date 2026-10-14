@@ -31,7 +31,8 @@ test('import keeps every Nova record', () => {
   assert.equal(b.approvals.length, 2);
   assert.equal(b.approvals[0].state, 'waiting');
   assert.equal(b.approvals[1].decidedBy, 'Mangesh');
-  assert.equal(b.decisions.length, 1);
+  assert.equal(b.decisions.length, 2); // Nova's one + "company is Good Space"
+  assert.equal(b.company, 'Good Space');
   assert.equal(b.tasks.length, 1);
   assert.equal(b.youtube.videos[0].published.url, 'https://youtube.com/shorts/x');
   assert.equal(b.agents[0].model, 'haiku');

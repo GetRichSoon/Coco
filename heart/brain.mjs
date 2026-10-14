@@ -26,3 +26,6 @@ export function update(fn) {
   fn(b);
   return saveBrain(b);
 }
+
+// First folder that exists (new Good Space home first, old place as fallback).
+export const firstHome = (...paths) => paths.find(p => p && existsSync(p)) || paths.filter(Boolean).at(-1);
