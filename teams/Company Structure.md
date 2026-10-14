@@ -115,3 +115,37 @@ ZAZA
 Rules: Roblox needs a Roblox account + Roblox Studio on the PC (founder sets up). Follow Roblox rules
 for kids' safety and fair in-game purchases. No copied characters or brands. A Roblox game cannot run
 elsewhere: other stores get a separate small version of the same idea.
+
+## Bonbon Club (support team): 9 members in 3 groups, serving every House
+```
+BONBON CLUB
+├── THINK  (before anything is made)
+│   ├── Lola ..... finds ideas and trends, scores them out of 50
+│   └── Lili ..... checks the market and competitors; after launch, tracks views, installs, sales
+├── MAKE   (does the work)
+│   ├── Remy ..... builds extensions, apps, websites, games
+│   ├── Margot ... writes scripts, titles, captions, store text, e-books
+│   └── Cleo ..... makes videos, thumbnails, trailers
+└── CARE   (after the work)
+    ├── Elise .... checks quality; never checks her own work; packs the release
+    ├── Kiki ..... growth: SEO, store pages, links, email drafts (drafts only)
+    ├── Didi ..... customer care: reviews, support replies (drafts only)
+    └── Bibi ..... money, weekly scoreboard, approvals list, alerts
+```
+
+| Member | Gives | Helps | Model (cost) | Agent file |
+|---|---|---|---|---|
+| Lola | top ideas with scores | all Houses | haiku (cheap) | scout |
+| Lili | market check + weekly results | all Houses | haiku | scout |
+| Remy | working product | Lulu, Zaza, Fifi (apps) | sonnet (opus only on Max plan) | builder |
+| Margot | finished text | all Houses | sonnet | content-writer |
+| Cleo | finished video | Gigi, Zaza trailers, Fifi lessons | sonnet | video-producer |
+| Elise | PASS/FAIL + release pack | all Houses | sonnet | release-qa |
+| Kiki | growth plan + drafts | all Houses | haiku | growth |
+| Didi | reply drafts | Lulu, Fifi, Zaza | haiku | new (to create) |
+| Bibi | scoreboard + approvals | Coco and all Houses | haiku | new (to create) |
+
+Hand-off order: Lola → Lili → Remy / Margot / Cleo → Elise → founder YES → live on 3+ platforms →
+Kiki grows it → Didi looks after users → Bibi counts the money.
+Rules: members only work when a House asks; cheapest model that can do the job; Kiki and Didi never
+send or post anything themselves; Elise is always someone other than the maker.
