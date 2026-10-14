@@ -6,3 +6,10 @@ Grand Estate/Portraits/
 Grand Estate/*.blend
 Grand Estate/*.blend1
 Grand Estate/Motion Picture/
+
+Lounge Desktop/node_modules/
+Lounge Android/.gradle/
+Lounge Android/build/
+Lounge Android/app/build/
+Lounge Android/local.properties
+Lounge Android/.kotlin/

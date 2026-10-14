@@ -1,0 +1,146 @@
+package com.goodspace.cocolounge
+
+import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import org.json.JSONArray
+import org.json.JSONObject
+import java.security.SecureRandom
+import java.util.concurrent.TimeUnit
+
+/** Coco Cloud connection: founder sign-in, this device's key, REST calls and the live pulse. */
+class Cloud(context: Context) {
+    companion object {
+        const val URL = "https://bfnhnkxvppqmklfpslfm.supabase.co"
+        const val KEY = "sb_publishable_had-6h5KG1epTVwISeuWbg_IKg7IO1s"
+        private val JSON = "application/json".toMediaType()
+    }
+
+    private val prefs = context.getSharedPreferences("coco_lounge", Context.MODE_PRIVATE)
+    private val http = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).pingInterval(25, TimeUnit.SECONDS).build()
+
+    var accessToken: String? get() = prefs.getString("access", null); set(v) = prefs.edit().putString("access", v).apply()
+    var refreshToken: String? get() = prefs.getString("refresh", null); set(v) = prefs.edit().putString("refresh", v).apply()
+    var expiresAt: Long get() = prefs.getLong("expires", 0); set(v) = prefs.edit().putLong("expires", v).apply()
+    var email: String? get() = prefs.getString("email", null); set(v) = prefs.edit().putString("email", v).apply()
+    var deviceKey: String? get() = prefs.getString("device_key", null); set(v) = prefs.edit().putString("device_key", v).apply()
+    var deviceId: String? get() = prefs.getString("device_id", null); set(v) = prefs.edit().putString("device_id", v).apply()
+
+    val signedIn get() = refreshToken != null
+    val paired get() = deviceKey != null
+
+    class CloudError(message: String, val code: Int = 0) : Exception(message)
+
+    private fun Response.bodyOrThrow(): String {
+        val text = body?.string().orEmpty()
+        if (!isSuccessful) {
+            val msg = runCatching { JSONObject(text).let { it.optString("msg", it.optString("message", it.optString("error_description", text))) } }.getOrDefault(text)
+            throw CloudError(msg.ifBlank { "Coco Cloud error $code" }, code)
+        }
+        return text
+    }
+
+    private fun saveSession(o: JSONObject) {
+        accessToken = o.getString("access_token")
+        refreshToken = o.getString("refresh_token")
+        expiresAt = System.currentTimeMillis() + o.optLong("expires_in", 3600) * 1000
+        email = o.optJSONObject("user")?.optString("email") ?: email
+    }
+
+    suspend fun signIn(mail: String, password: String) = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("email", mail).put("password", password).toString().toRequestBody(JSON)
+        val r = http.newCall(Request.Builder().url("$URL/auth/v1/token?grant_type=password").header("apikey", KEY).post(body).build()).execute()
+        saveSession(JSONObject(r.bodyOrThrow()))
+    }
+
+    suspend fun signUp(mail: String, password: String) = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("email", mail).put("password", password).toString().toRequestBody(JSON)
+        http.newCall(Request.Builder().url("$URL/auth/v1/signup").header("apikey", KEY).post(body).build()).execute().bodyOrThrow()
+        Unit
+    }
+
+    fun signOut() { prefs.edit().remove("access").remove("refresh").remove("expires").apply() }
+    fun forgetDevice() { prefs.edit().remove("device_key").remove("device_id").apply() }
+
+    /** Keeps the login fresh; called before every request. */
+    suspend fun token(): String = withContext(Dispatchers.IO) {
+        if (accessToken != null && System.currentTimeMillis() < expiresAt - 60_000) return@withContext accessToken!!
+        val rt = refreshToken ?: throw CloudError("Please sign in", 401)
+        val body = JSONObject().put("refresh_token", rt).toString().toRequestBody(JSON)
+        val r = http.newCall(Request.Builder().url("$URL/auth/v1/token?grant_type=refresh_token").header("apikey", KEY).post(body).build()).execute()
+        try { saveSession(JSONObject(r.bodyOrThrow())) } catch (e: CloudError) { if (e.code in 400..401) signOut(); throw e }
+        accessToken!!
+    }
+
+    private suspend fun request(path: String, method: String = "GET", body: String? = null, prefer: String? = null): String = withContext(Dispatchers.IO) {
+        val b = Request.Builder().url("$URL/rest/v1/$path").header("apikey", KEY).header("Authorization", "Bearer ${token()}")
+        deviceKey?.let { b.header("x-device-key", it) }
+        prefer?.let { b.header("Prefer", it) }
+        when (method) {
+            "GET" -> b.get()
+            else -> b.method(method, (body ?: "{}").toRequestBody(JSON))
+        }
+        http.newCall(b.build()).execute().bodyOrThrow()
+    }
+
+    suspend fun list(table: String, query: String = "select=*"): JSONArray = JSONArray(request("$table?$query").ifBlank { "[]" })
+    suspend fun insert(table: String, row: JSONObject) { request(table, "POST", row.toString(), "return=minimal") }
+    suspend fun update(table: String, filter: String, row: JSONObject) { request("$table?$filter", "PATCH", row.toString(), "return=minimal") }
+    suspend fun rpc(name: String, args: JSONObject): String = request("rpc/$name", "POST", args.toString())
+
+    /** Pairs this phone with a one-time code. The secret key never leaves the phone; only its hash is stored in the cloud. */
+    suspend fun pair(code: String): String {
+        val raw = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val key = raw.joinToString("") { "%02x".format(it) }
+        val id = rpc("pair_device", JSONObject().put("p_code", code.trim().uppercase()).put("p_device_key", key)).trim().trim('"')
+        deviceKey = key; deviceId = id
+        return id
+    }
+
+    /** Live pulse: any change in Coco Cloud arrives here within a second. Reconnects on its own. */
+    fun listen(onPulse: () -> Unit, onState: (Boolean) -> Unit): () -> Unit {
+        var socket: WebSocket? = null
+        var closed = false
+        var ref = 1
+        fun connect() {
+            if (closed) return
+            val req = Request.Builder().url("${URL.replace("https", "wss")}/realtime/v1/websocket?apikey=$KEY&vsn=1.0.0").build()
+            socket = http.newWebSocket(req, object : WebSocketListener() {
+                override fun onOpen(ws: WebSocket, response: Response) {
+                    val join = JSONObject().put("topic", "realtime:pulse").put("event", "phx_join").put("ref", (ref++).toString())
+                        .put("payload", JSONObject()
+                            .put("config", JSONObject().put("postgres_changes", JSONArray().put(JSONObject().put("event", "INSERT").put("schema", "public").put("table", "pulse"))))
+                            .put("access_token", accessToken))
+                    ws.send(join.toString())
+                    Thread {
+                        while (!closed && socket === ws) {
+                            Thread.sleep(25_000)
+                            ws.send(JSONObject().put("topic", "phoenix").put("event", "heartbeat").put("payload", JSONObject()).put("ref", (ref++).toString()).toString())
+                        }
+                    }.start()
+                }
+                override fun onMessage(ws: WebSocket, text: String) {
+                    val m = runCatching { JSONObject(text) }.getOrNull() ?: return
+                    when (m.optString("event")) {
+                        "phx_reply" -> if (m.optJSONObject("payload")?.optString("status") == "ok" && m.optString("topic") == "realtime:pulse") onState(true)
+                        "postgres_changes" -> onPulse()
+                    }
+                }
+                override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) { onState(false); retry() }
+                override fun onClosed(ws: WebSocket, code: Int, reason: String) { onState(false); retry() }
+            })
+        }
+        fun retryLater() { Thread { Thread.sleep(3_000); connect() }.start() }
+        retry = { if (!closed) retryLater() }
+        connect()
+        return { closed = true; socket?.close(1000, "bye") }
+    }
+    private var retry: () -> Unit = {}
+}

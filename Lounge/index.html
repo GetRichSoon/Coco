@@ -19,12 +19,18 @@
   --good: #2f6b40; --good-c: #cdeed5; --warn: #7a5a00; --warn-c: #ffe6a3; --bad: #9c2b33; --bad-c: #ffdad8;
   --display: "Fraunces", Georgia, serif; --body: "Nunito", "Segoe UI", system-ui, sans-serif;
 }
-@media (prefers-color-scheme: dark) { :root {
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
   --gold: #e3c06c; --gold-soft: #5e4a1f; --sage: #34482d; --on-sage: #d6ecc9;
   --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --surface-3: #332939;
   --on-surface: #f2e6ea; --muted: #cbbac4; --outline: #4f4250;
   --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --bad: #ffb3ae; --bad-c: #6f1d23; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --primary: #f1b6d8; --on-primary: #4a1c3f; --primary-c: #633856; --on-primary-c: #ffd8ee;
+  --gold: #e3c06c; --gold-soft: #5e4a1f; --sage: #34482d; --on-sage: #d6ecc9;
+  --surface: #141018; --surface-1: #1e1822; --surface-2: #28202c; --surface-3: #332939;
+  --on-surface: #f2e6ea; --muted: #cbbac4; --outline: #4f4250;
+  --good: #a9dcb6; --good-c: #1f4a2b; --warn: #f3cd5f; --warn-c: #5a4300; --bad: #ffb3ae; --bad-c: #6f1d23; color-scheme: dark; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; background: var(--surface); color: var(--on-surface); font: 15px/1.5 var(--body); }
@@ -97,7 +103,33 @@ dialog::backdrop { background: rgba(20, 10, 16, .45); }
   .bottom a.on .pill { background: var(--primary-c); color: var(--on-primary-c); }
   .bottom .badge { position: absolute; top: 0; right: 18%; font-size: 10px; }
 }
-</style>
+@keyframes fadeThrough { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes breathe { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.2); opacity: 0; } }
+@keyframes drift { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+#view.enter { animation: fadeThrough .26s cubic-bezier(.2,0,0,1) .06s both; }
+#view.enter .card2, #view.enter .hero, #view.enter .form { animation: rise .42s cubic-bezier(.2,0,0,1) both; }
+#view.enter .grid > :nth-child(1), #view.enter > :nth-child(1) { animation-delay: .04s; }
+#view.enter .grid > :nth-child(2), #view.enter > :nth-child(2) { animation-delay: .08s; }
+#view.enter .grid > :nth-child(3), #view.enter > :nth-child(3) { animation-delay: .12s; }
+#view.enter .grid > :nth-child(4), #view.enter > :nth-child(4) { animation-delay: .16s; }
+#view.enter .grid > :nth-child(n+5), #view.enter > :nth-child(n+5) { animation-delay: .2s; }
+.dot.on { position: relative; }
+.dot.on::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #3fb46a; animation: breathe 1.4s ease-out infinite; }
+.hero { background-size: 220% 220%; animation: drift 9s ease-in-out infinite alternate; }
+.btn, .card2, .nav a, .bottom a .pill { transition: transform .18s cubic-bezier(.2,0,0,1), background-color .2s, box-shadow .2s; }
+.btn:active { transform: scale(.97); }
+@media (hover: hover) { .card2:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(60, 20, 40, .08); } }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.switch { appearance: none; width: 52px; height: 32px; border-radius: 999px; background: var(--surface-3); box-shadow: inset 0 0 0 2px var(--outline); position: relative; cursor: pointer; flex: none; transition: background .2s; }
+.switch::after { content: ""; position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform .2s cubic-bezier(.2,0,0,1), width .2s, height .2s; }
+.switch:checked { background: var(--primary); box-shadow: none; }
+.switch:checked::after { transform: translateX(20px); top: 4px; left: 4px; width: 24px; height: 24px; background: var(--on-primary); }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; color: var(--on-surface); font: 700 14px var(--body); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+body.calm *, body.calm *::after { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }</style>
 </head>
 <body>
 <!-- 1. sign in -->
@@ -159,7 +191,7 @@ function makeClient(deviceKey) {
 }
 let me = null, founder = null, deviceId = store.get('gs-device-id'), page = location.hash.slice(1) || 'home', D = {}, sub = 'houses';
 
-const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['devices', 'Devices', 'devices']];
+const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
@@ -169,7 +201,8 @@ async function boot() {
   const { data, error } = await sb.from('founders').select('*');
   if (error || !data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
-  show('app'); await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000);
+  show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
+  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000);
 }
 function show(which, msg) {
   ['signin', 'pair', 'app'].forEach(id => $('#' + id).hidden = id !== which);
@@ -199,22 +232,57 @@ $('#pairForm').addEventListener('submit', async (e) => {
 });
 $('#signOut1').onclick = async () => { await sb.auth.signOut(); show('signin'); };
 
+// ---------- notifications: tell this founder what changed elsewhere ----------
+let seen = null;
+function notify(title, body, kind = 'other') {
+  if (store.get('gs-n-' + kind) === '0') return;
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body, icon: 'coco.svg', silent: false }); } catch {}
+}
+function diffAndNotify() {
+  const now = { approvals: new Set(D.approvals.filter(a => a.state === 'waiting').map(a => a.id)), done: new Set(D.tasks.filter(t => t.status === 'done').map(t => t.id)), act: D.activity[0] ? D.activity[0].id : 0 };
+  if (seen) {
+    D.approvals.filter(a => a.state === 'waiting' && !seen.approvals.has(a.id)).forEach(a => notify('Needs your YES: ' + a.code, a.what.slice(0, 120), 'approvals'));
+    D.tasks.filter(t => t.status === 'done' && !seen.done.has(t.id)).forEach(t => notify('Done: ' + t.title, t.result || 'Finished', 'done'));
+    D.activity.filter(a => a.id > seen.act && a.actor !== founderName()).forEach(a => {
+      if (a.action === 'rule set') notify(`${a.actor} set a new rule`, a.detail || '');
+      if (a.action === 'merged') notify('Coco merged a task', a.detail || '', 'merged');
+      if (a.action === 'task added') notify(`${a.actor} gave a task`, a.detail || '');
+    });
+  }
+  seen = now;
+  if (window.cocoDesktop) window.cocoDesktop.saveRules(D.rules.map(r => `## ${r.title}\n${r.body}`).join('\n\n'));
+}
 async function loadAll() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
   const res = await Promise.all([
     q('houses', '*', ['sort', true]), q('categories', '*', ['code', true]), q('offerings', '*', ['name', true]), q('platforms', '*', ['sort', true]),
     q('members', '*', ['sort', true]), q('member_houses'), q('tools', '*', ['name', true]), q('member_tools'),
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
-    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'),
+    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'), q('rules', '*', ['updated_at', false]),
   ]);
-  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders'].forEach((k, i) => D[k] = res[i].data || []);
-  render();
+  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules'].forEach((k, i) => D[k] = res[i].data || []);
+  render(); diffAndNotify();
 }
 let pulseTimer = null;
+// Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
+let channel = null, isLive = false, retryTimer = null, tries = 0;
+function setLive(ok) { isLive = ok; $('#liveDot').classList.toggle('on', ok); $('#liveText').textContent = ok ? 'live' : 'reconnecting'; }
+function connectLive() {
+  clearTimeout(retryTimer);
+  if (channel) { try { sb.removeChannel(channel); } catch {} channel = null; }
+  channel = sb.channel('pulse-' + Date.now())
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { clearTimeout(pulseTimer); pulseTimer = setTimeout(loadAll, 400); })
+    .subscribe((s) => {
+      if (s === 'SUBSCRIBED') { tries = 0; setLive(true); loadAll(); }
+      else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
+    });
+}
 function listen() {
-  sb.channel('pulse').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { clearTimeout(pulseTimer); pulseTimer = setTimeout(loadAll, 400); })
-    .subscribe((s) => { const ok = s === 'SUBSCRIBED'; $('#liveDot').classList.toggle('on', ok); $('#liveText').textContent = ok ? 'live' : 'reconnecting'; if (ok) loadAll(); });
-  addEventListener('online', loadAll); document.addEventListener('visibilitychange', () => { if (!document.hidden) { heartbeat(); loadAll(); } });
+  connectLive();
+  addEventListener('online', () => { connectLive(); heartbeat(); });
+  addEventListener('offline', () => setLive(false));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { heartbeat(); if (!isLive) connectLive(); else loadAll(); } });
+  setInterval(() => { if (!isLive && navigator.onLine) connectLive(); }, 45000);
 }
 async function heartbeat() { if (deviceId) await sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-1' }).eq('id', deviceId); }
 const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id || '';
@@ -279,6 +347,28 @@ const V = {
       const hs = D.memberHouses.filter(x => x.member_id === m.id).map(x => (D.houses.find(h => h.id === x.house_id) || {}).name);
       return `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px"><h3>${esc(m.name)}</h3><span class="chip">${esc(m.model)}</span></div><div>${esc(m.job)}</div><span class="muted">Helps: ${esc(hs.join(', '))}</span><div class="actions">${tools.map(t => `<span class="chip ${t.status === 'connected' || t.status === 'installed' ? 'good' : t.status === 'to_install' ? 'warn' : ''}">${esc(t.name)}</span>`).join('')}</div></div>`; }).join('')}</div>`).join('');
   },
+  rules() {
+    return `<form class="form" id="newRule"><h3>Set a rule for all of Good Space</h3><p class="muted">Every device and every Coco worker follows it at once. The other founder is told.</p>
+      <label for="rTitle">Rule in a few words<input id="rTitle" required placeholder="e.g. No posting on Sundays"></label>
+      <label for="rBody">Details<textarea id="rBody" required placeholder="What exactly should Coco and the teams do?"></textarea></label>
+      <button class="btn filled" style="justify-self:start">Save rule for everyone</button></form>
+      <div class="grid">${D.rules.map(r => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px"><h3>${esc(r.title)}</h3><span class="muted">${ago(r.updated_at)}</span></div><div style="white-space:pre-wrap">${esc(r.body.length > 600 ? r.body.slice(0, 600) + '…' : r.body)}</div></div>`).join('')}</div>`;
+  },
+  settings() {
+    const me_ = D.devices.find(d => d.id === deviceId) || {};
+    const kinds = [['approvals', 'Approvals waiting for YES'], ['done', 'Tasks finished'], ['merged', 'Coco merged a task'], ['tasks', 'Tasks from the other founder'], ['rules', 'New rules']];
+    const theme = store.get('gs-theme') || 'system', calm = store.get('gs-calm') === '1';
+    return `<div class="grid">
+      <div class="card2"><span class="eyebrow">Account</span><h3>${esc(founder ? `${founder.name} · ${founder.call_me}` : '')}</h3><span class="muted">${esc(me.email)}</span><button class="btn gold" data-set="signout" style="justify-self:start">Sign out</button></div>
+      <div class="card2"><span class="eyebrow">This device</span><h3>${esc(me_.name || 'This device')}</h3><span class="muted">Paired ${ago(me_.paired_at)} · one of the four Good Space devices. Lost it? Switch it off from another device.</span>
+        ${window.cocoDesktop ? `<div class="settings-row"><span>Start with Windows</span><input type="checkbox" class="switch" id="startup" aria-label="Start with Windows"></div>` : ''}
+        <button class="btn tonal" data-set="refresh" style="justify-self:start">Refresh now</button></div>
+      <div class="card2"><span class="eyebrow">Notifications</span>${kinds.map(([k, l]) => `<div class="settings-row"><span>${l}</span><input type="checkbox" class="switch" data-notify="${k}" ${store.get('gs-n-' + k) === '0' ? '' : 'checked'} aria-label="${l}"></div>`).join('')}</div>
+      <div class="card2"><span class="eyebrow">Appearance</span><div class="seg" role="group" aria-label="Theme">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button type="button" data-theme-set="${v}" aria-pressed="${theme === v}">${l}</button>`).join('')}</div>
+        <div class="settings-row"><span>Calm motion<br><span class="muted">Fewer animations, everything else the same</span></span><input type="checkbox" class="switch" id="calm" ${calm ? 'checked' : ''} aria-label="Calm motion"></div></div>
+      <div class="card2"><span class="eyebrow">About</span><h3>Coco Lounge 1.0 · ${window.cocoDesktop ? 'Windows' : 'Web'}</h3><span class="muted">Good Space, managed by Coco. Follows the Lounge Standard: the same screens, look and rules on all four devices. Private: founder login plus this device's key; keys and personal documents never pass through the app.</span></div>
+    </div>`;
+  },
   devices() {
     return `<p class="muted">Only these four devices can open Good Space. A device that is switched off stops working at once.</p><div class="grid">${D.devices.map(d => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(d.name)}</h3><span class="live"><i class="dot ${online(d) ? 'on' : ''}"></i>${online(d) ? 'online' : 'offline'}</span></div>
       <span class="muted">${esc(d.kind === 'pc' ? 'PC' : 'Phone')} · ${d.key_hash ? 'paired ' + ago(d.paired_at) : 'not paired yet'} · seen ${ago(d.last_seen)}</span>${d.id === deviceId ? '<span class="chip gold" style="justify-self:start">This device</span>' : ''}
@@ -291,32 +381,56 @@ function render() {
   nav();
   $('#title').textContent = PAGES.find(p => p[0] === page)[1];
   $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;
-  $('#view').innerHTML = V[page]();
+  const view = $('#view'); const changed = view.dataset.page !== page; view.innerHTML = V[page](); view.dataset.page = page;
+  if (changed) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); }
+  wireSettings();
   const f = $('#newTask'); if (f) f.addEventListener('submit', addTask);
+  const fr = $('#newRule'); if (fr) fr.addEventListener('submit', addRule);
 }
 addEventListener('hashchange', () => { page = location.hash.slice(1) || 'home'; render(); scrollTo(0, 0); });
 
+function applyLook() {
+  const th = store.get('gs-theme') || 'system';
+  if (th === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = th;
+  document.body.classList.toggle('calm', store.get('gs-calm') === '1');
+}
+function wireSettings() {
+  document.querySelectorAll('[data-notify]').forEach(s => s.onchange = () => store.set('gs-n-' + s.dataset.notify, s.checked ? '1' : '0'));
+  const c = $('#calm'); if (c) c.onchange = () => { store.set('gs-calm', c.checked ? '1' : '0'); applyLook(); };
+  const su = $('#startup'); if (su && window.cocoDesktop.getStartup) { window.cocoDesktop.getStartup().then(v => su.checked = v); su.onchange = () => window.cocoDesktop.setStartup(su.checked); }
+}
+applyLook();
+async function addRule(e) {
+  e.preventDefault();
+  const title = $('#rTitle').value.trim(), body = $('#rBody').value.trim();
+  const id = 'rule-' + title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').slice(0, 6).join('_') + '-' + Date.now().toString(36);
+  const { error } = await sb.from('rules').insert({ id, title, body: `${body}\n\nSet by ${founderName()} on ${new Date().toLocaleDateString()}.` });
+  if (error) return toast(error.message);
+  await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `New rule: ${title}. ${body}` });
+  await log('rule set', title); toast('Rule saved for all devices'); loadAll();
+}
 async function addTask(e) {
   e.preventDefault();
   const title = $('#tTitle').value.trim(), house_id = $('#tHouse').value, needs = $('#tNeeds').value, details = $('#tDetails').value.trim() || null;
-  const { data: similar } = await sb.rpc('similar_open_tasks', { p_title: title });
-  if (similar && similar.length) {
-    const t = similar[0];
-    $('#dupBody').innerHTML = `<p><b>${esc(t.title)}</b></p><p class="muted">${chipFor(t.status)[1]}${t.claimed_by_device ? ' on ' + esc(deviceName(t.claimed_by_device)) : ''}. Do you want to add your points to it, stop it, or still create yours?</p>`;
-    const d = $('#dup'); d.showModal();
-    const choice = await new Promise(r => d.addEventListener('close', () => r(d.returnValue), { once: true }));
-    if (choice === 'add') { await sb.from('task_notes').insert({ task_id: t.id, note: title + (details ? ': ' + details : ''), by_email: founderName(), device_id: deviceId }); toast('Added to the running task'); return loadAll(); }
-    if (choice === 'stop') { await sb.from('tasks').update({ status: 'stopped', updated_at: new Date().toISOString() }).eq('id', t.id); await log('task stopped', t.title); toast('Stopped'); return loadAll(); }
-    if (choice !== 'new') return;
-  }
-  const { error } = await sb.from('tasks').insert({ title, house_id, needs, details, created_by: founderName(), created_device: deviceId });
+  // Coco Cloud decides: same open work in the same House is merged automatically.
+  const { data: r, error } = await sb.rpc('submit_task', { p_title: title, p_details: details, p_house: house_id, p_needs: needs, p_device: deviceId, p_by: founderName() });
   if (error) return toast(error.message);
-  await log('task added', title); toast('Sent to Coco'); loadAll();
+  if (r.merged) {
+    $('#dupBody').innerHTML = `<p>Coco found the same work already ${esc(chipFor(r.status)[1].toLowerCase())}${r.device ? ' on ' + esc(deviceName(r.device)) : ''}, given by ${esc(r.by)}:</p><p><b>${esc(r.title)}</b></p><p class="muted">Your points were added to it, so nothing runs twice. Stop that task instead?</p>`;
+    const d = $('#dup'); d.querySelector('[value=add]').hidden = d.querySelector('[value=new]').hidden = true; d.showModal();
+    const choice = await new Promise(res => d.addEventListener('close', () => res(d.returnValue), { once: true }));
+    d.querySelector('[value=add]').hidden = d.querySelector('[value=new]').hidden = false;
+    if (choice === 'stop') { await sb.from('tasks').update({ status: 'stopped', updated_at: new Date().toISOString() }).eq('id', r.task_id); await log('task stopped', r.title); toast('Stopped'); }
+  } else toast('Sent to Coco');
+  $('#newTask').reset(); loadAll();
 }
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const ds = b.dataset;
   if (ds.sub) { sub = ds.sub; render(); }
+  if (ds.themeSet) { store.set('gs-theme', ds.themeSet); applyLook(); render(); }
+  if (ds.set === 'refresh') { await loadAll(); toast('Up to date'); }
+  if (ds.set === 'signout') { await sb.auth.signOut(); show('signin'); }
   if (ds.yes || ds.no) {
     const id = ds.yes || ds.no, a = D.approvals.find(x => x.id === id), yes = !!ds.yes;
     await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() }).eq('id', id);

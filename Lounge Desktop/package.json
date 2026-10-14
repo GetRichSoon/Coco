@@ -1,0 +1,14 @@
+{
+  "name": "coco-lounge-desktop",
+  "productName": "Coco Lounge",
+  "version": "1.0.0",
+  "description": "Coco Lounge for Windows: the private Good Space app with tray, start with Windows and notifications.",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "33.2.1"
+  }
+}
