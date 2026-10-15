@@ -26,6 +26,7 @@ Repo 'shreya-nova-hq' (Join-Path $HOME 'shreya-nova-hq')
 $vaultNote = Join-Path $gs 'Coco Vault\Read Me.md'
 if (-not (Test-Path $vaultNote)) { Set-Content $vaultNote "Big Boss's own keys go here. Never copied from another PC, never in Git." -Encoding utf8 }
 
+$gsRead = Join-Path $PSScriptRoot "Good Space Read Me.md"; if (Test-Path $gsRead) { Copy-Item $gsRead (Join-Path $gs "Read Me.md") -Force }
 Step 'Coco desktop app'
 $lounge = Join-Path $gs 'Coco\Lounge Desktop'
 Push-Location $lounge; npm install --no-audit --no-fund; Pop-Location
