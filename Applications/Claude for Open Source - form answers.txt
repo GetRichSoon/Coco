@@ -1,0 +1,16 @@
+Claude for Open Source - form answers (copy each into the form, then press Submit yourself)
+Form: https://claude.com/contact-sales/claude-for-oss
+
+First name: Mangesh
+Last name: Lokade
+Email: (your Claude account email)
+Select repo on GitHub: Mangesh347/screen-time-tracker-extension
+
+Tell us about the project's reach and impact:
+Screen Time Tracker is a Manifest V3 Chrome extension that shows people where their browsing time goes and helps them take it back: per-site time, weekly charts, site limits, focus nudges and a weekly PDF/email report. It is private by default (tracking stays in the browser unless the user signs in to sync). It is live on the Chrome Web Store with about 1,000 users (https://chromewebstore.google.com/detail/screen-time-tracker/llfciomelolhkmnepbnjkiokpinfgdmf). I have now open-sourced the full extension under MIT so others can learn from it, audit its privacy, or build their own digital-wellbeing tools on it. It is small today and does not meet the dependency thresholds; I am applying under "don't quite fit".
+
+How will you use the subscription for your project?
+To keep improving the extension in the open: accessibility and Firefox support, tests and CI, cleaner docs, and pulling the time-tracking core into a small reusable library other extension developers can use. I also maintain other small Chrome extensions (for example a volume booster with about 1,500 users) and would use Claude to review, refactor and document them for open-source release.
+
+Other info:
+Solo developer from Pune, India. Repo opened publicly in October 2026, so it has little GitHub history yet; the Chrome Web Store numbers above are the real usage.
