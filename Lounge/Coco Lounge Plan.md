@@ -4,7 +4,7 @@ All four devices (Boss PC, Boss phone, Big Boss PC, Big Boss phone) work through
 
 ## Tonight: phone APK (Lounge Android), one build with all of this
 1. **Always connected:** a foreground service ("Coco connected" in the notification bar) that keeps the live link open and reconnects by itself when the network comes back. Today the phone only wakes every 15 minutes when the app is closed.
-2. **Flow and team updates as notifications:** `activity` rows with action `update` (title | detail). Code is already in `Alerts.kt` (not built yet).
+2. **Flow and team updates as notifications** (after this APK is on both phones, set LEGACY = false in nova-hq/scripts/coco-notify.mjs): `activity` rows with action `update` (title | detail). Code is already in `Alerts.kt` (not built yet).
 3. **New PC commands in the phone's parser** (`PhoneRemote.understand`, keep it identical to `understand()` in `Lounge Desktop/main.js`): type / likho, press / dabao, screenshot (show the image), bolo / speak, close, party, joke, fact, motivate, laptop dhundo.
 4. **Mic in any language** (Hindi, English, Marathi, mixed): the spoken text goes to Coco Cloud (`coco-chat`) which turns it into actions. Needs the Gemini API key in the cloud secrets.
 5. **Files between devices:** receive a file from a PC or the other phone (Coco Cloud storage), open it; send a photo/file to a PC.

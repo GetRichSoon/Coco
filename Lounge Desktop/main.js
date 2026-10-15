@@ -63,6 +63,7 @@ const PC_APPS = {
   files: () => 'explorer', settings: () => 'ms-settings:', spotify: () => 'spotify:', whatsapp: () => 'whatsapp:',
   vscode: () => local('Programs', 'Microsoft VS Code', 'Code.exe'), cursor: () => local('Programs', 'cursor', 'Cursor.exe') || [path.join(process.env.ProgramFiles || '', 'Cursor', 'Cursor.exe')].find((f) => fs.existsSync(f)) || null,
   lounge: () => process.execPath,
+  blender: () => [path.join(os.homedir(), 'tools', 'blender-4.5.14-windows-x64', 'blender.exe')].find((f) => fs.existsSync(f)) || null,
 };
 // Browsers by name; YouTube opens in Brave (the founders' YouTube browser) when it is installed.
 const pf = (...p) => [process.env.ProgramFiles, process.env['ProgramFiles(x86)'], process.env.LOCALAPPDATA].filter(Boolean).map((r) => path.join(r, ...p)).find((x) => fs.existsSync(x)) || null;
@@ -80,7 +81,27 @@ const APP_WORDS = [[/\b(vs ?code|visual studio|code)\b/, 'vscode'], [/\bcursor\b
   [/\bnotepad\b/, 'notepad'], [/\b(calculator|calc)\b/, 'calculator'], [/\b(files?|explorer|folder)\b/, 'files'], [/\bsettings?\b/, 'settings'], [/\bspotify\b/, 'spotify'],
   [/\bwhats ?app\b/, 'whatsapp'], [/\b(yt|youtube) ?music\b/, 'ytmusic'], [/\b(yt|youtube)\b/, 'youtube'], [/\b(insta|instagram)\b/, 'instagram'], [/\bmaps?\b/, 'maps'],
   [/\b(gmail|mail)\b/, 'gmail'], [/\bcamera\b/, 'camera'], [/\b(lounge|coco)\b/, 'lounge']];
+// Phone mics write Hindi and Marathi in Devanagari. These turn the common command words into the Roman forms below.
+// Free text after "likho / bolo / type" stays as spoken. Keep the same list in the phone app (PhoneRemote.kt).
+const WORDS = [
+  [/आणि|और|फिर|मग|नंतर/g, ' aur '], [/खोलो|खोल दो|खोल|उघडा|उघड/g, ' kholo '], [/चलाओ|चला दो|चालू करो|चालू कर|लावा|लाव|सुरू कर|सुरू करा/g, ' chalao '],
+  [/बजाओ|बजा दो|वाजव/g, ' bajao '], [/लिखो|लिख दो|लिहा|टाइप करो|टाइप/g, ' likho '], [/बोलो|बोल दो|सांगा|सांग|म्हण/g, ' bolo '],
+  [/ढूंढो|ढूँढो|ढूंढ|ढूँढ|शोधा|शोध/g, ' dhundo '], [/बंद करो|बंद कर|बंद करा|बंद/g, ' band karo '], [/आवाज़|आवाज|आवाज़/g, ' awaaz '],
+  [/बढ़ाओ|बढाओ|वाढव/g, ' badhao '], [/कम करो|कमी कर|कम/g, ' kam '], [/स्क्रीनशॉट|स्क्रीन शॉट/g, ' screenshot '], [/पार्टी/g, ' party '],
+  [/चुटकुला|जोक|विनोद/g, ' joke '], [/लॉक/g, ' lock '], [/अगला|पुढचं|पुढचा/g, ' next '], [/पिछला|मागचं|मागचा/g, ' previous '],
+  [/रुको|थांब|थांबा/g, ' pause '], [/लैपटॉप|लॅपटॉप/g, ' laptop '], [/नोटपैड|नोटपॅड/g, ' notepad '], [/यूट्यूब|युट्यूब/g, ' youtube '],
+  [/क्रोम/g, ' chrome '], [/व्हाट्सएप|व्हॉट्सअॅप|व्हाट्सऐप/g, ' whatsapp '], [/गाना|गाणं|गाणे/g, ' gaana '],
+  [/\b(ughad|ughda)\b/gi, 'kholo'], [/\b(lav|lava|chalu kar)\b/gi, 'chalao'], [/\b(liha)\b/gi, 'likho'], [/\b(sang|saang)\b/gi, 'bolo'], [/\b(shodh|shodha)\b/gi, 'dhundo'], [/\b(ani|aani|mag|phir|then)\b/gi, 'aur'],
+];
+const toRoman = (s) => WORDS.reduce((x, [re, w]) => x.replace(re, w), String(s || '')).replace(/\s+/g, ' ').trim();
+// "notepad kholo aur likho kal meeting 10 baje": several steps, run one after another.
+function plan(text, kind) {
+  const r = toRoman(text);
+  const parts = r.split(/\s+aur\s+(?=(?:likho|type|bolo|speak|press|dabao|kholo|open|chalao|play|bajao|dhundo|find|screenshot|band karo|close|lock|party|joke)\b)/i);
+  return parts.map((s) => understand(s, kind)).filter(Boolean);
+}
 function understand(text, kind) {
+  text = toRoman(text);
   const t = String(text || '').toLowerCase().replace(/[.!?,]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (!t) return null;
   const url = t.match(/https?:\/\/\S+/); if (url) return { action: 'open_url', args: { url: url[0].replace(/^http:/, 'https:') } };
@@ -104,9 +125,13 @@ function understand(text, kind) {
   const openIt = (app) => webApp(app) ? { action: 'open_url', args: { url: webApp(app), browser: browser || 'brave' } } : { action: 'open_app', args: { app } };
   // "youtube brave app", "youtube brave chalu kar": YouTube in that browser
   if (/\b(yt|youtube)\b/.test(t) && !/\bmusic\b/.test(t) && (browser || t.split(' ').length <= 4)) return openIt('youtube');
-  if (/\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit)\b/.test(t) && !/\b(pc|laptop|computer|system)\b/.test(t)) return { action: 'close_app', args: {} };
+  if (/\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit)\b/.test(t) && !/\b(pc|laptop|computer|system)\b/.test(t)) {
+    const name = t.replace(/\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit|app|application|ko|wala|wali|sab|all)\b/g, ' ').trim();
+    return { action: 'close_app', args: name ? { app: name } : {} };
+  }
+  if (/\b(desktop dikha(?:o)?|sab minimi[sz]e|show desktop)\b/.test(t)) return { action: 'key', args: { combo: 'win+d' } };
   const open = t.match(/^(?:open|khol(?:o|do)?|start|launch|chalu kar(?:o)?)\s+(.+)$/) || t.match(/^(.+?)\s+(?:khol(?:o|do)?|open kar(?:o|do)?|open|chalu kar(?:o|do)?)$/);
-  if (open) { const hit = APP_WORDS.find(([re]) => re.test(open[1])); if (hit) return openIt(hit[1]); }
+  if (open) { const hit = APP_WORDS.find(([re]) => re.test(open[1])); if (hit) return openIt(hit[1]); if (kind === 'pc') return { action: 'open_app', args: { app: open[1].replace(/\b(app|application|ko|ka|pe|par|laptop|pc)\b/g, ' ').trim() } }; }
   // Just an app name ("chrome", "vs code app")
   if (t.split(' ').length <= 3 && !/\b(volume|awaaz|play|chala|bajao|status|lock)\b/.test(t)) { const hit = APP_WORDS.find(([re]) => re.test(t)); if (hit) return openIt(hit[1]); }
   if (/\b(volume|awaaz|awaz|aawaz|sound|louder|quieter)\b/.test(t)) {
@@ -142,7 +167,14 @@ refreshBattery(); setInterval(refreshBattery, 120000);
 ipcMain.handle('pc-command', (_e, { action, args = {} }) => runAction(action, args));
 async function runAction(action, args = {}) {
   switch (action) {
-    case 'say': { const p = understand(args.text, 'pc'); return p && p.action !== 'say' ? runAction(p.action, p.args) : `Not understood: "${String(args.text || '').slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
+    case 'say': {
+      const steps = plan(args.text, 'pc').filter((s) => s.action !== 'say');
+      if (steps.length > 1) {
+        const out = [];
+        for (const s of steps.slice(0, 5)) { out.push(await runAction(s.action, s.args)); await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400)); }
+        return out.map((o) => String(o).startsWith('data:image') ? 'Screenshot taken' : o).join(' → ');
+      }
+      const p = steps[0]; return p ? runAction(p.action, p.args) : `Not understood: "${String(args.text || '').slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
     case 'status': {
       const disk = fs.statfsSync ? fs.statfsSync('C:\\') : null;
       // Battery comes from a slow Windows query, so answer at once with the last reading and refresh it in the background.
@@ -160,7 +192,14 @@ async function runAction(action, args = {}) {
       if (exe) await exec(exe, [args.url]); else await shell.openExternal(args.url);
       return 'Opened ' + args.url + (exe ? ' in ' + args.browser : '');
     }
-    case 'close_app': await exec(KEYS_EXE, ['combo', 'alt+f4']); return 'Closed the app in front';
+    case 'close_app': {
+      if (!args.app) { await exec(KEYS_EXE, ['combo', 'alt+f4']); return 'Closed the app in front'; }
+      const exe = processFor(String(args.app));
+      if (!exe) return 'Do not know which program "' + args.app + '" is';
+      if (/^(explorer|winlogon|csrss|lsass|svchost|services|system|dwm|electron)$/i.test(exe)) return 'Coco will not close ' + exe;
+      const r = await exec('taskkill.exe', ['/IM', exe + '.exe']);
+      return /SUCCESS/i.test(r) ? 'Closed ' + args.app : (/not found/i.test(r) ? args.app + ' is not running' : r);
+    }
     case 'type_text': { const s = String(args.text || '').slice(0, 2000); if (!s) return 'Nothing to type'; await exec(KEYS_EXE, ['type', s]); return 'Typed ' + s.length + ' characters'; }
     case 'key': { const r = await exec(KEYS_EXE, ['combo', String(args.combo || '')]); return /failed/.test(r) ? 'Unknown keys: ' + args.combo : 'Pressed ' + args.combo; }
     case 'speak': { const s = String(args.text || '').slice(0, 300); exec(KEYS_EXE, ['speak', s]); return 'Saying: ' + s; }
@@ -188,7 +227,8 @@ async function runAction(action, args = {}) {
       return { playpause: 'Play / pause', next: 'Next track', prev: 'Previous track', mute: 'Mute toggled', down: 'Volume down', up: 'Volume up' }[args.key];
     }
     case 'open_app': {
-      const target = PC_APPS[String(args.app)]; if (!target) return 'This app is not on the allowed list';
+      const target = PC_APPS[String(args.app)];
+      if (!target) { const lnk = startMenuApp(String(args.app)); if (!lnk) return 'No app called "' + args.app + '" on this PC'; await exec('cmd.exe', ['/c', 'start', '""', lnk]); return 'Opened ' + path.basename(lnk, '.lnk'); }
       const file = target();
       if (!file) return 'App not found on this PC';
       await exec('cmd.exe', ['/c', 'start', '""', file]); return 'Opened ' + args.app;
@@ -196,6 +236,36 @@ async function runAction(action, args = {}) {
     case 'ring': return 'A PC cannot ring; try: say hello';
     default: return 'This action is not allowed';
   }
+}
+
+// ---------- any installed app (Start Menu shortcuts) ----------
+function startMenuApp(name) {
+  const want = name.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+  if (!want.length) return null;
+  const dirs = [path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs'), path.join(process.env.ProgramData || 'C:\\ProgramData', 'Microsoft', 'Windows', 'Start Menu', 'Programs'), path.join(os.homedir(), 'Desktop')];
+  let best = null, bestScore = 0;
+  const walk = (d, depth) => {
+    if (depth > 3) return;
+    let list; try { list = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of list) {
+      const f = path.join(d, e.name);
+      if (e.isDirectory()) { walk(f, depth + 1); continue; }
+      if (!/\.(lnk|url)$/i.test(e.name) || /uninstall/i.test(e.name)) continue;
+      const n = e.name.toLowerCase().replace(/\.(lnk|url)$/, '');
+      const score = want.filter((w) => n.includes(w)).length / want.length - n.length / 1000;
+      if (score > bestScore) { bestScore = score; best = f; }
+    }
+  };
+  dirs.forEach((d) => walk(d, 0));
+  return bestScore >= 0.99 - 0.1 ? best : null;
+}
+// App name as spoken into its program file name, for closing.
+const PROC = { chrome: 'chrome', brave: 'brave', edge: 'msedge', notepad: 'notepad', calculator: 'CalculatorApp', calc: 'CalculatorApp', 'vs code': 'Code', vscode: 'Code', code: 'Code', cursor: 'Cursor', spotify: 'Spotify', whatsapp: 'WhatsApp', word: 'WINWORD', excel: 'EXCEL', powerpoint: 'POWERPNT', teams: 'ms-teams', zoom: 'Zoom', discord: 'Discord', telegram: 'Telegram', blender: 'blender', 'android studio': 'studio64', vlc: 'vlc', obs: 'obs64', paint: 'mspaint', photos: 'Photos' };
+function processFor(name) {
+  const n = name.toLowerCase().trim();
+  if (PROC[n]) return PROC[n];
+  const key = Object.keys(PROC).find((k) => n.includes(k));
+  return key ? PROC[key] : (/^[a-z0-9_.-]+$/i.test(n) ? n : null);
 }
 
 // ---------- find files (Desktop, Documents, Downloads, Pictures, Good Space; names only, never contents) ----------
@@ -274,6 +344,18 @@ app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focu
 app.whenReady().then(() => {
   if (!app.getLoginItemSettings().openAtLogin) app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] });
   createWindow(); createTray();
+  setTimeout(selfUpdate, 60 * 1000); setInterval(selfUpdate, 30 * 60 * 1000);
 });
-app.on('before-quit', () => { quitting = true; });
-app.on('window-all-closed', () => {});
+
+// ---------- self update (Boss, 2026-10-15): both founders' PCs stay on the latest Coco from GitHub GetRichSoon/Coco ----------
+// Every 30 minutes: fast-forward pull only (never overwrites local edits). If the Lounge changed, restart into it.
+const COCO_DIR = path.join(__dirname, '..');
+async function selfUpdate() {
+  const before = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
+  const pull = await exec('git', ['-C', COCO_DIR, 'pull', '--ff-only', '--quiet']);
+  const after = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
+  if (/failed/.test(pull) || before === after) return;
+  const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', before, after]);
+  if (/package\.json/.test(changed)) await exec('cmd.exe', ['/c', 'npm', 'install', '--no-audit', '--no-fund', '--prefix', __dirname]);
+  if (/^(Lounge|Lounge Desktop)\//m.test(changed)) { app.relaunch({ args: ['--hidden'] }); app.exit(0); }
+}
