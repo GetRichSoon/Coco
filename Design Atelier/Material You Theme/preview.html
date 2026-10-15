@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material You Theme</title>
+<link rel="stylesheet" href="dist/tokens.css">
+<link rel="stylesheet" href="theme.css">
+<style>
+  body { margin: 0; background: var(--mu-background); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
+  header.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; flex-wrap: wrap; }
+  .hero { position: relative; overflow: hidden; border-radius: 0 0 var(--mu-radius-xxl) var(--mu-radius-xxl); padding: 48px 0 64px; }
+  .hero-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; align-items: center; }
+  .hero h1 { font-size: clamp(44px, 8vw, 96px); line-height: .95; letter-spacing: -0.025em; }
+  .hero h1 em { font-style: normal; color: var(--mu-primary); }
+  .stage { position: relative; aspect-ratio: 1; max-width: 420px; justify-self: center; width: 100%; }
+  .stage > * { position: absolute; }
+  section { padding: 48px 0; }
+  section > h2 { margin-bottom: 24px; }
+  .grid { display: grid; gap: 16px; }
+  .g4 { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .shape-tile { display: grid; justify-items: center; gap: 8px; padding: 16px; border-radius: var(--mu-radius-lg); background: var(--mu-surface-container-low); }
+  .roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .role { border-radius: var(--mu-radius-md); padding: 12px; min-height: 72px; font: var(--mu-type-label-small); display: flex; align-items: flex-end; }
+  .popup { width: 360px; max-width: 100%; border-radius: var(--mu-radius-lg); overflow: hidden; background: var(--mu-surface); box-shadow: var(--mu-elev-4); }
+  .popup-head { padding: 20px; position: relative; overflow: hidden; }
+  .popup-body { padding: 20px; display: grid; gap: 16px; }
+  .phone { width: 300px; max-width: 100%; aspect-ratio: 9/19; border-radius: 40px; padding: 10px; background: var(--mu-c-ink); box-shadow: var(--mu-elev-4); }
+  .screen { height: 100%; border-radius: 32px; overflow: hidden; background: var(--mu-surface); position: relative; display: flex; flex-direction: column; }
+  .screen .top { padding: 28px 20px 20px; }
+  .screen .list { padding: 0 16px; display: grid; gap: 10px; }
+  .item { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: var(--mu-radius-lg); background: var(--mu-surface-container); }
+  .navbar { margin-top: auto; display: flex; justify-content: space-around; padding: 12px; background: var(--mu-surface-container); }
+  .navbar span { padding: 4px 18px; border-radius: 16px; font: var(--mu-type-label-small); }
+  .navbar span.on { background: var(--mu-secondary-container); color: var(--mu-on-secondary-container); }
+  .band { padding: 18px 0; font-family: var(--mu-font-display); font-variation-settings: var(--mu-display-settings); font-weight: 800; font-size: 40px; }
+  footer { padding: 48px 0; }
+  @media (max-width: 760px) { .hero-grid { grid-template-columns: 1fr; } .stage { max-width: 300px; } }
+</style>
+</head>
+<body class="mu-root">
+
+<div class="hero">
+  <div class="mu-drift" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <header class="bar">
+      <span class="mu-fun" style="font-size:28px;color:var(--mu-primary)">nova studio</span>
+      <div class="row">
+        <button class="mu-chip" id="themeBtn" aria-pressed="false">Dark mode</button>
+        <button class="mu-chip" id="motionBtn" aria-pressed="false">Pause motion</button>
+      </div>
+    </header>
+    <div class="hero-grid">
+      <div class="mu-enter">
+        <p class="mu-label mu-muted">DEFAULT THEME · V1.0 · 14 OCT 2026</p>
+        <h1 class="mu-display">Material&nbsp;You, <em>but&nbsp;cheeky.</em></h1>
+        <p style="max-width:52ch">Cream paper, hot tomato, bubblegum and sky. Soft chunky type. Cookie, flower and clover shapes that never stop moving. Our default theme for every extension, app and website.</p>
+        <div class="row" style="margin-top:24px">
+          <a class="mu-btn mu-loop-breathe" href="#components">See components</a>
+          <a class="mu-btn mu-btn--tonal" href="#shapes">Shape library</a>
+          <a class="mu-btn mu-btn--outlined" href="#palette">Palette</a>
+        </div>
+      </div>
+      <div class="stage" aria-hidden="true">
+        <img src="dist/shapes/morph-loop.svg" alt="" style="inset:8%;width:84%">
+        <div class="mu-seal mu-loop-float" style="--mu-shape-size:130px;top:-2%;right:-2%;color:var(--mu-c-plum)">
+          <span class="mu-shape mu-shape--cookie mu-loop-spin"></span>
+          <b class="mu-fun" style="color:var(--mu-c-bubblegum);font-size:22px;line-height:1">NEW<br>v1</b>
+        </div>
+        <span class="mu-shape mu-shape--clover mu-loop-wobble mu-delay-1" style="--mu-shape-size:96px;bottom:2%;left:0;color:var(--mu-c-forest)"></span>
+        <span class="mu-shape mu-shape--flower mu-loop-float mu-delay-2" style="--mu-shape-size:80px;bottom:6%;right:6%;color:var(--mu-c-sky)"></span>
+        <span class="mu-shape mu-shape--sunny mu-loop-spin-rev" style="--mu-shape-size:64px;top:6%;left:4%;color:var(--mu-c-marigold)"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mu-marquee mu-duo-plum-bubblegum band" aria-label="Theme keywords">
+  <div class="mu-marquee__track">
+    <span>cookie ✦ flower ✦ clover ✦ sunny ✦ burst ✦ blob ✦ squiggle ✦</span>
+    <span aria-hidden="true">cookie ✦ flower ✦ clover ✦ sunny ✦ burst ✦ blob ✦ squiggle ✦</span>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="palette">
+    <h2 class="mu-display-s">Brand duos</h2>
+    <div class="grid g4" id="duos"></div>
+  </section>
+
+  <section>
+    <h2 class="mu-display-s">Colour roles <span class="mu-muted mu-body-m">(switch dark mode above)</span></h2>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <section>
+    <h2 class="mu-display-s">Type</h2>
+    <div class="grid" style="gap:12px">
+      <p class="mu-display-l">Display Large 56</p>
+      <p class="mu-display-m">Display Medium 40</p>
+      <p class="mu-headline-l">Headline Large 28</p>
+      <p class="mu-title-l">Title Large 20 — Figtree for all UI</p>
+      <p style="margin:0">Body Large 16. Friendly and easy to read at small sizes, so popups and settings pages stay clear.</p>
+      <p class="mu-fun" style="font-size:56px;margin:0;color:var(--mu-secondary)">yum!</p>
+      <p class="mu-muted mu-body-m" style="margin:0">Fun font (Bagel Fat One): ONE word per screen, for stickers and splash logos only.</p>
+    </div>
+  </section>
+
+  <section id="shapes">
+    <h2 class="mu-display-s">Shape library — always moving</h2>
+    <div class="grid g4" id="shapeGrid"></div>
+    <div style="margin-top:24px;color:var(--mu-primary)">
+      <svg class="mu-squiggle" viewBox="0 0 240 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 12 Q 15 0 30 12 T 60 12 T 90 12 T 120 12 T 150 12 T 180 12 T 210 12 T 240 12"/></svg>
+    </div>
+    <div class="row" style="margin-top:24px">
+      <div class="mu-loop-blob" style="width:160px;height:160px;background:var(--mu-c-bubblegum);display:grid;place-items:center">
+        <span class="mu-fun" style="color:var(--mu-c-plum);font-size:26px">blob</span>
+      </div>
+      <span class="mu-shape mu-loop-shapes" style="--mu-shape-size:140px;color:var(--mu-c-cobalt)"></span>
+      <div class="mu-loop-duo" style="padding:32px;border-radius:var(--mu-radius-xl);min-width:220px">
+        <b class="mu-display-s">Duo cycle</b><br><span class="mu-body-m">one per page, max</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="components">
+    <h2 class="mu-display-s">Components</h2>
+    <div class="grid g3">
+      <div class="mu-card grid" style="gap:16px">
+        <h3 class="mu-title-l">Buttons</h3>
+        <div class="row">
+          <button class="mu-btn">Save changes</button>
+          <button class="mu-btn mu-btn--tonal">Try Pro</button>
+          <button class="mu-btn mu-btn--outlined">Cancel</button>
+          <button class="mu-btn mu-btn--text">Learn more</button>
+          <button class="mu-btn mu-btn--sticker">Sticker</button>
+          <button class="mu-btn" disabled>Disabled</button>
+        </div>
+        <div class="row"><button class="mu-fab mu-loop-breathe" aria-label="Add">+</button><span class="mu-badge">3</span></div>
+      </div>
+      <div class="mu-card grid" style="gap:16px">
+        <h3 class="mu-title-l">Inputs</h3>
+        <div class="mu-field"><label for="nm">Your name</label><input id="nm" placeholder="Boss"></div>
+        <label class="row" style="justify-content:space-between"><span>Show sticker on pages</span><input type="checkbox" class="mu-switch" checked></label>
+        <div class="row"><button class="mu-chip" aria-pressed="true">Daily</button><button class="mu-chip" aria-pressed="false">Weekly</button><button class="mu-chip" aria-pressed="false">Never</button></div>
+      </div>
+      <div class="mu-card mu-card--filled grid" style="gap:12px">
+        <h3 class="mu-title-l">Cards</h3>
+        <div class="mu-palette-card mu-duo-tomato-cream"><b>Tomato</b><span>#F24E1E</span></div>
+        <div class="mu-palette-card mu-duo-forest-butter"><b>Forest</b><span>#1F5A3A</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="mu-display-s">In a Chrome extension and an Android app</h2>
+    <div class="row" style="gap:32px;align-items:flex-start">
+      <div class="popup" role="group" aria-label="Extension popup example">
+        <div class="popup-head mu-duo-tomato-cream">
+          <span class="mu-shape mu-shape--cookie mu-loop-spin" style="--mu-shape-size:120px;position:absolute;right:-30px;top:-30px;color:var(--mu-c-bubblegum);opacity:.9" aria-hidden="true"></span>
+          <p class="mu-fun" style="font-size:30px;margin:0;position:relative">focus</p>
+          <p class="mu-body-m" style="margin:4px 0 0;position:relative">3 sites blocked today</p>
+        </div>
+        <div class="popup-body">
+          <button class="mu-btn" style="width:100%">Start 25 min session</button>
+          <label class="row" style="justify-content:space-between"><span class="mu-body-m">Block social media</span><input type="checkbox" class="mu-switch" checked></label>
+          <label class="row" style="justify-content:space-between"><span class="mu-body-m">Sound when done</span><input type="checkbox" class="mu-switch"></label>
+          <div class="row" style="justify-content:space-between"><span class="mu-body-m mu-muted">Free plan</span><button class="mu-btn mu-btn--text">Settings</button></div>
+        </div>
+      </div>
+      <div class="phone" aria-label="App screen example" role="group">
+        <div class="screen">
+          <div class="top mu-duo-plum-bubblegum" style="position:relative;overflow:hidden">
+            <span class="mu-shape mu-shape--flower mu-loop-spin" style="--mu-shape-size:110px;position:absolute;right:-24px;bottom:-30px;color:var(--mu-c-wine)" aria-hidden="true"></span>
+            <p class="mu-body-m" style="margin:0;position:relative">Good morning, Boss</p>
+            <p class="mu-display-s" style="position:relative">4 habits left</p>
+          </div>
+          <div class="list" style="padding-top:16px">
+            <div class="item"><span class="mu-shape mu-shape--clover" style="--mu-shape-size:36px;color:var(--mu-c-forest)"></span><span>Drink water</span></div>
+            <div class="item"><span class="mu-shape mu-shape--sunny" style="--mu-shape-size:36px;color:var(--mu-c-marigold)"></span><span>Walk 20 min</span></div>
+            <div class="item"><span class="mu-shape mu-shape--cookie" style="--mu-shape-size:36px;color:var(--mu-c-tomato)"></span><span>Read 10 pages</span></div>
+          </div>
+          <div class="navbar"><span class="on">Today</span><span>Stats</span><span>Me</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="mu-duo-cocoa-cream">
+  <div class="wrap"><p class="mu-title-m">Material You Design Theme · default since 14 Oct 2026 · tokens in company/design/themes/material-you/</p></div>
+</footer>
+
+<script>
+  const duos = [
+    ['tomato','cream','#F24E1E'],['plum','bubblegum','#4A1430'],['cobalt','sky','#2F55C4'],['forest','butter','#1F5A3A'],
+    ['wine','marigold','#7A1838'],['cocoa','cream','#5A2E1E'],['bubblegum','plum','#FFC2E2'],['butter','cocoa','#FFE79A']];
+  document.getElementById('duos').innerHTML = duos.map(([b,f,h]) =>
+    `<div class="mu-palette-card mu-duo-${b}-${f}"><b>${b[0].toUpperCase()+b.slice(1)}</b><span>${h} · on ${f}</span></div>`).join('');
+  const roles = ['primary','primary-container','secondary','secondary-container','tertiary','tertiary-container','error-container','surface-container-low','surface-container-highest','inverse-surface'];
+  const on = r => r.startsWith('surface') ? 'on-surface' : r === 'inverse-surface' ? 'inverse-on-surface' : 'on-' + r;
+  document.getElementById('roles').innerHTML = roles.map(r =>
+    `<div class="role" style="background:var(--mu-${r});color:var(--mu-${on(r)})">${r}</div>`).join('');
+  const shapes = [['cookie','tomato','mu-loop-spin'],['flower','cherry','mu-loop-float'],['clover','forest','mu-loop-wobble'],['sunny','marigold','mu-loop-spin-rev'],
+    ['burst','cobalt','mu-loop-spin'],['soft-burst','plum','mu-loop-breathe'],['wavy-circle','sky','mu-loop-spin-rev'],['pill-blob','bubblegum','mu-loop-float']];
+  document.getElementById('shapeGrid').innerHTML = shapes.map(([s,c,l],i) =>
+    `<div class="shape-tile"><span class="mu-shape mu-shape--${s} ${l} mu-delay-${i%3+1}" style="color:var(--mu-c-${c})"></span><span class="mu-label">${s}</span></div>`).join('');
+  const root = document.documentElement;
+  const tb = document.getElementById('themeBtn'), mb = document.getElementById('motionBtn');
+  const dark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  tb.onclick = () => { root.dataset.theme = dark() ? 'light' : 'dark'; tb.setAttribute('aria-pressed', dark()); tb.textContent = dark() ? 'Light mode' : 'Dark mode'; };
+  if (dark()) tb.textContent = 'Light mode';
+  mb.onclick = () => { const off = document.body.dataset.motion !== 'off'; document.body.dataset.motion = off ? 'off' : 'on'; mb.setAttribute('aria-pressed', off); mb.textContent = off ? 'Play motion' : 'Pause motion'; };
+</script>
+</body>
+</html>

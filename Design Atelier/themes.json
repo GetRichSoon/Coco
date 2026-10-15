@@ -1,0 +1,13 @@
+{
+  "default": "material-you",
+  "themes": [
+    {
+      "id": "material-you",
+      "name": "Material You Design Theme",
+      "status": "default",
+      "since": "2026-10-14",
+      "decidedBy": "mangesh",
+      "summary": "Retro-playful Material You: cream paper, tomato/bubblegum/sky/plum duos, chunky soft serif, cookie/flower/clover shapes, slow looping motion."
+    }
+  ]
+}

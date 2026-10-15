@@ -1,0 +1,126 @@
+<title>Good Space Logos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,700..900,100,1&family=Figtree:wght@400;600;800&family=Bagel+Fat+One&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24..48,500..700,1,0&display=swap">
+<style>
+/* Layout: the house theme's cream paper with a plum marquee, then a grid of living logos: Coco, the four Houses, the Bonbon Club */
+:root {
+  --cream: #FFF4E6; --paper: #FBF8EB; --ink: #2B1712; --muted: #5A4136; --line: #DFC3B5;
+  --tomato: #F24E1E; --tomato-deep: #B83A12; --plum: #4A1430; --bubblegum: #FFC2E2;
+  --display: "Fraunces", Georgia, serif; --body: "Figtree", system-ui, sans-serif; --fun: "Bagel Fat One", "Fraunces", serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cream: #1E0F14; --paper: #26141A; --ink: #F6E3DA; --muted: #DCC0C8; --line: #54363F; color-scheme: dark; } }
+:root[data-theme="dark"] { --cream: #1E0F14; --paper: #26141A; --ink: #F6E3DA; --muted: #DCC0C8; --line: #54363F; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--cream); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; display: grid; gap: 36px; }
+h1 { font: 900 clamp(40px, 7vw, 76px)/1 var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; margin: 0; letter-spacing: -.02em; }
+h1 em { font-style: normal; color: var(--tomato-deep); }
+h2 { font: 800 clamp(24px, 3.5vw, 34px)/1.1 var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; margin: 0; }
+.eyebrow { font: 800 12px var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--tomato-deep); }
+.lede { color: var(--muted); max-width: 60ch; margin: 0; }
+.marquee { background: var(--plum); color: var(--bubblegum); overflow: hidden; white-space: nowrap; border-radius: 0; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+.marquee span { display: inline-block; padding: 12px 0; font: 900 26px var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; animation: run 30s linear infinite; }
+@keyframes run { to { transform: translateX(-50%); } }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.tile { background: var(--paper); border-radius: 28px; padding: 18px 16px 16px; display: grid; justify-items: center; gap: 6px; text-align: center; min-width: 0; }
+.tile.big { grid-column: span 2; }
+@media (max-width: 480px) { .tile.big { grid-column: span 1; } }
+.logo { width: 132px; height: 132px; position: relative; }
+.logo svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.logo .ms { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Material Symbols Rounded"; font-size: 52px; font-variation-settings: "FILL" 1, "wght" 600; line-height: 1; }
+.logo .letter { position: absolute; right: -4px; bottom: 2px; font: 400 26px var(--fun); padding: 2px 10px; border-radius: 999px; box-shadow: 0 3px 0 rgba(0, 0, 0, .18); }
+.tile h3 { font: 800 24px var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; margin: 6px 0 0; }
+.tile .role { font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tile p { margin: 0; color: var(--muted); font-size: 14px; max-width: 26ch; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.controls button { border: 0; border-radius: 999px; padding: 9px 18px; font: 800 14px var(--body); cursor: pointer; background: var(--bubblegum); color: var(--plum); transition: border-radius .2s; }
+.controls button:active { border-radius: 16px; }
+.controls button:focus-visible { outline: 3px solid var(--tomato-deep); outline-offset: 2px; }
+footer { color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .marquee span { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:12px">
+    <span class="eyebrow">Good Space · house theme v1</span>
+    <h1>Every team, <em>its own living mark.</em></h1>
+    <p class="lede">Each logo is a shape from our theme library that keeps morphing and turning, in the team's colour pair, with a symbol for its work. They are used everywhere: the Coco Lounge apps, reports, the estate.</p>
+    <div class="controls"><button type="button" id="pause">Pause motion</button></div>
+  </header>
+  <div class="marquee" aria-hidden="true"><span id="mq"></span></div>
+
+  <section style="display:grid;gap:16px"><span class="eyebrow">The manager</span><div class="grid" id="coco"></div></section>
+  <section style="display:grid;gap:16px"><span class="eyebrow">Houses · main teams</span><h2>What we make</h2><div class="grid" id="houses"></div></section>
+  <section style="display:grid;gap:16px"><span class="eyebrow">Bonbon Club · support team</span><h2>Who helps every House</h2><div class="grid" id="club"></div></section>
+  <footer>Shapes and colours from the Material You Design Theme (Good Space › Coco › Design Atelier › Material You Theme). Symbols: Material Symbols Rounded (Apache 2.0).</footer>
+</div>
+
+<script>
+// Theme shape library: 96 polar radii each, so any shape morphs into any other.
+const N = 96;
+const wave = (k, depth, phase = 0) => Array.from({ length: N }, (_, i) => 1 - depth * (0.5 + 0.5 * Math.cos((i / N) * Math.PI * 2 * k + phase)));
+const lobes = (k, depth) => Array.from({ length: N }, (_, i) => { const t = (i / N) * k * 2 * Math.PI; return 1 - depth * Math.pow(Math.abs(Math.sin(t / 2)), 1.6); });
+const S = {
+  cookie: wave(12, 0.13), flower: lobes(6, 0.17), clover: lobes(4, 0.25), sunny: wave(8, 0.2),
+  burst: wave(12, 0.33), soft: wave(10, 0.2, 0.3), wavy: wave(16, 0.09), blob: Array.from({ length: N }, (_, i) => 0.78 + 0.22 * Math.abs(Math.cos((i / N) * Math.PI))), circle: Array(N).fill(1),
+};
+const C = { cream: '#FFF4E6', ink: '#2B1712', tomato: '#F24E1E', plum: '#4A1430', bubblegum: '#FFC2E2', cobalt: '#2F55C4', sky: '#A9DCFF', forest: '#1F5A3A', butter: '#FFE79A', wine: '#7A1838', marigold: '#EAB04A', cocoa: '#5A2E1E', cherry: '#C21D5F' };
+
+const COCO = [{ name: 'Coco', role: 'The manager', job: 'Runs Good Space, gives the work, keeps the rules', icon: 'crown', bg: C.plum, fg: C.bubblegum, shapes: ['sunny', 'flower', 'wavy', 'cookie'], letter: 'C' }];
+const HOUSES = [
+  { name: 'Gigi', role: 'Content', job: 'YouTube channels, Shorts, long videos, social posts', icon: 'play_arrow', bg: C.tomato, fg: C.cream, shapes: ['cookie', 'wavy', 'sunny', 'flower'], letter: 'G' },
+  { name: 'Lulu', role: 'Products', job: 'Chrome extensions, Android apps, websites', icon: 'extension', bg: C.cobalt, fg: C.sky, shapes: ['clover', 'soft', 'wavy', 'cookie'], letter: 'L' },
+  { name: 'Fifi', role: 'Downloads', job: 'Notes, templates, planners, e-books', icon: 'menu_book', bg: C.butter, fg: C.cocoa, shapes: ['flower', 'blob', 'cookie', 'wavy'], letter: 'F' },
+  { name: 'Zaza', role: 'Games', job: 'Roblox games and mini games', icon: 'sports_esports', bg: C.forest, fg: C.butter, shapes: ['burst', 'sunny', 'soft', 'clover'], letter: 'Z' },
+];
+const CLUB = [
+  { name: 'Lola', role: 'Think · ideas', job: 'Finds ideas and trends', icon: 'lightbulb', bg: C.marigold, fg: C.ink, shapes: ['sunny', 'burst', 'cookie'] },
+  { name: 'Lili', role: 'Think · research', job: 'Checks the market, tracks results', icon: 'query_stats', bg: C.sky, fg: C.ink, shapes: ['wavy', 'circle', 'soft'] },
+  { name: 'Remy', role: 'Make · builds', job: 'Builds extensions, apps, games', icon: 'construction', bg: C.cocoa, fg: C.cream, shapes: ['cookie', 'clover', 'soft'] },
+  { name: 'Vivi', role: 'Make · design', job: 'Screens, icons, store images', icon: 'palette', bg: C.bubblegum, fg: C.plum, shapes: ['flower', 'blob', 'wavy'] },
+  { name: 'Margot', role: 'Make · writes', job: 'Scripts, titles, store text, e-books', icon: 'edit', bg: C.wine, fg: C.marigold, shapes: ['soft', 'flower', 'cookie'] },
+  { name: 'Cleo', role: 'Make · videos', job: 'Videos, thumbnails, trailers', icon: 'movie', bg: C.tomato, fg: C.ink, shapes: ['burst', 'cookie', 'sunny'] },
+  { name: 'Elise', role: 'Care · quality', job: 'Checks every release', icon: 'verified', bg: C.forest, fg: C.butter, shapes: ['cookie', 'wavy', 'clover'] },
+  { name: 'Kiki', role: 'Care · growth', job: 'SEO, store pages, links', icon: 'rocket_launch', bg: C.cobalt, fg: C.sky, shapes: ['burst', 'soft', 'sunny'] },
+  { name: 'Didi', role: 'Care · customers', job: 'Reviews and replies', icon: 'forum', bg: C.cherry, fg: C.cream, shapes: ['blob', 'flower', 'wavy'] },
+  { name: 'Bibi', role: 'Care · money', job: 'Earnings, costs, approvals', icon: 'payments', bg: C.butter, fg: C.cocoa, shapes: ['clover', 'cookie', 'blob'] },
+];
+
+const pathFor = (r, cx = 50, cy = 50, R = 46) => {
+  let d = '';
+  for (let i = 0; i < N; i++) { const a = (i / N) * Math.PI * 2 - Math.PI / 2; const x = cx + Math.cos(a) * R * r[i], y = cy + Math.sin(a) * R * r[i]; d += (i ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2); }
+  return d + 'Z';
+};
+const logos = [];
+function tile(t, big) {
+  const el = document.createElement('article'); el.className = 'tile' + (big ? ' big' : '');
+  el.innerHTML = `<div class="logo" role="img" aria-label="${t.name} logo"><svg viewBox="0 0 100 100"><path fill="${t.bg}"></path></svg><span class="ms" style="color:${t.fg}">${t.icon}</span>${t.letter ? `<span class="letter" style="background:${t.fg};color:${t.bg}">${t.letter}</span>` : ''}</div>
+    <h3>${t.name}</h3><span class="role">${t.role}</span><p>${t.job}</p>`;
+  logos.push({ path: el.querySelector('path'), svg: el.querySelector('svg'), shapes: t.shapes.map(s => S[s]), speed: 0.9 + Math.random() * 0.5, spin: (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 6), offset: Math.random() * 10 });
+  return el;
+}
+COCO.forEach(t => document.getElementById('coco').appendChild(tile(t, true)));
+HOUSES.forEach(t => document.getElementById('houses').appendChild(tile(t)));
+CLUB.forEach(t => document.getElementById('club').appendChild(tile(t)));
+document.getElementById('mq').textContent = ' ✦ Coco ✦ Gigi ✦ Lulu ✦ Fifi ✦ Zaza ✦ Lola ✦ Lili ✦ Remy ✦ Vivi ✦ Margot ✦ Cleo ✦ Elise ✦ Kiki ✦ Didi ✦ Bibi'.repeat(4);
+
+// smooth morph loop: ease between shapes, gentle spin and breathe (transform only on the svg)
+const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+let paused = matchMedia('(prefers-reduced-motion: reduce)').matches, t0 = performance.now(), frozen = 0;
+const buf = new Array(N);
+function frame(now) {
+  const t = paused ? frozen : (now - t0) / 1000;
+  for (const L of logos) {
+    const cyc = (t * 0.32 * L.speed + L.offset), n = L.shapes.length, i = Math.floor(cyc) % n, f = ease(cyc % 1);
+    const A = L.shapes[i], B = L.shapes[(i + 1) % n];
+    for (let k = 0; k < N; k++) buf[k] = A[k] + (B[k] - A[k]) * f;
+    L.path.setAttribute('d', pathFor(buf));
+    L.svg.style.transform = `rotate(${(t * L.spin) % 360}deg) scale(${1 + 0.025 * Math.sin(t * 1.6 + L.offset)})`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+const pb = document.getElementById('pause');
+pb.textContent = paused ? 'Play motion' : 'Pause motion';
+pb.onclick = () => { if (!paused) { frozen = (performance.now() - t0) / 1000; paused = true; } else { t0 = performance.now() - frozen * 1000; paused = false; } pb.textContent = paused ? 'Play motion' : 'Pause motion'; };
+</script>
