@@ -90,6 +90,8 @@ function understand(text, kind) {
   const spoken = raw.match(/^(?:speak|bolo|bol)\s+([\s\S]+)$/i); if (spoken) return { action: 'speak', args: { text: spoken[1] } };
   const pressed = t.match(/^(?:press|dabao|key)\s+(.+)$/); if (pressed) return { action: 'key', args: { combo: pressed[1].replace(/\s*(\+|plus|and|aur)\s*|\s+/g, '+') } };
   if (/\b(screenshot|screen ?shot|ss|screen dikha(?:o)?|screen bhej(?:o)?)\b/.test(t)) return { action: 'screenshot', args: {} };
+  const found = raw.match(/^(?:find|search|dhundo|dhoondo|dhund)\s+(.+?)(?:\s+(?:file|files|wali file))?$/i) || raw.match(/^(.+?)\s+(?:wali )?(?:file )?(?:dhundo|dhoondo|dhund do|find karo|search karo)$/i);
+  if (found && !/\b(pc|laptop|phone)\b$/i.test(found[1].trim())) return { action: 'find_file', args: { q: found[1].trim() } };
   if (/\b(confetti|party|celebrate|jashn)\b/.test(t)) return { action: 'fun', args: { kind: 'party' } };
   if (/\b(joke|chutkula|hasao|hasa do)\b/.test(t)) return { action: 'fun', args: { kind: 'joke' } };
   if (/\b(fact|gyaan|kuch naya batao)\b/.test(t)) return { action: 'fun', args: { kind: 'fact' } };
@@ -170,6 +172,7 @@ async function runAction(action, args = {}) {
       return 'data:image/jpeg;base64,' + src.thumbnail.toJPEG(62).toString('base64');
     }
     case 'fun': return fun(String(args.kind || 'party'));
+    case 'find_file': return findFiles(String(args.q || ''));
     case 'notify': { const { Notification } = require('electron'); new Notification({ title: 'Coco', body: String(args.text || '').slice(0, 200) }).show(); return 'Shown on screen'; }
     case 'play_youtube': {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
@@ -193,6 +196,31 @@ async function runAction(action, args = {}) {
     case 'ring': return 'A PC cannot ring; try: say hello';
     default: return 'This action is not allowed';
   }
+}
+
+// ---------- find files (Desktop, Documents, Downloads, Pictures, Good Space; names only, never contents) ----------
+function findFiles(q) {
+  const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1 && !/^(the|a|my|meri|mera|wali|wala|ka|ki|ke)$/.test(w));
+  if (!words.length) return 'Say what to find, e.g. "resume pdf dhundo"';
+  const home = os.homedir();
+  const roots = ['Desktop', 'Documents', 'Downloads', 'Pictures', 'Videos', 'Good Space', 'OneDrive'].map((d) => path.join(home, d)).filter((d) => fs.existsSync(d));
+  const hits = []; let seen = 0;
+  const skip = /^(node_modules|\.git|\.gradle|build|AppData|Coco Vault|Safe Keeping|\$Recycle\.Bin)$/i;
+  const walk = (dir, depth) => {
+    if (depth > 5 || hits.length >= 8 || seen > 40000) return;
+    let list; try { list = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of list) {
+      seen++;
+      if (skip.test(e.name)) continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) { walk(full, depth + 1); if (hits.length >= 8) return; continue; }
+      const n = e.name.toLowerCase();
+      if (words.every((w) => n.includes(w))) hits.push(full);
+      if (hits.length >= 8) return;
+    }
+  };
+  roots.forEach((r) => walk(r, 0));
+  return hits.length ? 'Found ' + hits.length + ':\n' + hits.map((h) => h.replace(home, '~')).join('\n') : 'Nothing found for "' + q + '"';
 }
 
 // ---------- fun corner ----------
