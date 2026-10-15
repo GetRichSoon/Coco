@@ -84,6 +84,17 @@ function understand(text, kind) {
   const t = String(text || '').toLowerCase().replace(/[.!?,]+/g, ' ').replace(/\s+/g, ' ').trim();
   if (!t) return null;
   const url = t.match(/https?:\/\/\S+/); if (url) return { action: 'open_url', args: { url: url[0].replace(/^http:/, 'https:') } };
+  // Wider PC control (Boss YES 2026-10-15): type, shortcuts, screenshot, speak, close the front app; plus the fun ones.
+  const raw = String(text || '').trim();
+  const typed = raw.match(/^(?:type|likh(?:o|do)?)\s+([\s\S]+)$/i); if (typed) return { action: 'type_text', args: { text: typed[1] } };
+  const spoken = raw.match(/^(?:speak|bolo|bol)\s+([\s\S]+)$/i); if (spoken) return { action: 'speak', args: { text: spoken[1] } };
+  const pressed = t.match(/^(?:press|dabao|key)\s+(.+)$/); if (pressed) return { action: 'key', args: { combo: pressed[1].replace(/\s*(\+|plus|and|aur)\s*|\s+/g, '+') } };
+  if (/\b(screenshot|screen ?shot|ss|screen dikha(?:o)?|screen bhej(?:o)?)\b/.test(t)) return { action: 'screenshot', args: {} };
+  if (/\b(confetti|party|celebrate|jashn)\b/.test(t)) return { action: 'fun', args: { kind: 'party' } };
+  if (/\b(joke|chutkula|hasao|hasa do)\b/.test(t)) return { action: 'fun', args: { kind: 'joke' } };
+  if (/\b(fact|gyaan|kuch naya batao)\b/.test(t)) return { action: 'fun', args: { kind: 'fact' } };
+  if (/\b(find (my )?(pc|laptop)|laptop dhundo|pc dhundo|beep)\b/.test(t)) return { action: 'fun', args: { kind: 'beep' } };
+  if (/\b(motivate|motivation|josh)\b/.test(t)) return { action: 'fun', args: { kind: 'motivate' } };
   const play = t.match(/^(?:play|chala(?:o)?|bajao|baja|laga(?:o)?|sunao|suna)\s+(.+)$/) || t.match(/^(.+?)\s+(?:chala(?:o|do)?|bajao|baja do|laga(?:o|do)?|sunao|play kar(?:o|do)?|play)$/);
   if (play && !/^(music|song|gaana|video)$/.test(play[1])) return { action: 'play_youtube', args: { q: play[1].replace(/\b(song|gaana|gana|ke gaane|gaane|on youtube|youtube pe|youtube par)\b/g, ' ').replace(/\s+/g, ' ').trim() || play[1] } };
   const browser = (t.match(/\b(brave|chrome|edge)\b/) || [])[1];
@@ -147,7 +158,18 @@ async function runAction(action, args = {}) {
       if (exe) await exec(exe, [args.url]); else await shell.openExternal(args.url);
       return 'Opened ' + args.url + (exe ? ' in ' + args.browser : '');
     }
-    case 'close_app': return 'Closing apps from another device is not switched on yet (it needs Boss YES for wider PC control)';
+    case 'close_app': await exec(KEYS_EXE, ['combo', 'alt+f4']); return 'Closed the app in front';
+    case 'type_text': { const s = String(args.text || '').slice(0, 2000); if (!s) return 'Nothing to type'; await exec(KEYS_EXE, ['type', s]); return 'Typed ' + s.length + ' characters'; }
+    case 'key': { const r = await exec(KEYS_EXE, ['combo', String(args.combo || '')]); return /failed/.test(r) ? 'Unknown keys: ' + args.combo : 'Pressed ' + args.combo; }
+    case 'speak': { const s = String(args.text || '').slice(0, 300); exec(KEYS_EXE, ['speak', s]); return 'Saying: ' + s; }
+    case 'screenshot': {
+      const { desktopCapturer, screen } = require('electron');
+      const d = screen.getPrimaryDisplay().size; const w = 900; const h = Math.round(w * d.height / d.width);
+      const [src] = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: w, height: h } });
+      if (!src) return 'Screenshot failed';
+      return 'data:image/jpeg;base64,' + src.thumbnail.toJPEG(62).toString('base64');
+    }
+    case 'fun': return fun(String(args.kind || 'party'));
     case 'notify': { const { Notification } = require('electron'); new Notification({ title: 'Coco', body: String(args.text || '').slice(0, 200) }).show(); return 'Shown on screen'; }
     case 'play_youtube': {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
@@ -170,6 +192,50 @@ async function runAction(action, args = {}) {
     }
     case 'ring': return 'A PC cannot ring; try: say hello';
     default: return 'This action is not allowed';
+  }
+}
+
+// ---------- fun corner ----------
+const JOKES = [
+  'Why did the laptop go to the doctor? It had a terrible case of Windows updates.',
+  'My PC and I have a lot in common. We both stop working when it gets too hot.',
+  'Boss, I tried to take a break, but my RAM said: not enough memory for fun.',
+  'Why do programmers prefer dark mode? Because light attracts bugs.',
+  'I told my charger a joke. It did not get it, it was not plugged in.',
+  'Coco tip of the day: if the Short is not posting, just stare at the laptop. It works for cats.',
+];
+const FACTS = [
+  'Honey never spoils. Archaeologists found three thousand year old honey that was still good to eat.',
+  'Octopuses have three hearts and blue blood.',
+  'A day on Venus is longer than its year.',
+  'Bananas are berries, but strawberries are not.',
+  'Your phone has more computing power than the computers that took Apollo eleven to the Moon.',
+  'Hot phones charge slower on purpose. They protect the battery from heat.',
+];
+const MOTIVATE = ['Boss, one Short a day becomes three hundred sixty five a year. Keep going.', 'Big things are built one small step at a time. Today counts.', 'Good Space is growing. Let us make today the best day yet.'];
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+function popup(title, body) { const { Notification } = require('electron'); new Notification({ title, body }).show(); }
+function confetti(seconds = 5) {
+  const { screen } = require('electron'); const { width, height } = screen.getPrimaryDisplay().bounds;
+  const w = new BrowserWindow({ x: 0, y: 0, width, height, transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true, focusable: false, hasShadow: false, webPreferences: { contextIsolation: true } });
+  w.setIgnoreMouseEvents(true); w.setAlwaysOnTop(true, 'screen-saver');
+  const html = '<html><body style="margin:0;overflow:hidden;background:transparent"><canvas id=c></canvas><script>' +
+    'const c=document.getElementById("c"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;' +
+    'const col=["#8E6BFF","#4FE3F2","#FFD166","#FF6B9A","#34D399","#FF9F0A"];' +
+    'const P=[...Array(260)].map(()=>({x:Math.random()*c.width,y:-Math.random()*c.height,s:6+Math.random()*8,v:2+Math.random()*4,a:Math.random()*6,r:(Math.random()-.5)*.2,c:col[Math.floor(Math.random()*col.length)]}));' +
+    'function f(){x.clearRect(0,0,c.width,c.height);for(const p of P){p.y+=p.v;p.x+=Math.sin(p.a+=.05)*1.5;x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore();}requestAnimationFrame(f)}f();' +
+    '</script></body></html>';
+  w.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+  setTimeout(() => { if (!w.isDestroyed()) w.close(); }, seconds * 1000);
+}
+async function fun(kind) {
+  switch (kind) {
+    case 'party': confetti(6); exec(KEYS_EXE, ['speak', 'Party time, Boss!']); return 'Confetti on the PC screen';
+    case 'joke': { const j = pick(JOKES); popup('Coco joke', j); exec(KEYS_EXE, ['speak', j]); return j; }
+    case 'fact': { const f = pick(FACTS); popup('Coco fact', f); exec(KEYS_EXE, ['speak', f]); return f; }
+    case 'motivate': { const m = pick(MOTIVATE); popup('Coco', m); exec(KEYS_EXE, ['speak', m]); return m; }
+    case 'beep': exec(KEYS_EXE, ['beep']); popup('Coco', 'Here I am! (find my PC)'); return 'Beeping on the PC';
+    default: return 'Unknown fun';
   }
 }
 

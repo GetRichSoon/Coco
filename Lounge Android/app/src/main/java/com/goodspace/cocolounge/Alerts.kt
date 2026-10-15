@@ -55,6 +55,7 @@ object Alerts {
                 "rule set" -> post(context, a.optLong("id").toInt(), "${a.optString("actor")} set a new rule", detail, "rules")
                 "merged" -> post(context, a.optLong("id").toInt(), "Coco merged a task", detail, "merged")
                 "task added" -> post(context, a.optLong("id").toInt(), "${a.optString("actor")} gave a task", detail, "tasks")
+                "update" -> post(context, a.optLong("id").toInt(), detail.substringBefore(" | "), detail.substringAfter(" | ", ""), "updates")
             }
         }
         remember(context, new)
@@ -79,8 +80,8 @@ object Alerts {
                 val waiting = cloud.list("approvals", "select=id,code,what&state=eq.waiting").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
                 waiting.filter { it.optString("id") !in known }.forEach { post(applicationContext, it.optString("id").hashCode(), "Needs your YES: ${it.optString("code")}", it.optString("what").take(140), "approvals") }
                 val act = cloud.list("activity", "select=*&id=gt.$lastAct&order=id.asc").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
-                act.filter { it.optString("actor") != me && it.optString("action") in setOf("rule set", "merged", "task added") }.forEach { a: JSONObject ->
-                    val title = when (a.optString("action")) { "rule set" -> "${a.optString("actor")} set a new rule"; "merged" -> "Coco merged a task"; else -> "${a.optString("actor")} gave a task" }
+                act.filter { it.optString("actor") != me && it.optString("action") in setOf("rule set", "merged", "task added", "update") }.forEach { a: JSONObject ->
+                    val title = when (a.optString("action")) { "rule set" -> "${a.optString("actor")} set a new rule"; "merged" -> "Coco merged a task"; "update" -> a.optString("detail").substringBefore(" | "); else -> "${a.optString("actor")} gave a task" }
                     post(applicationContext, a.optLong("id").toInt(), title, a.optString("detail"))
                 }
                 prefs.edit().putString("waiting", waiting.joinToString(",") { it.optString("id") }).putLong("activity", act.maxOfOrNull { it.optLong("id") } ?: lastAct).apply()
