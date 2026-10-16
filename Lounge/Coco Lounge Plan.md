@@ -21,6 +21,7 @@ All four devices (Boss PC, Boss phone, Big Boss PC, Big Boss phone) work through
 - The Flow daily Short as a cloud routine (keys in cloud secrets), laptop as backup.
 
 ## Coco Voice: "Okay Coco" on all four devices (Boss, 2026-10-16)
+**Founder rule 2026-10-16: Coco never speaks. It only listens and does.** Feedback is silent: a small glow/tick on screen and the result in the Remote list. Any language works on every device (the cloud brain understands every language Gemini knows; speech-to-text set to auto-detect).
 Goal: like "Okay Google", but for Good Space. Say "Okay Coco" (or "Coco") to any device, in any language
 (Hindi, English, Marathi, mixed), and keep talking; every step runs on whichever device you name, until you stop.
 
@@ -42,7 +43,7 @@ Example the system must handle in one go:
    Device names it understands: "Boss PC", "mera laptop", "Big Boss phone", "Shreya ka PC", "yahi phone".
    No device named = the device you are talking to.
 4. **Runners on each device** do the steps in order, wait for each to finish (window open, page loaded),
-   and report back; Coco speaks a one-line answer ("Ho gaya Boss, Mumu ko bhej diya, YouTube aur Chrome aadhe-aadhe screen pe").
+   and report back; no voice reply, only a silent tick on screen.
 
 ### New abilities needed
 - **Window layouts (PC):** left half, right half, full screen, minimise, "isko half karo" = the front window.
@@ -54,13 +55,13 @@ Example the system must handle in one go:
 - **Follow-ups without the wake word** while the session is open: "ab ruko", "aur tez", "wapas", "band karo".
 - **Context memory:** "isko", "wo video", "same cheez Big Boss PC pe" refer to the last thing done.
 - **Answers, not only actions:** questions ("battery kitni hai", "The Flow ka aaj ka video kab aayega")
-  are answered by voice from live Coco Cloud data.
+  are answered as text on the screen from live Coco Cloud data.
 - **Cross-device hand-off:** "ye video phone pe chalao" continues the same YouTube video at the same second on the phone.
 - **Barge-in:** saying "Coco ruko" stops whatever is running on every device at once.
 
 ### Safety and privacy
 - Wake word runs offline; audio is never stored; only the text of a command goes to the cloud.
-- Power actions (restart, switch off), messages to non-family, payments, publishing: always a spoken "confirm" first.
+- Power actions (restart, switch off), messages to non-family, payments, publishing: always a confirm button on screen first.
 - Each phone and PC answers its own founder's voice by default; a command for the other founder's devices
   shows on their device and needs nothing extra only for harmless actions (play, open, volume).
 - Microphone always-on shows a visible "Coco listening" notification on phones (Android rule) and a tray dot on PCs;
