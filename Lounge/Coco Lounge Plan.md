@@ -84,6 +84,13 @@ Test sentences for every build (must pass before release): the WhatsApp+YouTube+
 - **Sticky control mode:** "Coco, Boss PC se connect karo" makes Boss PC the target for every next command ("YouTube kholo", "pause", "10 sec aage"), live, until you say "mere phone me karo" / "wapas" / name another device. The phone shows a small banner "Controlling: Boss PC" while this is on.
 - Calls: "Coco, Mumu ko call karo" dials from the phone (Android shows the call screen; family only without asking).
 
+
+### Always connected setting (Boss, 2026-10-16)
+- Every app (both phones, both PCs) gets a Settings switch: **Keep connected** (default ON) / **Disconnect**. ON = stays linked to the other devices and Coco Cloud all the time.
+- PC locked: stays connected and keeps running commands (the app runs as a background service, not only a window).
+- Phone locked / screen off: stays connected (foreground service, battery-optimisation exception).
+- PC switched off or asleep: cannot be online; the other devices show "off since 6:42 PM" and it reconnects by itself at the next start. Later option: wake it from the phone over Wi-Fi (Wake-on-LAN) when on the same network.
+
 ### Independence from Claude (Boss, 2026-10-16)
 The 4 devices, remote control, voice, chat and the whole company run on Coco Cloud (Supabase + Gemini + device apps) and the local AI (Ollama). They never need Claude to work. Claude is one tool Coco calls only for hard work (code, scripts, big builds); if Claude is out of limit, everything else keeps running.
 
