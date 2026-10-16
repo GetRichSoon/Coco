@@ -552,13 +552,21 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
         }
         // Power or phone tools
         Card {
+            var msgOpen by remember { mutableStateOf(false) }
+            if (msgOpen) {
+                var msg by remember { mutableStateOf("") }
+                AlertDialog(onDismissRequest = { msgOpen = false }, title = { Text("Message to ${dev.s("name")}") },
+                    text = { OutlinedTextField(msg, { msg = it }, placeholder = { Text("Type anything, emojis ok 😊") }, minLines = 2, modifier = Modifier.fillMaxWidth()) },
+                    confirmButton = { Button({ if (msg.isNotBlank()) send("notify", JSONObject().put("text", msg.trim())); msgOpen = false }) { Text("Send") } },
+                    dismissButton = { TextButton({ msgOpen = false }) { Text("Cancel") } })
+            }
             Eyebrow(if (pc) "Power" else "Phone")
             val actions = if (pc) listOf(Triple("lock", "Lock", Icons.Rounded.Lock), Triple("sleep", "Sleep", Icons.Rounded.Bedtime), Triple("restart", "Restart", Icons.Rounded.RestartAlt),
                 Triple("shutdown", "Switch off", Icons.Rounded.PowerSettingsNew), Triple("cancel_power", "Cancel", Icons.Rounded.Cancel), Triple("notify", "Message", Icons.Rounded.Chat))
             else listOf(Triple("ring", "Ring it", Icons.Rounded.NotificationsActive), Triple("notify", "Message", Icons.Rounded.Chat))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), maxItemsInEachRow = 3) {
                 actions.forEach { (a, label, icon) ->
-                    FilledTonalButton({ when (a) { "restart", "shutdown" -> confirm = a; "notify" -> send(a, JSONObject().put("text", "Hello from ${vm.callMe.ifBlank { vm.name }}")); else -> send(a, JSONObject()) } },
+                    FilledTonalButton({ when (a) { "restart", "shutdown" -> confirm = a; "notify" -> msgOpen = true; else -> send(a, JSONObject()) } },
                         Modifier.weight(1f), shape = RoundedCornerShape(18.dp), contentPadding = PaddingValues(6.dp, 12.dp)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) { Icon(icon, null); Text(label, style = MaterialTheme.typography.labelSmall, maxLines = 1) }
                     }

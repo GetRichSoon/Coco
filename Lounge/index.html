@@ -420,7 +420,7 @@ const V = {
       <div class="card2"><span class="eyebrow">Open an app</span><div class="actions">${apps.map(([k, l]) => `<button class="btn tonal" data-rc="open_app" data-ra="${k}">${l}</button>`).join('')}</div>
         <div style="display:flex;gap:8px"><input id="rLink" placeholder="https:// link to open" style="flex:1"><button class="btn tonal" data-rc="open_url">Open</button></div>
         ${pc ? '' : '<span class="muted">Android opens apps at once only while Coco Lounge is on the phone screen; otherwise the phone shows a notification to tap.</span>'}</div>
-      <div class="card2"><span class="eyebrow">${pc ? 'Power' : 'Phone'}</span><div class="actions">${pc ? `<button class="btn tonal" data-rc="lock">Lock</button><button class="btn tonal" data-rc="sleep">Sleep</button><button class="btn tonal" data-rc="restart">Restart</button><button class="btn tonal" data-rc="shutdown">Switch off</button><button class="btn text" data-rc="cancel_power">Cancel</button>` : '<button class="btn tonal" data-rc="ring"><i class="ms">notifications_active</i> Ring it</button>'}<button class="btn text" data-rc="notify">Send a hello</button></div></div>
+      <div class="card2"><span class="eyebrow">${pc ? 'Power' : 'Phone'}</span><div class="actions">${pc ? `<button class="btn tonal" data-rc="lock">Lock</button><button class="btn tonal" data-rc="sleep">Sleep</button><button class="btn tonal" data-rc="restart">Restart</button><button class="btn tonal" data-rc="shutdown">Switch off</button><button class="btn text" data-rc="cancel_power">Cancel</button>` : '<button class="btn tonal" data-rc="ring"><i class="ms">notifications_active</i> Ring it</button>'}<button class="btn text" data-rc="notify">Send message</button></div></div>
       </div>
       <h3 style="margin:22px 0 8px">Recent commands</h3><div class="card2">${(D.commands || []).map(c => `<div class="row"><div class="grow"><b>${esc(c.action.replace('_', ' '))}${c.args && (c.args.text || c.args.q || c.args.app || c.args.key) ? ' · ' + esc(c.args.text || c.args.q || c.args.app || c.args.key) : ''}</b> → ${esc(deviceName(c.target_device))}<div class="muted">${/^data:image\/jpeg;base64,/.test(c.result || '') ? `<img src="${c.result}" style="max-width:100%;border-radius:12px;margin:6px 0;display:block" alt="Screenshot">` : esc(c.result || '')} · ${esc(c.created_by || '')} · ${ago(c.created_at)}</div></div>${chip(c.status)}</div>`).join('') || '<span class="muted">Nothing sent yet.</span>'}</div>`;
   },
@@ -492,7 +492,7 @@ document.addEventListener('click', async (e) => {
     if (a === 'media' || a === 'volume') args.key = ds.rk;
     if (a === 'open_app') args.app = ds.ra;
     if (a === 'open_url') { args.url = ($('#rLink') || {}).value || ''; if (!args.url.startsWith('https://')) return toast('Use an https link'); }
-    if (a === 'notify') args.text = 'Hello from ' + (founder ? founder.call_me : 'Good Space');
+    if (a === 'notify') { args.text = rSay.trim() || prompt('Message (emojis ok):', '') || ''; if (!args.text) return; rSay = ''; }
     if ((a === 'restart' || a === 'shutdown') && !confirm((a === 'restart' ? 'Restart ' : 'Switch off ') + deviceName(rTarget) + ' in 60 seconds?')) return;
     const { error } = await sb.from('commands').insert({ target_device: rTarget, action: a, args, created_by: founderName(), created_device: deviceId });
     if (error) return toast('Could not send: ' + error.message);

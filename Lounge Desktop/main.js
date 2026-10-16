@@ -75,6 +75,7 @@ async function firstVideo(q) {
     return ((await r.text()).match(/"videoId":"([\w-]{11})"/) || [])[1] || null;
   } catch { return null; }
 }
+const front = () => setTimeout(() => exec(KEYS_EXE, ['combo', 'win+up']), 2500);   // newly opened window: bring it up, maximized
 const exec = (cmd, args) => new Promise((r) => execFile(cmd, args, { windowsHide: true }, (e, so, se) => r(e ? `failed: ${(se || e.message).slice(0, 160)}` : String(so || 'ok').trim())));
 // Plain words (English or Hinglish) into one of the fixed actions. Same rules as the phone app's PhoneRemote.understand.
 const APP_WORDS = [[/\b(vs ?code|visual studio|code)\b/, 'vscode'], [/\bcursor\b/, 'cursor'], [/\bchrome\b/, 'chrome'], [/\bbrave\b/, 'brave'], [/\bedge\b/, 'edge'],
@@ -152,6 +153,8 @@ function understand(text, kind) {
   if (/\b(shut ?down|switch off|power off|band kar(o|do)?)\b/.test(t)) return { action: 'shutdown', args: {} };
   if (/\b(sleep|so ja(o)?)\b/.test(t)) return { action: 'sleep', args: {} };
   const say = t.match(/^(?:say|message|msg|bol(?:o)?|likho)\s+(.+)$/); if (say) return { action: 'notify', args: { text: say[1] } };
+  const win = [[/\b(maximi[sz]e|bada kar|full window)/, 'win+up'], [/\b(minimi[sz]e|chhota kar|chota kar|chhupa)/, 'win+down'], [/\b(left|baaye|baye) ?(half|side|me)\b/, 'win+left'], [/\b(right|daaye|daye) ?(half|side|me)\b/, 'win+right'], [/\bhalf ?screen\b/, 'win+left'], [/\b(desktop dikhao|show desktop)\b/, 'win+d']].find(([re]) => re.test(t));
+  if (win) return { action: 'key', args: { combo: win[1] } };
   if (/\b(full ?screen|poori screen|screen (pe|per|par) dikh)/.test(t)) return { action: 'key', args: { combo: 'f' } };
   if (kind === 'pc' && t.split(' ').length <= 8) return { action: 'play_youtube', args: { q: t } };   // anything else: search it on YouTube
   return null;
@@ -191,7 +194,7 @@ async function runAction(action, args = {}) {
     case 'open_url': {
       if (!/^https:\/\//.test(String(args.url || ''))) return 'Only https links';
       const exe = BROWSERS[String(args.browser || '')] && BROWSERS[String(args.browser)]();
-      if (exe) await exec(exe, [args.url]); else await shell.openExternal(args.url);
+      if (exe) await exec(exe, [args.url]); else await shell.openExternal(args.url); front();
       return 'Opened ' + args.url + (exe ? ' in ' + args.browser : '');
     }
     case 'close_app': {
@@ -219,7 +222,7 @@ async function runAction(action, args = {}) {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
       const id = await firstVideo(q);
       const url = id ? `https://www.youtube.com/watch?v=${id}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-      const brave = BROWSERS.brave(); if (brave) await exec(brave, [url]); else await shell.openExternal(url); return id ? `Playing "${q}" on YouTube` : `Opened YouTube search for "${q}"`;
+      const brave = BROWSERS.brave(); if (brave) await exec(brave, [url]); else await shell.openExternal(url); front(); return id ? `Playing "${q}" on YouTube` : `Opened YouTube search for "${q}"`;
     }
     case 'media': case 'volume': {
       const key = { playpause: 179, next: 176, prev: 177, mute: 173, down: 174, up: 175 }[String(args.key)];
@@ -230,10 +233,10 @@ async function runAction(action, args = {}) {
     }
     case 'open_app': {
       const target = PC_APPS[String(args.app)];
-      if (!target) { const lnk = startMenuApp(String(args.app)); if (!lnk) return 'No app called "' + args.app + '" on this PC'; await exec('cmd.exe', ['/c', 'start', '""', lnk]); return 'Opened ' + path.basename(lnk, '.lnk'); }
+      if (!target) { const lnk = startMenuApp(String(args.app)); if (!lnk) return 'No app called "' + args.app + '" on this PC'; await exec('cmd.exe', ['/c', 'start', '""', lnk]); front(); return 'Opened ' + path.basename(lnk, '.lnk'); }
       const file = target();
       if (!file) return 'App not found on this PC';
-      await exec('cmd.exe', ['/c', 'start', '""', file]); return 'Opened ' + args.app;
+      await exec('cmd.exe', ['/c', 'start', '""', file]); front(); return 'Opened ' + args.app;
     }
     case 'ring': return 'A PC cannot ring; try: say hello';
     default: return 'This action is not allowed';
