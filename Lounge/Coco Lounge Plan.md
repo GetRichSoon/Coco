@@ -91,6 +91,10 @@ Test sentences for every build (must pass before release): the WhatsApp+YouTube+
 - Phone locked / screen off: stays connected (foreground service, battery-optimisation exception).
 - PC switched off or asleep: cannot be online; the other devices show "off since 6:42 PM" and it reconnects by itself at the next start. Later option: wake it from the phone over Wi-Fi (Wake-on-LAN) when on the same network.
 
+### Window and message rules (Boss, 2026-10-16)
+- "YouTube kholo" must bring the window to the FRONT and show it on screen (not open in the background). Also: maximize / minimize / bada karo / chhota karo / half screen / band karo for the front window. Handle every phrasing.
+- Remote "Message" button: type your own text (emoji keyboard allowed) and it shows as a notification on the chosen device, with emojis.
+
 ### Independence from Claude (Boss, 2026-10-16)
 The 4 devices, remote control, voice, chat and the whole company run on Coco Cloud (Supabase + Gemini + device apps) and the local AI (Ollama). They never need Claude to work. Claude is one tool Coco calls only for hard work (code, scripts, big builds); if Claude is out of limit, everything else keeps running.
 
