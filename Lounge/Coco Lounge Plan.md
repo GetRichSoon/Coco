@@ -77,5 +77,15 @@ Example the system must handle in one go:
 Test sentences for every build (must pass before release): the WhatsApp+YouTube+Chrome example above,
 "Coco, Big Boss phone pe bhajan chalao", "Coco, laptop pe ye video half screen karo aur 10 second aage", "Coco ruko".
 
+
+### Target device rules (Boss, 2026-10-16)
+- Phone unlocked, app closed: "Coco ..." still runs in the background.
+- No device named = do it on the device that heard you ("Coco, koi song laga de" plays on that phone; calls, messages, apps, anything).
+- **Sticky control mode:** "Coco, Boss PC se connect karo" makes Boss PC the target for every next command ("YouTube kholo", "pause", "10 sec aage"), live, until you say "mere phone me karo" / "wapas" / name another device. The phone shows a small banner "Controlling: Boss PC" while this is on.
+- Calls: "Coco, Mumu ko call karo" dials from the phone (Android shows the call screen; family only without asking).
+
+### Independence from Claude (Boss, 2026-10-16)
+The 4 devices, remote control, voice, chat and the whole company run on Coco Cloud (Supabase + Gemini + device apps) and the local AI (Ollama). They never need Claude to work. Claude is one tool Coco calls only for hard work (code, scripts, big builds); if Claude is out of limit, everything else keeps running.
+
 ## Rules that stay
 - Nothing in git that is a key. Non-family messages need a YES. Commands older than 10 minutes never run.
