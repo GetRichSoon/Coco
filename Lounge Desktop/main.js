@@ -152,7 +152,7 @@ function understand(text, kind) {
   if (/\b(shut ?down|switch off|power off|band kar(o|do)?)\b/.test(t)) return { action: 'shutdown', args: {} };
   if (/\b(sleep|so ja(o)?)\b/.test(t)) return { action: 'sleep', args: {} };
   const say = t.match(/^(?:say|message|msg|bol(?:o)?|likho)\s+(.+)$/); if (say) return { action: 'notify', args: { text: say[1] } };
-  if (/b(full ?screen|poori screen|screen (pe|per|par) dikh)/.test(t)) return { action: 'key', args: { combo: 'f' } };
+  if (/\b(full ?screen|poori screen|screen (pe|per|par) dikh)/.test(t)) return { action: 'key', args: { combo: 'f' } };
   if (kind === 'pc' && t.split(' ').length <= 8) return { action: 'play_youtube', args: { q: t } };   // anything else: search it on YouTube
   return null;
 }
