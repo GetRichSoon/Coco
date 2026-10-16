@@ -6,7 +6,9 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-const GEMINI = Deno.env.get("GEMINI_API_KEY");
+// Gemini key: env secret if set, else Coco Cloud's vault (read through the service-role-only coco_secret()).
+let GEMINI = Deno.env.get("GEMINI_API_KEY") ?? null;
+async function loadKey() { if (!GEMINI) { const { data } = await db.rpc("coco_secret", { p_name: "gemini_api_key" }); GEMINI = data ?? null; } }
 
 type Msg = { id: number; author: string; body: string; device_id: string | null };
 
@@ -42,11 +44,16 @@ Waiting for YES: ${f.waiting.map((w) => `${w.code} ${w.what}`).join("; ") || "no
 Open tasks: ${f.open.map((t) => `${t.title} [${t.status}]`).join("; ") || "none"}
 Return JSON only: {"reply":"...","needs_work":true|false,"task_title":"...","house":"gigi|lulu|fifi|zaza|coco"}. needs_work is true only for real work (build, write, research, video, fix, plan).`;
   const contents = [...history.map((x) => ({ role: x.role === "coco" ? "model" : "user", parts: [{ text: x.body }] })), { role: "user", parts: [{ text: m.body }] }];
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI}`, {
-    method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { responseMimeType: "application/json", temperature: 0.4 } }),
-  });
-  if (!r.ok) throw new Error(`gemini ${r.status}`);
+  let r: Response | null = null;
+  for (const model of ["gemini-3.8-flash", "gemini-flash-latest"]) {
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": GEMINI! },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents, generationConfig: { responseMimeType: "application/json", temperature: 0.4 } }),
+    });
+    if (r.ok) break;
+    console.error(`gemini ${model} ${r.status} ${(await r.text()).slice(0, 200)}`);
+  }
+  if (!r || !r.ok) throw new Error(`gemini ${r?.status}`);
   const j = await r.json();
   return JSON.parse(j.candidates[0].content.parts[0].text);
 }
@@ -116,6 +123,7 @@ Deno.serve(async () => {
     if (data?.length) break;
     await new Promise((r) => setTimeout(r, 500));
   }
+  if (data?.length) await loadKey();
   for (const m of (data ?? []) as Msg[]) await handle(m);
   return new Response(JSON.stringify({ handled: data?.length ?? 0 }), { headers: { "content-type": "application/json" } });
 });

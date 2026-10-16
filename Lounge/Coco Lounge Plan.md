@@ -21,6 +21,7 @@ All four devices (Boss PC, Boss phone, Big Boss PC, Big Boss phone) work through
 - The Flow daily Short as a cloud routine (keys in cloud secrets), laptop as backup.
 
 ## Coco Voice: "Okay Coco" on all four devices (Boss, 2026-10-16)
+**Founder rule 2026-10-16: works even when the Coco app is closed.** All 4 devices stay connected in the background and listen for "Okay Coco" / "Coco" at all times (phones: a foreground service that starts on boot, with the required "Coco listening" notification; PCs: the tray app that starts with Windows). Whatever is said after "Coco" is done.
 **Founder rule 2026-10-16: Coco never speaks. It only listens and does.** Feedback is silent: a small glow/tick on screen and the result in the Remote list. Any language works on every device (the cloud brain understands every language Gemini knows; speech-to-text set to auto-detect).
 Goal: like "Okay Google", but for Good Space. Say "Okay Coco" (or "Coco") to any device, in any language
 (Hindi, English, Marathi, mixed), and keep talking; every step runs on whichever device you name, until you stop.
