@@ -98,8 +98,14 @@ const toRoman = (s) => WORDS.reduce((x, [re, w]) => x.replace(re, w), String(s |
 // "notepad kholo aur likho kal meeting 10 baje": several steps, run one after another.
 function plan(text, kind) {
   const r = toRoman(text);
-  const parts = r.split(/\s+aur\s+(?=(?:likho|type|bolo|speak|press|dabao|kholo|open|chalao|play|bajao|dhundo|find|screenshot|band karo|close|lock|party|joke)\b)/i);
-  return parts.map((s) => understand(s, kind)).filter(Boolean);
+  // Split a whole sentence into steps: aur / phir / fir / then / and / uske baad / iske baad / commas.
+  // "likho ..." / "type ..." keeps the rest of the sentence as the text to type.
+  const typeAt = r.search(/\b(likho|type)\b/i);
+  const head = typeAt > 0 ? r.slice(0, typeAt) : r, tail = typeAt > 0 ? r.slice(typeAt) : '';
+  const parts = head.split(/\s*(?:,|\buske baad\b|\biske baad\b|\baur phir\b|\baur fir\b|\bphir\b|\bfir\b|\bthen\b|\band\b|\baur\b)\s*/i).map((s) => s.trim()).filter(Boolean);
+  if (tail) parts.push(tail.trim());
+  const steps = parts.map((s) => understand(s, kind)).filter(Boolean);
+  return steps.length ? steps : [understand(r, kind)].filter(Boolean);
 }
 function understand(text, kind) {
   text = toRoman(text);
