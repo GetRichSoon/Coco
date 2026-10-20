@@ -5,6 +5,7 @@
 //   CocoKeys.exe combo <keys>        one shortcut, e.g. ctrl+c, alt+f4, win+d, ctrl+shift+esc, enter, esc
 //   CocoKeys.exe speak "<text>"      the PC says the text out loud (Windows voice)
 //   CocoKeys.exe beep                loud "find my PC" beeps
+//   CocoKeys.exe closeplayer         closes Coco's YouTube player windows (one song at a time)
 // Build: C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /r:C:\Windows\Microsoft.NET\Framework64\v4.0.30319\WPF\System.Speech.dll /out:CocoKeys.exe CocoKeys.cs
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,11 @@ static class CocoKeys {
     [DllImport("user32.dll")] static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
     [DllImport("user32.dll")] static extern uint SendInput(uint n, INPUT[] inputs, int size);
     [DllImport("kernel32.dll")] static extern bool Beep(uint freq, uint ms);
+    delegate bool EnumProc(IntPtr h, IntPtr l);
+    [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc p, IntPtr l);
+    [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+    [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
 
     [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT { public ushort wVk, wScan; public uint dwFlags, time; public IntPtr extra; }
     [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT { public int dx, dy; public uint data, flags, time; public IntPtr extra; }
@@ -66,6 +72,18 @@ static class CocoKeys {
                 return 0;
             }
             case "beep": for (int i = 0; i < 6; i++) { Beep(2000, 220); Thread.Sleep(80); Beep(2600, 220); Thread.Sleep(160); } return 0;
+            case "closeplayer": {
+                // Closes Coco's own YouTube player windows (Brave app windows: title ends " - YouTube", never "- Brave"),
+                // so only one song plays at a time. Normal browser windows are never touched.
+                int n = 0;
+                EnumWindows((h, l) => {
+                    if (!IsWindowVisible(h)) return true;
+                    var sb = new System.Text.StringBuilder(512); GetWindowText(h, sb, 512); var t = sb.ToString();
+                    if (t.EndsWith(" - YouTube") || t == "YouTube") { PostMessage(h, 0x10, IntPtr.Zero, IntPtr.Zero); n++; }
+                    return true;
+                }, IntPtr.Zero);
+                Console.Write(n); return 0;
+            }
         }
         byte mk;
         switch (a[0]) {

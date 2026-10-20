@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Phone Control mode may open these apps when a founder's PC asks -->
     <queries>
         <package android:name="com.google.android.youtube" />
@@ -20,6 +21,7 @@
         <package android:name="com.spotify.music" />
         <package android:name="com.google.android.gm" />
         <intent><action android:name="android.media.action.STILL_IMAGE_CAMERA" /></intent>
+        <intent><action android:name="android.speech.RecognitionService" /></intent>
     </queries>
     <application
         android:allowBackup="false"

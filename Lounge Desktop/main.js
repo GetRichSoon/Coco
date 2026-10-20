@@ -336,7 +336,12 @@ async function runAction(action, args = {}) {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
       const id = await firstVideo(q);
       const url = id ? `https://www.youtube.com/watch?v=${id}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
-      const brave = BROWSERS.brave(); if (brave) await exec(brave, [url]); else await shell.openExternal(url); front(); return id ? `Playing "${q}" on YouTube` : `Opened YouTube search for "${q}"`;
+      // One song at a time (Boss, 2026-10-21): close the last Coco player window, then play in a fresh one.
+      await exec(KEYS_EXE, ['closeplayer']);
+      const brave = BROWSERS.brave();
+      if (brave) require('node:child_process').spawn(brave, ['--app=' + url, '--autoplay-policy=no-user-gesture-required'], { detached: true, stdio: 'ignore' }).unref();
+      else await shell.openExternal(url);
+      front(); return id ? `Playing "${q}" on YouTube` : `Opened YouTube search for "${q}"`;
     }
     case 'media': case 'volume': {
       const key = { playpause: 179, next: 176, prev: 177, mute: 173, down: 174, up: 175 }[String(args.key)];

@@ -479,24 +479,62 @@ fun CommandBar(vm: Lounge, dev: JSONObject, title: String = "Tell ${dev.optStrin
     val mic = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { r ->
         r.data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let { heard -> say = heard; send(heard) }
     }
+    // Live mic (Boss, 2026-10-21): stays on like an assistant. Every sentence runs at once on this device, and it keeps
+    // listening for the next one until "bas" / "stop" / "mic band" (or a tap).
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var live by remember { mutableStateOf(false) }
+    var hearing by remember { mutableStateOf("") }
+    val heardLog = remember { androidx.compose.runtime.mutableStateListOf<String>() }
+    val rec = remember { runCatching { android.speech.SpeechRecognizer.createSpeechRecognizer(ctx) }.getOrNull() }
+    val main = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
+    val speechIntent = remember { Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
+        .putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        .putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L) }
+    val startOnce = { if (live) runCatching { rec?.startListening(speechIntent) } }
+    androidx.compose.runtime.DisposableEffect(rec) {
+        rec?.setRecognitionListener(object : android.speech.RecognitionListener {
+            override fun onResults(b: android.os.Bundle?) {
+                val heard = b?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty().trim()
+                hearing = ""
+                if (Regex("^(bas|stop|stop listening|mic band|mic band karo|thank you coco|band karo mic)\b", RegexOption.IGNORE_CASE).containsMatchIn(heard)) { live = false; return }
+                if (heard.isNotBlank()) { heardLog.add(0, heard); if (heardLog.size > 5) heardLog.removeAt(5); send(heard) }
+                main.postDelayed({ startOnce() }, 250)
+            }
+            override fun onPartialResults(b: android.os.Bundle?) { hearing = b?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty() }
+            override fun onError(error: Int) { main.postDelayed({ startOnce() }, if (error == android.speech.SpeechRecognizer.ERROR_RECOGNIZER_BUSY) 600 else 250) }
+            override fun onReadyForSpeech(p: android.os.Bundle?) {}
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(v: Float) {}
+            override fun onBufferReceived(b: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onEvent(t: Int, b: android.os.Bundle?) {}
+        })
+        onDispose { live = false; runCatching { rec?.destroy() } }
+    }
+    val askMic = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { ok ->
+        if (ok) { live = true; startOnce() } else vm.message = "Allow the microphone to talk to Coco"
+    }
     val listen = {
-        runCatching {
-            mic.launch(Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
-                .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Tell ${dev.optString("name")}…"))
-        }.onFailure { vm.message = "Voice typing is not available on this phone" }
+        when {
+            rec == null -> vm.message = "Voice is not available on this phone"
+            live -> { live = false; runCatching { rec.stopListening() } }
+            androidx.core.content.ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED -> askMic.launch(android.Manifest.permission.RECORD_AUDIO)
+            else -> { live = true; startOnce() }
+        }
     }
     Surface(shape = RoundedCornerShape(28.dp), color = Mu.plum, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleLarge, color = Mu.cream)
-                    Text("Tap the mic and speak, or type. Runs in about a second.", style = MaterialTheme.typography.bodyMedium, color = Mu.bubblegum)
+                    Text(if (live) (hearing.ifBlank { "Listening… keep talking. Say \"bas\" to stop." }) else "Tap the mic once: it keeps listening and does each thing you say.", style = MaterialTheme.typography.bodyMedium, color = Mu.bubblegum)
                 }
                 Spacer(Modifier.width(10.dp))
-                FilledIconButton({ listen() }, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = Mu.tomato, contentColor = Mu.cream)) { Icon(Icons.Rounded.Mic, "Speak", Modifier.size(32.dp)) }
+                FilledIconButton({ listen() }, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (live) Mu.bubblegum else Mu.tomato, contentColor = if (live) Mu.plum else Mu.cream)) { Icon(if (live) Icons.Rounded.GraphicEq else Icons.Rounded.Mic, if (live) "Stop listening" else "Speak", Modifier.size(32.dp)) }
             }
+            if (live && heardLog.isNotEmpty()) heardLog.forEach { Text("✓ $it", style = MaterialTheme.typography.bodySmall, color = Mu.cream.copy(alpha = 0.85f)) }
             OutlinedTextField(say, { say = it }, placeholder = { Text(if (pc) "play kesariya · open vs code · lock" else "play kesariya · open whatsapp · ring", color = Mu.cream.copy(alpha = 0.7f)) },
                 singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { send(say) }),
