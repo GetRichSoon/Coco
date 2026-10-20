@@ -162,9 +162,49 @@ function understand(text, kind) {
   const win = [[/\b(maximi[sz]e|bada kar|full window)/, 'win+up'], [/\b(minimi[sz]e|chhota kar|chota kar|chhupa)/, 'win+down'], [/\b(left|baaye|baye) ?(half|side|me)\b/, 'win+left'], [/\b(right|daaye|daye) ?(half|side|me)\b/, 'win+right'], [/\bhalf ?screen\b/, 'win+left'], [/\b(desktop dikhao|show desktop)\b/, 'win+d']].find(([re]) => re.test(t));
   if (win) return { action: 'key', args: { combo: win[1] } };
   if (/\b(full ?screen|poori screen|screen (pe|per|par) dikh)/.test(t)) return { action: 'key', args: { combo: 'f' } };
-  if (kind === 'pc' && t.split(' ').length <= 8) return { action: 'play_youtube', args: { q: t } };   // anything else: search it on YouTube
+  if (kind === 'pc' && t.split(' ').length <= 8) return { action: 'play_youtube', args: { q: t }, guess: true };   // anything else: search it on YouTube
   return null;
 }
+// ---------- AI planner (Boss, 2026-10-21): any language / any wording -> steps from the fixed action list only ----------
+// Gemini key from the Coco Vault (never printed). If there is no internet or no key, the rules above still work.
+const ACTIONS = ['open_app{app}', 'open_url{url,browser?}', 'play_youtube{q}', 'type_text{text}', 'key{combo e.g. ctrl+t, win+left, f, k, l, j}',
+  'close_app{app?}', 'media{key: playpause|next|prev}', 'volume{key: up|down|mute, steps?}', 'screenshot{}', 'find_file{q}',
+  'notify{text}', 'speak{text}', 'status{}', 'lock{}', 'sleep{}', 'fun{kind: party|joke|fact|motivate|beep}', 'wait{ms}'];
+let geminiKey = null;
+function readGeminiKey() {
+  if (geminiKey !== null) return geminiKey;
+  try { const raw = fs.readFileSync(path.join(__dirname, '..', '..', 'Coco Vault', 'Coco Keys', 'Gemini API Key.txt'), 'utf8'); geminiKey = (raw.match(/(?:=|:)\s*(\S{20,})/) || raw.match(/(\S{30,})/) || [])[1] || ''; } catch { geminiKey = ''; }
+  return geminiKey;
+}
+async function aiPlan(text) {
+  const key = readGeminiKey(); if (!key || !text.trim()) return null;
+  const prompt = `You control a Windows PC for its owner (Boss). He speaks Hindi, Marathi, English or a mix, often via rough voice typing.
+Turn his sentence into steps. Use ONLY these actions: ${ACTIONS.join('; ')}.
+Rules: keep his words exactly for type_text; YouTube keys: k pause, l +10s, j -10s, f fullscreen; "half screen left" = key win+left.
+Restart/shutdown/payments/messages are NOT allowed here. If the sentence is unclear, return {"ask":"one short question in his language"}.
+Return JSON only: {"steps":[{"action":"...","args":{...}}]}.
+Sentence: ${text}`;
+  // Fastest model first (about 2 s measured 2026-10-21), a stronger one if it is busy.
+  let j = null;
+  for (const [model, cfg, ms] of [['gemini-3.1-flash-lite', { thinkingConfig: { thinkingLevel: 'minimal' } }, 7000], ['gemini-flash-latest', {}, 9000]]) {
+    const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST', signal: ctrl.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.1, ...cfg } }),
+      });
+      if (r.ok) { j = await r.json(); break; }
+    } catch { /* timed out: try the next model */ } finally { clearTimeout(timer); }
+  }
+  if (!j) return null;
+  {
+    const out = JSON.parse(j.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+    const allowed = new Set(ACTIONS.map((a) => a.split('{')[0]));
+    if (Array.isArray(out.steps)) out.steps = out.steps.filter((s) => s && allowed.has(s.action)).slice(0, 8).map((s) => ({ action: s.action, args: s.args || {} }));
+    return out;
+  }
+}
+
 // Media and volume keys through CocoKeys.exe (built from CocoKeys.cs): about 0.3 s, where PowerShell
 // can take over 10 s to start on a busy PC.
 const KEYS_EXE = path.join(__dirname, 'CocoKeys.exe');
@@ -179,10 +219,16 @@ ipcMain.handle('pc-command', (_e, { action, args = {} }) => runAction(action, ar
 async function runAction(action, args = {}) {
   switch (action) {
     case 'say': {
-      const steps = plan(args.text, 'pc').filter((s) => s.action !== 'say');
+      let steps = plan(args.text, 'pc').filter((s) => s.action !== 'say');
+      // Rules missed or only guessed: ask the AI planner (Boss: "understand anything, like Claude").
+      if (!steps.length || steps.some((s) => s.guess)) {   // rules first (instant); AI only when they miss
+        const ai = await aiPlan(String(args.text || '')).catch(() => null);
+        if (ai && ai.ask) return 'Question: ' + ai.ask;
+        if (ai && ai.steps && ai.steps.length) steps = ai.steps;
+      }
       if (steps.length > 1) {
         const out = [];
-        for (const s of steps.slice(0, 5)) { out.push(await runAction(s.action, s.args)); await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400)); }
+        for (const s of steps.slice(0, 8)) { out.push(await runAction(s.action, s.args)); await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400)); }
         return out.map((o) => String(o).startsWith('data:image') ? 'Screenshot taken' : o).join(' → ');
       }
       const p = steps[0]; return p ? runAction(p.action, p.args) : `Not understood: "${String(args.text || '').slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
@@ -192,6 +238,7 @@ async function runAction(action, args = {}) {
       const battery = batteryCache; refreshBattery();
       return `${os.hostname()} · on for ${(os.uptime() / 3600).toFixed(1)} h · battery ${/^\d+$/.test(battery) ? battery + '%' : 'n/a'} · C: free ${disk ? Math.round(disk.bavail * disk.bsize / 1e9) + ' GB' : 'n/a'} · memory free ${(os.freemem() / 1e9).toFixed(1)} of ${(os.totalmem() / 1e9).toFixed(0)} GB`;
     }
+    case 'wait': await new Promise((r) => setTimeout(r, Math.min(10000, Number(args.ms) || 1000))); return 'Waited';
     case 'lock': await exec('rundll32.exe', ['user32.dll,LockWorkStation']); return 'Locked';
     case 'sleep': setTimeout(() => exec('rundll32.exe', ['powrprof.dll,SetSuspendState', '0,1,0']), 3000); return 'Sleeping in 3 seconds';
     case 'restart': await exec('shutdown.exe', ['/r', '/t', '60', '/c', 'Coco: restart asked from a founder phone. Cancel from Coco Lounge within 60 seconds.']); return 'Restarting in 60 seconds';
