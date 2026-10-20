@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,11 +25,12 @@ import java.io.File
  */
 object Updater {
     private val http = OkHttpClient()
+    private val lock = Mutex()   // app, worker and service may all check at once
     private fun apk(ctx: Context) = File(ctx.filesDir, "update.apk")
     private fun current(ctx: Context) = ctx.packageManager.getPackageInfo(ctx.packageName, 0).longVersionCode
 
     /** Downloads a newer build if there is one. Returns its version name, or null when up to date. */
-    suspend fun check(ctx: Context): String? = withContext(Dispatchers.IO) {
+    suspend fun check(ctx: Context, manual: Boolean = false): String? = lock.withLock { withContext(Dispatchers.IO) {
         val cloud = Cloud(ctx)
         if (!cloud.signedIn) return@withContext null
         val token = cloud.token()
@@ -42,10 +45,17 @@ object Updater {
             get(meta.getString("file")).use { r -> if (!r.isSuccessful) return@withContext null; tmp.outputStream().use { r.body!!.byteStream().copyTo(it) } }
             tmp.renameTo(apk(ctx))
             prefs.edit().putLong("ready", code).apply()
-            Alerts.post(ctx, 4242, "Coco update ready: ${meta.optString("versionName")}", "Tap to install the new Coco Lounge.", "update", install = true)
         }
+        // Install by itself when Android allows it; otherwise one tap on the notification.
+        if (ctx.packageManager.canRequestPackageInstalls()) runCatching { install(ctx) }
+        else Alerts.post(ctx, 4242, "Coco update ready: ${meta.optString("versionName")}", "Tap to install the new Coco Lounge.", "update", install = true)
         meta.optString("versionName")
-    }
+    } }
+
+    /** For the Settings button: says what happened in plain words. */
+    suspend fun checkNow(ctx: Context): String = runCatching { check(ctx, manual = true) }.fold(
+        { v -> if (v == null) "Coco Lounge is up to date" else "Installing Coco Lounge $v" },
+        { "Could not check: ${it.message}" })
 
     /** Hands the downloaded build to Android's installer (the system shows one "Update" button). */
     fun install(ctx: Context) {
@@ -70,7 +80,12 @@ object Updater {
     /** Android asks for the confirm screen through this receiver. */
     class Result : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
-            if (intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1) == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+            val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
+            if (status != PackageInstaller.STATUS_SUCCESS && status != PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                // Broken or refused file: forget it, so the next check downloads it again.
+                apk(ctx).delete(); ctx.getSharedPreferences("coco_update", Context.MODE_PRIVATE).edit().remove("ready").apply()
+            }
+            if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 @Suppress("DEPRECATION") val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return
                 ctx.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }

@@ -697,7 +697,14 @@ fun LazyListScope.settings(vm: Lounge) {
         Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Calm motion", style = MaterialTheme.typography.bodyLarge); Muted("Logos and screens keep still") }; Switch(vm.calm, { vm.chooseCalm(it) }) }
         OutlinedButton({ vm.refreshNow() }) { Text("Refresh now") }
     } }
-    item(key = "s-about") { Card { Eyebrow("About"); Text("Coco Lounge 2.0 · Android", style = MaterialTheme.typography.titleLarge); Muted("Good Space, managed by Coco. House theme: Material You Design Theme v1. Private: founder login plus this device's key.") } }
+    item(key = "s-remote") { Card {
+        val ctx = androidx.compose.ui.platform.LocalContext.current
+        Eyebrow("Remote control when the app is closed")
+        Muted(if (android.provider.Settings.canDrawOverlays(ctx)) "On: your PC can open YouTube and other apps here even when Coco Lounge is closed." else "Off: allow \"Display over other apps\" once, so your PC can open apps here even when Coco Lounge is closed.")
+        if (!android.provider.Settings.canDrawOverlays(ctx)) Button({ ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + ctx.packageName))) }) { Text("Allow") }
+    } }
+    item(key = "s-update") { Card { Eyebrow("Updates"); Text("Coco Lounge ${vm.appVersion}", style = MaterialTheme.typography.titleLarge); Muted("Updates install by themselves. Tap to check right now."); Button({ vm.checkUpdate() }) { Text("Check for update") } } }
+    item(key = "s-about") { Card { Eyebrow("About"); Text("Coco Lounge ${vm.appVersion} · Android", style = MaterialTheme.typography.titleLarge); Muted("Good Space, managed by Coco. House theme: Material You Design Theme v1. Private: founder login plus this device's key.") } }
 }
 
 @Composable

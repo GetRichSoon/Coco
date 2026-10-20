@@ -93,6 +93,8 @@ class Cloud(context: Context) {
     suspend fun list(table: String, query: String = "select=*"): JSONArray = JSONArray(request("$table?$query").ifBlank { "[]" })
     suspend fun insert(table: String, row: JSONObject) { request(table, "POST", row.toString(), "return=minimal") }
     suspend fun update(table: String, filter: String, row: JSONObject) { request("$table?$filter", "PATCH", row.toString(), "return=minimal") }
+    /** Takes a row only if the filter still matches; true = this device won it (no double runs). */
+    suspend fun claim(table: String, filter: String, row: JSONObject): Boolean = JSONArray(request("$table?$filter", "PATCH", row.toString(), "return=representation").ifBlank { "[]" }).length() > 0
     suspend fun rpc(name: String, args: JSONObject): String = request("rpc/$name", "POST", args.toString())
 
     /** Pairs this phone with a one-time code. The secret key never leaves the phone; only its hash is stored in the cloud. */

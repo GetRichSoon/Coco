@@ -36,6 +36,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     fun notifyOn(kind: String) = sp.getBoolean("n_$kind", true)
     fun setNotify(kind: String, v: Boolean) { sp.edit().putBoolean("n_$kind", v).apply(); notifyTick++ }
     var notifyTick by mutableStateOf(0)
+    fun checkUpdate() = viewModelScope.launch { message = "Checking for update…"; message = Updater.checkNow(getApplication()) }
+    val appVersion: String get() = runCatching { getApplication<android.app.Application>().let { a -> a.packageManager.getPackageInfo(a.packageName, 0).versionName } }.getOrDefault("?") ?: "?"
     fun refreshNow() = viewModelScope.launch { reload(); message = "Up to date" }
 
     data class Data(
@@ -112,7 +114,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     /** Heartbeat with this phone's own live data (battery, storage, volume), so every device sees it. */
     private suspend fun beat() { cloud.deviceId?.let { runCatching {
         val info = JSONObject().put("summary", PhoneRemote.status(getApplication())).put("at", Instant.now().toString())
-        cloud.update("devices", "id=eq.$it", JSONObject().put("last_seen", Instant.now().toString()).put("app_version", "android-2").put("info", info)) } } }
+        cloud.update("devices", "id=eq.$it", JSONObject().put("last_seen", Instant.now().toString()).put("app_version", "android-" + runCatching { getApplication<android.app.Application>().let { a -> a.packageManager.getPackageInfo(a.packageName, 0).versionName } }.getOrDefault("?")).put("info", info)) } } }
 
     /** Fast path: on every cloud ping, fetch only the commands waiting for this phone and run them at once. */
     private fun quickCommands() {
@@ -159,7 +161,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         list.filter { it.optString("target_device") == me && it.optString("status") == "queued" && handled.add(it.optString("id")) }.forEach { c ->
             viewModelScope.launch {
                 val id = c.optString("id")
-                runCatching { cloud.update("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "running")) }
+                if (!runCatching { cloud.claim("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "running")) }.getOrDefault(false)) return@launch
                 val age = runCatching { java.time.Duration.between(java.time.OffsetDateTime.parse(c.optString("created_at")).toInstant(), Instant.now()).seconds }.getOrDefault(0L)
                 val result = if (age > 600) "failed: too old (over 10 minutes), not run" else runCatching { PhoneRemote.run(getApplication(), c.optString("action"), c.optJSONObject("args") ?: JSONObject()) }.getOrElse { "failed: ${it.message}" }
                 runCatching { cloud.update("commands", "id=eq.$id", JSONObject().put("status", if (result.startsWith("failed") || result.startsWith("Not understood")) "failed" else "done").put("result", result).put("done_at", Instant.now().toString())) }

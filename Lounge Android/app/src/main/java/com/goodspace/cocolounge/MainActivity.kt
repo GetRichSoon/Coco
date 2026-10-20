@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         Alerts.setup(this)
+        Connected.start(this)
         lifecycleScope.launch { runCatching { Updater.check(this@MainActivity) } }
         if (intent.getBooleanExtra("install", false)) Updater.install(this)
         if (Build.VERSION.SDK_INT >= 33) registerForActivityResult(ActivityResultContracts.RequestPermission()) {}.launch(Manifest.permission.POST_NOTIFICATIONS)

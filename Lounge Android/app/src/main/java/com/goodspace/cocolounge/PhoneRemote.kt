@@ -136,7 +136,8 @@ object PhoneRemote {
     /** Opens at once when the Lounge is on screen; otherwise Android allows it only from a tap, so a notification asks for one. */
     private fun launch(ctx: Context, intent: Intent, ask: String, done: String): String {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (foreground) return runCatching { ctx.startActivity(intent); done }.getOrElse { "failed: ${it.message}" }
+        // "Display over other apps" (Boss, 2026-10-21) lets Coco open apps even when the Lounge is closed.
+        if (foreground || android.provider.Settings.canDrawOverlays(ctx)) return runCatching { ctx.startActivity(intent); done }.getOrElse { "failed: ${it.message}" }
         post(ctx, "From your PC", "$ask: tap to open", intent)
         return "$ask: waiting for a tap on the phone notification"
     }
