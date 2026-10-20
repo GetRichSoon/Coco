@@ -76,7 +76,9 @@ async function firstVideo(q) {
   } catch { return null; }
 }
 const front = () => setTimeout(() => exec(KEYS_EXE, ['combo', 'win+up']), 2500);   // newly opened window: bring it up, maximized
-const exec = (cmd, args) => new Promise((r) => execFile(cmd, args, { windowsHide: true }, (e, so, se) => r(e ? `failed: ${(se || e.message).slice(0, 160)}` : String(so || 'ok').trim())));
+// Opens a program without waiting for it (with exec, a GUI app kept the pipe open, so the command waited until it was closed).
+const launchDetached = (file) => { require('node:child_process').spawn('cmd.exe', ['/c', 'start', '""', file], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); };
+const exec = (cmd, args) => new Promise((r) => execFile(cmd, args, { windowsHide: true, timeout: 15000 }, (e, so, se) => r(e ? `failed: ${(se || e.message).slice(0, 160)}` : String(so || 'ok').trim())));   // a stuck program can never hold the runner
 // Plain words (English or Hinglish) into one of the fixed actions. Same rules as the phone app's PhoneRemote.understand.
 const APP_WORDS = [[/\b(vs ?code|visual studio|code)\b/, 'vscode'], [/\bcursor\b/, 'cursor'], [/\bchrome\b/, 'chrome'], [/\bbrave\b/, 'brave'], [/\bedge\b/, 'edge'],
   [/\bnotepad\b/, 'notepad'], [/\b(calculator|calc)\b/, 'calculator'], [/\b(files?|explorer|folder)\b/, 'files'], [/\bsettings?\b/, 'settings'], [/\bspotify\b/, 'spotify'],
@@ -100,6 +102,9 @@ function plan(text, kind) {
   const r = toRoman(text);
   // Split a whole sentence into steps: aur / phir / fir / then / and / uske baad / iske baad / commas.
   // "likho ..." / "type ..." keeps the rest of the sentence as the text to type.
+  // Hindi order: "notepad kholo aur usme kal meeting likho" = open notepad, then type "kal meeting".
+  const hi = r.match(/^(.*?)\b(?:usme|isme|us me|is me|wahan|waha|uspe|ispe)\s+(.+?)\s+(?:likho|likh do|likhdo|type karo|type kar do)\s*$/i);
+  if (hi) return [...plan(hi[1].replace(/\s*\b(aur|phir|fir|and|then)\s*$/i, ''), kind), { action: 'type_text', args: { text: hi[2] } }];
   const typeAt = r.search(/\b(likho|type)\b/i);
   const head = typeAt > 0 ? r.slice(0, typeAt) : r, tail = typeAt > 0 ? r.slice(typeAt) : '';
   const parts = head.split(/\s*(?:,|\buske baad\b|\biske baad\b|\baur phir\b|\baur fir\b|\bphir\b|\bfir\b|\bthen\b|\band\b|\baur\b)\s*/i).map((s) => s.trim()).filter(Boolean);
@@ -162,7 +167,11 @@ function understand(text, kind) {
   const win = [[/\b(maximi[sz]e|bada kar|full window)/, 'win+up'], [/\b(minimi[sz]e|chhota kar|chota kar|chhupa)/, 'win+down'], [/\b(left|baaye|baye) ?(half|side|me)\b/, 'win+left'], [/\b(right|daaye|daye) ?(half|side|me)\b/, 'win+right'], [/\bhalf ?screen\b/, 'win+left'], [/\b(desktop dikhao|show desktop)\b/, 'win+d']].find(([re]) => re.test(t));
   if (win) return { action: 'key', args: { combo: win[1] } };
   if (/\b(full ?screen|poori screen|screen (pe|per|par) dikh)/.test(t)) return { action: 'key', args: { combo: 'f' } };
-  if (kind === 'pc' && t.split(' ').length <= 8) return { action: 'play_youtube', args: { q: t }, guess: true };   // anything else: search it on YouTube
+  // Seek inside the playing video (YouTube keys: j = back 10 s, l = forward 10 s).
+  if (/\b(piche|peeche|pichhe|back|rewind)\b/.test(t) && /\b(video|yt|youtube|karo|kar do|thoda)\b/.test(t)) return { action: 'key', args: { combo: 'j' } };
+  if (/\b(aage|forward|skip)\b/.test(t) && /\b(video|yt|youtube|karo|kar do|thoda|second)\b/.test(t)) return { action: 'key', args: { combo: 'l' } };
+  // Anything else short: search it on YouTube. Long sentences are never searched; the AI or a question handles them.
+  if (kind === 'pc' && t.split(' ').length <= 4) return { action: 'play_youtube', args: { q: t }, guess: true };
   return null;
 }
 // ---------- AI planner (Boss, 2026-10-21): any language / any wording -> steps from the fixed action list only ----------
@@ -207,6 +216,26 @@ Sentence: ${text}`;
   }
 }
 
+// Mic on the Control page (Boss, 2026-10-21): the recorded voice goes to Gemini once and comes back as plain text
+// (any language; Hindi/Marathi written in Roman letters so the rules can read it).
+ipcMain.handle('transcribe', async (_e, { bytes, mime }) => {
+  const key = readGeminiKey(); if (!key) return { error: 'No Gemini key on this PC' };
+  const audio = Buffer.from(bytes).toString('base64');
+  const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent', {
+      method: 'POST', signal: ctrl.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [
+        { inline_data: { mime_type: String(mime || 'audio/webm').split(';')[0], data: audio } },
+        { text: 'Write down exactly what is said, nothing else. Hindi or Marathi: write it in Roman letters (Hinglish). No quotes.' },
+      ] }], generationConfig: { temperature: 0, thinkingConfig: { thinkingLevel: 'minimal' } } }),
+    });
+    if (!r.ok) return { error: 'Speech service error ' + r.status };
+    const j = await r.json();
+    return { text: String(j.candidates?.[0]?.content?.parts?.[0]?.text || '').trim() };
+  } catch (e) { return { error: e.name === 'AbortError' ? 'Speech took too long' : e.message }; } finally { clearTimeout(timer); }
+});
+
 // Media and volume keys through CocoKeys.exe (built from CocoKeys.cs): about 0.3 s, where PowerShell
 // can take over 10 s to start on a busy PC.
 const KEYS_EXE = path.join(__dirname, 'CocoKeys.exe');
@@ -230,7 +259,8 @@ async function runAction(action, args = {}) {
       }
       if (steps.length > 1) {
         const out = [];
-        for (const s of steps.slice(0, 8)) { out.push(await runAction(s.action, s.args)); await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400)); }
+        for (const s of steps.slice(0, 8)) { const t0 = Date.now(); out.push(await runAction(s.action, s.args)); try { fs.appendFileSync(path.join(os.tmpdir(), 'coco-steps.log'), `${new Date().toISOString()} ${s.action} ${JSON.stringify(s.args).slice(0, 60)} ${Date.now() - t0}ms -> ${String(out[out.length - 1]).slice(0, 80)}
+`); } catch {} await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400)); }
         return out.map((o) => String(o).startsWith('data:image') ? 'Screenshot taken' : o).join(' → ');
       }
       const p = steps[0]; return p ? runAction(p.action, p.args) : `Not understood: "${String(args.text || '').slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
@@ -288,10 +318,10 @@ async function runAction(action, args = {}) {
     }
     case 'open_app': {
       const target = PC_APPS[String(args.app)];
-      if (!target) { const lnk = startMenuApp(String(args.app)); if (!lnk) return 'No app called "' + args.app + '" on this PC'; await exec('cmd.exe', ['/c', 'start', '""', lnk]); front(); return 'Opened ' + path.basename(lnk, '.lnk'); }
+      if (!target) { const lnk = startMenuApp(String(args.app)); if (!lnk) return 'No app called "' + args.app + '" on this PC'; launchDetached(lnk); front(); return 'Opened ' + path.basename(lnk, '.lnk'); }
       const file = target();
       if (!file) return 'App not found on this PC';
-      await exec('cmd.exe', ['/c', 'start', '""', file]); front(); return 'Opened ' + args.app;
+      launchDetached(file); front(); return 'Opened ' + args.app;
     }
     case 'ring': return 'A PC cannot ring; try: say hello';
     default: return 'This action is not allowed';

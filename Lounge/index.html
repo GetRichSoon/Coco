@@ -192,6 +192,34 @@ function makeClient(deviceKey) {
 let rTarget = null, rSong = '', rSay = '';
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'rSay' || e.target.id === 'rSong')) { const b = document.querySelector(e.target.id === 'rSay' ? '[data-rc="say"]' : '[data-rc="play_youtube"]'); if (b) b.click(); } });
 document.addEventListener('input', (e) => { if (e.target.id === 'rSong') rSong = e.target.value; if (e.target.id === 'rSay') rSay = e.target.value; });
+// Mic (Boss, 2026-10-21): tap, speak in any language, it stops by itself after a short pause, then runs on the chosen device.
+let micRec = null;
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('#rMic'); if (!b) return;
+  if (!window.cocoDesktop || !window.cocoDesktop.transcribe) return toast('The mic works in the Coco Lounge PC app');
+  if (micRec) { micRec.stop(); return; }
+  let stream; try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch { return toast('Microphone is blocked'); }
+  const chunks = [], rec = new MediaRecorder(stream, { mimeType: 'audio/webm' }); micRec = rec;
+  b.classList.add('filled'); toast('Listening… speak now');
+  const ac = new AudioContext(), an = ac.createAnalyser(); ac.createMediaStreamSource(stream).connect(an);
+  const buf = new Uint8Array(an.fftSize); let heard = false, quietSince = Date.now(); const t0 = Date.now();
+  const tick = setInterval(() => {
+    an.getByteTimeDomainData(buf); let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v - 128));
+    if (peak > 12) { heard = true; quietSince = Date.now(); }
+    if ((heard && Date.now() - quietSince > 1200) || Date.now() - t0 > 12000) { if (rec.state === 'recording') rec.stop(); }
+  }, 100);
+  rec.ondataavailable = (ev) => chunks.push(ev.data);
+  rec.onstop = async () => {
+    clearInterval(tick); ac.close(); stream.getTracks().forEach((t) => t.stop()); micRec = null; b.classList.remove('filled');
+    if (!heard) return toast('Kuch suna nahi, phir se bolo');
+    toast('Samajh raha hoon…');
+    const r = await window.cocoDesktop.transcribe(new Uint8Array(await new Blob(chunks, { type: 'audio/webm' }).arrayBuffer()), 'audio/webm');
+    if (r.error || !r.text) return toast(r.error || 'Samajh nahi aaya');
+    rSay = r.text; const inp = $('#rSay'); if (inp) inp.value = r.text;
+    const go = document.querySelector('[data-rc="say"]'); if (go) go.click();
+  };
+  rec.start(250);
+});
 let me = null, founder = null, deviceId = store.get('gs-device-id'), page = location.hash.slice(1) || 'home', D = {}, sub = 'houses';
 
 const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
@@ -270,7 +298,8 @@ async function runMyCommands() {
       if (!got || !got.length) continue;
       if (Date.now() - new Date(c.created_at) > 600000) { await sb.from('commands').update({ status: 'failed', result: 'Too old (over 10 minutes), not run', done_at: new Date().toISOString() }).eq('id', c.id); continue; }
       let result;
-      try { result = await window.cocoDesktop.pcCommand(c.action, c.args || {}); } catch (e) { result = 'failed: ' + e.message; }
+      // One stuck command must never block the ones behind it: give up after 30 s.
+      try { result = await Promise.race([window.cocoDesktop.pcCommand(c.action, c.args || {}), new Promise((r) => setTimeout(() => r('failed: took longer than 30 seconds'), 30000))]); } catch (e) { result = 'failed: ' + e.message; }
       const ok = !/^failed|not allowed|not understood/i.test(result);
       // Report in the background so the next command starts at once.
       sb.from('commands').update({ status: ok ? 'done' : 'failed', result, done_at: new Date().toISOString() }).eq('id', c.id).then(() => {});
@@ -413,7 +442,7 @@ const V = {
     const key = (k, ic, a = 'media') => `<button class="btn tonal" data-rc="${a}" data-rk="${k}" aria-label="${k}"><i class="ms">${ic}</i></button>`;
     return `<p class="muted">Control your other devices: play YouTube songs, music keys, volume, open apps${pc ? ', lock, restart' : ', ring the phone'}. The device runs it in its Coco Lounge app and reports back.</p>
       <div class="actions" style="margin:10px 0">${targets.map(d => `<button class="btn ${d.id === t.id ? 'filled' : 'tonal'}" data-rt="${d.id}"><i class="ms">${d.kind === 'pc' ? 'laptop' : 'smartphone'}</i> ${esc(d.name)}</button>`).join('')}</div>
-      <div class="card2" style="margin-bottom:14px"><span class="eyebrow">Tell ${esc(t.name)} what to do</span><div style="display:flex;gap:8px"><input id="rSay" placeholder="play kesariya · open chrome · volume up · lock · ring" value="${esc(rSay)}" style="flex:1"><button class="btn filled" data-rc="say"><i class="ms">send</i> Do it</button></div><span class="muted">Plain words in English or Hinglish. It runs on that device in about a second.</span></div>
+      <div class="card2" style="margin-bottom:14px"><span class="eyebrow">Tell ${esc(t.name)} what to do</span><div style="display:flex;gap:8px"><input id="rSay" placeholder="play kesariya · open chrome · volume up · lock · ring" value="${esc(rSay)}" style="flex:1"><button class="btn" id="rMic" title="Speak (any language)"><i class="ms">mic</i></button><button class="btn filled" data-rc="say"><i class="ms">send</i> Do it</button></div><span class="muted">Plain words in English or Hinglish. It runs on that device in about a second.</span></div>
       <div class="grid">
       <div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(t.name)}</h3><span class="live"><i class="dot ${online(t) ? 'on' : ''}"></i>${online(t) ? 'online' : 'offline'}</span></div>
         <span class="muted">${t.key_hash ? (online(t) ? 'Coco Lounge connected' : 'runs when it comes back online within 10 minutes') : 'not paired yet'}</span>${t.info && t.info.summary ? `<span class="muted">${esc(t.info.summary)} · ${ago(t.info.at)}</span>` : ''}<div class="actions"><button class="btn text" data-rc="status">Check status</button></div></div>
