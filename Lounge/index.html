@@ -258,9 +258,10 @@ function diffAndNotify() {
   if (window.cocoDesktop) window.cocoDesktop.saveRules(D.rules.map(r => `## ${r.title}\n${r.body}`).join('\n\n'));
 }
 // ---------- PC Control mode: this PC runs the commands sent to it from a founder phone ----------
-let runningCmds = false;
+let runningCmds = false, cmdsAgain = false;
 async function runMyCommands() {
-  if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId || runningCmds) return;
+  if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId) return;
+  if (runningCmds) { cmdsAgain = true; return; }   // a command came in while busy: look again right after, never skip it
   runningCmds = true;
   try {
     const { data } = await sb.from('commands').select('*').eq('target_device', deviceId).eq('status', 'queued').order('created_at', { ascending: true });
@@ -271,10 +272,11 @@ async function runMyCommands() {
       let result;
       try { result = await window.cocoDesktop.pcCommand(c.action, c.args || {}); } catch (e) { result = 'failed: ' + e.message; }
       const ok = !/^failed|not allowed|not understood/i.test(result);
-      await sb.from('commands').update({ status: ok ? 'done' : 'failed', result, done_at: new Date().toISOString() }).eq('id', c.id);
-      await log('pc command', `${c.action} on ${deviceName(deviceId)}: ${result}`);
+      // Report in the background so the next command starts at once.
+      sb.from('commands').update({ status: ok ? 'done' : 'failed', result, done_at: new Date().toISOString() }).eq('id', c.id).then(() => {});
+      log('pc command', `${c.action} on ${deviceName(deviceId)}: ${result}`);
     }
-  } finally { runningCmds = false; }
+  } finally { runningCmds = false; if (cmdsAgain) { cmdsAgain = false; runMyCommands(); } }
 }
 async function loadAll() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
@@ -286,7 +288,7 @@ async function loadAll() {
     q('commands', '*', ['created_at', false]).limit(15),
   ]);
   ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands'].forEach((k, i) => D[k] = res[i].data || []);
-  render(); diffAndNotify(); runMyCommands();
+  if (!document.hidden) render(); diffAndNotify(); runMyCommands();   // hidden in the tray: no drawing, only data
 }
 let pulseTimer = null;
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
@@ -296,7 +298,7 @@ function connectLive() {
   clearTimeout(retryTimer);
   if (channel) { try { sb.removeChannel(channel); } catch {} channel = null; }
   channel = sb.channel('pulse-' + Date.now())
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { runMyCommands(); clearTimeout(pulseTimer); pulseTimer = setTimeout(loadAll, 400); })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { runMyCommands(); if (!pulseTimer) pulseTimer = setTimeout(() => { pulseTimer = null; loadAll(); }, document.hidden ? 10000 : 1500); })
     .subscribe((s) => {
       if (s === 'SUBSCRIBED') { tries = 0; setLive(true); loadAll(); }
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
