@@ -99,7 +99,8 @@ const WORDS = [
 const toRoman = (s) => WORDS.reduce((x, [re, w]) => x.replace(re, w), String(s || '')).replace(/\s+/g, ' ').trim();
 // "notepad kholo aur likho kal meeting 10 baje": several steps, run one after another.
 function plan(text, kind) {
-  const r = toRoman(text);
+  // Filler words ("yaar", "please", "bhai"...) carry no meaning and broke the rules ("gaana bajao yaar").
+  const r = toRoman(text).replace(/[!?.]+/g, ' ').replace(/\b(yaar|yar|please|plz|pls|zara|jara|bhai|bro|jaldi|na|ji)\b/gi, ' ').replace(/\s+/g, ' ').trim();
   // Split a whole sentence into steps: aur / phir / fir / then / and / uske baad / iske baad / commas.
   // "likho ..." / "type ..." keeps the rest of the sentence as the text to type.
   // Hindi order: "notepad kholo aur usme kal meeting likho" = open notepad, then type "kal meeting".
@@ -216,6 +217,26 @@ Sentence: ${text}`;
   }
 }
 
+// ---------- Learning from the control log (Boss, 2026-10-21) ----------
+// What the AI understood and what then worked is kept in memory\Learned Commands.json (shared through git with the
+// other PC): the same sentence runs at once next time. Misses go to memory\Control Misses.md for the nightly fix.
+const LEARN_FILE = path.join(__dirname, '..', 'memory', 'Learned Commands.json');
+const MISS_FILE = path.join(__dirname, '..', 'memory', 'Control Misses.md');
+const learnKey = (t) => toRoman(String(t || '')).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+let learnedCache = null;
+function learned() {
+  if (!learnedCache) { try { learnedCache = JSON.parse(fs.readFileSync(LEARN_FILE, 'utf8')); } catch { learnedCache = {}; } }
+  return learnedCache;
+}
+function learn(said, steps) {
+  const k = learnKey(said); if (!k || k.split(' ').length > 25) return;
+  learned()[k] = steps.map((s) => ({ action: s.action, args: s.args || {} }));
+  try { fs.mkdirSync(path.dirname(LEARN_FILE), { recursive: true }); fs.writeFileSync(LEARN_FILE, JSON.stringify(learnedCache, null, 1)); } catch {}
+}
+function learnMiss(said, why) {
+  try { fs.mkdirSync(path.dirname(MISS_FILE), { recursive: true }); fs.appendFileSync(MISS_FILE, `- ${new Date().toISOString()} | "${String(said).slice(0, 160)}" | ${String(why).slice(0, 200)}\n`); } catch {}
+}
+
 // Mic on the Control page (Boss, 2026-10-21): the recorded voice goes to Gemini once and comes back as plain text
 // (any language; Hindi/Marathi written in Roman letters so the rules can read it).
 ipcMain.handle('transcribe', async (_e, { bytes, mime }) => {
@@ -250,20 +271,28 @@ ipcMain.handle('pc-command', (_e, { action, args = {} }) => runAction(action, ar
 async function runAction(action, args = {}) {
   switch (action) {
     case 'say': {
-      let steps = plan(args.text, 'pc').filter((s) => s.action !== 'say');
+      const said = String(args.text || '');
+      let steps = plan(said, 'pc').filter((s) => s.action !== 'say'), viaAi = false;
+      // Learned from earlier commands: a sentence the AI already understood (and that worked) runs at once.
+      const known = learned()[learnKey(said)];
+      if (known && (!steps.length || steps.some((s) => s.guess))) steps = known;
       // Rules missed or only guessed: ask the AI planner (Boss: "understand anything, like Claude").
-      if (!steps.length || steps.some((s) => s.guess)) {   // rules first (instant); AI only when they miss
-        const ai = await aiPlan(String(args.text || '')).catch(() => null);
-        if (ai && ai.ask) return 'Question: ' + ai.ask;
-        if (ai && ai.steps && ai.steps.length) steps = ai.steps;
+      else if (!steps.length || steps.some((s) => s.guess)) {   // rules first (instant); AI only when they miss
+        const ai = await aiPlan(said).catch(() => null);
+        if (ai && ai.ask) { learnMiss(said, 'AI asked: ' + ai.ask); return 'Question: ' + ai.ask; }
+        if (ai && ai.steps && ai.steps.length) { steps = ai.steps; viaAi = true; }
       }
-      if (steps.length > 1) {
-        const out = [];
-        for (const s of steps.slice(0, 8)) { const t0 = Date.now(); out.push(await runAction(s.action, s.args)); try { fs.appendFileSync(path.join(os.tmpdir(), 'coco-steps.log'), `${new Date().toISOString()} ${s.action} ${JSON.stringify(s.args).slice(0, 60)} ${Date.now() - t0}ms -> ${String(out[out.length - 1]).slice(0, 80)}
-`); } catch {} await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400)); }
-        return out.map((o) => String(o).startsWith('data:image') ? 'Screenshot taken' : o).join(' → ');
+      if (!steps.length) { learnMiss(said, 'not understood'); return `Not understood: "${said.slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
+      const out = [];
+      for (const s of steps.slice(0, 8)) {
+        out.push(await runAction(s.action, s.args));
+        if (steps.length > 1) await new Promise((r) => setTimeout(r, s.action === 'open_app' || s.action === 'open_url' ? 1800 : 400));
       }
-      const p = steps[0]; return p ? runAction(p.action, p.args) : `Not understood: "${String(args.text || '').slice(0, 60)}". Try: kesariya chalao, youtube kholo, chrome kholo, awaaz badhao, next, pause, lock, status`; }
+      const failed = out.some((o) => /^failed|not allowed|not understood|no app called|not found/i.test(String(o)));
+      if (failed) learnMiss(said, out.join(' → '));
+      else if (viaAi) learn(said, steps);
+      if (out.length === 1) return out[0];   // one step: keep its own result (a screenshot is an image)
+      return out.map((o) => String(o).startsWith('data:image') ? 'Screenshot taken' : o).join(' → '); }
     case 'status': {
       const disk = fs.statfsSync ? fs.statfsSync('C:\\') : null;
       // Battery comes from a slow Windows query, so answer at once with the last reading and refresh it in the background.
