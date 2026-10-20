@@ -137,7 +137,25 @@ object PhoneRemote {
     private fun launch(ctx: Context, intent: Intent, ask: String, done: String): String {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         // "Display over other apps" (Boss, 2026-10-21) lets Coco open apps even when the Lounge is closed.
-        if (foreground || android.provider.Settings.canDrawOverlays(ctx)) return runCatching { ctx.startActivity(intent); done }.getOrElse { "failed: ${it.message}" }
+        if (foreground) return runCatching { ctx.startActivity(intent); done }.getOrElse { "failed: ${it.message}" }
+        if (android.provider.Settings.canDrawOverlays(ctx)) {
+            // OnePlus/ColorOS blocks app starts from a closed app unless it has a visible window: show a 1-pixel
+            // see-through overlay for a moment, open the app while it is up, then remove it.
+            val main = android.os.Handler(android.os.Looper.getMainLooper())
+            main.post {
+                val wm = ctx.getSystemService(android.view.WindowManager::class.java)
+                val dot = android.view.View(ctx)
+                val lp = android.view.WindowManager.LayoutParams(1, 1, android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                    android.graphics.PixelFormat.TRANSLUCENT)
+                val added = runCatching { wm.addView(dot, lp) }.isSuccess
+                main.postDelayed({
+                    runCatching { ctx.startActivity(intent) }
+                    main.postDelayed({ if (added) runCatching { wm.removeView(dot) } }, 1500)
+                }, 150)
+            }
+            return done
+        }
         post(ctx, "From your PC", "$ask: tap to open", intent)
         return "$ask: waiting for a tap on the phone notification"
     }
