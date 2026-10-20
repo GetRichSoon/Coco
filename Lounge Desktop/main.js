@@ -202,7 +202,7 @@ Sentence: ${text}`;
     const allowed = new Set(ACTIONS.map((a) => a.split('{')[0]));
     if (Array.isArray(out.steps)) out.steps = out.steps.filter((s) => s && allowed.has(s.action)).slice(0, 8).map((s) => ({ action: s.action, args: s.args || {} }));
     // Safety: AI steps may never open the Run box, Task Manager or a power menu (that would run any program).
-    if (Array.isArray(out.steps) && out.steps.some((s) => s.action === 'key' && /wins*+s*[rx]|ctrls*+s*shifts*+s*esc|ctrls*+s*alts*+s*del/i.test(String(s.args.combo || '')))) return { ask: 'Ye kaam main AI se nahi karunga. Seedha bolo kya kholna hai.' };
+    if (Array.isArray(out.steps) && out.steps.some((s) => s.action === 'key' && /win\s*\+\s*[rx]|ctrl\s*\+\s*shift\s*\+\s*esc|ctrl\s*\+\s*alt\s*\+\s*del/i.test(String(s.args.combo || '')))) return { ask: 'Ye kaam main AI se nahi karunga. Seedha bolo kya kholna hai.' };
     return out;
   }
 }
