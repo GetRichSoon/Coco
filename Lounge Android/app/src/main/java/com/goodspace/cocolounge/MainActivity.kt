@@ -3,6 +3,8 @@ package com.goodspace.cocolounge
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +23,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         Alerts.setup(this)
+        lifecycleScope.launch { runCatching { Updater.check(this@MainActivity) } }
+        if (intent.getBooleanExtra("install", false)) Updater.install(this)
         if (Build.VERSION.SDK_INT >= 33) registerForActivityResult(ActivityResultContracts.RequestPermission()) {}.launch(Manifest.permission.POST_NOTIFICATIONS)
         setContent {
             LoungeTheme(vm.theme) { androidx.compose.runtime.CompositionLocalProvider(LocalCalm provides vm.calm) {
@@ -34,6 +38,8 @@ class MainActivity : ComponentActivity() {
             } }
         }
     }
+
+    override fun onNewIntent(intent: android.content.Intent) { super.onNewIntent(intent); if (intent.getBooleanExtra("install", false)) Updater.install(this) }
 
     override fun onResume() { super.onResume(); PhoneRemote.foreground = true; vm.onResume() }
     override fun onPause() { PhoneRemote.foreground = false; super.onPause() }

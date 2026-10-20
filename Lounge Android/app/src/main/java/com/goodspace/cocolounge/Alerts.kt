@@ -30,10 +30,10 @@ object Alerts {
 
     private fun allowed(context: Context, kind: String) = context.getSharedPreferences("coco_settings", Context.MODE_PRIVATE).getBoolean("n_$kind", true)
 
-    fun post(context: Context, id: Int, title: String, text: String, kind: String = "other") {
+    fun post(context: Context, id: Int, title: String, text: String, kind: String = "other", install: Boolean = false) {
         if (!allowed(context, kind)) return
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
-        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
+        val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("install", install), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val n = NotificationCompat.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_coco_face).setColor(0xFFB83A12.toInt())
             .setContentTitle(title).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text)).setContentIntent(open).setAutoCancel(true).build()
         NotificationManagerCompat.from(context).notify(id, n)
@@ -71,6 +71,7 @@ object Alerts {
     class Watch(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
         override suspend fun doWork(): Result {
             val cloud = Cloud(applicationContext)
+            runCatching { Updater.check(applicationContext) }
             if (!cloud.signedIn || !cloud.paired) return Result.success()
             return try {
                 val prefs = applicationContext.getSharedPreferences("coco_watch", Context.MODE_PRIVATE)

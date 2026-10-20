@@ -31,3 +31,7 @@ Keys stay in Coco Vault (later Bitwarden / cloud secret settings).
 1. Add Shreya's email as a founder and register her PC and phone.
 2. Coco app on phones (Vercel, free) with founder login.
 3. Coco Core on each PC as a background worker that claims tasks and runs Claude headless.
+
+## Account
+Coco Cloud (Supabase project bfnhnkxvppqmklfpslfm) is owned by the Google account mangesh.lokade.dev@gmail.com (Boss, 2026-10-21).
+Private bucket `apk` holds Coco Lounge phone builds + latest.json (founders can read; created 2026-10-21).
