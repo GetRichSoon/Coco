@@ -30,3 +30,12 @@ Status words: VERIFIED WORKING · PARTIAL · NOT BUILT · BLOCKED · NEEDS EXTER
 5. PC and APK: one shared status component that reads the same columns; remove placeholder labels.
 6. Move approvals and decisions from git files into Supabase as the single source; git keeps a nightly export.
 7. Tests: PC-created task appears on Android and vice versa; reconnect without duplicates; stale worker detection.
+
+## Progress 2026-10-21 (verified in the database)
+- DONE: houses → Social Media / Products / Courses & Learning / Games.
+- DONE: tasks has retry_count, error, evidence, stale, category, platform_id.
+- DONE: status model v2 constraint (planned … cancelled; old values still allowed). Founder ran it in the SQL Editor; checked afterwards.
+- DONE: trigger tasks_done_evidence (DONE needs evidence or result).
+- DONE: coco_reap_stale() runs every 5 min via pg_cron (coco-reap-stale); 6 stuck commands were marked failed.
+- DONE: integrations table with 10 platforms and their real state (RLS: founders read).
+- NEXT: PC + APK read integrations and the new statuses (one shared status component); then the PC↔Android sync test.
