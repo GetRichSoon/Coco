@@ -170,7 +170,10 @@ object PhoneRemote {
     private suspend fun firstVideo(q: String): String? = withContext(Dispatchers.IO) {
         runCatching {
             val c = URL("https://www.youtube.com/results?search_query=${URLEncoder.encode(q, "UTF-8")}&hl=en").openConnection()
-            c.setRequestProperty("accept-language", "en"); c.connectTimeout = 8000; c.readTimeout = 8000
+            c.setRequestProperty("accept-language", "en-US"); c.setRequestProperty("cookie", "CONSENT=YES+1")
+            // Without a browser name YouTube sends a page with no video list, so play always fell back to search.
+            c.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36")
+            c.connectTimeout = 8000; c.readTimeout = 8000
             Regex("\"videoId\":\"([\\w-]{11})\"").find(c.getInputStream().bufferedReader().readText())?.groupValues?.get(1)
         }.getOrNull()
     }

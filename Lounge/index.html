@@ -234,6 +234,7 @@ async function boot() {
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
   show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
   await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000);
+  if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
 function show(which, msg) {
   ['signin', 'pair', 'app'].forEach(id => $('#' + id).hidden = id !== which);
@@ -284,6 +285,17 @@ function diffAndNotify() {
   }
   seen = now;
   if (window.cocoDesktop) window.cocoDesktop.saveRules(D.rules.map(r => `## ${r.title}\n${r.body}`).join('\n\n'));
+}
+// ---------- Live work: this PC tells every device what the teams are really doing (every minute) ----------
+async function pushLive() {
+  let snap; try { snap = await window.cocoDesktop.liveSnapshot(); } catch { return; }
+  const now = new Date().toISOString();
+  for (const [id, h] of Object.entries(snap || {})) {
+    const row = { updated_at: now };
+    if (h.doing && h.doing.length) { row.state = 'working'; row.doing = 'Now: ' + h.doing.slice(0, 2).join(' · '); }
+    if (h.recent || h.stats) row.recent = [h.recent, h.stats].filter(Boolean).join(' · ');
+    await sb.from('houses').update(row).eq('id', id);
+  }
 }
 // ---------- PC Control mode: this PC runs the commands sent to it from a founder phone ----------
 let runningCmds = false, cmdsAgain = false;

@@ -217,6 +217,59 @@ Sentence: ${text}`;
   }
 }
 
+// ---------- Live work (Boss, 2026-10-21: "not hardcoded, show what is really happening") ----------
+// Every minute the Lounge page asks for this snapshot and writes it to Coco Cloud `houses`, so every device shows real work.
+// Sources on this PC: Claude sessions active in the last 5 minutes (their last step), the team hand-off log (COMMS.md)
+// and the YouTube brain snapshot. Only safe text is kept: a tool name, a short description, the first line of a message.
+const HQ = path.join(os.homedir(), 'nova-hq');
+const HOUSE_HINTS = [['gigi', /youtube|\byt\b|yt-|video|short|render|channel|thumbnail|the flow|kahani|blender|upload/i],
+  ['lulu', /extension|chrome web store|apk|android|play store|\bapp\b|lounge|coco|island|cleanbar/i]];
+function liveSessions() {
+  const root = path.join(os.homedir(), '.claude', 'projects'); const out = [];
+  let dirs = []; try { dirs = fs.readdirSync(root); } catch { return out; }
+  for (const d of dirs) {
+    let files = []; try { files = fs.readdirSync(path.join(root, d)).filter((n) => n.endsWith('.jsonl')); } catch { continue; }
+    for (const n of files) {
+      const f = path.join(root, d, n); let st; try { st = fs.statSync(f); } catch { continue; }
+      if (Date.now() - st.mtimeMs > 5 * 60 * 1000) continue;
+      let text = ''; try { const fd = fs.openSync(f, 'r'); const len = Math.min(st.size, 200000); const b = Buffer.alloc(len); fs.readSync(fd, b, 0, len, st.size - len); fs.closeSync(fd); text = b.toString('utf8'); } catch { continue; }
+      const steps = [];
+      for (const raw of text.split('\n').slice(1)) {
+        let e; try { e = JSON.parse(raw); } catch { continue; }
+        if (e.type !== 'assistant' || !Array.isArray(e.message && e.message.content)) continue;
+        for (const c of e.message.content) {
+          if (c.type === 'tool_use') { const i = c.input || {}; const w = i.description || (i.file_path ? path.basename(String(i.file_path)) : ''); if (w && !/token|secret|password|key/i.test(w)) steps.push(String(w).slice(0, 90)); }
+        }
+      }
+      if (steps.length) out.push({ steps: steps.slice(-6), at: st.mtimeMs });
+    }
+  }
+  return out;
+}
+ipcMain.handle('live-snapshot', () => {
+  const houses = {};
+  for (const s of liveSessions()) {
+    const hay = s.steps.join(' ');
+    const hit = HOUSE_HINTS.find(([, re]) => re.test(hay)); if (!hit) continue;
+    const h = houses[hit[0]] || (houses[hit[0]] = { state: 'working', doing: [], at: 0 });
+    h.doing.push(s.steps[s.steps.length - 1]); h.at = Math.max(h.at, s.at);
+  }
+  // Last real hand-off per house from the team log, as "recent".
+  try {
+    const lines = fs.readFileSync(path.join(HQ, 'company', 'COMMS.md'), 'utf8').split('\n').filter((l) => l.startsWith('- 20')).slice(-60).reverse();
+    for (const [id, re] of HOUSE_HINTS) {
+      const l = lines.find((x) => re.test(x)); if (!l) continue;
+      const p = l.slice(2).split(' | ');
+      (houses[id] || (houses[id] = { doing: [] })).recent = `${p[1]} → ${p[2]}: ${(p[3] || '').slice(0, 140)} (${p[0].slice(5, 16).replace('T', ' ')})`;
+    }
+  } catch {}
+  try {
+    const perf = (fs.readFileSync(path.join(HQ, 'company', 'youtube', 'BRAIN.md'), 'utf8').match(/Channel: [^\n]+/) || [])[0];
+    if (perf) (houses.gigi || (houses.gigi = { doing: [] })).stats = perf;
+  } catch {}
+  return houses;
+});
+
 // ---------- Learning from the control log (Boss, 2026-10-21) ----------
 // What the AI understood and what then worked is kept in memory\Learned Commands.json (shared through git with the
 // other PC): the same sentence runs at once next time. Misses go to memory\Control Misses.md for the nightly fix.
