@@ -554,5 +554,5 @@ async function selfUpdate() {
   if (/failed/.test(pull) || before === after) return;
   const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', before, after]);
   if (/package\.json/.test(changed)) await exec('cmd.exe', ['/c', 'npm', 'install', '--no-audit', '--no-fund', '--prefix', __dirname]);
-  if (/^(Lounge|Lounge Desktop)\//m.test(changed)) { app.relaunch({ args: ['--hidden'] }); app.exit(0); }
+  if (/^(Lounge|Lounge Desktop)\//m.test(changed)) { app.relaunch({ args: [...(app.isPackaged ? [] : [path.resolve(__dirname)]), '--hidden'] }); app.exit(0); } // keep the app folder, or a bare electron.exe starts
 }
