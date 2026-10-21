@@ -17,12 +17,14 @@ setInterval(() => { if (atOffice() && win && win.isVisible() && !win.isFocused()
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 app.setAppUserModelId('GoodSpace.CocoLounge');
+// Unpackaged Electron needs the app folder in the start-up command, or Windows starts a bare electron.exe (the bug: Coco was not running after restart).
+const loginArgs = (on) => ({ openAtLogin: on, path: process.execPath, args: app.isPackaged ? ['--hidden'] : ['"' + path.resolve(__dirname) + '"', '--hidden'] });
 
 function createWindow() {
   win = new BrowserWindow({
     width: 1280, height: 860, minWidth: 380, minHeight: 600, show: false,
     title: 'Coco Lounge', icon: ICON, backgroundColor: '#fff4e6', autoHideMenuBar: true,
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false }, // keep the cloud link and commands live while hidden in the tray
   });
   win.loadFile(UI);
   win.once('ready-to-show', () => { if (!process.argv.includes('--hidden') && !atOffice()) win.show(); });
@@ -40,7 +42,7 @@ function createTray() {
     { label: 'Board', click: () => open('board') },
     { label: 'Approvals', click: () => open('approvals') },
     { type: 'separator' },
-    { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked, args: ['--hidden'] }) },
+    { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings(loginArgs(i.checked)) },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },
   ]));
   tray.on('click', () => open());
@@ -533,11 +535,11 @@ async function fun(kind) {
 }
 
 ipcMain.handle('get-startup', () => app.getLoginItemSettings().openAtLogin);
-ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings({ openAtLogin: !!on, args: ['--hidden'] }); return !!on; });
+ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings(loginArgs(!!on)); return !!on; });
 
 app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focus(); } }); // at the office only the tray icon opens it
 app.whenReady().then(() => {
-  if (!app.getLoginItemSettings().openAtLogin) app.setLoginItemSettings({ openAtLogin: true, args: ['--hidden'] });
+  app.setLoginItemSettings(loginArgs(true)); // always rewrite, so an old broken entry gets fixed
   createWindow(); createTray();
   setTimeout(selfUpdate, 60 * 1000); setInterval(selfUpdate, 30 * 60 * 1000);
 });
