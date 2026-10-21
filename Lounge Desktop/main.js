@@ -138,6 +138,10 @@ function understand(text, kind) {
   const openIt = (app) => webApp(app) ? { action: 'open_url', args: { url: webApp(app), browser: browser || 'brave' } } : { action: 'open_app', args: { app } };
   // "youtube brave app", "youtube brave chalu kar": YouTube in that browser
   if (/\b(yt|youtube)\b/.test(t) && !/\bmusic\b/.test(t) && (browser || t.split(' ').length <= 4)) return openIt('youtube');
+  // Tabs and Coco's own player (before the general "close an app" rule).
+  if (/\bnew tab\b|\bnaya tab\b/.test(t)) return { action: 'key', args: { combo: 'ctrl+t' } };
+  if (/\btab\b/.test(t) && /\b(close|band)\b/.test(t)) return { action: 'key', args: { combo: 'ctrl+w' } };
+  if (/\b(video|gaana|gana|song|music|player)\b/.test(t) && /\b(band|close|hatao|stop karo)\b/.test(t)) return { action: 'close_player', args: {} };
   if (/\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit)\b/.test(t) && !/\b(pc|laptop|computer|system)\b/.test(t)) {
     const name = t.replace(/\b(close|band kar(?:o|do)?|hata(?:o|do)?|exit|app|application|ko|wala|wali|sab|all)\b/g, ' ').trim();
     return { action: 'close_app', args: name ? { app: name } : {} };
@@ -179,7 +183,7 @@ function understand(text, kind) {
 // Gemini key from the Coco Vault (never printed). If there is no internet or no key, the rules above still work.
 const ACTIONS = ['open_app{app}', 'open_url{url,browser?}', 'play_youtube{q}', 'type_text{text}', 'key{combo e.g. ctrl+t, win+left, f, k, l, j}',
   'close_app{app?}', 'media{key: playpause|next|prev}', 'volume{key: up|down|mute, steps?}', 'screenshot{}', 'find_file{q}',
-  'notify{text}', 'speak{text}', 'status{}', 'lock{}', 'sleep{}', 'fun{kind: party|joke|fact|motivate|beep}', 'wait{ms}'];
+  'close_player{} (stops the song/video Coco is playing)', 'notify{text}', 'speak{text}', 'status{}', 'lock{}', 'sleep{}', 'fun{kind: party|joke|fact|motivate|beep}', 'wait{ms}'];
 let geminiKey = null;
 function readGeminiKey() {
   if (geminiKey !== null) return geminiKey;
@@ -410,6 +414,7 @@ async function runAction(action, args = {}) {
       if (!file) return 'App not found on this PC';
       launchDetached(file); front(); return 'Opened ' + args.app;
     }
+    case 'close_player': { const n = await exec(KEYS_EXE, ['closeplayer']); return Number(n) > 0 ? 'Closed the song/video' : 'No Coco song/video is open'; }
     case 'ring': return 'A PC cannot ring; try: say hello';
     default: return 'This action is not allowed';
   }
