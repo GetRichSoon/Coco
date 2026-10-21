@@ -492,7 +492,23 @@ fun CommandBar(vm: Lounge, dev: JSONObject, title: String = "Tell ${dev.optStrin
         .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
         .putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         .putExtra(android.speech.RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L) }
-    val startOnce = { if (live) runCatching { rec?.startListening(speechIntent) } }
+    // Silent mic (Boss, 2026-10-21): Android beeps every time listening starts or stops, and in silence it restarts every
+    // 3-4 s. While the live mic is on, the beep streams are muted; music keeps playing (it is muted only for a moment, and
+    // only when nothing is playing).
+    val am = remember { ctx.getSystemService(android.media.AudioManager::class.java) }
+    val mute = { stream: Int, on: Boolean -> runCatching { am.adjustStreamVolume(stream, if (on) android.media.AudioManager.ADJUST_MUTE else android.media.AudioManager.ADJUST_UNMUTE, 0) } }
+    androidx.compose.runtime.LaunchedEffect(live) {
+        mute(android.media.AudioManager.STREAM_SYSTEM, live); mute(android.media.AudioManager.STREAM_NOTIFICATION, live)
+        if (!live) mute(android.media.AudioManager.STREAM_MUSIC, false)
+    }
+    val startOnce = {
+        if (live) {
+            val quietMusic = !am.isMusicActive
+            if (quietMusic) mute(android.media.AudioManager.STREAM_MUSIC, true)
+            runCatching { rec?.startListening(speechIntent) }
+            if (quietMusic) main.postDelayed({ mute(android.media.AudioManager.STREAM_MUSIC, false) }, 700)
+        }
+    }
     androidx.compose.runtime.DisposableEffect(rec) {
         rec?.setRecognitionListener(object : android.speech.RecognitionListener {
             override fun onResults(b: android.os.Bundle?) {
@@ -511,7 +527,7 @@ fun CommandBar(vm: Lounge, dev: JSONObject, title: String = "Tell ${dev.optStrin
             override fun onEndOfSpeech() {}
             override fun onEvent(t: Int, b: android.os.Bundle?) {}
         })
-        onDispose { live = false; runCatching { rec?.destroy() } }
+        onDispose { live = false; mute(android.media.AudioManager.STREAM_SYSTEM, false); mute(android.media.AudioManager.STREAM_NOTIFICATION, false); mute(android.media.AudioManager.STREAM_MUSIC, false); runCatching { rec?.destroy() } }
     }
     val askMic = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) { live = true; startOnce() } else vm.message = "Allow the microphone to talk to Coco"
