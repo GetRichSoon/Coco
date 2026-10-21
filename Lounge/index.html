@@ -311,7 +311,9 @@ async function runMyCommands() {
       if (Date.now() - new Date(c.created_at) > 600000) { await sb.from('commands').update({ status: 'failed', result: 'Too old (over 10 minutes), not run', done_at: new Date().toISOString() }).eq('id', c.id); continue; }
       let result;
       // One stuck command must never block the ones behind it: give up after 30 s.
-      try { result = await Promise.race([window.cocoDesktop.pcCommand(c.action, c.args || {}), new Promise((r) => setTimeout(() => r('failed: took longer than 30 seconds'), 30000))]); } catch (e) { result = 'failed: ' + e.message; }
+      const limit = c.action === 'workspace' ? 120000 : 30000;   // saving, closing and starting apps can take a minute
+      try { result = await Promise.race([window.cocoDesktop.pcCommand(c.action, c.args || {}), new Promise((r) => setTimeout(() => r('failed: took longer than ' + limit / 1000 + ' seconds'), limit))]); } catch (e) { result = 'failed: ' + e.message; }
+      if (c.action === 'workspace') { infoAt = 0; heartbeat(); }   // every device sees the new mode at once
       const ok = !/^failed|not allowed|not understood/i.test(result);
       // Report in the background so the next command starts at once.
       sb.from('commands').update({ status: ok ? 'done' : 'failed', result, done_at: new Date().toISOString() }).eq('id', c.id).then(() => {});
@@ -465,6 +467,10 @@ const V = {
       <div class="card2"><span class="eyebrow">Open an app</span><div class="actions">${apps.map(([k, l]) => `<button class="btn tonal" data-rc="open_app" data-ra="${k}">${l}</button>`).join('')}</div>
         <div style="display:flex;gap:8px"><input id="rLink" placeholder="https:// link to open" style="flex:1"><button class="btn tonal" data-rc="open_url">Open</button></div>
         ${pc ? '' : '<span class="muted">Android opens apps at once only while Coco Lounge is on the phone screen; otherwise the phone shows a notification to tap.</span>'}</div>
+      ${pc ? `<div class="card2"><span class="eyebrow">Home &amp; Office</span><span class="muted">${esc(((t.info && t.info.summary) || 'mode not reported yet').split(' · ').slice(0, 4).join(' · '))}</span>
+        <div class="actions"><button class="btn filled" data-rc="workspace" data-op="close_all"><i class="ms">close</i> Close All Tabs &amp; Desktop Sessions</button></div>
+        <div class="actions"><button class="btn tonal" data-rc="workspace" data-op="save">Save Current Session</button><button class="btn tonal" data-rc="workspace" data-op="restore_home">Restore Home Session</button><button class="btn tonal" data-rc="workspace" data-op="restore_office">Restore Office Session</button><button class="btn tonal" data-rc="workspace" data-op="switch_home">Switch to Home Mode</button><button class="btn tonal" data-rc="workspace" data-op="switch_office">Switch to Office Mode</button></div>
+        <span class="muted">Runs on ${esc(t.name)} (the laptop), not on this device. Every close saves the session first; if the save fails nothing is closed.</span></div>` : ''}
       <div class="card2"><span class="eyebrow">${pc ? 'Power' : 'Phone'}</span><div class="actions">${pc ? `<button class="btn tonal" data-rc="lock">Lock</button><button class="btn tonal" data-rc="sleep">Sleep</button><button class="btn tonal" data-rc="restart">Restart</button><button class="btn tonal" data-rc="shutdown">Switch off</button><button class="btn text" data-rc="cancel_power">Cancel</button>` : '<button class="btn tonal" data-rc="ring"><i class="ms">notifications_active</i> Ring it</button>'}<button class="btn text" data-rc="notify">Send message</button></div></div>
       </div>
       <h3 style="margin:22px 0 8px">Recent commands</h3><div class="card2">${(D.commands || []).map(c => `<div class="row"><div class="grow"><b>${esc(c.action.replace('_', ' '))}${c.args && (c.args.text || c.args.q || c.args.app || c.args.key) ? ' · ' + esc(c.args.text || c.args.q || c.args.app || c.args.key) : ''}</b> → ${esc(deviceName(c.target_device))}<div class="muted">${/^data:image\/jpeg;base64,/.test(c.result || '') ? `<img src="${c.result}" style="max-width:100%;border-radius:12px;margin:6px 0;display:block" alt="Screenshot">` : esc(c.result || '')} · ${esc(c.created_by || '')} · ${ago(c.created_at)}</div></div>${chip(c.status)}</div>`).join('') || '<span class="muted">Nothing sent yet.</span>'}</div>`;
@@ -538,6 +544,11 @@ document.addEventListener('click', async (e) => {
     if (a === 'open_app') args.app = ds.ra;
     if (a === 'open_url') { args.url = ($('#rLink') || {}).value || ''; if (!args.url.startsWith('https://')) return toast('Use an https link'); }
     if (a === 'notify') { args.text = rSay.trim() || prompt('Message (emojis ok):', '') || ''; if (!args.text) return; rSay = ''; }
+    if (a === 'workspace') {
+      args.op = ds.op;
+      if (ds.op === 'close_all' && !confirm('Close all tabs, windows and app sessions on ' + deviceName(rTarget) + '?\n\nThe session is saved first. Apps with unsaved work will ask and stay open. Coco and the Claude terminals stay running.')) return;
+      if (/^switch_/.test(ds.op) && !confirm('Switch ' + deviceName(rTarget) + ' to ' + ds.op.slice(7) + ' mode? The open windows are saved, then closed.')) return;
+    }
     if ((a === 'restart' || a === 'shutdown') && !confirm((a === 'restart' ? 'Restart ' : 'Switch off ') + deviceName(rTarget) + ' in 60 seconds?')) return;
     const { error } = await sb.from('commands').insert({ target_device: rTarget, action: a, args, created_by: founderName(), created_device: deviceId });
     if (error) return toast('Could not send: ' + error.message);

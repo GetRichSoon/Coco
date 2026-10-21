@@ -619,6 +619,19 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
                 trailingIcon = { IconButton({ if (link.startsWith("https://")) { send("open_url", JSONObject().put("url", link)); link = "" } else vm.message = "Use an https link" }) { Icon(Icons.AutoMirrored.Rounded.OpenInNew, "Open") } })
             if (!pc) Muted("On a phone, Android opens apps at once only while Coco Lounge is on screen; otherwise a notification asks for one tap.")
         }
+        // Home & Office (Boss, 2026-10-22): runs on the laptop through office-mode.exe; the result comes back in Recent commands.
+        if (pc) Card {
+            Eyebrow("Home & Office")
+            dev.optJSONObject("info")?.optString("summary")?.takeIf { it.isNotBlank() }?.let { Muted(it.split(" · ").take(4).joinToString(" · ")) }
+            Button({ confirm = "close_all" }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp)) { Icon(Icons.Rounded.Cancel, null); Spacer(Modifier.width(8.dp)); Text("Close All Tabs & Desktop Sessions") }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                listOf("save" to "Save Current Session", "restore_home" to "Restore Home Session", "restore_office" to "Restore Office Session",
+                    "switch_home" to "Switch to Home Mode", "switch_office" to "Switch to Office Mode").forEach { (op, label) ->
+                    AssistChip({ if (op.startsWith("switch_")) confirm = op else send("workspace", JSONObject().put("op", op)) }, { Text(label) })
+                }
+            }
+            Muted("Runs on ${dev.s("name")}, not on this phone. Every close saves the session first; if the save fails nothing is closed.")
+        }
         // Power or phone tools
         Card {
             var msgOpen by remember { mutableStateOf(false) }
@@ -644,7 +657,12 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
             if (pc) Muted("Restart and switch off wait 60 seconds so you can cancel. Unlock is not possible from a phone: Windows only unlocks with your PIN or face at the PC.")
         }
     }
-    confirm?.let { a -> AlertDialog(onDismissRequest = { confirm = null }, title = { Text(if (a == "restart") "Restart ${dev.s("name")}?" else "Switch off ${dev.s("name")}?") },
+    confirm?.takeIf { it == "close_all" || it.startsWith("switch_") }?.let { op -> AlertDialog(onDismissRequest = { confirm = null },
+        title = { Text(if (op == "close_all") "Close everything on ${dev.s("name")}?" else "Switch ${dev.s("name")} to ${op.removePrefix("switch_")} mode?") },
+        text = { Text(if (op == "close_all") "All tabs, windows and app sessions on the laptop close. The session is saved first. Apps with unsaved work ask and stay open. Coco and the Claude terminals keep running." else "The open windows are saved, then closed, and the ${op.removePrefix("switch_")} apps open.") },
+        confirmButton = { Button({ send("workspace", JSONObject().put("op", op)); confirm = null }) { Text(if (op == "close_all") "Close all" else "Switch") } },
+        dismissButton = { TextButton({ confirm = null }) { Text("Cancel") } }) }
+    confirm?.takeIf { it == "restart" || it == "shutdown" }?.let { a -> AlertDialog(onDismissRequest = { confirm = null }, title = { Text(if (a == "restart") "Restart ${dev.s("name")}?" else "Switch off ${dev.s("name")}?") },
         text = { Text("It happens in 60 seconds. Unsaved work on that PC can be lost. You can cancel from here.") },
         confirmButton = { Button({ send(a, JSONObject()); confirm = null }) { Text(if (a == "restart") "Restart" else "Switch off") } },
         dismissButton = { TextButton({ confirm = null }) { Text("Keep it on") } }) }

@@ -83,6 +83,13 @@ const front = () => {};
 let lastPlayAt = 0;
 // Opens a program without waiting for it (with exec, a GUI app kept the pipe open, so the command waited until it was closed).
 const launchDetached = (file) => { require('node:child_process').spawn('cmd.exe', ['/c', 'start', '""', file], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); };
+// "home mode · Wi-Fi X · home saved 2026-10-22 01:52 · office saved ..." for the status line on every device.
+async function workspaceLine() {
+  const dir = path.dirname(PLACE_FILE); let place = '?'; try { place = fs.readFileSync(PLACE_FILE, 'utf8').trim() || '?'; } catch {}
+  const ssid = ((await exec('netsh.exe', ['wlan', 'show', 'interfaces'])).match(/^\s*SSID\s*:\s*(.+)$/m) || [])[1] || 'no Wi-Fi';
+  const saved = ['home', 'office'].map((p) => { try { return p + ' saved ' + (fs.readFileSync(path.join(dir, p + '-session.json'), 'utf8').match(/"saved":\s*"([^"]+)"/) || [])[1]; } catch { return p + ' not saved'; } });
+  return [place + ' mode', 'Wi-Fi ' + ssid.trim(), ...saved].join(' · ');
+}
 const exec = (cmd, args) => new Promise((r) => execFile(cmd, args, { windowsHide: true, timeout: 15000 }, (e, so, se) => r(e ? `failed: ${(se || e.message).slice(0, 160)}` : String(so || 'ok').trim())));   // a stuck program can never hold the runner
 // Plain words (English or Hinglish) into one of the fixed actions. Same rules as the phone app's PhoneRemote.understand.
 const APP_WORDS = [[/\b(vs ?code|visual studio|code)\b/, 'vscode'], [/\bcursor\b/, 'cursor'], [/\bchrome\b/, 'chrome'], [/\bbrave\b/, 'brave'], [/\bedge\b/, 'edge'],
@@ -359,7 +366,7 @@ async function runAction(action, args = {}) {
       const disk = fs.statfsSync ? fs.statfsSync('C:\\') : null;
       // Battery comes from a slow Windows query, so answer at once with the last reading and refresh it in the background.
       const battery = batteryCache; refreshBattery();
-      return `${os.hostname()} · on for ${(os.uptime() / 3600).toFixed(1)} h · battery ${/^\d+$/.test(battery) ? battery + '%' : 'n/a'} · C: free ${disk ? Math.round(disk.bavail * disk.bsize / 1e9) + ' GB' : 'n/a'} · memory free ${(os.freemem() / 1e9).toFixed(1)} of ${(os.totalmem() / 1e9).toFixed(0)} GB`;
+      return `${await workspaceLine()} · ${os.hostname()} · on for ${(os.uptime() / 3600).toFixed(1)} h · battery ${/^\d+$/.test(battery) ? battery + '%' : 'n/a'} · C: free ${disk ? Math.round(disk.bavail * disk.bsize / 1e9) + ' GB' : 'n/a'} · memory free ${(os.freemem() / 1e9).toFixed(1)} of ${(os.totalmem() / 1e9).toFixed(0)} GB`;
     }
     case 'wait': await new Promise((r) => setTimeout(r, Math.min(10000, Number(args.ms) || 1000))); return 'Waited';
     case 'lock': await exec('rundll32.exe', ['user32.dll,LockWorkStation']); return 'Locked';
@@ -428,6 +435,17 @@ async function runAction(action, args = {}) {
       const file = target();
       if (!file) return 'App not found on this PC';
       launchDetached(file); front(); return 'Opened ' + args.app;
+    }
+    // Home / Office workspace (Boss, 2026-10-22): office-mode.exe saves (verified), closes, restores and switches; its report is the result.
+    case 'workspace': {
+      const flag = { close_all: ['--close-all'], save: ['--save-session'], restore_home: ['--restore', 'home'], restore_office: ['--restore', 'office'], switch_home: ['--switch', 'home'], switch_office: ['--switch', 'office'] }[String(args.op)];
+      if (!flag) return 'failed: unknown workspace step ' + args.op;
+      const dir = path.dirname(PLACE_FILE), exe = path.join(dir, 'office-mode.exe');
+      if (!fs.existsSync(exe)) return 'failed: office-mode.exe not found';
+      const code = await new Promise((r) => execFile(exe, flag, { windowsHide: true, timeout: 110000 }, (e) => r(e ? (e.code ?? 'timeout') : 0)));
+      let out = ''; try { out = fs.readFileSync(path.join(dir, 'office-mode.out.txt'), 'utf8').replace(/^﻿/, ''); } catch {}
+      const report = out.split(/\r?\n/).filter((l) => /^\d{4}-/.test(l)).map((l) => l.slice(20)).join(' · ').slice(0, 900);
+      return (code === 0 ? '' : 'failed: ') + (report || 'no report (exit ' + code + ')');
     }
     case 'close_player': { const n = await exec(KEYS_EXE, ['closeplayer']); return Number(n) > 0 ? 'Closed the song/video' : 'No Coco song/video is open'; }
     case 'ring': return 'A PC cannot ring; try: say hello';

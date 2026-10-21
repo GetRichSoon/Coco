@@ -84,7 +84,7 @@ object PhoneRemote {
     suspend fun run(ctx: Context, action: String, args: JSONObject): String = when (action) {
         "say" -> understand(args.optString("text"), "phone")?.takeIf { it.first != "say" }?.let { (a, x) -> run(ctx, a, x) }
             ?: "Not understood: \"${args.optString("text").take(60)}\". Try: kesariya chalao, youtube kholo, whatsapp kholo, awaaz badhao, ring, status"
-        "lock", "sleep", "restart", "shutdown", "cancel_power", "close_app" -> "A phone can't do \"$action\" from Coco; use the phone's own buttons"
+        "lock", "sleep", "restart", "shutdown", "cancel_power", "close_app", "workspace" -> "A phone can't do \"$action\" from Coco; use the phone's own buttons"
         "status" -> status(ctx)
         "notify" -> { post(ctx, "Coco", args.optString("text").take(200), null); "Shown on the phone" }
         "open_url" -> args.optString("url").let { u -> if (!u.startsWith("https://")) "Only https links" else launch(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(u)), "Open link", "Opened $u") }
