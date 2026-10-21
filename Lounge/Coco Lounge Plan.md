@@ -264,3 +264,33 @@ same command bar brain; any device can control any other device (with the same s
 her/his own devices by default; the other founder's devices only for harmless actions unless they allow more.
 Release order every time: Boss phone + Boss PC first (canary) -> if healthy for 24 h -> Big Boss devices.
 Big Boss setup needs her one-time steps: install 2.2.0 APK once (tap + allow "install unknown apps"), PC app once.
+
+## Status board (updated 2026-10-21 night) — ✓ built and tested · ⏳ next · ☐ later
+### Phone APK (now 2.5.0)
+- ✓ Self-update from Coco Cloud (bucket `apk`, latest.json), installs by itself; Settings > "Check for update" (2.2.0+)
+- ✓ "Coco connected" background service: runs commands with the app closed, starts after reboot (2.3.0/2.4.0)
+- ✓ Opens apps from a closed app on OnePlus/ColorOS (display-over-apps + 1 px window) — tested: YouTube, WhatsApp, Chrome (2.4.1)
+- ✓ Each command runs once (atomic claim)
+- ✓ Live mic: keeps listening like an assistant, each sentence runs, "bas"/"stop" ends (2.5.0) — not yet tested on the phone
+- ⏳ "Play <song>" opens a search instead of the video on the phone
+- ⏳ Heartbeat shows version on all paths; Big Boss phone still on old version (offline since 16 Oct)
+- ☐ Control page v2 (device chips, live steps, smart tiles, keyboard + mouse mode)
+- ☐ Live Now/Next on Home, YouTube channel live page, Lulu real logos, new design + circular motion
+- ☐ Coco Save (share-to-Coco, daily saves log, idea reminders), widget, quick tile, habits
+
+### PC app (Lounge Desktop, updates itself from git)
+- ✓ AI planner (Gemini 3.1 flash lite) when rules miss; Hindi "usme X likho"; video back/forward; filler words ignored
+- ✓ Learns from the control log: AI-understood sentences that worked run instantly next time (memory\Learned Commands.json); misses in memory\Control Misses.md
+- ✓ Speed: 0.4-0.6 s per command (was up to 3.3 s); no reload storm; nothing drawn while hidden
+- ✓ Hang fixed (opening an app waited for it to close) + 15 s / 30 s safety timeouts
+- ✓ One song at a time (Coco player window replaces the old one)
+- ✓ Mic on the Control page (any language, auto-stop, runs on the chosen device) — speech ~7 s (Gemini speed)
+- ✓ Safety: AI may not use Run box / Task Manager keys
+- ⏳ Same-Wi-Fi direct link (10-50 ms) + Mouse mode for the phone
+- ⏳ Nightly job: turn Control Misses into new rules automatically
+- ☐ Watchdog + floating bubble + Ctrl+Shift+S save + screenshot watch
+- ☐ Control page v2, live data pages, new design (same as phone)
+
+### Both / cloud
+- ⏳ Faster AI and speech (Gemini 2-8 s now): keep rules first, cache learned sentences, try a faster model/region
+- ☐ Big Boss devices: open Coco Lounge once on her PC and phone (they update themselves after that)
