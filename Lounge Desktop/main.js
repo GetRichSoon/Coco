@@ -75,7 +75,10 @@ async function firstVideo(q) {
     return ((await r.text()).match(/"videoId":"([\w-]{11})"/) || [])[1] || null;
   } catch { return null; }
 }
-const front = () => setTimeout(() => exec(KEYS_EXE, ['combo', 'win+up']), 2500);   // newly opened window: bring it up, maximized
+// It used to press Win+Up 2.5 s later on whatever window was in front, which resized VS Code when an app opened slowly.
+// New windows come to the front by themselves, so nothing is pressed now.
+const front = () => {};
+let lastPlayAt = 0;
 // Opens a program without waiting for it (with exec, a GUI app kept the pipe open, so the command waited until it was closed).
 const launchDetached = (file) => { require('node:child_process').spawn('cmd.exe', ['/c', 'start', '""', file], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); };
 const exec = (cmd, args) => new Promise((r) => execFile(cmd, args, { windowsHide: true, timeout: 15000 }, (e, so, se) => r(e ? `failed: ${(se || e.message).slice(0, 160)}` : String(so || 'ok').trim())));   // a stuck program can never hold the runner
@@ -377,7 +380,16 @@ async function runAction(action, args = {}) {
       return /SUCCESS/i.test(r) ? 'Closed ' + args.app : (/not found/i.test(r) ? args.app + ' is not running' : r);
     }
     case 'type_text': { const s = String(args.text || '').slice(0, 2000); if (!s) return 'Nothing to type'; await exec(KEYS_EXE, ['type', s]); return 'Typed ' + s.length + ' characters'; }
-    case 'key': { const r = await exec(KEYS_EXE, ['combo', String(args.combo || '')]); return /failed/.test(r) ? 'Unknown keys: ' + args.combo : 'Pressed ' + args.combo; }
+    case 'key': {
+      const combo = String(args.combo || '').toLowerCase().replace(/\s+/g, '');
+      // Video keys go only to Coco's player and tab keys only to a browser, never to whatever is in front (it was VS Code).
+      const to = /^(j|k|l|f|m|shift\+n|shift\+p)$/.test(combo) ? 'player' : /^ctrl\+(t|w|tab|shift\+t|shift\+tab|l)$/.test(combo) ? 'browser' : null;
+      if (to) {
+        let r = await exec(KEYS_EXE, ['keyto', to, combo]);
+        // A player that just opened has no title yet: look again twice before saying it is not there.
+        for (let i = 0; i < 2 && r !== '1' && to === 'player' && Date.now() - lastPlayAt < 15000; i++) { await new Promise((ok) => setTimeout(ok, 1200)); r = await exec(KEYS_EXE, ['keyto', to, combo]); }
+        return r === '1' ? `Pressed ${combo} in the ${to === 'player' ? 'video' : 'browser'}` : (to === 'player' ? 'No Coco video is open' : 'No browser window is open'); }
+      const r = await exec(KEYS_EXE, ['combo', combo]); return /failed/.test(r) ? 'Unknown keys: ' + args.combo : 'Pressed ' + combo; }
     case 'speak': { const s = String(args.text || '').slice(0, 300); exec(KEYS_EXE, ['speak', s]); return 'Saying: ' + s; }
     case 'screenshot': {
       const { desktopCapturer, screen } = require('electron');
@@ -393,6 +405,7 @@ async function runAction(action, args = {}) {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
       const id = await firstVideo(q);
       const url = id ? `https://www.youtube.com/watch?v=${id}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+      lastPlayAt = Date.now();
       // One song at a time (Boss, 2026-10-21): close the last Coco player window, then play in a fresh one.
       await exec(KEYS_EXE, ['closeplayer']);
       const brave = BROWSERS.brave();

@@ -21,6 +21,8 @@ static class CocoKeys {
     [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
     [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
 
     [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT { public ushort wVk, wScan; public uint dwFlags, time; public IntPtr extra; }
     [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT { public int dx, dy; public uint data, flags, time; public IntPtr extra; }
@@ -83,6 +85,25 @@ static class CocoKeys {
                     return true;
                 }, IntPtr.Zero);
                 Console.Write(n); return 0;
+            }
+            case "keyto": {
+                // keyto <player|browser> <combo>: brings that window to the front first and presses the keys only there.
+                // Prints 1 when pressed, 0 when no such window is open (then nothing is pressed anywhere).
+                if (a.Length < 3) return 1;
+                IntPtr target = IntPtr.Zero; bool player = a[1] == "player";
+                EnumWindows((h, l) => {
+                    if (!IsWindowVisible(h)) return true;
+                    var sb = new System.Text.StringBuilder(512); GetWindowText(h, sb, 512); var t = sb.ToString();
+                    bool hit = player ? (t.EndsWith(" - YouTube") || t == "YouTube")
+                                      : (t.EndsWith(" - Brave") || t.EndsWith(" - Google Chrome") || t.EndsWith("Microsoft​ Edge") || t.EndsWith("Microsoft Edge"));
+                    if (hit) { target = h; return false; }
+                    return true;
+                }, IntPtr.Zero);
+                if (target == IntPtr.Zero) { Console.Write(0); return 0; }
+                keybd_event(0x12, 0, 0, UIntPtr.Zero); keybd_event(0x12, 0, 2, UIntPtr.Zero);   // Alt lets us take the foreground
+                SetForegroundWindow(target); Thread.Sleep(150);
+                if (GetForegroundWindow() != target) { Console.Write(0); return 0; }
+                Console.Write(Combo(a[2]) ? 1 : 0); return 0;
             }
         }
         byte mk;
