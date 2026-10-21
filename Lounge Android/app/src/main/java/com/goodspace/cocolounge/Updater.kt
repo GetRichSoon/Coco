@@ -34,15 +34,18 @@ object Updater {
         val cloud = Cloud(ctx)
         if (!cloud.signedIn) return@withContext null
         val token = cloud.token()
-        fun get(path: String) = http.newCall(Request.Builder().url("${Cloud.URL}/storage/v1/object/authenticated/apk/$path")
-            .header("apikey", Cloud.KEY).header("Authorization", "Bearer $token").build()).execute()
-        val meta = get("latest.json").use { r -> if (!r.isSuccessful) return@withContext null; JSONObject(r.body!!.string()) }
+        fun get(path: String) = http.newCall(Request.Builder().url(if (path.startsWith("https://")) path else "${Cloud.URL}/storage/v1/object/authenticated/apk/$path")
+            .apply { if (!path.startsWith("https://")) header("apikey", Cloud.KEY).header("Authorization", "Bearer $token") }.build()).execute()
+        // The newest build is announced in controls/apk_latest with a ready download link (works without storage rules);
+        // the bucket file is the fallback. A failure is an error, never "up to date".
+        val meta = runCatching { cloud.list("controls", "select=value&id=eq.apk_latest").optJSONObject(0)?.optJSONObject("value") }.getOrNull()
+            ?: get("latest.json").use { r -> if (!r.isSuccessful) throw Exception("Coco Cloud said ${r.code}"); JSONObject(r.body!!.string()) }
         val code = meta.optLong("versionCode")
         if (code <= current(ctx)) { apk(ctx).delete(); return@withContext null }
         val prefs = ctx.getSharedPreferences("coco_update", Context.MODE_PRIVATE)
         if (prefs.getLong("ready", 0) != code || !apk(ctx).exists()) {
             val tmp = File(ctx.filesDir, "update.part")
-            get(meta.getString("file")).use { r -> if (!r.isSuccessful) return@withContext null; tmp.outputStream().use { r.body!!.byteStream().copyTo(it) } }
+            get(meta.optString("url").ifBlank { meta.getString("file") }).use { r -> if (!r.isSuccessful) throw Exception("Download failed (${r.code})"); tmp.outputStream().use { r.body!!.byteStream().copyTo(it) } }
             tmp.renameTo(apk(ctx))
             prefs.edit().putLong("ready", code).apply()
         }

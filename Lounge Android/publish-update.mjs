@@ -30,4 +30,11 @@ async function put(name, body, type) {
 // APK first, then latest.json, so a phone never sees a version whose file is not there yet.
 await put(file, fs.readFileSync(apk), 'application/vnd.android.package-archive');
 await put('latest.json', JSON.stringify({ versionCode, versionName, file, at: new Date().toISOString() }), 'application/json');
+// Announce it in controls/apk_latest with a download link valid for a year, so phones never depend on storage rules.
+const H = { apikey: KEY, authorization: `Bearer ${KEY}`, 'content-type': 'application/json' };
+const signed = await (await fetch(`${URL}/storage/v1/object/sign/apk/${file}`, { method: 'POST', headers: H, body: JSON.stringify({ expiresIn: 365 * 24 * 3600 }) })).json();
+if (!signed.signedURL) throw new Error('Could not make the download link: ' + JSON.stringify(signed));
+const row = { id: 'apk_latest', value: { versionCode, versionName, file, url: `${URL}/storage/v1${signed.signedURL}` }, updated_by: 'coco', updated_at: new Date().toISOString() };
+const up = await fetch(`${URL}/rest/v1/controls`, { method: 'POST', headers: { ...H, prefer: 'resolution=merge-duplicates' }, body: JSON.stringify(row) });
+if (!up.ok) throw new Error('controls: ' + up.status + ' ' + await up.text());
 console.log(`Published Coco Lounge ${versionName} (${versionCode}) as ${file}`);
