@@ -326,9 +326,9 @@ async function loadAll() {
     q('members', '*', ['sort', true]), q('member_houses'), q('tools', '*', ['name', true]), q('member_tools'),
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
     q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'), q('rules', '*', ['updated_at', false]),
-    q('commands', '*', ['created_at', false]).limit(15),
+    q('commands', '*', ['created_at', false]).limit(15), q('integrations', '*', ['platform', true]),
   ]);
-  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands'].forEach((k, i) => D[k] = res[i].data || []);
+  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations'].forEach((k, i) => D[k] = res[i].data || []);
   if (!document.hidden) render(); diffAndNotify(); runMyCommands();   // hidden in the tray: no drawing, only data
 }
 let pulseTimer = null;
@@ -364,7 +364,8 @@ const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id |
 const founderName = () => founder ? founder.name : (me && me.email);
 async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
 
-const chipFor = (s) => ({ queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
+const chipFor = (s) => ({ planned: ['', 'Planned'], need_approval: ['warn', 'Needs YES'], blocked: ['bad', 'Blocked'], verifying: ['warn', 'Verifying'], paused: ['', 'Paused'], cancelled: ['', 'Cancelled'], connected: ['good', 'Connected'], partial: ['warn', 'Partly connected'], not_connected: ['bad', 'Not connected'], error: ['bad', 'Error'], queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
+const LOGO = { youtube: 'youtube.com', github: 'github.com', supabase: 'supabase.com', chrome_store: 'chromewebstore.google.com', play_console: 'play.google.com', autodraft: 'autodraft.in', roblox: 'roblox.com', meta: 'facebook.com', udemy: 'udemy.com', coursera: 'coursera.org' };
 const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
 
 function nav() {
@@ -378,15 +379,16 @@ function nav() {
 
 const V = {
   home() {
-    const live = D.offerings.filter(o => o.status === 'live').length, running = D.tasks.filter(t => t.status === 'running').length, wait = D.approvals.filter(a => a.state === 'waiting').length;
+    const live = D.offerings.filter(o => o.status === 'live').length, running = D.tasks.filter(t => ['running', 'working'].includes(t.status)).length, wait = D.approvals.filter(a => a.state === 'waiting').length;
     return `<div class="hero"><h3 style="font-size:24px">Hello ${esc(founder ? founder.call_me : '')}</h3>
       <div>${wait ? `${wait} things wait for your YES.` : 'Nothing waits for you.'} ${running ? `${running} tasks are running now.` : ''}</div>
       <div class="stats"><div class="stat"><b>${D.houses.filter(h => h.state === 'working').length}</b><span>Houses working</span></div><div class="stat"><b>${running}</b><span>tasks running</span></div><div class="stat"><b>${D.offerings.length}</b><span>channels and products</span></div><div class="stat"><b>${D.devices.filter(online).length}/4</b><span>devices online</span></div></div></div>
       <div class="grid">${D.houses.map(h => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(h.name)}</h3>${chip(h.state)}</div><span class="muted">${esc(h.role)}</span><div>${esc(h.doing || '')}</div><span class="muted">Next: ${esc(h.next || '')}</span></div>`).join('')}</div>
+      <h3 style="margin:22px 0 8px">Connections</h3><div class="card2">${(D.integrations || []).map(c => `<div class="row"><img src="${LOGO[c.id] ? 'https://www.google.com/s2/favicons?sz=64&domain=' + LOGO[c.id] : 'coco.svg'}" alt="" width="28" height="28" style="border-radius:6px;flex:none"><div class="grow"><b>${esc(c.platform)}</b>${c.account ? ' · ' + esc(c.account) : ''}<div class="muted">${esc(c.error || c.next_action || (c.capabilities || []).join(', '))}${c.last_ok_at ? ' · checked ' + ago(c.last_ok_at) : ''}</div></div>${chip(c.state)}</div>`).join('') || '<span class="muted">No connections listed yet.</span>'}</div>
       <h3 style="margin:22px 0 8px">Latest activity</h3><div class="card2">${D.activity.map(a => `<div class="row"><div class="grow"><b>${esc(a.action)}</b> · ${esc(a.detail || '')}<div class="muted">${esc(a.actor)} ${a.device_id ? '· ' + esc(deviceName(a.device_id)) : ''} · ${ago(a.at)}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;
   },
   board() {
-    const open = D.tasks.filter(t => !['done', 'stopped'].includes(t.status)), closed = D.tasks.filter(t => ['done', 'stopped'].includes(t.status)).slice(0, 15);
+    const open = D.tasks.filter(t => !['done', 'stopped', 'cancelled'].includes(t.status)), closed = D.tasks.filter(t => ['done', 'stopped', 'cancelled'].includes(t.status)).slice(0, 15);
     const row = (t) => { const notes = D.notes.filter(n => n.task_id === t.id); return `<div class="row"><div class="grow"><b>${esc(t.title)}</b> ${chip(t.status)}
       <div class="muted">${esc((D.houses.find(h => h.id === t.house_id) || {}).name || 'Coco')} · by ${esc(t.created_by)}${t.created_device ? ' on ' + esc(deviceName(t.created_device)) : ''} · ${ago(t.created_at)}${t.claimed_by_device ? ` · <b>working on ${esc(deviceName(t.claimed_by_device))}</b>` : ''}</div>
       ${t.details ? `<div>${esc(t.details)}</div>` : ''}${notes.map(n => `<div class="muted">+ ${esc(n.note)} (${esc(n.by_email)})</div>`).join('')}${t.result ? `<div class="chip gold" style="margin-top:6px">Result: ${esc(t.result)}</div>` : ''}

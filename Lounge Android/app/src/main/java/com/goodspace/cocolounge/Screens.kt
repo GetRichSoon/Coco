@@ -39,6 +39,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -94,9 +96,9 @@ private fun JSONObject.s(k: String) = optString(k).let { if (it == "null") "" el
 fun StatusChip(state: String, text: String? = null) {
     val lux = LocalLux.current
     val (bg, fg, label) = when (state) {
-        "running", "working", "done", "approved", "live", "connected" -> Triple(lux.goodC, lux.good, text ?: state.replaceFirstChar { it.uppercase() })
-        "waiting", "needs_yes", "waiting_yes", "waiting_pc", "next", "planned", "queued", "late" -> Triple(lux.warnC, lux.warn, text ?: mapOf("waiting" to "Needs YES", "needs_yes" to "Needs YES", "waiting_yes" to "Needs YES", "waiting_pc" to "Waits for a PC", "next" to "Next", "planned" to "Planned", "queued" to "Queued", "late" to "Late")[state].orEmpty())
-        "failed", "rejected", "off" -> Triple(lux.badC, lux.bad, text ?: mapOf("failed" to "Failed", "rejected" to "No", "off" to "Not connected")[state].orEmpty())
+        "running", "working", "done", "approved", "live", "connected", "verifying" -> Triple(lux.goodC, lux.good, text ?: state.replaceFirstChar { it.uppercase() })
+        "waiting", "needs_yes", "need_approval", "waiting_yes", "waiting_pc", "next", "planned", "queued", "late", "partial" -> Triple(lux.warnC, lux.warn, text ?: mapOf("partial" to "Partly connected", "need_approval" to "Needs YES", "waiting" to "Needs YES", "needs_yes" to "Needs YES", "waiting_yes" to "Needs YES", "waiting_pc" to "Waits for a PC", "next" to "Next", "planned" to "Planned", "queued" to "Queued", "late" to "Late")[state].orEmpty())
+        "failed", "rejected", "off", "blocked", "not_connected", "error" -> Triple(lux.badC, lux.bad, text ?: mapOf("blocked" to "Blocked", "not_connected" to "Not connected", "error" to "Error", "failed" to "Failed", "rejected" to "No", "off" to "Not connected")[state].orEmpty())
         else -> Triple(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurface, text ?: state.replaceFirstChar { it.uppercase() })
     }
     Surface(color = bg, contentColor = fg, shape = RoundedCornerShape(50)) { Text(label, Modifier.padding(horizontal = 10.dp, vertical = 3.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1) }
@@ -254,7 +256,7 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
     item(key = "tiles") {
         Appear(1) {
             val waiting by animateIntAsState(d.approvals.count { it.s("state") == "waiting" }, tween(600), label = "w")
-            val running by animateIntAsState(d.tasks.count { it.s("status") == "running" }, tween(600), label = "r")
+            val running by animateIntAsState(d.tasks.count { it.s("status") in setOf("running", "working") }, tween(600), label = "r")
             val chan = d.offerings.filter { it.s("kind") == "channel" }
             val conn by animateIntAsState(chan.count { it.optBoolean("connected") }, tween(600), label = "c")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -280,6 +282,19 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
                         StatusChip(h.s("state"), when (h.s("state")) { "working" -> "Working"; "next" -> "Next"; "later" -> "Later"; else -> null })
                         Muted("${mine.size} ${if (id == "gigi") "channels" else "products"} · ${mine.count { it.optBoolean("connected") }} connected", 1)
                     }
+                }
+            }
+        }
+    }
+    item(key = "connh") { Section("Connections") }
+    item(key = "conn") {
+        Card {
+            if (d.integrations.isEmpty()) Muted("No connections listed yet.")
+            d.integrations.forEach { c ->
+                Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    NetLogo(LOGO_DOMAINS[c.s("id")], 30.dp); Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) { Text(c.s("platform"), style = MaterialTheme.typography.titleSmall); Muted(c.s("next_action").ifBlank { c.s("account") }, 2) }
+                    StatusChip(c.s("state"))
                 }
             }
         }
@@ -777,4 +792,29 @@ fun Dialogs(vm: Lounge) {
         }
         null -> {}
     }
+}
+
+
+val LOGO_DOMAINS = mapOf("youtube" to "youtube.com", "github" to "github.com", "supabase" to "supabase.com", "chrome_store" to "chromewebstore.google.com",
+    "play_console" to "play.google.com", "autodraft" to "autodraft.in", "roblox" to "roblox.com", "meta" to "facebook.com", "udemy" to "udemy.com", "coursera" to "coursera.org")
+
+private val logoCache = mutableMapOf<String, androidx.compose.ui.graphics.ImageBitmap?>()
+
+// Each platform's own logo (site favicon), loaded once and cached; Coco's mark while loading or offline.
+@Composable
+fun NetLogo(domain: String?, size: androidx.compose.ui.unit.Dp) {
+    var img by remember(domain) { mutableStateOf(domain?.let { logoCache[it] }) }
+    LaunchedEffect(domain) {
+        if (domain == null || img != null) return@LaunchedEffect
+        img = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                okhttp3.OkHttpClient().newCall(okhttp3.Request.Builder().url("https://www.google.com/s2/favicons?sz=64&domain=$domain").build()).execute()
+                    .use { r -> r.body?.bytes()?.let { android.graphics.BitmapFactory.decodeByteArray(it, 0, it.size) }?.asImageBitmap() }
+            }.getOrNull()
+        }
+        logoCache[domain] = img
+    }
+    val b = img
+    if (b != null) androidx.compose.foundation.Image(b, null, Modifier.size(size).clip(RoundedCornerShape(6.dp)))
+    else LivingMark(Marks.coco, size)
 }
