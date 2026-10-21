@@ -1,0 +1,32 @@
+{
+ "mera favourite wala lofi music laga do please jab tak main kaam karta hoon": [
+  {
+   "action": "play_youtube",
+   "args": {
+    "q": "lofi music"
+   }
+  }
+ ],
+ "bhai kya chal raha hai": [
+  {
+   "action": "speak",
+   "args": {
+    "text": "Sab badhiya bhai, aap bataiye main aapki kya madad kar sakta hoon?"
+   }
+  }
+ ],
+ "म र प स क स ट टस बत ओ": [
+  {
+   "action": "status",
+   "args": {}
+  }
+ ],
+ "hello": [
+  {
+   "action": "speak",
+   "args": {
+    "text": "Hello! How can I help you today?"
+   }
+  }
+ ]
+}

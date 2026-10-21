@@ -1,0 +1,10 @@
+- 2026-10-20T22:45:25.043Z | "koi motivational gaana bajao yaar" | not understood
+- 2026-10-20T22:45:43.332Z | "koi motivational gaana bajao yaar!" | not understood
+- 2026-10-20T22:45:49.082Z | "zxqv blorp karo" | AI asked: zxqv blorp ka kya matlab hai? Main aapki kaise madad kar sakta hoon?
+- 2026-10-20T22:58:39.818Z | "bhai Tu Khud dekhna Kisi Ka Kya chalu hai tu nahin hai main screen per" | AI asked: Boss, aap kya dekhna chahte hain? Kya main screen share karun ya koi specific app kholu?
+- 2026-10-20T22:59:00.399Z | "Mujhe ko ko dekhne ko ko" | AI asked: Aap kya dekhna chahte hain?
+- 2026-10-21T07:57:06.454Z | "zxqv blorp karo" | AI asked: zxqv blorp ka matlab kya hai? Main kya karun?
+- 2026-10-21T07:57:12.480Z | "chrome kholo aur new tab kholo" | Opened chrome → No app called "new tab" on this PC
+- 2026-10-21T08:09:11.296Z | "Jo screen chal rahi hai na vah dikhao" | not understood
+- 2026-10-21T08:09:36.920Z | "abhi jo PC per hai na voice chalu hai Jis movie chalu hai na Ek room per vah Chrome open karke ful screen kar do movie mein dekhna hai mujhe" | not understood
+- 2026-10-21T08:20:15.934Z | "hello kya chal raha hai" | not understood
