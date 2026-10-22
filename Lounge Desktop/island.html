@@ -9,11 +9,8 @@
 @media (prefers-reduced-motion: reduce) { :root { --t: 0s; } }
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.3 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: var(--fg); user-select: none; }
-#pill { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); background: var(--bg); width: 200px; height: 34px; border-radius: 17px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.35); overflow: hidden; cursor: default; outline: none;
-  transition: width var(--t) var(--ease), height var(--t) var(--ease), border-radius var(--t) var(--ease); }
-#pill.open { width: 440px; height: 292px; border-radius: 30px; }
-#pill.toast { width: 360px; height: 64px; border-radius: 32px; }
+#pill { position: absolute; left: 50%; top: 0; transform: translateX(-50%); background: var(--bg); width: 200px; height: 32px; border-radius: 0 0 16px 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.35); overflow: hidden; cursor: default; outline: none; will-change: width, height; }
 #pill:focus-visible { box-shadow: 0 0 0 2px var(--blue); }
 .face { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .16s; }
 #pill:not(.open):not(.toast) #compact, #pill.open #full, #pill.toast #toastFace { opacity: 1; pointer-events: auto; transition: opacity .2s .1s; }
@@ -68,20 +65,40 @@ let S = { approvals: [], tasks: {}, sessions: [], doneToday: 0, recentDone: [] }
 let tab = 'coco', open = false, pomo = null, toastTimer = null;
 const TABS = [['coco', 'Coco'], ['music', 'Music'], ['control', 'Control'], ['focus', 'Focus']];
 
-// ---- click-through: the window passes clicks on everything but the pill ----
-let over = false;
-addEventListener('mousemove', (e) => {
-  const r = pill.getBoundingClientRect();
-  const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-  if (inside !== over) { over = inside; I.mouse(inside); if (inside) setOpen(true); }
-});
-pill.addEventListener('mouseleave', () => { over = false; I.mouse(false); setTimeout(() => { if (!over && !pill.contains(document.activeElement)) setOpen(false); }, 350); });
+// ---- size: Bloom's springs (width 400/31, height 450/29, corners 1000/40), run only while moving ----
+const SIZES = { compact: [200, 32, 16], open: [440, 292, 30], toast: [360, 62, 30] };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SPR = [[400, 31], [450, 29], [1000, 40]];
+let cur = [...SIZES.compact], vel = [0, 0, 0], goal = [...SIZES.compact], raf = 0, lastT = 0;
+function mode(m) {
+  goal = [...SIZES[m]];
+  pill.classList.toggle('open', m === 'open'); pill.classList.toggle('toast', m === 'toast');
+  I.rect({ w: goal[0], h: goal[1] });   // main uses it to keep clicks on the pill and to know when the pointer left
+  if (reduced) { cur = [...goal]; paint(); return; }
+  if (!raf) { lastT = performance.now(); raf = requestAnimationFrame(step); }
+}
+function paint() { pill.style.width = cur[0] + 'px'; pill.style.height = cur[1] + 'px'; pill.style.borderRadius = `0 0 ${cur[2]}px ${cur[2]}px`; }
+function step(t) {
+  const dt = Math.min(0.032, (t - lastT) / 1000); lastT = t; let moving = false;
+  for (let i = 0; i < 3; i++) {
+    const [k, c] = SPR[i];
+    vel[i] += (k * (goal[i] - cur[i]) - c * vel[i]) * dt; cur[i] += vel[i] * dt;
+    if (Math.abs(goal[i] - cur[i]) > 0.3 || Math.abs(vel[i]) > 0.3) moving = true; else { cur[i] = goal[i]; vel[i] = 0; }
+  }
+  paint();
+  raf = moving ? requestAnimationFrame(step) : 0;   // idle = no frames at all
+}
+paint();
+
+// ---- hover: Coco Lounge watches the pointer (top-centre band, Bloom's 200 ms dwell) and tells the island ----
+I.onHover((v) => setOpen(v));
 pill.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === pill) setOpen(!open); if (e.key === 'Escape') { setOpen(false); I.blur(); } });
 
 function setOpen(v) {
   if (v === open) return; open = v;
-  pill.classList.toggle('open', v); pill.classList.remove('toast'); pill.setAttribute('aria-expanded', v);
+  pill.setAttribute('aria-expanded', v);
   if (v) renderFull();
+  mode(v ? 'open' : 'compact');
 }
 
 // ---- compact: the most important thing first (approval > music > working agents > clock) ----
@@ -126,7 +143,7 @@ pill.addEventListener('click', (e) => {
   const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo]'); if (!t) return;
   const d = t.dataset;
   if (d.tab) { tab = d.tab; renderFull(); }
-  if (d.open) { I.openCoco(d.open); setOpen(false); }
+  if (d.open) { I.openCoco(d.open); I.close(); }
   if (d.media) I.act('media', { key: d.media });
   if (d.vol) I.act('volume', { key: d.vol, steps: 2 });
   if (d.set) I.openSettings(d.set);
@@ -140,8 +157,8 @@ function startPomo(brk, round) { pomo = { brk, round, end: Date.now() + (brk ? 5
 // ---- toasts: a new approval or a finished job, like a phone notification ----
 function toast(title, sub) {
   $('#tT').textContent = title; $('#tS').textContent = sub;
-  if (!open) pill.classList.add('toast');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => pill.classList.remove('toast'), 4500);
+  if (!open) mode('toast');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { if (!open) mode('compact'); }, 4500);
 }
 
 // ---- data in ----

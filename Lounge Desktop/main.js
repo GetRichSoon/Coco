@@ -570,7 +570,7 @@ const saveIsland = (s) => { try { fs.writeFileSync(ISLAND_FILE(), JSON.stringify
 function placeIsland() {
   if (!island) return;
   const { screen } = require('electron');
-  const d = screen.getPrimaryDisplay().workArea, W = 460, H = 310;
+  const d = screen.getPrimaryDisplay().bounds, W = 460, H = 310;   // flush with the top edge of the screen, like a notch
   island.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y, width: W, height: H });
 }
 function islandVisible() {
@@ -620,7 +620,29 @@ function islandSend() {
 }
 ipcMain.on('island-push', (_e, d) => { islandLast = d; islandSend(); });
 setInterval(islandSend, 60000);   // session files have no change event worth watching across every project folder
-ipcMain.on('island-mouse', (_e, inside) => { if (island) island.setIgnoreMouseEvents(!inside, { forward: true }); });
+// ---- hover like Bloom: an 8 px band at the top centre, 200 ms dwell, pointer checked every 40 ms ----
+// Works with the Coco window open or closed (this is the background process). The island never takes focus from the
+// hover; clicks pass through everywhere except the pill itself.
+const BAND_PX = 8, BAND_W = 420, DWELL_MS = 200, LEAVE_MS = 350;
+let pillRect = { w: 200, h: 32 }, hoverOpen = false, bandSince = 0, leftSince = 0, clickable = false;
+ipcMain.on('island-rect', (_e, r) => { pillRect = r; });
+ipcMain.on('island-close', () => { hoverOpen = false; if (island) island.webContents.send('island-hover', false); });
+function islandPointer() {
+  if (!island || !island.isVisible()) { if (hoverOpen) { hoverOpen = false; island && island.webContents.send('island-hover', false); } return; }
+  const { screen } = require('electron');
+  const p = screen.getCursorScreenPoint(), d = screen.getPrimaryDisplay().bounds, b = island.getBounds(), now = Date.now();
+  const cx = d.x + d.width / 2;
+  const inBand = p.y <= d.y + BAND_PX && Math.abs(p.x - cx) <= BAND_W / 2;
+  const onPill = p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - (b.x + b.width / 2)) <= pillRect.w / 2;
+  if (onPill !== clickable) { clickable = onPill; island.setIgnoreMouseEvents(!onPill, { forward: true }); }
+  if (!hoverOpen) {
+    bandSince = inBand || onPill ? bandSince || now : 0;
+    if (bandSince && now - bandSince >= DWELL_MS) { hoverOpen = true; leftSince = 0; island.webContents.send('island-hover', true); }
+  } else if (inBand || onPill) leftSince = 0;
+  else if (!leftSince) leftSince = now;
+  else if (now - leftSince >= LEAVE_MS) { hoverOpen = false; bandSince = 0; island.webContents.send('island-hover', false); }
+}
+setInterval(islandPointer, 40);
 ipcMain.on('island-blur', () => { if (island) island.blur(); });
 ipcMain.on('island-open', (_e, page) => { if (!/^[a-z]+$/.test(page) || !win) return; win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = '${page}'`); });
 ipcMain.on('island-settings', (_e, uri) => { if (/^ms-settings:[a-z-]+$/.test(uri)) shell.openExternal(uri); });
