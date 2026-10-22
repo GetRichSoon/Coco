@@ -44,7 +44,7 @@ function createTray() {
     { type: 'separator' },
     { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
     { label: 'Island modules', submenu: [['coco', 'Coco Brain'], ['music', 'Music'], ['control', 'Control Center'], ['focus', 'Focus']].map(([k, label]) => ({ label, type: 'checkbox', checked: islandSettings().modules[k] !== false,
-      click: (i) => { const s = islandSettings(); s.modules = { ...s.modules, [k]: i.checked }; saveIsland(s); if (island) island.webContents.send('island-modules', s.modules); } })) },
+      click: (i) => { const s = islandSettings(); s.modules = { ...s.modules, [k]: i.checked }; saveIsland(s); sendModules(true); } })) },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings(loginArgs(i.checked)) },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },
   ]));
@@ -573,7 +573,12 @@ function placeIsland() {
   const d = screen.getPrimaryDisplay().bounds, W = 460, H = 310;   // flush with the top edge of the screen, like a notch
   island.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y, width: W, height: H });
 }
+// At the office the island shows no Coco status (Boss, 2026-10-22): the Coco module is switched off there, whatever the tray says.
+let sentModules = '';
+const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) m.coco = false; return m; };
+function sendModules(force) { const m = islandModules(), k = JSON.stringify(m); if (island && (force || k !== sentModules)) { sentModules = k; island.webContents.send('island-modules', m); } }
 function islandVisible() {
+  sendModules(false);
   if (!island) return;
   const show = islandSettings().enabled && !islandFull;   // shows at the office too (Boss, 2026-10-22); only the big window stays hidden there
   if (show && !island.isVisible()) island.showInactive(); else if (!show && island.isVisible()) island.hide();
@@ -588,7 +593,7 @@ function createIsland() {
   island.setAlwaysOnTop(true, 'screen-saver'); island.setVisibleOnAllWorkspaces(true);
   island.setIgnoreMouseEvents(true, { forward: true });   // clicks pass through until the mouse is over the pill
   island.loadFile(path.join(__dirname, 'island.html'));
-  island.webContents.on('did-finish-load', () => { island.webContents.send('island-modules', islandSettings().modules); islandSend(); });
+  island.webContents.on('did-finish-load', () => { sendModules(true); islandSend(); });
   island.on('closed', () => { island = null; });
   placeIsland(); islandVisible();
   const { screen } = require('electron');
@@ -608,6 +613,7 @@ function startIslandHelper() {
       let m; try { m = JSON.parse(line); } catch { continue; }
       if (m.t === 'media' && island) island.webContents.send('island-media', m);
       if (m.t === 'full') { islandFull = !!m.on; islandVisible(); }
+      if ((m.t === 'net' || m.t === 'bright') && island) island.webContents.send('island-sys', m);
     }
   });
   islandHelper.on('exit', () => { islandHelper = null; if (!quitting && island) setTimeout(startIslandHelper, 5000); });   // crashed: start again
@@ -646,7 +652,10 @@ setInterval(islandPointer, 40);
 ipcMain.on('island-blur', () => { if (island) island.blur(); });
 ipcMain.on('island-open', (_e, page) => { if (!/^[a-z]+$/.test(page) || !win) return; win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = '${page}'`); });
 ipcMain.on('island-settings', (_e, uri) => { if (/^ms-settings:[a-z-]+$/.test(uri)) shell.openExternal(uri); });
-ipcMain.handle('island-act', (_e, { action, args }) => (['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed'));
+ipcMain.handle('island-act', (_e, { action, args }) => {
+  if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
+  return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
+});
 setInterval(islandVisible, 30000);   // home/office switch
 app.on('before-quit', () => { quitting = true; try { islandHelper && islandHelper.kill(); } catch {} });
 

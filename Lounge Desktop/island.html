@@ -43,6 +43,17 @@ html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.
 .muted { color: var(--dim); } h3 { margin: 2px 0 6px; font-size: 13px; color: var(--dim); font-weight: 600; }
 .big-time { font: 600 40px "Segoe UI Variable Display", "Segoe UI", sans-serif; text-align: center; margin: 6px 0; }
 #toastFace { display: flex; align-items: center; gap: 12px; padding: 0 20px; }
+.ico { display: inline-flex; align-items: center; gap: 4px; color: var(--fg); }
+.batt { position: relative; width: 24px; height: 12px; border: 1.5px solid rgba(255,255,255,.55); border-radius: 4px; padding: 1px; }
+.batt::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 4px; border-radius: 0 2px 2px 0; background: rgba(255,255,255,.55); }
+.batt i { display: block; height: 100%; border-radius: 2px; background: #fff; }
+.batt.low i { background: var(--red); } .batt.chg i { background: var(--green); }
+.strip { display: flex; gap: 8px; } .strip .stat { padding: 7px 10px; } .strip .stat b { font-size: 14px; }
+input[type=range] { width: 100%; accent-color: #fff; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 11px; }
+.cal span { padding: 3px 0; border-radius: 8px; color: var(--dim); } .cal b { color: var(--dim); font-weight: 600; font-size: 10px; }
+.cal span.in { color: #fff; } .cal span.today { background: var(--orange); color: #000; font-weight: 700; }
+.split { display: flex; gap: 14px; } .split > div { flex: 1; }
 </style></head>
 <body>
 <div id="pill" tabindex="0" role="button" aria-label="Coco Island. Press Enter to open." aria-expanded="false">
@@ -62,7 +73,21 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pill = $('#pill');
 let S = { approvals: [], tasks: {}, sessions: [], doneToday: 0, recentDone: [] }, media = null, battery = null, weather = '', modules = { coco: true, music: true, control: true, focus: true };
-let tab = 'coco', open = false, pomo = null, toastTimer = null;
+let tab = 'coco', open = false, pomo = null, toastTimer = null, net = null, bright = null, charging = false, chargeSecs = Infinity;
+const wifiIcon = () => {
+  if (!net || !net.on) return '<svg width="16" height="14" viewBox="0 0 24 20" aria-label="No Wi-Fi"><path d="M2 2l20 16" stroke="#ff453a" stroke-width="2.4"/><path d="M12 18l3-4a5 5 0 0 0-6 0z" fill="rgba(255,255,255,.4)"/></svg>';
+  const n = net.signal >= 70 ? 3 : net.signal >= 40 ? 2 : 1, op = (i) => (i <= n ? '#fff' : 'rgba(255,255,255,.3)');
+  return `<svg width="16" height="13" viewBox="0 0 24 20" aria-label="Wi-Fi ${net.signal}%"><path d="M12 19l3.4-4.2a5.6 5.6 0 0 0-6.8 0z" fill="${op(1)}"/><path d="M5.5 11.2a10 10 0 0 1 13 0l-2.1 2.6a6.7 6.7 0 0 0-8.8 0z" fill="${op(2)}"/><path d="M1 5.6a17 17 0 0 1 22 0l-2.1 2.6a13.7 13.7 0 0 0-17.8 0z" fill="${op(3)}"/></svg>`;
+};
+const battIcon = () => battery == null ? '' : `<span class="ico">${charging ? '<svg width="9" height="12" viewBox="0 0 10 16" aria-hidden="true"><path d="M6 0 0 9h4l-1 7 7-10H6z" fill="#30d158"/></svg>' : ''}<span>${battery}%</span><span class="batt ${charging ? 'chg' : battery <= 20 ? 'low' : ''}"><i style="width:${Math.max(6, battery)}%"></i></span></span>`;
+const statusIcons = () => `<span class="ico">${wifiIcon()}</span>${battIcon()}`;
+function monthGrid() {
+  const d = new Date(), y = d.getFullYear(), m = d.getMonth(), first = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+  let h = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((x) => `<b>${x}</b>`).join('');
+  for (let i = 0; i < first; i++) h += '<span></span>';
+  for (let i = 1; i <= days; i++) h += `<span class="in${i === d.getDate() ? ' today' : ''}">${i}</span>`;
+  return `<div class="muted" style="margin-bottom:4px">${d.toLocaleDateString([], { month: 'long', year: 'numeric' })}</div><div class="cal">${h}</div>`;
+}
 const TABS = [['coco', 'Coco'], ['music', 'Music'], ['control', 'Control'], ['focus', 'Focus']];
 
 // ---- size: Bloom's springs (width 400/31, height 450/29, corners 1000/40), run only while moving ----
@@ -111,7 +136,7 @@ function renderCompact() {
   else if (modules.music && media && media.playing) { set(l, `<span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg></span><span style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(media.title)}</span>`); set(r, '<span class="bars on"><i></i><i></i><i></i></span>'); }
   else if (pomo) { const left = Math.max(0, pomo.end - Date.now()); set(l, `<span class="dot ${pomo.brk ? '' : 'orange'}"></span><span>${pomo.brk ? 'Break' : 'Focus'}</span>`); set(r, `<span style="color:var(--orange)">${fmt(left)}</span>`); }
   else if (modules.coco && working) { set(l, `<span class="dot pulse"></span><span>${working} working</span>`); set(r, `<span class="muted">${S.doneToday} done</span>`); }
-  else { set(l, `<span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`); set(r, `<span class="muted">${battery != null ? battery + '%' : ''} ${esc(weather)}</span>`); }
+  else { set(l, `<span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><span class="muted">${esc(weather)}</span>`); set(r, statusIcons()); }
   pill.setAttribute('aria-label', 'Coco Island: ' + $('#compact').innerText.replace(/\s+/g, ' ') + '. Press Enter to open.');
 }
 const fmt = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -131,12 +156,14 @@ function renderFull() {
   if (tab === 'music') $('#p-music').innerHTML = media && !media.none
     ? `<div class="row"><span class="bars ${media.playing ? 'on' : ''}"><i></i><i></i><i></i></span><div class="g"><b>${esc(media.title)}</b><small>${esc(media.artist || media.app)}</small></div></div><div class="btns"><button class="btn" data-media="prev" aria-label="Previous"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button><button class="btn big" data-media="playpause" aria-label="Play or pause">${media.playing ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'}</button><button class="btn" data-media="next" aria-label="Next"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button></div>`
     : '<p class="muted">Nothing is playing.</p><div class="btns"><button class="btn big" data-media="playpause" aria-label="Play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button></div>';
-  if (tab === 'control') $('#p-control').innerHTML = `<h3>Sound</h3><div class="btns"><button class="btn" data-vol="down" aria-label="Volume down">−</button><button class="btn" data-vol="mute" aria-label="Mute"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg></button><button class="btn" data-vol="up" aria-label="Volume up">+</button></div>
+  if (tab === 'control') $('#p-control').innerHTML = `<div class="strip"><div class="stat"><small>Wi-Fi</small><b>${net && net.on ? esc(net.ssid) + ' · ' + net.signal + '%' : 'Off'}</b></div><div class="stat"><small>${charging ? 'Charging' : 'Battery'}</small><b>${battery != null ? battery + '%' : '—'}${isFinite(chargeSecs) && chargeSecs > 0 ? ' · ' + Math.round(chargeSecs / 60) + ' min' + (charging ? ' to full' : ' left') : ''}</b></div></div>
+    ${bright != null ? `<h3 style="margin-top:10px">Brightness ${bright}%</h3><input type="range" min="0" max="100" value="${bright}" id="bright" aria-label="Brightness">` : ''}
+    <h3>Sound</h3><div class="btns"><button class="btn" data-vol="down" aria-label="Volume down">−</button><button class="btn" data-vol="mute" aria-label="Mute"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg></button><button class="btn" data-vol="up" aria-label="Volume up">+</button></div>
     <h3 style="margin-top:12px">Shortcuts</h3><div class="btns"><button class="btn" data-set="ms-settings:network-wifi">Wi-Fi</button><button class="btn" data-set="ms-settings:bluetooth">Bluetooth</button><button class="btn" data-set="ms-settings:display">Display</button><button class="btn" data-set="ms-settings:batterysaver">Battery</button></div>
-    <p class="muted" style="text-align:center;margin-top:10px">${battery != null ? 'Battery ' + battery + '%' : ''} ${esc(weather)} · ${new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })}</p>`;
-  if (tab === 'focus') $('#p-focus').innerHTML = pomo
+    `;
+  if (tab === 'focus') $('#p-focus').innerHTML = `<div class="split"><div>${monthGrid()}</div><div>` + (pomo
     ? `<div class="big-time" style="color:${pomo.brk ? 'var(--green)' : 'var(--orange)'}">${fmt(Math.max(0, pomo.end - Date.now()))}</div><p class="muted" style="text-align:center">${pomo.brk ? 'Break' : 'Focus'} · round ${pomo.round}</p><div class="btns"><button class="btn" data-pomo="stop">Stop</button></div>`
-    : `<div class="big-time">25:00</div><p class="muted" style="text-align:center">Pomodoro: 25 min focus, 5 min break</p><div class="btns"><button class="btn big" data-pomo="start">Start focus</button></div>`;
+    : `<div class="big-time">25:00</div><p class="muted" style="text-align:center">25 min focus, 5 min break</p><div class="btns"><button class="btn big" data-pomo="start">Start</button></div>`) + '</div></div>';
 }
 
 pill.addEventListener('click', (e) => {
@@ -151,12 +178,21 @@ pill.addEventListener('click', (e) => {
   if (d.pomo === 'stop') { pomo = null; renderFull(); renderCompact(); }
 });
 pill.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target !== pill) e.target.click(); });
+pill.addEventListener('change', (e) => { if (e.target.id === 'bright') I.act('bright', { level: Number(e.target.value) }); });
+let wheelAt = 0;
+pill.addEventListener('wheel', (e) => {
+  if (!open || e.target.closest('.panel') && e.target.closest('.panel').scrollHeight > e.target.closest('.panel').clientHeight) return;
+  if (Date.now() - wheelAt < 300) return; wheelAt = Date.now();
+  const shown = TABS.filter(([k]) => modules[k]).map(([k]) => k), i = shown.indexOf(tab);
+  tab = shown[(i + (e.deltaY > 0 || e.deltaX > 0 ? 1 : -1) + shown.length) % shown.length]; renderFull();
+}, { passive: true });
 
 function startPomo(brk, round) { pomo = { brk, round, end: Date.now() + (brk ? 5 : 25) * 60000 }; renderFull(); renderCompact(); }
 
 // ---- toasts: a new approval or a finished job, like a phone notification ----
-function toast(title, sub) {
+function toast(title, sub, color) {
   $('#tT').textContent = title; $('#tS').textContent = sub;
+  $('#toastFace .dot').className = 'dot ' + (color === 'green' ? '' : 'orange');
   if (!open) mode('toast');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { if (!open) mode('compact'); }, 4500);
 }
@@ -173,7 +209,17 @@ I.onMedia((m) => { media = m.none ? null : m; renderCompact(); if (open && tab =
 I.onModules((m) => { modules = m; renderCompact(); if (open) renderFull(); });
 
 // Battery and weather: battery from Chromium; weather once an hour from Open-Meteo (no key), place from the IP once.
-navigator.getBattery?.().then((b) => { const up = () => { battery = Math.round(b.level * 100); renderCompact(); }; up(); b.addEventListener('levelchange', up); });
+navigator.getBattery?.().then((b) => {
+  const up = (plug) => {
+    const was = charging; battery = Math.round(b.level * 100); charging = b.charging; chargeSecs = charging ? b.chargingTime : b.dischargingTime;
+    if (plug && was !== charging) toast(charging ? 'Charging' : 'On battery', battery + '%' + (charging ? ' ⚡' : ''), charging ? 'green' : '');
+    renderCompact(); if (open && tab === 'control') renderFull();
+  };
+  up(false);
+  b.addEventListener('levelchange', () => up(false)); b.addEventListener('chargingchange', () => up(true));
+  b.addEventListener('chargingtimechange', () => up(false)); b.addEventListener('dischargingtimechange', () => up(false));
+});
+I.onSys((m) => { if (m.t === 'net') net = m; if (m.t === 'bright') bright = m.level; renderCompact(); if (open && tab === 'control' && document.activeElement?.id !== 'bright') renderFull(); });
 async function loadWeather() {
   try {
     const loc = await (await fetch('https://ipapi.co/json/')).json();

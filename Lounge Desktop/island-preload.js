@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('cocoIsland', {
   onData: (f) => ipcRenderer.on('island-data', (_e, d) => f(d)),
   onMedia: (f) => ipcRenderer.on('island-media', (_e, d) => f(d)),
   onModules: (f) => ipcRenderer.on('island-modules', (_e, d) => f(d)),
+  onSys: (f) => ipcRenderer.on('island-sys', (_e, d) => f(d)),
   onHover: (f) => ipcRenderer.on('island-hover', (_e, v) => f(!!v)),
   rect: (r) => ipcRenderer.send('island-rect', { w: Number(r.w) || 0, h: Number(r.h) || 0 }),
   close: () => ipcRenderer.send('island-close'),

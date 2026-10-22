@@ -2,10 +2,15 @@
 //   {"t":"media","title":..,"artist":..,"app":..,"playing":true}   from Windows' media controls (any player: Brave, Spotify...)
 //   {"t":"media","none":true}                                       nothing is playing any more
 //   {"t":"full","on":true|false}                                    the window in front covers the whole screen (video, game)
-// Reads nothing else. Exits when Coco closes its stdin.
+//   {"t":"net","ssid":..,"signal":80,"on":true}                     Wi-Fi name and strength (every 10 s, only when changed)
+//   {"t":"bright","level":60}                                       screen brightness (laptop panel; absent on desktop monitors)
+// Reads one command on stdin: "bright <0-100>". Exits when Coco closes its stdin.
 // Build: see build-island-helper.cmd
 using System;
+using System.Diagnostics;
+using System.Management;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
 using Windows.Foundation;
@@ -57,6 +62,51 @@ static class Program
         catch (Exception) { }
     }
 
+    static string lastNet = "", lastBright = "";
+
+    static void Net()
+    {
+        try
+        {
+            ProcessStartInfo psi = new ProcessStartInfo("netsh", "wlan show interfaces");
+            psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.CreateNoWindow = true;
+            string o; using (Process p = Process.Start(psi)) { o = p.StandardOutput.ReadToEnd(); p.WaitForExit(5000); }
+            Match ssid = Regex.Match(o, @"^\s*SSID\s*:\s*(.+?)\s*$", RegexOptions.Multiline);
+            Match sig = Regex.Match(o, @"^\s*Signal\s*:\s*(\d+)%", RegexOptions.Multiline);
+            bool on = Regex.IsMatch(o, @"^\s*State\s*:\s*connected", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            string line = "{\"t\":\"net\",\"ssid\":" + J(on && ssid.Success ? ssid.Groups[1].Value : "") + ",\"signal\":" + (sig.Success ? sig.Groups[1].Value : "0") + ",\"on\":" + (on ? "true" : "false") + "}";
+            if (line != lastNet) { lastNet = line; Emit(line); }
+        }
+        catch (Exception) { }
+    }
+
+    // Laptop panels only (WMI); a desktop monitor has no such object and nothing is sent.
+    static void Bright()
+    {
+        try
+        {
+            using (var q = new ManagementObjectSearcher(@"root\wmi", "SELECT CurrentBrightness FROM WmiMonitorBrightness"))
+                foreach (ManagementObject m in q.Get())
+                {
+                    string line = "{\"t\":\"bright\",\"level\":" + m["CurrentBrightness"] + "}";
+                    if (line != lastBright) { lastBright = line; Emit(line); }
+                    return;
+                }
+        }
+        catch (Exception) { }
+    }
+
+    static void SetBright(int level)
+    {
+        try
+        {
+            using (var q = new ManagementObjectSearcher(@"root\wmi", "SELECT * FROM WmiMonitorBrightnessMethods"))
+                foreach (ManagementObject m in q.Get()) m.InvokeMethod("WmiSetBrightness", new object[] { (uint)1, (byte)Math.Max(0, Math.Min(100, level)) });
+        }
+        catch (Exception) { }
+        Bright();
+    }
+
     static bool Fullscreen()
     {
         IntPtr h = GetForegroundWindow();
@@ -83,9 +133,23 @@ static class Program
         catch (Exception e) { Emit("{\"t\":\"error\",\"what\":" + J("media: " + e.Message) + "}"); }
 
         // Coco closing our stdin = Coco quit: stop too.
-        new Thread(() => { try { while (Console.In.Read() >= 0) { } } catch (Exception) { } Environment.Exit(0); }) { IsBackground = true }.Start();
+        new Thread(() =>
+        {
+            try
+            {
+                string cmd;
+                while ((cmd = Console.In.ReadLine()) != null)
+                {
+                    Match b = Regex.Match(cmd, @"^bright (\d{1,3})$");
+                    if (b.Success) SetBright(int.Parse(b.Groups[1].Value));
+                }
+            }
+            catch (Exception) { }
+            Environment.Exit(0);
+        }) { IsBackground = true }.Start();
 
         bool full = false;
+        int tick = 0;
         Emit("{\"t\":\"full\",\"on\":false}");
         while (true)
         {
@@ -94,6 +158,7 @@ static class Program
             if (mgr != null) Media();
             bool f = Fullscreen();
             if (f != full) { full = f; Emit("{\"t\":\"full\",\"on\":" + (f ? "true" : "false") + "}"); }
+            if (tick++ % 10 == 0) { Net(); Bright(); }   // Wi-Fi and brightness change rarely: every 10 s
             Thread.Sleep(1000);
         }
     }
