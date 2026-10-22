@@ -3,62 +3,143 @@
 <title>Coco Dock</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
 <style>
-/* Coco Dock (Bloom style): a black floating bar at the bottom with the taskbar's pinned apps. Icons near the pointer grow
-   on a spring (Bloom's 400/25), a dot marks open apps. The window lets clicks through everywhere but the bar. */
+/* Coco Dock (our own build, Bloom-style look): a slim black glass bar at the bottom that works like the taskbar.
+   Start, Coco, the taskbar's pinned apps, then every other open app. One icon per app; a dot per open app (two dots for
+   two or more windows). Hover an open app: live previews of its windows. Icons grow a little on a spring (400/25).
+   The window lets clicks through everywhere except the bar and the preview. */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; background: transparent; overflow: hidden; user-select: none; font: 12px "Segoe UI", system-ui, sans-serif; }
-#dock { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 6px; padding: 7px 10px;
-  background: rgba(0,0,0,.86); border-radius: 22px; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
-.app { position: relative; width: 46px; height: 46px; border: 0; padding: 0; background: none; cursor: pointer; transform-origin: 50% 100%; outline: none; }
-.app img, .app .start { width: 100%; height: 100%; display: block; border-radius: 12px; pointer-events: none; }
-.app .start { display: grid; place-items: center; background: #2c2c2e; }
-.app::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: transparent; }
-.app.on::after { background: #fff; }
-.app:focus-visible { box-shadow: 0 0 0 2px #0a84ff; border-radius: 12px; }
-.tip { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 4px 9px; border-radius: 8px; white-space: nowrap; opacity: 0; transition: opacity .12s; pointer-events: none; }
-.app:hover .tip, .app:focus-visible .tip { opacity: 1; }
-.sep { width: 1px; height: 34px; background: rgba(255,255,255,.18); margin: 0 3px 6px; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; font: 12px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: #fff; }
+#dock { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 4px; padding: 5px 8px;
+  background: linear-gradient(180deg, rgba(28,28,30,.93), rgba(0,0,0,.95)); border-radius: 16px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.09) inset, 0 10px 30px rgba(0,0,0,.45); }
+.app { position: relative; width: 36px; height: 36px; border: 0; padding: 0; background: none; cursor: pointer; transform-origin: 50% 100%; outline: none; flex: none; border-radius: 9px; }
+.app:hover, .app.sel { background: rgba(255,255,255,.08); }
+.app img, .app .tile { width: 28px; height: 28px; margin: 4px; display: block; border-radius: 7px; pointer-events: none; object-fit: contain; }
+.app .tile { display: grid; place-items: center; background: #2c2c2e; }
+.dots { position: absolute; left: 50%; bottom: -3px; transform: translateX(-50%); display: flex; gap: 2px; pointer-events: none; }
+.dots i { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,.75); }
+.app.front .dots i:first-child { width: 12px; border-radius: 2px; background: #fff; }
+.app:focus-visible { box-shadow: 0 0 0 2px #0a84ff; }
+.badge { position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #ff9f0a; color: #000; font: 700 10px/16px "Segoe UI", sans-serif; text-align: center; pointer-events: none; }
+.app.add .tile { background: transparent; border: 1.5px dashed rgba(255,255,255,.3); color: rgba(255,255,255,.7); font: 300 20px/1 "Segoe UI", sans-serif; }
+.sep { width: 1px; height: 24px; background: rgba(255,255,255,.16); margin: 0 4px 6px; flex: none; }
+#tip { position: absolute; bottom: 56px; background: rgba(28,28,30,.97); padding: 4px 9px; border-radius: 8px; white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.08); opacity: 0; transition: opacity .12s; pointer-events: none; }
+#tip.on { opacity: 1; }
+#pv.on { animation: pop .14s cubic-bezier(.2,.9,.3,1.1); } @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.97); } }
+#pv { position: absolute; bottom: 56px; display: none; gap: 8px; padding: 8px; background: rgba(28,28,30,.97); border-radius: 14px; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 12px 30px rgba(0,0,0,.5); }
+#pv.on { display: flex; }
+.win { width: 200px; border: 0; padding: 6px; background: transparent; color: #fff; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; }
+.win:hover, .win:focus-visible { background: rgba(255,255,255,.1); outline: none; }
+.win b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; margin-bottom: 6px; }
+.win img, .win .ph { width: 188px; height: 118px; display: block; border-radius: 6px; object-fit: contain; background: #111; }
 </style></head>
 <body>
+<div id="pv" role="menu" aria-label="Windows"></div>
+<div id="tip"></div>
 <div id="dock" role="toolbar" aria-label="Coco Dock"></div>
 <script>
-const D = window.cocoDock, dock = document.getElementById('dock');
+const D = window.cocoDock, dock = document.getElementById('dock'), pv = document.getElementById('pv'), tip = document.getElementById('tip');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let apps = [], running = new Set();
+let apps = [], wins = [], badge = 0, front = 0, groups = [];
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const START = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M3 3h8.5v8.5H3zm9.5 0H21v8.5h-8.5zM3 12.5h8.5V21H3zm9.5 0H21V21h-8.5z"/></svg>';
+const COCO = '<svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#ff9f0a"/><circle cx="9" cy="10.5" r="1.4" fill="#000"/><circle cx="15" cy="10.5" r="1.4" fill="#000"/><path d="M8.5 14.5q3.5 3 7 0" stroke="#000" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
 
+// One entry per app: pinned ones first (with their windows), then open apps that are not pinned, in first-opened order.
+function build() {
+  const used = new Set(), list = [];
+  // Web apps first (YouTube installed from Brave runs in brave.exe; its window title starts with its name), then programs.
+  const of = new Map();
+  apps.filter((a) => !a.proc).forEach((a) => of.set(a, wins.filter((x) => /^(brave|chrome|msedge)$/.test(x.name) && x.title.startsWith(a.name)).map((x) => (used.add(x.hwnd), x))));
+  apps.filter((a) => a.proc).forEach((a) => of.set(a, wins.filter((x) => x.name === a.proc && !used.has(x.hwnd)).map((x) => (used.add(x.hwnd), x))));
+  apps.forEach((a) => list.push({ key: 'pin:' + a.path, name: a.name, icon: a.icon, lnk: a.path, wins: of.get(a) }));
+  const rest = new Map();
+  for (const w of wins) if (!used.has(w.hwnd)) { const k = w.name === 'applicationframehost' ? 'app:' + w.title : 'app:' + w.name; if (!rest.has(k)) rest.set(k, { key: k, name: w.title, icon: w.icon, wins: [] }); rest.get(k).wins.push(w); }
+  return [list, [...rest.values()]];   // an app without a readable icon still shows (as a letter tile), never disappears
+}
 function render() {
-  dock.innerHTML = `<button class="app" data-start aria-label="Start"><span class="start"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M3 3h8.5v8.5H3zm9.5 0H21v8.5h-8.5zM3 12.5h8.5V21H3zm9.5 0H21V21h-8.5z"/></svg></span><span class="tip">Start</span></button><span class="sep"></span>`
-    + apps.map((a, i) => `<button class="app${running.has(a.proc) ? ' on' : ''}" data-i="${i}" aria-label="${esc(a.name)}${running.has(a.proc) ? ', open' : ''}"><img src="${a.icon}" alt=""><span class="tip">${esc(a.name)}</span></button>`).join('');
+  const [pinned, others] = build(); groups = [...pinned, ...others];
+  const pic = (g) => g.icon ? `<img src="${g.icon}" alt="">` : `<span class="tile" style="font:700 14px 'Segoe UI'">${esc(String(g.name || '?').trim().slice(0, 1).toUpperCase())}</span>`;
+  const btn = (g, i) => `<button class="app${g.wins.some((w) => w.hwnd === front) ? ' front' : ''}" data-g="${i}" aria-label="${esc(g.name)}${g.wins.length ? ', ' + g.wins.length + ' open' : ''}">${pic(g)}${g.wins.length ? `<span class="dots">${'<i></i>'.repeat(Math.min(2, g.wins.length))}</span>` : ''}</button>`;
+  dock.innerHTML = `<button class="app" data-k="start" aria-label="Start"><span class="tile">${START}</span></button>`
+    + `<button class="app" data-k="coco" aria-label="Coco${badge ? ', ' + badge + ' approvals waiting' : ''}"><span class="tile">${COCO}</span>${badge ? `<span class="badge">${badge}</span>` : ''}</button><span class="sep"></span>`
+    + pinned.map((g, i) => btn(g, i)).join('') + (others.length ? '<span class="sep"></span>' + others.map((g, i) => btn(g, pinned.length + i)).join('') : '')
+    + `<button class="app add" data-k="add" aria-label="Pin an app"><span class="tile">+</span></button>`;
   cells = [...dock.querySelectorAll('.app')]; scale = cells.map(() => 1); vel = cells.map(() => 0); goal = cells.map(() => 1);
-  D.size(dock.getBoundingClientRect().width);
+  report();
+}
+// The bar and the open preview are the only places that take clicks; main is told where they are.
+function report() {
+  const r = [dock.getBoundingClientRect()]; if (pv.classList.contains('on')) r.push(pv.getBoundingClientRect());
+  D.rects(r.map((x) => ({ x: Math.round(x.left), y: Math.round(x.top), w: Math.round(x.width), h: Math.round(x.height) })));
 }
 
-// Magnify: each icon springs toward a size set by its distance from the pointer.
+// Gentle magnify (+15% at most), on a spring.
 let cells = [], scale = [], vel = [], goal = [], raf = 0, last = 0;
 function aim(x) {
-  goal = cells.map((c) => { if (x == null) return 1; const r = c.getBoundingClientRect(), d = Math.abs(x - (r.left + r.width / 2)); return 1 + 0.5 * Math.max(0, 1 - d / 120); });
+  goal = cells.map((c) => { if (x == null) return 1; const r = c.getBoundingClientRect(), d = Math.abs(x - (r.left + r.width / 2)); return 1 + 0.15 * Math.max(0, 1 - d / 80); });
   if (reduced) { scale = [...goal]; paint(); return; }
   if (!raf) { last = performance.now(); raf = requestAnimationFrame(step); }
 }
-function paint() { cells.forEach((c, i) => { c.style.transform = `scale(${scale[i]})`; c.style.margin = `0 ${(scale[i] - 1) * 14}px`; }); }
+function paint() { cells.forEach((c, i) => { c.style.transform = `scale(${scale[i]})`; }); }
 function step(t) {
   const dt = Math.min(0.032, (t - last) / 1000); last = t; let moving = false;
   for (let i = 0; i < cells.length; i++) {
-    vel[i] += (400 * (goal[i] - scale[i]) - 25 * vel[i]) * dt; scale[i] += vel[i] * dt;
+    vel[i] += (700 * (goal[i] - scale[i]) - 42 * vel[i]) * dt; scale[i] += vel[i] * dt;   // quick, almost no bounce
     if (Math.abs(goal[i] - scale[i]) > 0.002 || Math.abs(vel[i]) > 0.002) moving = true; else { scale[i] = goal[i]; vel[i] = 0; }
   }
   paint(); raf = moving ? requestAnimationFrame(step) : 0;
 }
-addEventListener('mousemove', (e) => { const r = dock.getBoundingClientRect(); aim(e.clientY >= r.top - 30 && e.clientX >= r.left - 20 && e.clientX <= r.right + 20 ? e.clientX : null); });
-addEventListener('mouseleave', () => aim(null));
+
+// Hover: a name tip at once; for an open app, live previews after 400 ms (like the taskbar). Leaving closes them after 300 ms.
+let hoverG = null, pvTimer = 0, closeTimer = 0, pvFor = null;
+function place(el, b) { const r = b.getBoundingClientRect(); el.style.left = Math.max(6, Math.min(innerWidth - el.offsetWidth - 6, r.left + r.width / 2 - el.offsetWidth / 2)) + 'px'; }
+dock.addEventListener('mouseover', (e) => {
+  const b = e.target.closest('.app'); if (!b) return;
+  clearTimeout(closeTimer);
+  const g = b.dataset.g != null ? groups[Number(b.dataset.g)] : null;
+  tip.textContent = b.dataset.k === 'add' ? 'Pin an app' : b.dataset.k === 'start' ? 'Start' : b.dataset.k === 'coco' ? (badge ? badge + ' waiting for your YES' : 'Coco') : g ? (g.wins.length === 1 ? g.wins[0].title : g.name) : '';
+  if (!pv.classList.contains('on')) { tip.classList.add('on'); place(tip, b); }
+  if (g && g.wins.length && pvFor !== g.key) { clearTimeout(pvTimer); pvTimer = setTimeout(() => showPreview(g, b), pv.classList.contains('on') ? 0 : 250); }
+  if (!g || !g.wins.length) { clearTimeout(pvTimer); if (pv.classList.contains('on')) closePreview(); }
+});
+dock.addEventListener('mouseout', (e) => { if (!e.relatedTarget || !e.relatedTarget.closest('.app')) { tip.classList.remove('on'); clearTimeout(pvTimer); closeTimer = setTimeout(closePreview, 300); } });
+pv.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+pv.addEventListener('mouseleave', () => { closeTimer = setTimeout(closePreview, 300); });
+addEventListener('mousemove', (e) => { const r = dock.getBoundingClientRect(); aim(e.clientY >= r.top - 10 && e.clientX >= r.left && e.clientX <= r.right ? e.clientX : null); });
+addEventListener('mouseleave', () => { aim(null); tip.classList.remove('on'); });
+
+async function showPreview(g, b) {
+  pvFor = g.key; tip.classList.remove('on');
+  pv.innerHTML = g.wins.map((w) => `<button class="win" role="menuitem" data-h="${w.hwnd}"><b>${esc(w.title)}</b><span class="ph"></span></button>`).join('');
+  pv.classList.add('on'); place(pv, b); report();
+  const shots = await D.preview(g.wins.map((w) => w.hwnd));   // live pictures, taken now
+  if (pvFor !== g.key) return;
+  for (const s of shots) { const el = pv.querySelector(`[data-h="${s.hwnd}"] .ph`); if (el && s.thumb) el.outerHTML = `<img src="${s.thumb}" alt="">`; }
+}
+function closePreview() { pv.classList.remove('on'); pvFor = null; report(); }
+pv.addEventListener('click', (e) => { const w = e.target.closest('.win'); if (w) { D.focusWin(Number(w.dataset.h)); closePreview(); } });
 
 dock.addEventListener('click', (e) => {
   const b = e.target.closest('.app'); if (!b) return;
-  if (b.dataset.start != null) return D.start();
-  const a = apps[Number(b.dataset.i)]; D.launch(a.path, running.has(a.proc) ? a.proc : '');
+  if (b.dataset.k === 'start') return D.start();
+  if (b.dataset.k === 'coco') return D.coco();
+  if (b.dataset.k === 'add') return D.add();
+  const g = groups[Number(b.dataset.g)]; if (!g) return;
+  if (g.wins.length === 0) return g.lnk && D.launch(g.lnk);                                   // closed: open it
+  if (g.wins.length === 1) return D.focusWin(g.wins[0].hwnd === front ? -g.wins[0].hwnd : g.wins[0].hwnd);   // open: front, or minimise if already in front
+  showPreview(g, b);                                                                           // several windows: pick one
 });
+// Right-click: on an app its own menu (pin/unpin, new window, close); anywhere else the Dock menu.
+dock.addEventListener('contextmenu', (e) => {
+  e.preventDefault(); const b = e.target.closest('.app'); const g = b && b.dataset.g != null ? groups[Number(b.dataset.g)] : null;
+  if (g) D.appMenu({ lnk: g.lnk, exe: (g.wins[0] && g.wins[0].path) || '', hwnds: g.wins.map((w) => w.hwnd) }); else D.menu();
+});
+
 D.onApps((list) => { apps = list; render(); });
-D.onProcs((names) => { running = new Set(names); cells.forEach((c) => { const a = apps[Number(c.dataset.i)]; if (a) c.classList.toggle('on', running.has(a.proc)); }); });
+let key = '';
+D.onWins((d) => { const k = JSON.stringify([d.list.map((w) => w.hwnd + w.name + (w.icon ? 1 : 0)), d.badge, d.front]); wins = d.list; front = d.front; badge = d.badge; if (k !== key) { key = k; if (!pv.classList.contains('on')) render(); } });
+render();
 </script>
 </body></html>

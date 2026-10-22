@@ -14,8 +14,8 @@ html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.
 #pill:focus-visible { box-shadow: 0 0 0 2px var(--blue); }
 /* over a maximised app (Chrome tabs) the small pill steps aside; it comes back on hover, for a toast or when opened */
 #pill { transition: opacity .2s; } #pill.away:not(.open):not(.toast) { opacity: 0; transition: opacity .25s; }
-.face { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .16s; }
-#pill:not(.open):not(.toast) #compact, #pill.open #full, #pill.toast #toastFace { opacity: 1; pointer-events: auto; transition: opacity .2s .1s; }
+.face { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .1s; }
+#pill:not(.open):not(.toast) #compact, #pill.open #full, #pill.toast #toastFace { opacity: 1; pointer-events: auto; transition: opacity .16s .05s; }
 #compact { display: flex; align-items: center; justify-content: space-between; padding: 0 14px; }
 #compact .l, #compact .r { display: flex; align-items: center; gap: 7px; white-space: nowrap; overflow: hidden; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
@@ -45,6 +45,37 @@ html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.
 .muted { color: var(--dim); } h3 { margin: 2px 0 6px; font-size: 13px; color: var(--dim); font-weight: 600; }
 .big-time { font: 600 40px "Segoe UI Variable Display", "Segoe UI", sans-serif; text-align: center; margin: 6px 0; }
 #toastFace { display: flex; align-items: center; gap: 12px; padding: 0 20px; }
+/* Command Center tiles and sliders (Bloom-like): white when on, grey when off; sliders fill white to the level */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.tilebtn { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--chip); color: #fff; border: 0; border-radius: 16px; padding: 8px 10px; font: inherit; cursor: pointer; min-width: 0; }
+button.tilebtn:hover, .tl:hover, .tilebtn:focus-visible { background: #3a3a3c; outline: none; } .tilebtn.off { opacity: .45; }
+.tilebtn .ti { border: 0; color: #fff; cursor: pointer; } .tl { flex: 1; min-width: 0; position: relative; background: none; border: 0; color: #fff; text-align: left; font: inherit; cursor: pointer; border-radius: 10px; padding: 2px 14px 2px 4px; }
+.chev { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: 16px; }
+.subhead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; } .subhead b { flex: 1; font-size: 15px; }
+.back { background: var(--chip); border: 0; color: #fff; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; line-height: 1; cursor: pointer; }
+.sw { width: 40px; height: 24px; border-radius: 12px; border: 0; background: #48484a; position: relative; cursor: pointer; transition: background .15s; }
+.sw i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s cubic-bezier(.3,1.3,.5,1); } .sw.on { background: var(--green); } .sw.on i { left: 19px; }
+.list { max-height: 118px; overflow: auto; }
+::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 3px; } ::-webkit-scrollbar-track { background: transparent; }
+.panel { scrollbar-width: thin; } .netrow { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; color: #fff; padding: 6px 8px; border-radius: 10px; text-align: left; font: inherit; cursor: pointer; }
+.netrow:hover { background: #1c1c1e; } .netrow.now b { color: var(--blue); } .netrow .g { flex: 1; min-width: 0; } .netrow b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .netrow small { color: var(--dim); }
+.wbars { display: inline-flex; align-items: flex-end; gap: 2px; width: 18px; } .wbars i { width: 3px; background: #fff; border-radius: 1px; }
+.lock { color: var(--dim); font-size: 11px; } .ti.small { width: 24px; height: 24px; }
+.join { display: flex; gap: 8px; padding: 4px 8px 8px 36px; } .join input { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; color: #fff; border-radius: 10px; padding: 0 10px; font: inherit; }
+.join .btn { height: 34px; min-width: 0; } .msg { margin: 0 0 4px; color: var(--orange); font-size: 12px; } .btn.wide { width: 100%; height: 34px; margin-top: 6px; font-size: 13px; }
+.tilebtn b { display: block; font-weight: 600; } .tilebtn small { display: block; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+.ti { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #48484a; flex: none; }
+.tilebtn.on .ti { background: var(--blue); } .ti.green { background: var(--green); color: #000; }
+.sl { position: relative; display: flex; align-items: center; height: 34px; margin-top: 8px; border-radius: 17px; background: var(--chip); overflow: hidden; }
+.sl::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); background: #fff; pointer-events: none; }
+.sl .si { position: relative; z-index: 1; width: 34px; display: grid; place-items: center; color: #636366; pointer-events: none; }
+.sl .sv { position: absolute; right: 12px; z-index: 1; color: var(--dim); font-weight: 600; pointer-events: none; }
+.sl input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.np { display: flex; gap: 12px; align-items: center; }
+.art { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; flex: none; } .art.blank { display: grid; place-items: center; background: var(--chip); }
+.np .g { min-width: 0; flex: 1; } .np b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .np small { color: var(--dim); display: block; }
+.bars.big { height: 18px; margin-top: 8px; } .bars.big i { width: 4px; }
+.bars.on i:nth-child(4) { animation-delay: -.45s; } .bars.on i:nth-child(5) { animation-delay: -.15s; }
 .ico { display: inline-flex; align-items: center; gap: 4px; color: var(--fg); }
 .batt { position: relative; width: 24px; height: 12px; border: 1.5px solid rgba(255,255,255,.55); border-radius: 4px; padding: 1px; }
 .batt::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 4px; border-radius: 0 2px 2px 0; background: rgba(255,255,255,.55); }
@@ -75,6 +106,38 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const pill = $('#pill');
 let S = { approvals: [], tasks: {}, sessions: [], doneToday: 0, recentDone: [] }, media = null, battery = null, weather = '', modules = { coco: true, music: true, control: true, focus: true };
+const ICON = {
+  note: '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg>',
+  prev: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>',
+  next: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>',
+  play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>',
+  wifi: '<svg width="18" height="18" viewBox="0 0 24 20" fill="currentColor"><path d="M12 19l3.4-4.2a5.6 5.6 0 0 0-6.8 0zM5.5 11.2a10 10 0 0 1 13 0l-2.1 2.6a6.7 6.7 0 0 0-8.8 0zM1 5.6a17 17 0 0 1 22 0l-2.1 2.6a13.7 13.7 0 0 0-17.8 0z"/></svg>',
+  bt: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>',
+  moon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 15.3A8.5 8.5 0 1 1 8.7 4a7 7 0 0 0 11.3 11.3z"/></svg>',
+  bolt: '<svg width="16" height="18" viewBox="0 0 10 16" fill="currentColor"><path d="M6 0 0 9h4l-1 7 7-10H6z"/></svg>',
+  speaker: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg>',
+  muted: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>',
+  sun: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4.5"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="2"/></svg>',
+};
+let vol = { level: null, mute: false }, radio = {};
+const appName = (id) => String(id || '').replace(/\.exe$/i, '').split(/[._!]/)[0];
+const tile = (k, icon, name, on, sub) => `<div class="tilebtn${on ? ' on' : ''}${on == null ? ' off' : ''}"><button class="ti" data-radio="${k}" aria-pressed="${!!on}" aria-label="${name} ${on ? 'on' : 'off'}" ${on == null ? 'disabled' : ''}>${icon}</button><button class="tl" data-sub="${k}" aria-label="${name} list"><b>${name}</b><small>${sub || (on == null ? 'Not available' : '')}</small><span class="chev">›</span></button></div>`;
+let sub = null, wifiList = null, btList = null, joinSsid = null, wifiMsg = '';
+const bars = (n) => `<span class="wbars">${[1, 2, 3, 4].map((i) => `<i style="height:${3 + i * 2}px;opacity:${i <= n ? 1 : .25}"></i>`).join('')}</span>`;
+function subPanel() {
+  const head = (title, k, on) => `<div class="subhead"><button class="back" data-sub="" aria-label="Back">‹</button><b>${title}</b><button class="sw${on ? ' on' : ''}" data-radio="${k}" aria-pressed="${!!on}" aria-label="${title} ${on ? 'on' : 'off'}"><i></i></button></div>`;
+  if (sub === 'wifi') {
+    const rows = wifiList == null ? '<p class="muted">Looking for networks…</p>' : !wifiList.length ? `<p class="muted">${esc(wifiMsg || 'No networks found')}</p>`
+      : wifiList.map((n) => `<button class="netrow${n.now ? ' now' : ''}" data-net="${esc(n.ssid)}" data-saved="${n.saved || !n.secure ? 1 : 0}">${bars(n.bars)}<span class="g"><b>${esc(n.ssid)}</b><small>${n.now ? 'Connected' : n.saved ? 'Saved' : n.secure ? 'Secured' : 'Open'}</small></span>${n.secure ? '<span class="lock">🔒︎</span>' : ''}</button>`
+        + (joinSsid === n.ssid ? `<div class="join"><input type="password" id="wpw" placeholder="Password" aria-label="Password for ${esc(n.ssid)}" autocomplete="off"><button class="btn big" data-join="${esc(n.ssid)}">Join</button></div>` : '')).join('');
+    return head('Wi-Fi', 'wifi', radio.wifi) + (wifiMsg && wifiList && wifiList.length ? `<p class="msg">${esc(wifiMsg)}</p>` : '') + `<div class="list">${radio.wifi === false ? '<p class="muted">Wi-Fi is off.</p>' : rows}</div>`;
+  }
+  const rows = btList == null ? '<p class="muted">Reading devices…</p>' : !btList.length ? '<p class="muted">No paired devices</p>'
+    : btList.map((d) => `<div class="netrow${d.connected ? ' now' : ''}"><span class="ti small">${ICON.bt}</span><span class="g"><b>${esc(d.name)}</b><small>${d.connected ? 'Connected' : 'Paired'}</small></span></div>`).join('');
+  return head('Bluetooth', 'bt', radio.bt) + `<div class="list">${radio.bt === false ? '<p class="muted">Bluetooth is off.</p>' : rows}</div><button class="btn wide" data-set="ms-settings:bluetooth">Connect or add a device…</button>`;
+}
+const slider = (id, icon, v, label, missing) => missing ? '' : `<label class="sl" style="--v:${v}%"><span class="si">${icon}</span><input type="range" min="0" max="100" value="${v}" id="${id}" aria-label="${label}"><span class="sv">${v}</span></label>`;
 let tab = 'coco', open = false, pomo = null, toastTimer = null, net = null, bright = null, charging = false, chargeSecs = Infinity;
 const wifiIcon = () => {
   if (!net || !net.on) return '<svg width="16" height="14" viewBox="0 0 24 20" aria-label="No Wi-Fi"><path d="M2 2l20 16" stroke="#ff453a" stroke-width="2.4"/><path d="M12 18l3-4a5 5 0 0 0-6 0z" fill="rgba(255,255,255,.4)"/></svg>';
@@ -93,9 +156,9 @@ function monthGrid() {
 const TABS = [['coco', 'Coco'], ['music', 'Music'], ['control', 'Control'], ['focus', 'Focus']];
 
 // ---- size: Bloom's springs (width 400/31, height 450/29, corners 1000/40), run only while moving ----
-const SIZES = { compact: [200, 32, 16], open: [440, 292, 30], toast: [360, 62, 30] };
+const SIZES = { compact: [200, 32, 16], open: [440, 262, 30], toast: [360, 62, 30] };
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const SPR = [[400, 31], [450, 29], [1000, 40]];
+const SPR = [[600, 42], [650, 44], [1200, 55]];   // stiffer than Bloom: quicker, smooth, barely any bounce
 let cur = [...SIZES.compact], vel = [0, 0, 0], goal = [...SIZES.compact], raf = 0, lastT = 0;
 function mode(m) {
   goal = [...SIZES[m]];
@@ -135,7 +198,7 @@ function renderCompact() {
   const l = $('#cl'), r = $('#cr');
   const working = S.sessions.length + (S.tasks.working || 0);
   if (modules.coco && S.approvals.length) { set(l, `<span class="dot orange pulse"></span><span>${S.approvals.length} approval${S.approvals.length > 1 ? 's' : ''}</span>`); set(r, `<span class="muted">YES?</span>`); }
-  else if (modules.music && media && media.playing) { set(l, `<span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg></span><span style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(media.title)}</span>`); set(r, '<span class="bars on"><i></i><i></i><i></i></span>'); }
+  else if (modules.music && media && media.playing) { set(l, `${media.art ? `<img src="${media.art}" alt="" style="width:20px;height:20px;border-radius:6px;object-fit:cover">` : `<span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg></span>`}<span style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(media.title)}</span>`); set(r, '<span class="bars on"><i></i><i></i><i></i></span>'); }
   else if (pomo) { const left = Math.max(0, pomo.end - Date.now()); set(l, `<span class="dot ${pomo.brk ? '' : 'orange'}"></span><span>${pomo.brk ? 'Break' : 'Focus'}</span>`); set(r, `<span style="color:var(--orange)">${fmt(left)}</span>`); }
   else if (modules.coco && working) { set(l, `<span class="dot pulse"></span><span>${working} working</span>`); set(r, `<span class="muted">${S.doneToday} done</span>`); }
   else { set(l, `<span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><span class="muted">${esc(weather)}</span>`); set(r, statusIcons()); }
@@ -156,31 +219,50 @@ function renderFull() {
       + (!S.approvals.length && !S.sessions.length && !S.recentDone.length ? '<p class="muted">All quiet. Nothing waits for you.</p>' : '');
   }
   if (tab === 'music') $('#p-music').innerHTML = media && !media.none
-    ? `<div class="row"><span class="bars ${media.playing ? 'on' : ''}"><i></i><i></i><i></i></span><div class="g"><b>${esc(media.title)}</b><small>${esc(media.artist || media.app)}</small></div></div><div class="btns"><button class="btn" data-media="prev" aria-label="Previous"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button><button class="btn big" data-media="playpause" aria-label="Play or pause">${media.playing ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'}</button><button class="btn" data-media="next" aria-label="Next"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button></div>`
-    : '<p class="muted">Nothing is playing.</p><div class="btns"><button class="btn big" data-media="playpause" aria-label="Play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button></div>';
-  if (tab === 'control') $('#p-control').innerHTML = `<div class="strip"><div class="stat"><small>Wi-Fi</small><b>${net && net.on ? esc(net.ssid) + ' · ' + net.signal + '%' : 'Off'}</b></div><div class="stat"><small>${charging ? 'Charging' : 'Battery'}</small><b>${battery != null ? battery + '%' : '—'}${isFinite(chargeSecs) && chargeSecs > 0 ? ' · ' + Math.round(chargeSecs / 60) + ' min' + (charging ? ' to full' : ' left') : ''}</b></div></div>
-    ${bright != null ? `<h3 style="margin-top:10px">Brightness ${bright}%</h3><input type="range" min="0" max="100" value="${bright}" id="bright" aria-label="Brightness">` : ''}
-    <h3>Sound</h3><div class="btns"><button class="btn" data-vol="down" aria-label="Volume down">−</button><button class="btn" data-vol="mute" aria-label="Mute"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg></button><button class="btn" data-vol="up" aria-label="Volume up">+</button></div>
-    <h3 style="margin-top:12px">Shortcuts</h3><div class="btns"><button class="btn" data-set="ms-settings:network-wifi">Wi-Fi</button><button class="btn" data-set="ms-settings:bluetooth">Bluetooth</button><button class="btn" data-set="ms-settings:display">Display</button><button class="btn" data-set="ms-settings:batterysaver">Battery</button></div>
-    `;
+    ? `<div class="np">${media.art ? `<img class="art" src="${media.art}" alt="">` : `<span class="art blank">${ICON.note}</span>`}<div class="g"><b>${esc(media.title)}</b><small>${esc(media.artist || appName(media.app))}</small>
+        <span class="bars big ${media.playing ? 'on' : ''}"><i></i><i></i><i></i><i></i><i></i></span></div></div>
+      <div class="btns"><button class="btn" data-media="prev" aria-label="Previous">${ICON.prev}</button><button class="btn big" data-media="playpause" aria-label="${media.playing ? 'Pause' : 'Play'}">${media.playing ? ICON.pause : ICON.play}</button><button class="btn" data-media="next" aria-label="Next">${ICON.next}</button></div>`
+    : `<div class="np"><span class="art blank">${ICON.note}</span><div class="g"><b>Nothing playing</b><small>Start a song in any app</small></div></div><div class="btns"><button class="btn big" data-media="playpause" aria-label="Play">${ICON.play}</button></div>`;
+  // Command Center, Bloom style: four tiles (two real switches) and two sliders with the real levels.
+  if (tab === 'control' && sub) { $('#p-control').innerHTML = subPanel(); const pw = $('#wpw'); if (pw && document.activeElement !== pw) pw.focus(); }
+  else if (tab === 'control') $('#p-control').innerHTML = `<div class="tiles">
+      ${tile('wifi', ICON.wifi, 'Wi-Fi', radio.wifi, net && net.on ? esc(net.ssid) : radio.wifi === false ? 'Off' : 'Not connected')}
+      ${tile('bt', ICON.bt, 'Bluetooth', radio.bt, radio.bt ? 'On' : radio.bt === false ? 'Off' : '')}
+      <button class="tilebtn" data-set="ms-settings:quiethours"><span class="ti">${ICON.moon}</span><span><b>Focus</b><small>Do not disturb</small></span></button>
+      <button class="tilebtn" data-set="ms-settings:batterysaver"><span class="ti ${charging ? 'green' : ''}">${ICON.bolt}</span><span><b>${battery != null ? battery + '%' : 'Battery'}</b><small>${charging ? (isFinite(chargeSecs) && chargeSecs > 0 ? Math.round(chargeSecs / 60) + ' min to full' : 'Charging') : (isFinite(chargeSecs) && chargeSecs > 0 ? Math.round(chargeSecs / 60) + ' min left' : 'On battery')}</small></span></button>
+    </div>
+    ${slider('vol', vol.mute ? ICON.muted : ICON.speaker, vol.level, 'Volume', vol.level == null)}
+    ${slider('bright', ICON.sun, bright, 'Brightness', bright == null)}`;
   if (tab === 'focus') $('#p-focus').innerHTML = `<div class="split"><div>${monthGrid()}</div><div>` + (pomo
     ? `<div class="big-time" style="color:${pomo.brk ? 'var(--green)' : 'var(--orange)'}">${fmt(Math.max(0, pomo.end - Date.now()))}</div><p class="muted" style="text-align:center">${pomo.brk ? 'Break' : 'Focus'} · round ${pomo.round}</p><div class="btns"><button class="btn" data-pomo="stop">Stop</button></div>`
     : `<div class="big-time">25:00</div><p class="muted" style="text-align:center">25 min focus, 5 min break</p><div class="btns"><button class="btn big" data-pomo="start">Start</button></div>`) + '</div></div>';
 }
 
 pill.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo]'); if (!t) return;
+  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join]'); if (!t) return;
   const d = t.dataset;
   if (d.tab) { tab = d.tab; renderFull(); }
   if (d.open) { I.openCoco(d.open); I.close(); }
   if (d.media) I.act('media', { key: d.media });
   if (d.vol) I.act('volume', { key: d.vol, steps: 2 });
+  if (d.radio && !t.disabled) { radio[d.radio] = !radio[d.radio]; renderFull(); I.act('radio', { kind: d.radio, on: radio[d.radio] }); }
+  if (d.sub !== undefined) { sub = d.sub || null; joinSsid = null; wifiMsg = ''; if (sub === 'wifi') { wifiList = null; I.act('wifiscan'); } if (sub === 'bt') { btList = null; I.act('btlist'); } renderFull(); }
+  if (d.net) { if (d.saved === '1') { wifiMsg = 'Connecting to ' + d.net + '…'; I.act('wificonnect', { ssid: d.net }); } else joinSsid = joinSsid === d.net ? null : d.net; renderFull(); }
+  if (d.join) { const pw = $('#wpw'); if (pw && pw.value) { wifiMsg = 'Connecting to ' + d.join + '…'; I.act('wificonnect', { ssid: d.join, password: pw.value }); pw.value = ''; joinSsid = null; renderFull(); } }
   if (d.set) I.openSettings(d.set);
   if (d.pomo === 'start') startPomo(false, 1);
   if (d.pomo === 'stop') { pomo = null; renderFull(); renderCompact(); }
 });
 pill.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target !== pill) e.target.click(); });
-pill.addEventListener('change', (e) => { if (e.target.id === 'bright') I.act('bright', { level: Number(e.target.value) }); });
+// Sliders: fill follows the finger at once; the PC is told at most every 80 ms and once more on release.
+let slideAt = 0;
+pill.addEventListener('input', (e) => {
+  const t = e.target; if (t.id !== 'vol' && t.id !== 'bright') return;
+  const v = Number(t.value); t.parentElement.style.setProperty('--v', v + '%'); t.parentElement.querySelector('.sv').textContent = v;
+  if (t.id === 'vol') vol.level = v; else bright = v;
+  if (Date.now() - slideAt > 80) { slideAt = Date.now(); I.act(t.id === 'vol' ? 'vol' : 'bright', { level: v }); }
+});
+pill.addEventListener('change', (e) => { const t = e.target; if (t.id === 'vol' || t.id === 'bright') I.act(t.id === 'vol' ? 'vol' : 'bright', { level: Number(t.value) }); });
 let wheelAt = 0;
 pill.addEventListener('wheel', (e) => {
   if (!open || e.target.closest('.panel') && e.target.closest('.panel').scrollHeight > e.target.closest('.panel').clientHeight) return;
@@ -221,7 +303,15 @@ navigator.getBattery?.().then((b) => {
   b.addEventListener('levelchange', () => up(false)); b.addEventListener('chargingchange', () => up(true));
   b.addEventListener('chargingtimechange', () => up(false)); b.addEventListener('dischargingtimechange', () => up(false));
 });
-I.onSys((m) => { if (m.t === 'max') pill.classList.toggle('away', !!m.on); if (m.t === 'net') net = m; if (m.t === 'bright') bright = m.level; renderCompact(); if (open && tab === 'control' && document.activeElement?.id !== 'bright') renderFull(); });
+I.onSys((m) => {
+  if (m.t === 'max') pill.classList.toggle('away', !!m.on);
+  if (m.t === 'net') net = m; if (m.t === 'bright') bright = m.level; if (m.t === 'vol') vol = m; if (m.t === 'radio') radio = { wifi: m.wifi, bt: m.bt };
+  if (m.t === 'wifilist') { wifiList = m.list; if (m.why) wifiMsg = m.why; }
+  if (m.t === 'btlist') btList = m.list;
+  if (m.t === 'wifiresult') { wifiMsg = m.ok ? 'Connected to ' + m.ssid : 'Could not connect to ' + m.ssid + (m.why ? ': ' + m.why : ''); if (m.ok) I.act('wifiscan'); }
+  renderCompact();
+  if (open && tab === 'control' && !['vol', 'bright', 'wpw'].includes(document.activeElement?.id) && Date.now() - slideAt > 600) renderFull();
+});
 async function loadWeather() {
   try {
     const loc = await (await fetch('https://ipapi.co/json/')).json();

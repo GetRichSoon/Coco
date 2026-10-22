@@ -19,9 +19,10 @@ using System.Threading;
 using Windows.Foundation;
 using Windows.Media.Control;
 
-static class Program
+static partial class Program
 {
     [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
     [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
@@ -35,11 +36,13 @@ static class Program
     // Waits for a WinRT call without the AsTask bridge (that needs SDK files this PC does not have).
     static T Wait<T>(this IAsyncOperation<T> op)
     {
-        while (op.Status == AsyncStatus.Started) Thread.Sleep(5);
+        // Never wait more than 3 s: a call that hangs (radios without access) must not stop the island's loop.
+        for (int i = 0; i < 600 && op.Status == AsyncStatus.Started; i++) Thread.Sleep(5);
+        if (op.Status == AsyncStatus.Started) { try { op.Cancel(); } catch (Exception) { } throw new TimeoutException("WinRT call took over 3 s"); }
         return op.GetResults();
     }
 
-    static string last = "";
+    static string last = "", lastArtTitle = "", lastArt = "";
     static readonly object gate = new object();
 
     static string J(string s) { return "\"" + (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", " ").Replace("\r", " ") + "\""; }
@@ -59,7 +62,8 @@ static class Program
                 var p = s.TryGetMediaPropertiesAsync().Wait();
                 var info = s.GetPlaybackInfo();
                 bool playing = info.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
-                line = "{\"t\":\"media\",\"title\":" + J(p.Title) + ",\"artist\":" + J(p.Artist) + ",\"app\":" + J(s.SourceAppUserModelId) + ",\"playing\":" + (playing ? "true" : "false") + "}";
+                if (p.Title != lastArtTitle) { lastArtTitle = p.Title; lastArt = ArtOf(p); }   // the picture is read once per song
+                line = "{\"t\":\"media\",\"title\":" + J(p.Title) + ",\"artist\":" + J(p.Artist) + ",\"app\":" + J(s.SourceAppUserModelId) + ",\"playing\":" + (playing ? "true" : "false") + ",\"art\":" + J(lastArt) + "}";
             }
             if (line != last) { last = line; Emit(line); }
         }
@@ -214,6 +218,22 @@ static class Program
                     if (f.Success) Focus(f.Groups[1].Value);
                     if (cmd == "start") { keybd_event(0x5B, 0, 0, UIntPtr.Zero); keybd_event(0x5B, 0, 2, UIntPtr.Zero); }
                     if (cmd == "autohide on" || cmd == "autohide off") AutoHide(cmd.EndsWith("on"));
+                    Match v = Regex.Match(cmd, @"^vol (\d{1,3})$");
+                    if (v.Success) SetVol(int.Parse(v.Groups[1].Value));
+                    if (cmd == "mute") ToggleMute();
+                    Match fh = Regex.Match(cmd, @"^focushwnd (\d{1,19})$");
+                    if (fh.Success) FocusHwnd(long.Parse(fh.Groups[1].Value));
+                    Match ch = Regex.Match(cmd, @"^closehwnd (\d{1,19})$");
+                    if (ch.Success) PostMessage(new IntPtr(long.Parse(ch.Groups[1].Value)), 0x10, IntPtr.Zero, IntPtr.Zero);   // WM_CLOSE: the app may still ask to save
+                    Match mh = Regex.Match(cmd, @"^minhwnd (\d{1,19})$");
+                    if (mh.Success) MinHwnd(long.Parse(mh.Groups[1].Value));
+                    Match rd = Regex.Match(cmd, @"^radio (wifi|bt) (on|off)$");
+                    if (rd.Success) SetRadio(rd.Groups[1].Value, rd.Groups[2].Value == "on");
+                    // slow calls (scan, connect, device list) run on their own thread so the island never waits
+                    if (cmd == "wifi scan") new Thread(WifiScan) { IsBackground = true }.Start();
+                    if (cmd == "bt list") new Thread(BtList) { IsBackground = true }.Start();
+                    if (cmd.StartsWith("wifi connect ")) { string id = cmd.Substring(13); new Thread(() => WifiConnect(id, null)) { IsBackground = true }.Start(); }
+                    if (cmd.StartsWith("wifi join ") && cmd.IndexOf('	') > 10) { string id = cmd.Substring(10, cmd.IndexOf('	') - 10), pw = cmd.Substring(cmd.IndexOf('	') + 1); new Thread(() => WifiConnect(id, pw)) { IsBackground = true }.Start(); }
                     if (cmd == "taskbar hide") { hideBar = true; AutoHide(true); Bars(false); }
                     if (cmd == "taskbar show") { hideBar = false; Bars(true); AutoHide(false); }
                 }
@@ -238,6 +258,9 @@ static class Program
             if (mx != max) { max = mx; Emit("{\"t\":\"max\",\"on\":" + (mx ? "true" : "false") + "}"); }
             if (hideBar) Bars(false);
             if (tick % 4 == 0) Procs();
+            if (tick % 2 == 0) Wins();
+            if (tick % 2 == 0) Vol();
+            if (tick % 8 == 0) Radios();
             if (tick++ % 20 == 0) { Net(); Bright(); }   // Wi-Fi and brightness change rarely: every 10 s
             Thread.Sleep(500);
         }

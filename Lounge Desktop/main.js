@@ -568,6 +568,12 @@ let island = null, islandHelper = null, islandFull = false, islandMax = false, i
 const islandSettings = () => { try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(fs.readFileSync(ISLAND_FILE(), 'utf8')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } };
 const saveIsland = (s) => { try { fs.writeFileSync(ISLAND_FILE(), JSON.stringify(s)); } catch {} };
 
+// Errors from the island and dock pages go to userData\island.log, so a broken screen can be traced after the fact.
+function logWindow(w, name) {
+  w.webContents.on('console-message', (e, level, message, line) => { if (e && e.message !== undefined) { level = { error: 3, warning: 2 }[e.level] || 0; message = e.message; line = e.lineNumber; }   // newer Electron passes one event object
+    if (level >= 2) try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} ${name}:${line} ${message}
+`); } catch {} });
+}
 function placeIsland() {
   if (!island) return;
   const { screen } = require('electron');
@@ -596,6 +602,7 @@ function createIsland() {
   island.loadFile(path.join(__dirname, 'island.html'));
   island.webContents.on('did-finish-load', () => { sendModules(true); islandSend(); });
   island.on('closed', () => { island = null; });
+  logWindow(island, 'island');
   placeIsland(); islandVisible();
   const { screen } = require('electron');
   for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, () => { placeIsland(); placeDock(); });
@@ -614,9 +621,9 @@ function startIslandHelper() {
       let m; try { m = JSON.parse(line); } catch { continue; }
       if (m.t === 'media' && island) island.webContents.send('island-media', m);
       if (m.t === 'full') { islandFull = !!m.on; islandVisible(); dockVisible(); }
-      if ((m.t === 'net' || m.t === 'bright' || m.t === 'max') && island) island.webContents.send('island-sys', m);
+      if (['net', 'bright', 'max', 'vol', 'radio', 'wifilist', 'wifiresult', 'btlist'].includes(m.t) && island) island.webContents.send('island-sys', m);
+      if (m.t === 'wins') { dockWins = m.list; dockFront = m.front || 0; sendDockWins(); }
       if (m.t === 'max') islandMax = !!m.on;
-      if (m.t === 'procs') { dockProcs = m.names; if (dock) dock.webContents.send('dock-procs', dockProcs); }
     }
   });
   islandHelper.on('exit', () => { islandHelper = null; if (!quitting && (island || dock)) setTimeout(() => { startIslandHelper(); if (dock) setTimeout(() => islandHelper && islandHelper.stdin.write('taskbar hide\n'), 1000); }, 5000); });   // crashed: start again
@@ -627,12 +634,12 @@ function islandSend() {
   const sessions = liveSessions().sort((a, b) => b.at - a.at).map((x) => ({ now: x.steps[x.steps.length - 1], ago: Math.max(0, Math.round((Date.now() - x.at) / 60000)) + ' min ago' }));
   if (island) island.webContents.send('island-data', { ...islandLast, sessions });
 }
-ipcMain.on('island-push', (_e, d) => { islandLast = d; islandSend(); });
+ipcMain.on('island-push', (_e, d) => { islandLast = d; islandSend(); sendDockWins(); });
 setInterval(islandSend, 60000);   // session files have no change event worth watching across every project folder
 // ---- hover like Bloom: an 8 px band at the top centre, 200 ms dwell, pointer checked every 40 ms ----
 // Works with the Coco window open or closed (this is the background process). The island never takes focus from the
 // hover; clicks pass through everywhere except the pill itself.
-const BAND_PX = 8, BAND_W = 420, DWELL_MS = 200, LEAVE_MS = 350;
+const BAND_PX = 8, BAND_W = 420, DWELL_MS = 120, LEAVE_MS = 250;   // Boss 2026-10-22: quicker than Bloom's 200 ms
 let pillRect = { w: 200, h: 32 }, hoverOpen = false, bandSince = 0, leftSince = 0, clickable = false;
 ipcMain.on('island-rect', (_e, r) => { pillRect = r; });
 ipcMain.on('island-close', () => { hoverOpen = false; if (island) island.webContents.send('island-hover', false); });
@@ -655,45 +662,105 @@ function islandPointer() {
 }
 setInterval(islandPointer, 40);
 
-// ---------- Coco Dock (Boss, 2026-10-22): Bloom-style dock at the bottom; the Windows taskbar goes to auto-hide ----------
-// Apps = the taskbar's own pinned shortcuts, so pinning in Windows changes the Dock too. Open dots come from the helper.
+// ---------- Coco Dock (Boss, 2026-10-22): our taskbar, Bloom-style look; the Windows taskbar is hidden while it runs ----------
+// Pinned apps = the taskbar's own pinned shortcuts. Open windows come from the helper (every top-level app window, like
+// the taskbar), the front window too. Hover previews are live pictures from Windows (desktopCapturer).
 const PINNED = path.join(process.env.APPDATA || '', 'Microsoft', 'Internet Explorer', 'Quick Launch', 'User Pinned', 'TaskBar');
-let dock = null, dockW = 400, dockProcs = [];
+let dock = null, dockWins = [], dockFront = 0, dockRects = [];
 const dockOn = () => islandSettings().dock !== false;
+const exeIcons = new Map();
+// getFileIcon can hang when called many times at once: one at a time, and never longer than 2 s each.
+let iconQueue = Promise.resolve();
+function fileIcon(file) {
+  const job = iconQueue.then(() => Promise.race([app.getFileIcon(file, { size: 'large' }).then((i) => i.toDataURL()).catch(() => ''), new Promise((r) => setTimeout(() => r(''), 2000))]));
+  iconQueue = job.catch(() => '');
+  return job;
+}
+// Pins = the taskbar's pinned shortcuts minus the ones unpinned in the Dock, plus apps added in the Dock (island.json).
+function pinPaths() {
+  const s = islandSettings(), gone = new Set(s.unpinned || []);
+  let files = []; try { files = fs.readdirSync(PINNED).filter((f) => f.toLowerCase().endsWith('.lnk')).map((f) => path.join(PINNED, f)); } catch {}
+  return [...files.filter((p) => !gone.has(p)), ...(s.pins || []).filter((p) => fs.existsSync(p))];
+}
 async function dockApps() {
-  let files = []; try { files = fs.readdirSync(PINNED).filter((f) => f.toLowerCase().endsWith('.lnk')); } catch {}
   const out = [];
-  for (const f of files) {
-    const p = path.join(PINNED, f); let target = '', iconFile = '';
+  for (const p of pinPaths()) {
+    const f = path.basename(p);
+    if (/\.exe$/i.test(p)) { out.push({ name: f.replace(/\.exe$/i, ''), path: p, proc: f.replace(/\.exe$/i, '').toLowerCase(), icon: await fileIcon(p) }); continue; }
+    let target = '', iconFile = '';
     try { const l = shell.readShortcutLink(p); target = l.target || ''; iconFile = l.icon || ''; } catch {}
-    // The shortcut's own icon (web apps like YouTube), else the program's; a .lnk path itself only gives the arrow icon.
-    let icon = '';
     // A web app's shortcut points at an .ico file: read the picture itself (getFileIcon would give the .ico file-type icon).
+    let icon = '';
     if (/\.(ico|png)$/i.test(iconFile) && fs.existsSync(iconFile)) { const im = nativeImage.createFromPath(iconFile); if (!im.isEmpty()) icon = im.resize({ width: 64, height: 64 }).toDataURL(); }
-    for (const f2 of [iconFile, target]) { if (!icon && f2 && fs.existsSync(f2)) { try { icon = (await app.getFileIcon(f2, { size: 'large' })).toDataURL(); } catch {} } }
-    if (!icon && /explorer/i.test(f)) { try { icon = (await app.getFileIcon(path.join(process.env.WINDIR || 'C:\\Windows', 'explorer.exe'), { size: 'large' })).toDataURL(); } catch {} }
-    out.push({ name: f.replace(/\.lnk$/i, ''), path: p, proc: (path.basename(target, path.extname(target)) || (/explorer/i.test(f) ? 'explorer' : '')).toLowerCase(), icon });
+    for (const f2 of [iconFile, target]) { if (!icon && f2 && fs.existsSync(f2)) icon = await fileIcon(f2); }
+    if (!icon && /explorer/i.test(f)) icon = await fileIcon(path.join(process.env.WINDIR || 'C:\\Windows', 'explorer.exe'));
+    // A web app (YouTube installed from Brave) runs inside brave.exe: its windows are found by its name in the title instead.
+    const webApp = /--app-id=/.test(String((() => { try { return shell.readShortcutLink(p).args; } catch { return ''; } })()));
+    out.push({ name: f.replace(/\.lnk$/i, ''), path: p, proc: webApp ? '' : (path.basename(target, path.extname(target)) || (/explorer/i.test(f) ? 'explorer' : '')).toLowerCase(), icon });
   }
   return out;
 }
-function placeDock() {
+// Store apps (Teams, Terminal, Settings) live under WindowsApps, where getFileIcon gives a blank window: their icon comes
+// from the window itself (desktopCapturer appIcon), read once per program.
+const winIcons = new Map();
+// A Store app's logo sits in its package folder (AppxManifest.xml names it; the file has scale variants: take the biggest).
+function packageLogo(exe) {
+  try {
+    const parts = exe.split(path.sep), at = parts.findIndex((x) => x.toLowerCase() === 'windowsapps');
+    if (at < 0 || at + 1 >= parts.length) return '';
+    const m = [null, parts.slice(0, at + 2).join(path.sep)];   // ...\WindowsApps\<package folder>
+    const xml = fs.readFileSync(path.join(m[1], 'AppxManifest.xml'), 'utf8');
+    const rel = (xml.match(/Square44x44Logo="([^"]+)"/) || xml.match(/<Logo>([^<]+)<\/Logo>/) || [])[1]; if (!rel) return '';
+    const dir = path.join(m[1], path.dirname(rel)), base = path.basename(rel, path.extname(rel));
+    const files = fs.readdirSync(dir).filter((f) => f.startsWith(base) && /\.png$/i.test(f) && !/contrast|light/i.test(f))
+      .map((f) => ({ f, n: Number((f.match(/(?:targetsize|scale)-(\d+)/) || [])[1] || 0) })).sort((x, y) => y.n - x.n);
+    if (!files.length) return '';
+    const im = nativeImage.createFromPath(path.join(dir, files[0].f)); return im.isEmpty() ? '' : im.resize({ width: 64, height: 64 }).toDataURL();
+  } catch { return ''; }
+}
+async function storeIcons(need) {
+  for (const w of need) { const logo = w.path ? packageLogo(w.path) : ''; if (logo) winIcons.set(w.name, logo); }
+  need = need.filter((w) => !winIcons.has(w.name)); if (!need.length) return;
+  try {
+    const { desktopCapturer } = require('electron');
+    const src = await desktopCapturer.getSources({ types: ['window'], fetchWindowIcons: true, thumbnailSize: { width: 0, height: 0 } });
+    for (const w of need) { const s = src.find((x) => x.id === `window:${w.hwnd}:0`); if (s && s.appIcon && !s.appIcon.isEmpty()) winIcons.set(w.name, s.appIcon.resize({ width: 64, height: 64 }).toDataURL()); }
+  } catch {}
+}
+async function sendDockWins() {
   if (!dock) return;
-  const { screen } = require('electron'); const d = screen.getPrimaryDisplay().bounds, W = Math.min(d.width, Math.round(dockW * 1.5 + 120)), H = 130;
-  dock.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y + d.height - H, width: W, height: H });
+  const list = [];
+  const store = dockWins.filter((w) => (!w.path || /\\WindowsApps\\|applicationframehost/i.test(w.path)) && !winIcons.has(w.name));
+  if (store.length) await storeIcons(store);
+  for (const w of dockWins) {
+    const isStore = !w.path || /\\WindowsApps\\|applicationframehost/i.test(w.path);
+    if (!isStore && !exeIcons.has(w.path)) exeIcons.set(w.path, await fileIcon(w.path));
+    list.push({ hwnd: w.hwnd, name: w.name, title: w.title, path: isStore ? '' : w.path, icon: isStore ? winIcons.get(w.name) || '' : exeIcons.get(w.path) });
+  }
+  const badge = atOffice() ? 0 : ((islandLast && islandLast.approvals) || []).length;   // no Coco status at the office
+  if (dock) dock.webContents.send('dock-wins', { list, badge, front: dockFront });
+}
+function placeDock() {   // full width, 300 px tall at the bottom: room for previews; all of it but the bar and preview lets clicks through
+  if (!dock) return;
+  const { screen } = require('electron'); const d = screen.getPrimaryDisplay().bounds;
+  dock.setBounds({ x: d.x, y: d.y + d.height - 300, width: d.width, height: 300 });
 }
 function dockVisible() { if (!dock) return; const show = dockOn() && !islandFull; if (show && !dock.isVisible()) dock.showInactive(); else if (!show && dock.isVisible()) dock.hide(); }
 function createDock() {
   if (dock || !dockOn()) return;
-  dock = new BrowserWindow({ width: 600, height: 130, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, show: false,
+  dock = new BrowserWindow({ width: 800, height: 300, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, show: false,
     alwaysOnTop: true, hasShadow: false, title: 'Coco Dock', webPreferences: { preload: path.join(__dirname, 'dock-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
   dock.setAlwaysOnTop(true, 'screen-saver'); dock.setIgnoreMouseEvents(true, { forward: true });
   dock.loadFile(path.join(__dirname, 'dock.html'));
-  dock.webContents.on('did-finish-load', async () => { dock.webContents.send('dock-apps', await dockApps()); dock.webContents.send('dock-procs', dockProcs); });
+  dock.webContents.on('did-finish-load', async () => {
+    try { dock.webContents.send('dock-apps', await dockApps()); await sendDockWins(); }
+    catch (e) { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} dock main: ${e.stack}\n`); } catch {} }
+  });
   dock.on('closed', () => { dock = null; });
+  logWindow(dock, 'dock');
   try { fs.watch(PINNED, async () => { if (dock) dock.webContents.send('dock-apps', await dockApps()); }); } catch {}
   placeDock(); dockVisible();
   startIslandHelper(); setTimeout(() => islandHelper && islandHelper.stdin.write('taskbar hide\n'), 1500);
-  dock.webContents.on('context-menu', () => dockMenu().popup({ window: dock }));
 }
 function removeDock() { if (dock) dock.destroy(); dock = null; if (islandHelper) islandHelper.stdin.write('taskbar show\n'); }
 // With the taskbar hidden the tray icon is hidden too, so the Dock's right-click menu carries the same switches.
@@ -704,26 +771,74 @@ function dockMenu() {
     { type: 'separator' },
     { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
     { label: 'Turn off Coco Dock (Windows taskbar back)', click: () => { const s = islandSettings(); s.dock = false; saveIsland(s); removeDock(); } },
+    { label: 'Task Manager', click: () => shell.openPath('taskmgr.exe') },
     { label: 'Taskbar settings', click: () => shell.openExternal('ms-settings:taskbar') },
   ]);
 }
-ipcMain.on('dock-size', (_e, w) => { dockW = w; placeDock(); });
-ipcMain.on('dock-start', () => { if (islandHelper) islandHelper.stdin.write('start\n'); });
-ipcMain.on('dock-launch', (_e, { lnk, proc }) => {
-  if (!lnk.startsWith(PINNED) || !lnk.toLowerCase().endsWith('.lnk')) return;   // only the pinned shortcuts
-  if (proc && /^[\w .-]+$/.test(proc) && islandHelper) islandHelper.stdin.write('focus ' + proc + '\n'); else shell.openPath(lnk);
+const say = (c) => { if (islandHelper) islandHelper.stdin.write(c + '\n'); };
+ipcMain.on('dock-rects', (_e, r) => { dockRects = Array.isArray(r) ? r.slice(0, 4) : []; });
+ipcMain.on('dock-start', () => say('start'));
+ipcMain.on('dock-menu', () => { if (dock) dockMenu().popup({ window: dock }); });
+ipcMain.on('dock-coco', () => { win.show(); win.focus(); if (!atOffice() && islandLast && islandLast.approvals && islandLast.approvals.length) win.webContents.executeJavaScript(`location.hash = 'approvals'`); });
+ipcMain.on('dock-focuswin', (_e, n) => { n = Math.trunc(Number(n)); if (!n) return; if (n > 0) say('focushwnd ' + n); else say('minhwnd ' + -n); });
+ipcMain.on('dock-launch', (_e, lnk) => { if (pinPaths().includes(String(lnk))) shell.openPath(lnk); });   // only what is pinned
+const resendApps = async () => { if (dock) dock.webContents.send('dock-apps', await dockApps()); };
+function setPin(p, on) {
+  const s = islandSettings(); s.pins = s.pins || []; s.unpinned = s.unpinned || [];
+  if (on) { if (p.startsWith(PINNED)) s.unpinned = s.unpinned.filter((x) => x !== p); else if (!s.pins.includes(p)) s.pins.push(p); }
+  else { if (p.startsWith(PINNED)) s.unpinned.push(p); else s.pins = s.pins.filter((x) => x !== p); }
+  saveIsland(s); resendApps();
+}
+// "+" on the Dock: pick any app (Start menu shortcut or a program) to pin.
+ipcMain.on('dock-add', async () => {
+  const { dialog } = require('electron');
+  const r = await dialog.showOpenDialog({ title: 'Pin an app to the Coco Dock', defaultPath: path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+    properties: ['openFile'], filters: [{ name: 'Apps', extensions: ['lnk', 'exe'] }] });
+  if (!r.canceled && r.filePaths[0] && /\.(lnk|exe)$/i.test(r.filePaths[0])) setPin(r.filePaths[0], true);
+});
+// Right-click on an app: pin or unpin, new window, close its windows.
+ipcMain.on('dock-appmenu', (_e, a) => {
+  if (!dock || !a) return;
+  const pinned = pinPaths(), lnk = String(a.lnk || ''), exe = String(a.exe || ''), hwnds = (a.hwnds || []).map((h) => Math.trunc(Number(h))).filter(Boolean);
+  const items = [];
+  if (lnk && pinned.includes(lnk)) items.push({ label: 'Unpin from Dock', click: () => setPin(lnk, false) });
+  else if (exe && fs.existsSync(exe)) items.push({ label: 'Pin to Dock', click: () => setPin(exe, true) });
+  if (lnk && pinned.includes(lnk)) items.push({ label: 'New window', click: () => shell.openPath(lnk) });
+  else if (exe && fs.existsSync(exe)) items.push({ label: 'New window', click: () => shell.openPath(exe) });
+  if (hwnds.length) items.push({ type: 'separator' }, { label: hwnds.length > 1 ? `Close ${hwnds.length} windows` : 'Close window', click: () => hwnds.forEach((h) => say('closehwnd ' + h)) });
+  if (items.length) Menu.buildFromTemplate(items).popup({ window: dock });
+});
+ipcMain.handle('dock-preview', async (_e, hwnds) => {
+  const want = new Set((hwnds || []).slice(0, 8).map((h) => `window:${Math.trunc(h)}:0`));
+  try {
+    const { desktopCapturer } = require('electron');
+    const src = await desktopCapturer.getSources({ types: ['window'], thumbnailSize: { width: 376, height: 236 } });
+    return src.filter((s) => want.has(s.id)).map((s) => ({ hwnd: Number(s.id.split(':')[1]), thumb: s.thumbnail.isEmpty() ? '' : s.thumbnail.toDataURL() }));
+  } catch { return []; }
 });
 let dockHot = false;
-setInterval(() => {   // clicks reach the Dock only where the bar is; everywhere else they pass through
+setInterval(() => {   // clicks reach the Dock only on the bar and the open preview; everywhere else they pass through
   if (!dock || !dock.isVisible()) return;
   const { screen } = require('electron'); const p = screen.getCursorScreenPoint(), b = dock.getBounds();
-  const hot = p.y >= b.y + b.height - 80 && Math.abs(p.x - (b.x + b.width / 2)) <= dockW / 2 + 30;
+  const x = p.x - b.x, y = p.y - b.y;
+  const hot = dockRects.some((r) => x >= r.x - 4 && x <= r.x + r.w + 4 && y >= r.y - 4 && y <= r.y + r.h + 4);
   if (hot !== dockHot) { dockHot = hot; dock.setIgnoreMouseEvents(!hot, { forward: true }); }
 }, 40);
 ipcMain.on('island-blur', () => { if (island) island.blur(); });
 ipcMain.on('island-open', (_e, page) => { if (!/^[a-z]+$/.test(page) || !win) return; win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = '${page}'`); });
 ipcMain.on('island-settings', (_e, uri) => { if (/^ms-settings:[a-z-]+$/.test(uri)) shell.openExternal(uri); });
 ipcMain.handle('island-act', (_e, { action, args }) => {
+  const say = (c) => { if (islandHelper) islandHelper.stdin.write(c + '\n'); return 'ok'; };
+  if (action === 'vol') { const n = Math.round(Number(args && args.level)); return n >= 0 && n <= 100 ? say('vol ' + n) : 'bad'; }
+  if (action === 'mute') return say('mute');
+  if (action === 'wifiscan') return say('wifi scan');
+  if (action === 'btlist') return say('bt list');
+  if (action === 'wificonnect') {   // the password goes straight to the helper's stdin, never to a log or a file
+    const ssid = String((args && args.ssid) || ''), pw = args && args.password != null ? String(args.password) : null;
+    if (!ssid || ssid.length > 64 || /[\r\n\t]/.test(ssid) || (pw != null && (pw.length > 128 || /[\r\n]/.test(pw)))) return 'bad';
+    return say(pw == null ? 'wifi connect ' + ssid : 'wifi join ' + ssid + '\t' + pw);
+  }
+  if (action === 'radio') { const k = args && args.kind, on = !!(args && args.on); return k === 'wifi' || k === 'bt' ? say(`radio ${k} ${on ? 'on' : 'off'}`) : 'bad'; }
   if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
 });
