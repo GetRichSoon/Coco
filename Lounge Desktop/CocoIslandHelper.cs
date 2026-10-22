@@ -24,6 +24,7 @@ static class Program
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
     [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h, int i);
     [DllImport("user32.dll")] static extern bool IsZoomed(IntPtr h);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassName(IntPtr h, StringBuilder s, int n);
     [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; }
     [StructLayout(LayoutKind.Sequential)] struct MONITORINFO { public int cbSize; public RECT mon, work; public uint flags; }
@@ -114,6 +115,9 @@ static class Program
         StringBuilder c = new StringBuilder(64); GetClassName(h, c, 64);
         string cls = c.ToString();
         if (cls == "Progman" || cls == "WorkerW" || cls == "Shell_TrayWnd") return false;   // the desktop itself
+        // Explorer's own screen-sized layers (XamlExplorerHostIslandWindow, Start, Task View) are not full-screen apps.
+        uint pid; GetWindowThreadProcessId(h, out pid);
+        try { if (Process.GetProcessById((int)pid).ProcessName.Equals("explorer", StringComparison.OrdinalIgnoreCase)) return false; } catch (Exception) { }
         if ((GetWindowLong(h, -16) & 0x00C00000) == 0x00C00000) return false;   // has a title bar: a normal window
         if (IsZoomed(h)) return false;   // maximised (VS Code, Chrome draw their own title bar), not full screen
         RECT r; if (!GetWindowRect(h, out r)) return false;
