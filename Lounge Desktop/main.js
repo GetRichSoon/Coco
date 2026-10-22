@@ -561,7 +561,7 @@ ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings(loginArgs(!
 // ---------- Coco Island (Boss, 2026-10-22): Bloom-style black pill at the top of the screen ----------
 // A transparent, click-through, never-focused window at the top centre of the main display. The Lounge page pushes
 // tasks/approvals the moment they change (island-push); CocoIslandHelper.exe reports the song and full-screen apps.
-// Hidden at the office (founder rule: Coco stays out of sight there) and while a full-screen app is in front.
+// Hidden only while a full-screen app is in front (at the office too, Boss 2026-10-22).
 const ISLAND_FILE = () => path.join(app.getPath('userData'), 'island.json');
 let island = null, islandHelper = null, islandFull = false, islandLast = null;
 const islandSettings = () => { try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(fs.readFileSync(ISLAND_FILE(), 'utf8')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } };
@@ -575,7 +575,7 @@ function placeIsland() {
 }
 function islandVisible() {
   if (!island) return;
-  const show = islandSettings().enabled && !atOffice() && !islandFull;
+  const show = islandSettings().enabled && !islandFull;   // shows at the office too (Boss, 2026-10-22); only the big window stays hidden there
   if (show && !island.isVisible()) island.showInactive(); else if (!show && island.isVisible()) island.hide();
 }
 function createIsland() {
