@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Coco Dock</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<style>
+/* Coco Dock (Bloom style): a black floating bar at the bottom with the taskbar's pinned apps. Icons near the pointer grow
+   on a spring (Bloom's 400/25), a dot marks open apps. The window lets clicks through everywhere but the bar. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; background: transparent; overflow: hidden; user-select: none; font: 12px "Segoe UI", system-ui, sans-serif; }
+#dock { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 6px; padding: 7px 10px;
+  background: rgba(0,0,0,.86); border-radius: 22px; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+.app { position: relative; width: 46px; height: 46px; border: 0; padding: 0; background: none; cursor: pointer; transform-origin: 50% 100%; outline: none; }
+.app img, .app .start { width: 100%; height: 100%; display: block; border-radius: 12px; pointer-events: none; }
+.app .start { display: grid; place-items: center; background: #2c2c2e; }
+.app::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: transparent; }
+.app.on::after { background: #fff; }
+.app:focus-visible { box-shadow: 0 0 0 2px #0a84ff; border-radius: 12px; }
+.tip { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 4px 9px; border-radius: 8px; white-space: nowrap; opacity: 0; transition: opacity .12s; pointer-events: none; }
+.app:hover .tip, .app:focus-visible .tip { opacity: 1; }
+.sep { width: 1px; height: 34px; background: rgba(255,255,255,.18); margin: 0 3px 6px; }
+</style></head>
+<body>
+<div id="dock" role="toolbar" aria-label="Coco Dock"></div>
+<script>
+const D = window.cocoDock, dock = document.getElementById('dock');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let apps = [], running = new Set();
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function render() {
+  dock.innerHTML = `<button class="app" data-start aria-label="Start"><span class="start"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M3 3h8.5v8.5H3zm9.5 0H21v8.5h-8.5zM3 12.5h8.5V21H3zm9.5 0H21V21h-8.5z"/></svg></span><span class="tip">Start</span></button><span class="sep"></span>`
+    + apps.map((a, i) => `<button class="app${running.has(a.proc) ? ' on' : ''}" data-i="${i}" aria-label="${esc(a.name)}${running.has(a.proc) ? ', open' : ''}"><img src="${a.icon}" alt=""><span class="tip">${esc(a.name)}</span></button>`).join('');
+  cells = [...dock.querySelectorAll('.app')]; scale = cells.map(() => 1); vel = cells.map(() => 0); goal = cells.map(() => 1);
+  D.size(dock.getBoundingClientRect().width);
+}
+
+// Magnify: each icon springs toward a size set by its distance from the pointer.
+let cells = [], scale = [], vel = [], goal = [], raf = 0, last = 0;
+function aim(x) {
+  goal = cells.map((c) => { if (x == null) return 1; const r = c.getBoundingClientRect(), d = Math.abs(x - (r.left + r.width / 2)); return 1 + 0.5 * Math.max(0, 1 - d / 120); });
+  if (reduced) { scale = [...goal]; paint(); return; }
+  if (!raf) { last = performance.now(); raf = requestAnimationFrame(step); }
+}
+function paint() { cells.forEach((c, i) => { c.style.transform = `scale(${scale[i]})`; c.style.margin = `0 ${(scale[i] - 1) * 14}px`; }); }
+function step(t) {
+  const dt = Math.min(0.032, (t - last) / 1000); last = t; let moving = false;
+  for (let i = 0; i < cells.length; i++) {
+    vel[i] += (400 * (goal[i] - scale[i]) - 25 * vel[i]) * dt; scale[i] += vel[i] * dt;
+    if (Math.abs(goal[i] - scale[i]) > 0.002 || Math.abs(vel[i]) > 0.002) moving = true; else { scale[i] = goal[i]; vel[i] = 0; }
+  }
+  paint(); raf = moving ? requestAnimationFrame(step) : 0;
+}
+addEventListener('mousemove', (e) => { const r = dock.getBoundingClientRect(); aim(e.clientY >= r.top - 30 && e.clientX >= r.left - 20 && e.clientX <= r.right + 20 ? e.clientX : null); });
+addEventListener('mouseleave', () => aim(null));
+
+dock.addEventListener('click', (e) => {
+  const b = e.target.closest('.app'); if (!b) return;
+  if (b.dataset.start != null) return D.start();
+  const a = apps[Number(b.dataset.i)]; D.launch(a.path, running.has(a.proc) ? a.proc : '');
+});
+D.onApps((list) => { apps = list; render(); });
+D.onProcs((names) => { running = new Set(names); cells.forEach((c) => { const a = apps[Number(c.dataset.i)]; if (a) c.classList.toggle('on', running.has(a.proc)); }); });
+</script>
+</body></html>

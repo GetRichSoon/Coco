@@ -7,7 +7,7 @@ const island = { isVisible: () => visible, getBounds: () => ({ x: 730, y: 0, wid
 const screen = { getCursorScreenPoint: () => cursor, getPrimaryDisplay: () => ({ bounds: { x: 0, y: 0, width: 1920, height: 1200 } }) };
 const ipcMain = { on: (n, f) => (ipcMain[n] = f) };
 const Date_ = { now: () => now };
-const run = new Function('island', 'require', 'ipcMain', 'Date', block + '; return { tick: islandPointer };')(island, () => ({ screen }), ipcMain, Date_);
+const run = new Function('island', 'require', 'ipcMain', 'Date', 'let islandMax = false;' + block + '; return { tick: islandPointer, max: (v) => { islandMax = v; } };')(island, () => ({ screen }), ipcMain, Date_);
 const walk = (x, y, ms) => { cursor = { x, y }; for (let t = 0; t < ms; t += 40) { now += 40; run.tick(); } };
 const opened = () => sent.filter((v) => v === true).length, closed = () => sent.filter((v) => v === false).length;
 
@@ -24,4 +24,14 @@ assert.equal(ignore[ignore.length - 1], true, 'clicks pass through again');
 ipcMain['island-rect'](null, { w: 200, h: 32 });
 walk(960, 2, 240);                   assert.equal(opened(), 2, 'opens again');
 visible = false; walk(960, 2, 80);   assert.equal(closed(), 2, 'full-screen app (island hidden) closes it');
-console.log('hover tests: 11 passed');
+
+// Chrome maximised: its tabs and the new-tab button sit under the faded pill.
+visible = true; run.max(true); walk(500, 600, 400);
+walk(950, 20, 600);                  assert.equal(opened(), 2, 'Chrome maximised: pointer on the tab strip under the pill does not open it');
+assert.equal(ignore[ignore.length - 1], true, 'Chrome maximised: clicks on the tab strip go to Chrome (new tab works)');
+walk(960, 2, 120); walk(960, 20, 200); assert.equal(opened(), 2, 'Chrome maximised: brushing the top edge on the way to a tab does not open it');
+walk(960, 2, 240);                   assert.equal(opened(), 3, 'Chrome maximised: resting at the very top edge still opens it');
+ipcMain['island-rect'](null, { w: 440, h: 292 });
+walk(1000, 150, 400);                assert.equal(closed(), 2, 'Chrome maximised: the open panel stays open and usable');
+assert.equal(ignore[ignore.length - 1], false, 'Chrome maximised: open panel takes the clicks');
+console.log('hover tests: 17 passed');

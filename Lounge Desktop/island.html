@@ -12,6 +12,8 @@ html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.
 #pill { position: absolute; left: 50%; top: 0; transform: translateX(-50%); background: var(--bg); width: 200px; height: 32px; border-radius: 0 0 16px 16px;
   box-shadow: 0 6px 24px rgba(0,0,0,.35); overflow: hidden; cursor: default; outline: none; will-change: width, height; }
 #pill:focus-visible { box-shadow: 0 0 0 2px var(--blue); }
+/* over a maximised app (Chrome tabs) the small pill steps aside; it comes back on hover, for a toast or when opened */
+#pill { transition: opacity .2s; } #pill.away:not(.open):not(.toast) { opacity: 0; transition: opacity .25s; }
 .face { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .16s; }
 #pill:not(.open):not(.toast) #compact, #pill.open #full, #pill.toast #toastFace { opacity: 1; pointer-events: auto; transition: opacity .2s .1s; }
 #compact { display: flex; align-items: center; justify-content: space-between; padding: 0 14px; }
@@ -219,7 +221,7 @@ navigator.getBattery?.().then((b) => {
   b.addEventListener('levelchange', () => up(false)); b.addEventListener('chargingchange', () => up(true));
   b.addEventListener('chargingtimechange', () => up(false)); b.addEventListener('dischargingtimechange', () => up(false));
 });
-I.onSys((m) => { if (m.t === 'net') net = m; if (m.t === 'bright') bright = m.level; renderCompact(); if (open && tab === 'control' && document.activeElement?.id !== 'bright') renderFull(); });
+I.onSys((m) => { if (m.t === 'max') pill.classList.toggle('away', !!m.on); if (m.t === 'net') net = m; if (m.t === 'bright') bright = m.level; renderCompact(); if (open && tab === 'control' && document.activeElement?.id !== 'bright') renderFull(); });
 async function loadWeather() {
   try {
     const loc = await (await fetch('https://ipapi.co/json/')).json();

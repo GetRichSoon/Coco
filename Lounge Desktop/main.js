@@ -43,6 +43,7 @@ function createTray() {
     { label: 'Approvals', click: () => open('approvals') },
     { type: 'separator' },
     { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
+    { label: 'Coco Dock (hides the Windows taskbar)', type: 'checkbox', checked: islandSettings().dock !== false, click: (i) => { const s = islandSettings(); s.dock = i.checked; saveIsland(s); if (i.checked) createDock(); else removeDock(); } },
     { label: 'Island modules', submenu: [['coco', 'Coco Brain'], ['music', 'Music'], ['control', 'Control Center'], ['focus', 'Focus']].map(([k, label]) => ({ label, type: 'checkbox', checked: islandSettings().modules[k] !== false,
       click: (i) => { const s = islandSettings(); s.modules = { ...s.modules, [k]: i.checked }; saveIsland(s); sendModules(true); } })) },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings(loginArgs(i.checked)) },
@@ -563,7 +564,7 @@ ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings(loginArgs(!
 // tasks/approvals the moment they change (island-push); CocoIslandHelper.exe reports the song and full-screen apps.
 // Hidden only while a full-screen app is in front (at the office too, Boss 2026-10-22).
 const ISLAND_FILE = () => path.join(app.getPath('userData'), 'island.json');
-let island = null, islandHelper = null, islandFull = false, islandLast = null;
+let island = null, islandHelper = null, islandFull = false, islandMax = false, islandLast = null;
 const islandSettings = () => { try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(fs.readFileSync(ISLAND_FILE(), 'utf8')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } };
 const saveIsland = (s) => { try { fs.writeFileSync(ISLAND_FILE(), JSON.stringify(s)); } catch {} };
 
@@ -597,8 +598,8 @@ function createIsland() {
   island.on('closed', () => { island = null; });
   placeIsland(); islandVisible();
   const { screen } = require('electron');
-  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, placeIsland);
-  require('electron').powerMonitor.on('resume', () => { placeIsland(); islandVisible(); });
+  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, () => { placeIsland(); placeDock(); });
+  require('electron').powerMonitor.on('resume', () => { placeIsland(); islandVisible(); placeDock(); });
   startIslandHelper();
 }
 function startIslandHelper() {
@@ -612,11 +613,13 @@ function startIslandHelper() {
       const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
       let m; try { m = JSON.parse(line); } catch { continue; }
       if (m.t === 'media' && island) island.webContents.send('island-media', m);
-      if (m.t === 'full') { islandFull = !!m.on; islandVisible(); }
-      if ((m.t === 'net' || m.t === 'bright') && island) island.webContents.send('island-sys', m);
+      if (m.t === 'full') { islandFull = !!m.on; islandVisible(); dockVisible(); }
+      if ((m.t === 'net' || m.t === 'bright' || m.t === 'max') && island) island.webContents.send('island-sys', m);
+      if (m.t === 'max') islandMax = !!m.on;
+      if (m.t === 'procs') { dockProcs = m.names; if (dock) dock.webContents.send('dock-procs', dockProcs); }
     }
   });
-  islandHelper.on('exit', () => { islandHelper = null; if (!quitting && island) setTimeout(startIslandHelper, 5000); });   // crashed: start again
+  islandHelper.on('exit', () => { islandHelper = null; if (!quitting && (island || dock)) setTimeout(() => { startIslandHelper(); if (dock) setTimeout(() => islandHelper && islandHelper.stdin.write('taskbar hide\n'), 1000); }, 5000); });   // crashed: start again
 }
 // Claude Code sessions that wrote in the last 5 minutes (liveSessions above) ride along with every push.
 function islandSend() {
@@ -639,7 +642,9 @@ function islandPointer() {
   const p = screen.getCursorScreenPoint(), d = screen.getPrimaryDisplay().bounds, b = island.getBounds(), now = Date.now();
   const cx = d.x + d.width / 2;
   const inBand = p.y <= d.y + BAND_PX && Math.abs(p.x - cx) <= BAND_W / 2;
-  const onPill = p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - (b.x + b.width / 2)) <= pillRect.w / 2;
+  // Over a maximised app (Chrome tabs, VS Code title bar) the pill is faded out and lets every click through; only the
+  // top-edge band with its dwell opens it, so the new-tab button and tabs under it keep working.
+  const onPill = (hoverOpen || !islandMax) && p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - (b.x + b.width / 2)) <= pillRect.w / 2;
   if (onPill !== clickable) { clickable = onPill; island.setIgnoreMouseEvents(!onPill, { forward: true }); }
   if (!hoverOpen) {
     bandSince = inBand || onPill ? bandSince || now : 0;
@@ -649,6 +654,72 @@ function islandPointer() {
   else if (now - leftSince >= LEAVE_MS) { hoverOpen = false; bandSince = 0; island.webContents.send('island-hover', false); }
 }
 setInterval(islandPointer, 40);
+
+// ---------- Coco Dock (Boss, 2026-10-22): Bloom-style dock at the bottom; the Windows taskbar goes to auto-hide ----------
+// Apps = the taskbar's own pinned shortcuts, so pinning in Windows changes the Dock too. Open dots come from the helper.
+const PINNED = path.join(process.env.APPDATA || '', 'Microsoft', 'Internet Explorer', 'Quick Launch', 'User Pinned', 'TaskBar');
+let dock = null, dockW = 400, dockProcs = [];
+const dockOn = () => islandSettings().dock !== false;
+async function dockApps() {
+  let files = []; try { files = fs.readdirSync(PINNED).filter((f) => f.toLowerCase().endsWith('.lnk')); } catch {}
+  const out = [];
+  for (const f of files) {
+    const p = path.join(PINNED, f); let target = '', iconFile = '';
+    try { const l = shell.readShortcutLink(p); target = l.target || ''; iconFile = l.icon || ''; } catch {}
+    // The shortcut's own icon (web apps like YouTube), else the program's; a .lnk path itself only gives the arrow icon.
+    let icon = '';
+    // A web app's shortcut points at an .ico file: read the picture itself (getFileIcon would give the .ico file-type icon).
+    if (/\.(ico|png)$/i.test(iconFile) && fs.existsSync(iconFile)) { const im = nativeImage.createFromPath(iconFile); if (!im.isEmpty()) icon = im.resize({ width: 64, height: 64 }).toDataURL(); }
+    for (const f2 of [iconFile, target]) { if (!icon && f2 && fs.existsSync(f2)) { try { icon = (await app.getFileIcon(f2, { size: 'large' })).toDataURL(); } catch {} } }
+    if (!icon && /explorer/i.test(f)) { try { icon = (await app.getFileIcon(path.join(process.env.WINDIR || 'C:\\Windows', 'explorer.exe'), { size: 'large' })).toDataURL(); } catch {} }
+    out.push({ name: f.replace(/\.lnk$/i, ''), path: p, proc: (path.basename(target, path.extname(target)) || (/explorer/i.test(f) ? 'explorer' : '')).toLowerCase(), icon });
+  }
+  return out;
+}
+function placeDock() {
+  if (!dock) return;
+  const { screen } = require('electron'); const d = screen.getPrimaryDisplay().bounds, W = Math.min(d.width, Math.round(dockW * 1.5 + 120)), H = 130;
+  dock.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y + d.height - H, width: W, height: H });
+}
+function dockVisible() { if (!dock) return; const show = dockOn() && !islandFull; if (show && !dock.isVisible()) dock.showInactive(); else if (!show && dock.isVisible()) dock.hide(); }
+function createDock() {
+  if (dock || !dockOn()) return;
+  dock = new BrowserWindow({ width: 600, height: 130, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, show: false,
+    alwaysOnTop: true, hasShadow: false, title: 'Coco Dock', webPreferences: { preload: path.join(__dirname, 'dock-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  dock.setAlwaysOnTop(true, 'screen-saver'); dock.setIgnoreMouseEvents(true, { forward: true });
+  dock.loadFile(path.join(__dirname, 'dock.html'));
+  dock.webContents.on('did-finish-load', async () => { dock.webContents.send('dock-apps', await dockApps()); dock.webContents.send('dock-procs', dockProcs); });
+  dock.on('closed', () => { dock = null; });
+  try { fs.watch(PINNED, async () => { if (dock) dock.webContents.send('dock-apps', await dockApps()); }); } catch {}
+  placeDock(); dockVisible();
+  startIslandHelper(); setTimeout(() => islandHelper && islandHelper.stdin.write('taskbar hide\n'), 1500);
+  dock.webContents.on('context-menu', () => dockMenu().popup({ window: dock }));
+}
+function removeDock() { if (dock) dock.destroy(); dock = null; if (islandHelper) islandHelper.stdin.write('taskbar show\n'); }
+// With the taskbar hidden the tray icon is hidden too, so the Dock's right-click menu carries the same switches.
+function dockMenu() {
+  return Menu.buildFromTemplate([
+    { label: 'Open Coco Lounge', click: () => { win.show(); win.focus(); } },
+    { label: 'Approvals', click: () => { win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = 'approvals'`); } },
+    { type: 'separator' },
+    { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
+    { label: 'Turn off Coco Dock (Windows taskbar back)', click: () => { const s = islandSettings(); s.dock = false; saveIsland(s); removeDock(); } },
+    { label: 'Taskbar settings', click: () => shell.openExternal('ms-settings:taskbar') },
+  ]);
+}
+ipcMain.on('dock-size', (_e, w) => { dockW = w; placeDock(); });
+ipcMain.on('dock-start', () => { if (islandHelper) islandHelper.stdin.write('start\n'); });
+ipcMain.on('dock-launch', (_e, { lnk, proc }) => {
+  if (!lnk.startsWith(PINNED) || !lnk.toLowerCase().endsWith('.lnk')) return;   // only the pinned shortcuts
+  if (proc && /^[\w .-]+$/.test(proc) && islandHelper) islandHelper.stdin.write('focus ' + proc + '\n'); else shell.openPath(lnk);
+});
+let dockHot = false;
+setInterval(() => {   // clicks reach the Dock only where the bar is; everywhere else they pass through
+  if (!dock || !dock.isVisible()) return;
+  const { screen } = require('electron'); const p = screen.getCursorScreenPoint(), b = dock.getBounds();
+  const hot = p.y >= b.y + b.height - 80 && Math.abs(p.x - (b.x + b.width / 2)) <= dockW / 2 + 30;
+  if (hot !== dockHot) { dockHot = hot; dock.setIgnoreMouseEvents(!hot, { forward: true }); }
+}, 40);
 ipcMain.on('island-blur', () => { if (island) island.blur(); });
 ipcMain.on('island-open', (_e, page) => { if (!/^[a-z]+$/.test(page) || !win) return; win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = '${page}'`); });
 ipcMain.on('island-settings', (_e, uri) => { if (/^ms-settings:[a-z-]+$/.test(uri)) shell.openExternal(uri); });
@@ -657,12 +728,13 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
 });
 setInterval(islandVisible, 30000);   // home/office switch
-app.on('before-quit', () => { quitting = true; try { islandHelper && islandHelper.kill(); } catch {} });
+// Quitting: the helper brings the taskbar back when its input closes, then exits by itself.
+app.on('before-quit', () => { quitting = true; try { if (islandHelper) { if (dock) islandHelper.stdin.write('taskbar show\n'); islandHelper.stdin.end(); } } catch {} });
 
 app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focus(); } }); // at the office only the tray icon opens it
 app.whenReady().then(() => {
   app.setLoginItemSettings(loginArgs(true)); // always rewrite, so an old broken entry gets fixed
-  createWindow(); createTray(); createIsland();
+  createWindow(); createTray(); createIsland(); createDock();
   setTimeout(selfUpdate, 60 * 1000); setInterval(selfUpdate, 30 * 60 * 1000);
 });
 
