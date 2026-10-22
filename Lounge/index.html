@@ -332,6 +332,19 @@ async function loadAll() {
   ]);
   ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations'].forEach((k, i) => D[k] = res[i].data || []);
   if (!document.hidden) render(); diffAndNotify(); runMyCommands();   // hidden in the tray: no drawing, only data
+  pushIsland();
+}
+// Coco Island on this PC: the same live data, summed up, every time it changes.
+function pushIsland() {
+  if (!window.cocoDesktop || !window.cocoDesktop.islandPush) return;
+  const today = new Date().toISOString().slice(0, 10), tasks = {};
+  for (const t of D.tasks || []) tasks[t.status] = (tasks[t.status] || 0) + 1;
+  const done = (D.tasks || []).filter((t) => ['done', 'merged'].includes(t.status) && String(t.updated_at || t.created_at || '').slice(0, 10) === today);
+  window.cocoDesktop.islandPush({
+    approvals: (D.approvals || []).filter((a) => a.state === 'waiting' || a.state === 'on-hold').map((a) => ({ id: a.id, code: a.code, team: a.team, what: String(a.what || '').slice(0, 120) })),
+    tasks: { ...tasks, working: (tasks.working || 0) + (tasks.running || 0) + (tasks.in_progress || 0) },
+    doneToday: done.length, recentDone: done.slice(0, 3).map((t) => String(t.title || '').slice(0, 80)),
+  });
 }
 let pulseTimer = null;
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.

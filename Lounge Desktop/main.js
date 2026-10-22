@@ -42,6 +42,9 @@ function createTray() {
     { label: 'Board', click: () => open('board') },
     { label: 'Approvals', click: () => open('approvals') },
     { type: 'separator' },
+    { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
+    { label: 'Island modules', submenu: [['coco', 'Coco Brain'], ['music', 'Music'], ['control', 'Control Center'], ['focus', 'Focus']].map(([k, label]) => ({ label, type: 'checkbox', checked: islandSettings().modules[k] !== false,
+      click: (i) => { const s = islandSettings(); s.modules = { ...s.modules, [k]: i.checked }; saveIsland(s); if (island) island.webContents.send('island-modules', s.modules); } })) },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings(loginArgs(i.checked)) },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },
   ]));
@@ -555,10 +558,80 @@ async function fun(kind) {
 ipcMain.handle('get-startup', () => app.getLoginItemSettings().openAtLogin);
 ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings(loginArgs(!!on)); return !!on; });
 
+// ---------- Coco Island (Boss, 2026-10-22): Bloom-style black pill at the top of the screen ----------
+// A transparent, click-through, never-focused window at the top centre of the main display. The Lounge page pushes
+// tasks/approvals the moment they change (island-push); CocoIslandHelper.exe reports the song and full-screen apps.
+// Hidden at the office (founder rule: Coco stays out of sight there) and while a full-screen app is in front.
+const ISLAND_FILE = () => path.join(app.getPath('userData'), 'island.json');
+let island = null, islandHelper = null, islandFull = false, islandLast = null;
+const islandSettings = () => { try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(fs.readFileSync(ISLAND_FILE(), 'utf8')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } };
+const saveIsland = (s) => { try { fs.writeFileSync(ISLAND_FILE(), JSON.stringify(s)); } catch {} };
+
+function placeIsland() {
+  if (!island) return;
+  const { screen } = require('electron');
+  const d = screen.getPrimaryDisplay().workArea, W = 460, H = 310;
+  island.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y, width: W, height: H });
+}
+function islandVisible() {
+  if (!island) return;
+  const show = islandSettings().enabled && !atOffice() && !islandFull;
+  if (show && !island.isVisible()) island.showInactive(); else if (!show && island.isVisible()) island.hide();
+}
+function createIsland() {
+  if (island || !islandSettings().enabled) return;
+  island = new BrowserWindow({
+    width: 460, height: 310, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, focusable: true,
+    show: false, alwaysOnTop: true, hasShadow: false, title: 'Coco Island',
+    webPreferences: { preload: path.join(__dirname, 'island-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
+  });
+  island.setAlwaysOnTop(true, 'screen-saver'); island.setVisibleOnAllWorkspaces(true);
+  island.setIgnoreMouseEvents(true, { forward: true });   // clicks pass through until the mouse is over the pill
+  island.loadFile(path.join(__dirname, 'island.html'));
+  island.webContents.on('did-finish-load', () => { island.webContents.send('island-modules', islandSettings().modules); islandSend(); });
+  island.on('closed', () => { island = null; });
+  placeIsland(); islandVisible();
+  const { screen } = require('electron');
+  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, placeIsland);
+  require('electron').powerMonitor.on('resume', () => { placeIsland(); islandVisible(); });
+  startIslandHelper();
+}
+function startIslandHelper() {
+  const exe = path.join(__dirname, 'CocoIslandHelper.exe');
+  if (!fs.existsSync(exe) || islandHelper) return;
+  islandHelper = require('node:child_process').spawn(exe, [], { windowsHide: true, stdio: ['pipe', 'pipe', 'ignore'] });
+  let buf = '';
+  islandHelper.stdout.on('data', (b) => {
+    buf += b.toString('utf8'); let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      let m; try { m = JSON.parse(line); } catch { continue; }
+      if (m.t === 'media' && island) island.webContents.send('island-media', m);
+      if (m.t === 'full') { islandFull = !!m.on; islandVisible(); }
+    }
+  });
+  islandHelper.on('exit', () => { islandHelper = null; if (!quitting && island) setTimeout(startIslandHelper, 5000); });   // crashed: start again
+}
+// Claude Code sessions that wrote in the last 5 minutes (liveSessions above) ride along with every push.
+function islandSend() {
+  if (!islandLast) return;
+  const sessions = liveSessions().sort((a, b) => b.at - a.at).map((x) => ({ now: x.steps[x.steps.length - 1], ago: Math.max(0, Math.round((Date.now() - x.at) / 60000)) + ' min ago' }));
+  if (island) island.webContents.send('island-data', { ...islandLast, sessions });
+}
+ipcMain.on('island-push', (_e, d) => { islandLast = d; islandSend(); });
+setInterval(islandSend, 60000);   // session files have no change event worth watching across every project folder
+ipcMain.on('island-mouse', (_e, inside) => { if (island) island.setIgnoreMouseEvents(!inside, { forward: true }); });
+ipcMain.on('island-blur', () => { if (island) island.blur(); });
+ipcMain.on('island-open', (_e, page) => { if (!/^[a-z]+$/.test(page) || !win) return; win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = '${page}'`); });
+ipcMain.on('island-settings', (_e, uri) => { if (/^ms-settings:[a-z-]+$/.test(uri)) shell.openExternal(uri); });
+ipcMain.handle('island-act', (_e, { action, args }) => (['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed'));
+setInterval(islandVisible, 30000);   // home/office switch
+app.on('before-quit', () => { quitting = true; try { islandHelper && islandHelper.kill(); } catch {} });
+
 app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focus(); } }); // at the office only the tray icon opens it
 app.whenReady().then(() => {
   app.setLoginItemSettings(loginArgs(true)); // always rewrite, so an old broken entry gets fixed
-  createWindow(); createTray();
+  createWindow(); createTray(); createIsland();
   setTimeout(selfUpdate, 60 * 1000); setInterval(selfUpdate, 30 * 60 * 1000);
 });
 

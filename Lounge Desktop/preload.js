@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('cocoDesktop', {
   setStartup: (on) => ipcRenderer.invoke('set-startup', !!on),
   pcCommand: (action, args) => ipcRenderer.invoke('pc-command', { action, args }),
   liveSnapshot: () => ipcRenderer.invoke('live-snapshot'),
+  islandPush: (d) => ipcRenderer.send('island-push', d),
   transcribe: (bytes, mime) => ipcRenderer.invoke('transcribe', { bytes, mime }),
   platform: 'windows',
 });
