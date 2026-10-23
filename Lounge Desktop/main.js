@@ -20,6 +20,13 @@ app.setAppUserModelId('GoodSpace.CocoLounge');
 // Unpackaged Electron needs the app folder in the start-up command, or Windows starts a bare electron.exe (the bug: Coco was not running after restart).
 const loginArgs = (on) => ({ openAtLogin: on, path: process.execPath, args: app.isPackaged ? ['--hidden'] : ['"' + path.resolve(__dirname) + '"', '--hidden'] });
 
+// Office mode (Boss, 2026-10-23): no notifications at all on the PC at the office. The page's own Windows notifications
+// are refused here; main-process pop-ups check atOffice() themselves; the island gets no toasts (see island 'quiet').
+app.whenReady().then(() => {
+  const { session } = require('electron');
+  session.defaultSession.setPermissionCheckHandler((_wc, permission) => !(permission === 'notifications' && atOffice()));
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(!(permission === 'notifications' && atOffice())));
+});
 function createWindow() {
   win = new BrowserWindow({
     width: 1280, height: 860, minWidth: 380, minHeight: 600, show: false,
@@ -414,7 +421,7 @@ async function runAction(action, args = {}) {
     }
     case 'fun': return fun(String(args.kind || 'party'));
     case 'find_file': return findFiles(String(args.q || ''));
-    case 'notify': { const { Notification } = require('electron'); new Notification({ title: 'Coco', body: String(args.text || '').slice(0, 200) }).show(); return 'Shown on screen'; }
+    case 'notify': { if (atOffice()) return 'Not shown: office mode (no notifications at the office)'; const { Notification } = require('electron'); new Notification({ title: 'Coco', body: String(args.text || '').slice(0, 200) }).show(); return 'Shown on screen'; }
     case 'play_youtube': {
       const q = String(args.q || '').trim().slice(0, 120); if (!q) return 'Say what to play';
       const id = await firstVideo(q);
@@ -532,7 +539,7 @@ const FACTS = [
 ];
 const MOTIVATE = ['Boss, one Short a day becomes three hundred sixty five a year. Keep going.', 'Big things are built one small step at a time. Today counts.', 'Good Space is growing. Let us make today the best day yet.'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
-function popup(title, body) { const { Notification } = require('electron'); new Notification({ title, body }).show(); }
+function popup(title, body) { if (atOffice()) return; const { Notification } = require('electron'); new Notification({ title, body }).show(); }   // silent at the office (Boss, 2026-10-23)
 function confetti(seconds = 5) {
   const { screen } = require('electron'); const { width, height } = screen.getPrimaryDisplay().bounds;
   const w = new BrowserWindow({ x: 0, y: 0, width, height, transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true, focusable: false, hasShadow: false, webPreferences: { contextIsolation: true } });
@@ -583,7 +590,7 @@ function placeIsland() {
 }
 // At the office the island shows no Coco status (Boss, 2026-10-22): the Coco module is switched off there, whatever the tray says.
 let sentModules = '';
-const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) m.coco = false; return m; };
+const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { m.coco = false; m.quiet = true; } return m; };   // quiet = no toasts
 function sendModules(force) { const m = islandModules(), k = JSON.stringify(m); if (island && (force || k !== sentModules)) { sentModules = k; island.webContents.send('island-modules', m); } }
 function islandVisible() {
   sendModules(false);
@@ -859,7 +866,7 @@ ipcMain.on('lounge-beat', beatNow);
 let needShown = 0;
 ipcMain.on('lounge-need', (_e, which) => {
   lastBeat = Date.now();   // reloading would not help; a person must act
-  if (Date.now() - needShown < 30 * 60 * 1000) return;
+  if (Date.now() - needShown < 30 * 60 * 1000 || atOffice()) return;   // at the office: no pop-up; the Dock menu still opens Coco
   needShown = Date.now();
   const { Notification } = require('electron');
   new Notification({ title: 'Coco is not connected', body: which === 'pair' ? 'Pair this PC again in Coco Lounge (it opened for you).' : 'Sign in to Coco Lounge again (it opened for you).' }).show();

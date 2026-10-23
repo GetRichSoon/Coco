@@ -278,7 +278,7 @@ $('#signOut1').onclick = async () => { await sb.auth.signOut(); show('signin'); 
 let seen = null;
 function notify(title, body, kind = 'other') {
   if (store.get('gs-n-' + kind) === '0') return;
-  try { if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body, icon: 'coco.svg', silent: false }); } catch {}
+  try { if ('Notification' in window && Notification.permission === 'granted' && !(window.cocoDesktop && window.cocoDesktop.atOffice && window.cocoDesktop.atOffice())) new Notification(title, { body, icon: 'coco.svg', silent: false }); } catch {}
 }
 function diffAndNotify() {
   const now = { approvals: new Set(D.approvals.filter(a => a.state === 'waiting').map(a => a.id)), done: new Set(D.tasks.filter(t => t.status === 'done').map(t => t.id)), act: D.activity[0] ? D.activity[0].id : 0 };

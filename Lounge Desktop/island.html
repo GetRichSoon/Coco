@@ -275,6 +275,7 @@ function startPomo(brk, round) { pomo = { brk, round, end: Date.now() + (brk ? 5
 
 // ---- toasts: a new approval or a finished job, like a phone notification ----
 function toast(title, sub, color) {
+  if (modules.quiet) return;   // office mode: no pop-ups on the PC (Boss, 2026-10-23)
   $('#tT').textContent = title; $('#tS').textContent = sub;
   $('#toastFace .dot').className = 'dot ' + (color === 'green' ? '' : 'orange');
   if (!open) mode('toast');
