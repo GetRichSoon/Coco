@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "description": "Extension projects use CommonJS build/QA scripts (Coco itself is an ES module package).",
+  "type": "commonjs"
+}

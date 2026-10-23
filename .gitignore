@@ -14,3 +14,6 @@ Lounge Android/app/build/
 Lounge Android/local.properties
 Lounge Android/.kotlin/
 Gatekeeper/Gatekeeper Log.txt
+
+# Each extension is its own git repo (pushed to GitHub); Coco tracks only the index
+Extensions/*/
