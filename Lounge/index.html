@@ -230,13 +230,23 @@ async function boot() {
   me = session.user;
   if (!store.get('gs-device-key')) return show('pair');
   const { data, error } = await sb.from('founders').select('*');
-  if (error || !data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
+  // A network or server error (no Wi-Fi yet after waking, a timeout) is NOT a rejected device: try again in 20 s and keep
+  // the pairing. Only an answer that arrives and is empty means Coco Cloud really refused this device key.
+  // (Bug 2026-10-23: a failed first request deleted the key and the PC unpaired itself.)
+  if (error) { console.error('Coco boot: cannot reach Coco Cloud yet (' + (error.message || error) + '), retrying in 20 s'); setTimeout(boot, 20000); return; }
+  if (!data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
   show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
   await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000);
   if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
+// A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
+function needHuman(which) {
+  console.error('Coco is not connected: needs ' + which);
+  if (window.cocoDesktop && window.cocoDesktop.needSignIn) window.cocoDesktop.needSignIn(which);
+}
 function show(which, msg) {
+  if (which !== 'app') needHuman(which);
   ['signin', 'pair', 'app'].forEach(id => $('#' + id).hidden = id !== which);
   if (which === 'pair' && msg) $('#pairErr').textContent = msg;
 }
@@ -373,7 +383,14 @@ let infoAt = 0, info = null;
 async function heartbeat() {
   if (!deviceId) return;
   if (window.cocoDesktop && Date.now() - infoAt > 300000) { infoAt = Date.now(); try { info = { summary: await window.cocoDesktop.pcCommand('status', {}), at: new Date().toISOString() }; } catch {} }
-  await sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2', ...(info ? { info } : {}) }).eq('id', deviceId);
+  // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
+  // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
+  // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  let res = await beat().catch((e) => ({ error: e }));
+  if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await beat().catch((e) => ({ error: e })); }
+  if (!res.error && res.data && res.data.length && window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat();
+  else console.error('heartbeat failed:', res.error ? (res.error.message || res.error) : 'no row updated (signed out or device key rejected)', 'device', deviceId);
 }
 const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id || '';
 const founderName = () => founder ? founder.name : (me && me.email);

@@ -27,6 +27,7 @@ function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false }, // keep the cloud link and commands live while hidden in the tray
   });
   win.loadFile(UI);
+  logWindow(win, 'lounge');   // page errors (failed heartbeats, sign-in problems) land in island.log
   win.once('ready-to-show', () => { if (!process.argv.includes('--hidden') && !atOffice()) win.show(); });
   win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); } });
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return { action: 'deny' }; });
@@ -845,6 +846,39 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
 setInterval(islandVisible, 30000);   // home/office switch
 // Quitting: the helper brings the taskbar back when its input closes, then exits by itself.
 app.on('before-quit', () => { quitting = true; try { if (islandHelper) { if (dock) islandHelper.stdin.write('taskbar show\n'); islandHelper.stdin.end(); } } catch {} });
+
+// ---------- always connected (Boss, 2026-10-23) ----------
+// The page reports every heartbeat that really reached Coco Cloud. No beat for 4 minutes (sleep, Wi-Fi change, expired
+// login, a hung page) -> reload the page, which reconnects everything. A crashed page reloads at once, and so does
+// waking or unlocking the PC. A beat file lets the 5-minute keepalive restart the whole app if even that fails.
+const BEAT_FILE = () => path.join(app.getPath('userData'), 'last-beat.txt');
+let lastBeat = Date.now();
+const beatNow = () => { lastBeat = Date.now(); try { fs.writeFileSync(BEAT_FILE(), String(lastBeat)); } catch {} };
+ipcMain.on('lounge-beat', beatNow);
+// The page needs a person (sign in again, or pair again): show the window and a Windows notification once.
+let needShown = 0;
+ipcMain.on('lounge-need', (_e, which) => {
+  lastBeat = Date.now();   // reloading would not help; a person must act
+  if (Date.now() - needShown < 30 * 60 * 1000) return;
+  needShown = Date.now();
+  const { Notification } = require('electron');
+  new Notification({ title: 'Coco is not connected', body: which === 'pair' ? 'Pair this PC again in Coco Lounge (it opened for you).' : 'Sign in to Coco Lounge again (it opened for you).' }).show();
+  if (win) { win.show(); win.focus(); }
+});
+function reconnect(why) {
+  if (!win || win.isDestroyed()) return;
+  try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} reconnect: ${why}
+`); } catch {}
+  lastBeat = Date.now();   // give the reload its own 4 minutes
+  win.webContents.reloadIgnoringCache();
+}
+setInterval(() => { if (Date.now() - lastBeat > 4 * 60 * 1000) reconnect('no heartbeat for 4 min'); }, 60 * 1000);
+app.whenReady().then(() => {
+  const { powerMonitor } = require('electron');
+  powerMonitor.on('resume', () => setTimeout(() => reconnect('PC woke up'), 8000));
+  powerMonitor.on('unlock-screen', () => { if (Date.now() - lastBeat > 90 * 1000) reconnect('PC unlocked'); });
+});
+app.on('web-contents-created', (_e, wc) => wc.on('render-process-gone', (_e2, d) => { if (win && wc === win.webContents) setTimeout(() => reconnect('page crashed: ' + d.reason), 2000); }));
 
 app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focus(); } }); // at the office only the tray icon opens it
 app.whenReady().then(() => {
