@@ -5,6 +5,8 @@ $repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 $log = Join-Path (Split-Path -Parent $repo) 'Safe Keeping\Seal Log.txt'
 function Log($m) { Add-Content -LiteralPath $log "$(Get-Date -Format 'yyyy-MM-dd HH:mm')  $m" }
 Set-Location $repo
+# One shared memory for every Claude session on Boss's laptop; another PC opts in by running Link Sessions.ps1 itself.
+if ($env:COMPUTERNAME -eq 'LAPTOP-LSVOC2SK') { try { & (Join-Path $repo 'Link Sessions.ps1') | ForEach-Object { Log "memory: $_" } } catch { Log "memory link failed: $($_.Exception.Message)" } }
 git add -A
 if (git status --porcelain) {
   $who = if ($env:COMPUTERNAME -match 'SHREYA') { 'Shreya' } else { 'Mangesh' }

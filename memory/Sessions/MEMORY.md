@@ -1,0 +1,54 @@
+- [Goal execution rule](feedback_goal_execution.md) — do goals end to end, no task lists
+- [One brain rule](feedback_one_brain.md) — Nova is one brain across all sessions; search and act before asking
+- [Fullscreen playback](feedback_fullscreen_playback.md) — make YouTube videos fullscreen after playing; use the F key
+- [Playlist feature](project_playlist_feature.md) — Brave YouTube 05/06 gods, 07 English; tasks run scripts/yt-slot-run.ps1 (self-heals missing player from git); pools in scripts/playlist-rotate.mjs
+- [Playlist: no per-step permission](feedback_playlist_no_permission.md) — run the saved YouTube playlist steps directly; keep songs playing till founder ends
+- [Autonomous QA protocol](feedback_autonomous_qa.md) — Nova finds, fixes and regression-tests bugs itself; bug register inside
+- [Command memory](feedback_command_memory.md) — save verified commands as workflows (os/state/local/workflows.md) and reuse them first
+- [Do more than asked](feedback_do_more_than_asked.md) — founder: go beyond the literal request, move fast; approval gate still applies
+- [YouTube team + The Flow](project_youtube_the_flow.md) — separate YT/extension teams, daily Short, performance loop, creds + known gaps
+- [Terminal-first execution](feedback_terminal_first.md) — all work incl. publish runs on PC terminals 1,2,3; cloud only when told 'cloud pe kaam kar'; cloud passes tasks to terminal
+- [Shreya setup history](project_shreya_setup.md) — GetRichSoon org, her device, shared Pro account question, open items (from other sessions)
+- [Recall all sessions first](feedback_recall_all_sessions.md) — before 'I don't know' search ALL sessions' history, repo, Brain; then answer and save
+- [Home/Office mode v4](project_home_office_switch.md) — BUILT 2026-10-22: verified save before close, home=Brave YouTube, office=Chrome dev Calendar+Teams+Cursor, Close All on PC+APK
+- [Flow animation theme](feedback_flow_animation_theme.md) — all Flow Shorts + long videos use habit-beats style of the latest 2 Shorts
+- [Default theme](project_default_theme.md) — Material You Design Theme is default for all APKs/sites/extensions; company/design/themes/material-you
+- [No dash in names](feedback_no_dash_in_names.md) — never use - in app/product/file/APK names; plain words or underscores
+- [YouTube channels account](project_youtube_channels_account.md) — all 12 channels are brand channels under sampleshoppp@gmail.com (The Flow's account)
+- [Coco Remote + Gatekeeper](project_coco_remote.md) — phone<->PC commands via cloud, plain words + mic, local AI chat; expanded PC control blocked
+- [Install safe automation](feedback_install_safe_automation.md) — install safe tools/MCPs for more automated PC work, report after; never terms/accounts/passwords/pay
+- [Reference quality rule](feedback_reference_quality.md) — all teams: match reference quality copyright-free; test tool vs reference before real work; keep only if it matches
+- [Ask before making](feedback_ask_before_making.md) — before any video/big build, ask Boss (Coco chat or any terminal): what, where (PC/cloud), cost
+- [Claude is a tool](feedback_claude_is_a_tool.md) — company and devices must run without Claude; Gemini/Ollama on runtime paths
+- [Coco Engine](project_coco_engine.md) — Claude Code = private feature inside Good Space; Option 1 full power, cloud first; blocked until permission mode changes
+- [GitHub org layout](project_github_org.md) — GetRichSoon: Coco, CocoMaison (was nova-hq), BossSuite, BigBossSuite, House.Product; nightly Daily Seal
+- [Quality promise](feedback_quality_promise.md) — every user-facing output top quality; local AI internal only; Elise gate
+- [Save organised](feedback_save_organised.md) — every new file/install goes to its place in Good Space with a Read Me; tools listed in Good Space Read Me
+- [Good Space structure](project_good_space_structure.md) — Coco, Houses Gigi/Lulu/Fifi/Zaza, Bonbon Club, shared platforms, Gigi 14 + Lulu 10 categories
+- [PC folder layout](project_pc_folder_layout.md) — 2026-10-14 cleanup: 5 main folders, games removed, rename/move undo logs
+- [Check installed tools fully](feedback_check_installed_tools.md) — when founder says a tool was installed, check registry, pip, npm and winget before saying it is missing
+- [No Nova name](feedback_no_nova_name.md) — everything is Coco/Good Space; rename old Nova things safely
+- [Cloud first](feedback_cloud_first.md) — all work runs in Coco Cloud / cloud routines; laptop is just a device
+- [Coco Lounge plan](project_coco_lounge_plan.md) — tonight's APK list + PC app roadmap; plan file in Good Space\Coco\Lounge
+- [Kahani Ghar via Autodraft](project_kahani_autodraft.md) — workflow file + video-qa.py; only speaker acts, lip sync, face each other
+- [Coco islands](project_coco_islands.md) — PC Bloom island in Coco Lounge Desktop + Coco Halo phone (iPhone exact, accessibility overlay)
+- [Note every mistake](feedback_note_every_mistake.md) — Boss's mistakes go into the team MISTAKES file same day; separate checker agent enforces it
+- [Keep Coco updated](feedback_keep_coco_updated.md) — STRICT: every session writes connections/releases/decisions/bugs into Coco (integrations, activity, decisions)
+- [PC storage + Drive](project_pc_storage_drive.md) — G: Drive (lokademangesh123) PC Archive copy 2026-10-25; Boss deletes originals; Cursor 10.5 GB is mostly chats
+- [Use research tools](feedback_use_research_tools.md) — decide any company work with Google Trends, YT suggestions, niche view data; write numbers in the decision
+- [Head of YT team](feedback_yt_team_head.md) — Boss gave full permission for YouTube work; act as head, report after; paying + ToS limits still apply
+- [Search before asking](search-before-asking.md) — search PC + past sessions before asking Mangesh for files he "already shared" (see Recall all sessions first)
+- [Material You theme](material-you-theme.md) — design system folder in Good Space\Coco\Design Atelier, default for all products (same rule as Default theme)
+- [Usage limit stop](usage-limit-stop.md) — stop unattended work at a usage-limit warning (~90% weekly), save + report first
+- [Material You motion required](material-you-motion-required.md) — flat recolors rejected; use theme.css loops, morphing shapes, stickers, drift, marquee on every extension UI
+- [No yellow in extensions](no-yellow-in-extensions.md) — avoid marigold/butter in extension UIs and logos
+- [QuickCast Google OAuth credentials](project_quickcast_keys.md) — Google OAuth client ID + Chrome extension Item ID for QuickCast
+- [Always bump version + push on every update](feedback_version_and_push.md) — After every QuickCast change: bump manifest version, commit, push to GitHub
+- [Confirm before delete](feedback_confirm_before_delete.md) — show exact file list + get yes before deleting anything on the PC
+- [Mangesh Vault + SpaceClear smart clean](project_mangesh_vault_and_spaceclear.md) — Drive backup layout; SpaceClear auto-delete retired on purpose
+- [Typewave text expander](project_typewave.md) — overnight build 2026-10-01, Orbi billing stack reused, launch steps in LAUNCH.md
+- [Breakwater focus/site blocker](project_breakwater.md) — overnight build 2026-10-01, same billing stack as Typewave
+- [Loudleaf read-aloud](project_loudleaf.md) — TTS extension, overnight 2026-10-01; each product site must have its own idea-specific layout
+- [Nova AI company HQ](project_nova_hq.md) — nova-hq repo, 16 team agents, 5 cloud routines with IDs, approval gate (OLD, 2026-10-06: repo is now GetRichSoon/CocoMaison, team is the lean core; trust newer memories)
+- [GitHub repo layout](project_github_repo_layout.md) — private code repos + public <name>-website repos; sync script; Extension .env.example has live keys
+- [WhatsApp Enhancer = Projects/SpaceGuard](project_whatsapp_enhancer.md) — renamed extension; keep SpaceGuard storage key/identifiers; what he wants from it
