@@ -339,11 +339,49 @@ async function loadAll() {
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
     q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'), q('rules', '*', ['updated_at', false]),
     q('commands', '*', ['created_at', false]).limit(15), q('integrations', '*', ['platform', true]),
+    q('agent_messages', '*', ['at', false]).limit(40),
   ]);
-  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations'].forEach((k, i) => D[k] = res[i].data || []);
+  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations', 'agentMessages'].forEach((k, i) => D[k] = res[i].data || []);
   if (!document.hidden) render(); diffAndNotify(); runMyCommands();   // hidden in the tray: no drawing, only data
   pushIsland();
 }
+// The team as a tidy name, the live conversation, and who is working now - the same logic the phone uses.
+function agentName(raw, members) {
+  const s = String(raw || '').trim(), low = s.toLowerCase();
+  if (!low) return '';
+  if (low === 'coco' || low.endsWith('nova')) return 'Coco';
+  const m = (members || []).find((x) => String(x.id).toLowerCase() === low || String(x.name).toLowerCase() === low);
+  if (m) return m.name;
+  const tail = low.split('.').pop().replace(/[_-]/g, ' ').trim();
+  return tail ? tail[0].toUpperCase() + tail.slice(1) : s;
+}
+function teamTalk(D) {
+  const members = D.members || [], out = [];
+  for (const m of (D.agentMessages || [])) { const t = String(m.text || ''); if (!t) continue; out.push({ from: agentName(m.from_agent, members), to: m.to_agent ? agentName(m.to_agent, members) : null, text: t.slice(0, 160), at: m.at }); }
+  const phrase = { 'task added': 'gave a task', merged: 'merged duplicate work', 'rule set': 'set a rule', approved: 'approved', declined: 'said no to', published: 'published', posted: 'published' };
+  for (const a of (D.activity || [])) {
+    const act = a.action, det = String(a.detail || ''); let lead, body;
+    if (act === 'update') { lead = det.split(' | ')[0] || 'update'; body = det.split(' | ').slice(1).join(' | '); }
+    else if (phrase[act]) { lead = phrase[act]; body = det; }
+    else if (det) { lead = String(act || '').replace(/_/g, ' '); body = det; }
+    else continue;
+    const who = String(a.actor || ''); if (!who) continue;
+    out.push({ from: agentName(who, members), to: null, text: (body ? lead + ': ' + body : lead).slice(0, 160), at: a.at });
+  }
+  return out.sort((x, y) => String(y.at).localeCompare(String(x.at))).slice(0, 12);
+}
+function cocoHQ(D) {
+  const RUN = ['running', 'working', 'in_progress'], YES = ['needs_yes', 'waiting_yes', 'need_approval'];
+  const members = (D.members || []).map((m) => {
+    const mine = (D.tasks || []).filter((t) => t.member_id === m.id);
+    const yes = mine.find((t) => YES.includes(t.status)), run = mine.find((t) => RUN.includes(t.status)), q = mine.find((t) => t.status === 'queued');
+    let state = 'resting', line = m.job || '';
+    if (yes) { state = 'needs_yes'; line = yes.title; } else if (run) { state = 'working'; line = run.title; } else if (m.doing) { state = 'working'; line = m.doing; } else if (q) { state = 'queued'; line = q.title; }
+    return { id: m.id, name: m.name, state, line: String(line || '').slice(0, 90) };
+  });
+  return { working: members.filter((m) => m.state === 'working').length, queued: (D.tasks || []).filter((t) => t.status === 'queued').length, needsYes: (D.approvals || []).filter((a) => a.state === 'waiting').length, members };
+}
+
 // Coco Island on this PC: the same live data, summed up, every time it changes.
 function pushIsland() {
   if (!window.cocoDesktop || !window.cocoDesktop.islandPush) return;
@@ -354,6 +392,7 @@ function pushIsland() {
     approvals: (D.approvals || []).filter((a) => a.state === 'waiting' || a.state === 'on-hold').map((a) => ({ id: a.id, code: a.code, team: a.team, what: String(a.what || '').slice(0, 120) })),
     tasks: { ...tasks, working: (tasks.working || 0) + (tasks.running || 0) + (tasks.in_progress || 0) },
     doneToday: done.length, recentDone: done.slice(0, 3).map((t) => String(t.title || '').slice(0, 80)),
+    hq: cocoHQ(D), talk: teamTalk(D),
   });
 }
 let pulseTimer = null;

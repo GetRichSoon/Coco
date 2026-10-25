@@ -608,7 +608,7 @@ function createIsland() {
   island.setAlwaysOnTop(true, 'screen-saver'); island.setVisibleOnAllWorkspaces(true);
   island.setIgnoreMouseEvents(true, { forward: true });   // clicks pass through until the mouse is over the pill
   island.loadFile(path.join(__dirname, 'island.html'));
-  island.webContents.on('did-finish-load', () => { sendModules(true); islandSend(); });
+  island.webContents.on('did-finish-load', () => { sendModules(true); islandSend(); sendAccent(); });
   island.on('closed', () => { island = null; });
   logWindow(island, 'island');
   placeIsland(); islandVisible();
@@ -644,6 +644,11 @@ function islandSend() {
 }
 ipcMain.on('island-push', (_e, d) => { islandLast = d; islandSend(); sendDockWins(); });
 setInterval(islandSend, 60000);   // session files have no change event worth watching across every project folder
+// Material You: the island tints itself from the Windows accent colour (same idea as the phone using the wallpaper).
+function sendAccent() {
+  try { if (island) island.webContents.send('island-sys', { t: 'accent', hex: '#' + require('electron').systemPreferences.getAccentColor().slice(0, 6) }); } catch {}
+}
+try { require('electron').systemPreferences.on('accent-color-changed', sendAccent); } catch {}
 // ---- hover like Bloom: an 8 px band at the top centre, 200 ms dwell, pointer checked every 40 ms ----
 // Works with the Coco window open or closed (this is the background process). The island never takes focus from the
 // hover; clicks pass through everywhere except the pill itself.
