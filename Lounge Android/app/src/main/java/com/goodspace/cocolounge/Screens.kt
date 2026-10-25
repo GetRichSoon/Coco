@@ -13,6 +13,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -65,7 +69,7 @@ enum class Tab(val label: String, val icon: ImageVector) {
 }
 enum class MorePage(val label: String, val icon: ImageVector) {
     Approvals("Approvals", Icons.Rounded.Verified), Board("Board", Icons.Rounded.ViewKanban), Rules("Rules", Icons.Rounded.Gavel),
-    Devices("Devices", Icons.Rounded.Devices), Settings("Settings", Icons.Rounded.Settings)
+    Devices("Devices", Icons.Rounded.Devices), Island("Island", Icons.Rounded.AutoAwesome), Settings("Settings", Icons.Rounded.Settings)
 }
 
 val LocalCalm = staticCompositionLocalOf { false }
@@ -148,7 +152,7 @@ fun SignIn(vm: Lounge) {
         Muted("Private to the founders of Good Space, on their four devices only.")
         OutlinedTextField(mail, { mail = it }, label = { Text("Email") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
         OutlinedTextField(pass, { pass = it }, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
-        Button({ vm.signIn(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Sign in") }
+        MuButton({ vm.signIn(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Sign in") }
         TextButton({ vm.signUp(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth()) { Text("First time on Good Space? Create your password") }
     }
 }
@@ -159,7 +163,7 @@ fun Pair(vm: Lounge) {
     GateCard("Pair this phone", "One of four") {
         Muted("Good Space opens only on your PC and your phone. Type the 8-letter pairing code for this phone.")
         OutlinedTextField(code, { code = it.uppercase().take(12) }, label = { Text("Pairing code") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        Button({ vm.pair(code) }, enabled = !vm.busy && code.length >= 6, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Pair phone") }
+        MuButton({ vm.pair(code) }, enabled = !vm.busy && code.length >= 6, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Pair phone") }
         TextButton({ vm.signOut() }, modifier = Modifier.fillMaxWidth()) { Text("Sign out") }
     }
 }
@@ -170,6 +174,7 @@ fun LoungeApp(vm: Lounge) {
     var tab by rememberSaveable { mutableStateOf(Tab.Home) }
     var more by rememberSaveable { mutableStateOf<MorePage?>(null) }
     var house by rememberSaveable { mutableStateOf("gigi") }
+    var member by rememberSaveable { mutableStateOf<String?>(null) }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(vm.message) { vm.message?.let { snack.showSnackbar(it); vm.message = null } }
     val waiting = vm.data.approvals.count { it.s("state") == "waiting" }
@@ -183,7 +188,9 @@ fun LoungeApp(vm: Lounge) {
                 title = {
                     Column {
                         Text("Good Space · ${vm.callMe}".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        Text(if (tab == Tab.More && more != null) more!!.label else tab.label, style = MaterialTheme.typography.headlineMedium)
+                        AnimatedContent(if (tab == Tab.More && more != null) more!!.label else tab.label, label = "title", transitionSpec = {
+                            (slideInVertically(MuMotion.spatial()) { it / 2 } + fadeIn(MuMotion.effects())) togetherWith (slideOutVertically(MuMotion.spatial()) { -it / 2 } + fadeOut(tween(90)))
+                        }) { title -> Text(title, style = MaterialTheme.typography.headlineMedium) }
                     }
                 },
                 actions = {
@@ -195,23 +202,21 @@ fun LoungeApp(vm: Lounge) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
-        bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                Tab.entries.forEach { t ->
-                    NavigationBarItem(selected = tab == t, onClick = { tab = t; if (t == Tab.More) more = null }, label = { Text(t.label, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false) },
-                        icon = { BadgedBox(badge = { if (t == Tab.More && waiting > 0) Badge { Text("$waiting") } }) { Icon(t.icon, t.label) } })
-                }
-            }
-        },
         containerColor = MaterialTheme.colorScheme.background,
     ) { pad ->
-        AnimatedContent(tab to more, Modifier.padding(pad).consumeWindowInsets(pad), transitionSpec = {
-            (fadeIn(tween(220, delayMillis = 90)) + scaleIn(tween(220, delayMillis = 90), initialScale = 0.96f)) togetherWith fadeOut(tween(90))
+      // The screens run under the floating glass nav (iOS 26 style): it shows them blurred through itself.
+      val backdrop = rememberBackdrop()
+      Box(Modifier.fillMaxSize().padding(top = pad.calculateTopPadding())) {
+        AnimatedContent(tab to more, Modifier.fillMaxSize().backdropSource(backdrop), transitionSpec = {
+            // Shared-axis spring: screens to the right slide in from the right, going back slides from the left.
+            val dir = (targetState.first.ordinal - initialState.first.ordinal).let { if (it == 0) (if (targetState.second != null) 1 else -1) else Integer.signum(it) }
+            (slideInHorizontally(MuMotion.spatial()) { w -> dir * w / 5 } + fadeIn(tween(220, delayMillis = 60))) togetherWith
+                (slideOutHorizontally(MuMotion.spatial()) { w -> -dir * w / 5 } + fadeOut(tween(120)))
         }, label = "screens") { (t, m) ->
             if (t == Tab.Chat) ChatScreen(vm)
-            else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 when (t) {
-                    Tab.Home -> home(vm, go)
+                    Tab.Home -> home(vm, go) { member = it }
                     Tab.Teams -> teams(vm, house) { house = it }
                     Tab.Remote -> remote(vm)
                     Tab.More -> when (m) {
@@ -220,27 +225,36 @@ fun LoungeApp(vm: Lounge) {
                         MorePage.Board -> board(vm)
                         MorePage.Rules -> rules(vm)
                         MorePage.Devices -> devices(vm)
+                        MorePage.Island -> islandPage()
                         MorePage.Settings -> settings(vm)
                     }
                     Tab.Chat -> {}
                 }
             }
         }
+        FloatingNav(tab, waiting, { t -> tab = t; if (t == Tab.More) more = null }, Modifier.align(Alignment.BottomCenter), backdrop)
+      }
     }
+    member?.let { MemberSheet(vm, it) { member = null } }
     Dialogs(vm)
 }
 
+/** Bottom room every screen keeps free for the floating nav (it floats over the content). */
+val NavRoom = 96.dp
+
 // ---------- HOME: the dashboard ----------
-fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
+fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit, onMember: (String) -> Unit = {}) {
     val d = vm.data
     item(key = "hero") {
         Appear(0) {
             Surface(shape = RoundedCornerShape(32.dp), color = Mu.plum, contentColor = Mu.bubblegum, modifier = Modifier.fillMaxWidth()) {
                 Box {
+                    DriftBlobs(listOf(Mu.wine, Mu.cherry, Mu.tomato), Modifier.matchParentSize())
                     LivingMark(Marks.coco.copy(bg = Mu.wine), 150.dp, Modifier.align(Alignment.TopEnd).offset(x = 40.dp, y = (-30).dp))
                     Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Coco", fontFamily = Fun, fontSize = 22.sp, color = Mu.bubblegum)
-                        Text("Hello ${vm.callMe}", style = MaterialTheme.typography.displaySmall, color = Mu.cream)
+                        val hour = remember(rememberTicker(60_000L)) { java.time.LocalTime.now().hour }
+                        Text(greeting(hour, vm.callMe), style = MaterialTheme.typography.displaySmall, color = Mu.cream)
                         val w = d.approvals.count { it.s("state") == "waiting" }
                         Text(if (d.paused) "Coco is paused. Nothing new starts until you resume." else if (w > 0) "$w things need your YES." else "Everything is moving. Nothing needs you.", style = MaterialTheme.typography.bodyLarge, color = Mu.cream)
                     }
@@ -248,6 +262,8 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
             }
         }
     }
+    // Coco HQ: the team at work, live, with Coco coordinating in the middle
+    item(key = "hq") { Appear(1) { CocoHQ(vm, onMember) } }
     // Quick command to your own PC (online one first), right on Home
     val myPc = d.devices.filter { it.s("kind") == "pc" && it.s("id") != vm.cloud.deviceId && it.optBoolean("active", true) }
         .sortedWith(compareBy({ !online(it) }, { !it.s("id").startsWith(vm.cloud.deviceId?.substringBefore('-') ?: "~") }))
@@ -259,7 +275,7 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
             val running by animateIntAsState(d.tasks.count { it.s("status") in setOf("running", "working") }, tween(600), label = "r")
             val chan = d.offerings.filter { it.s("kind") == "channel" }
             val conn by animateIntAsState(chan.count { it.optBoolean("connected") }, tween(600), label = "c")
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Tile("$waiting", "need YES", Mu.tomato, Mu.cream, Modifier.weight(1f)) { go(Tab.More, MorePage.Approvals, null) }
                 Tile("$running", "running", Mu.cobalt, Mu.sky, Modifier.weight(1f)) { go(Tab.More, MorePage.Board, null) }
                 Tile("$conn/${chan.size}", "channels on", Mu.forest, Mu.butter, Modifier.weight(1f)) { go(Tab.Teams, null, "gigi") }
@@ -270,13 +286,20 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
     item(key = "nexth") { Section("Next up") }
     if (upcoming.isEmpty()) item(key = "nexte") { Muted("Nothing planned yet.") }
     items(upcoming.take(5), key = { "ev-" + it.s("id") }) { e -> Box(Modifier.animateItem()) { EventRow(vm, e) } }
+    item(key = "feedh") { Section("Live feed") }
+    item(key = "feed") {
+        Card {
+            if (d.activity.isEmpty()) Muted("Nothing new yet.")
+            d.activity.take(6).forEach { FeedRow(it) }
+        }
+    }
     item(key = "housesh") { Section("Houses") }
     item(key = "houses") {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
             d.houses.forEach { h ->
                 val id = h.s("id"); val mark = Marks.houses[id] ?: Marks.coco
                 val mine = d.offerings.filter { it.s("house_id") == id }
-                Surface(Modifier.weight(1f).clickable { go(Tab.Teams, null, id) }, shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                Surface(Modifier.weight(1f).clip(RoundedCornerShape(24.dp)).bounceClick { go(Tab.Teams, null, id) }, shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) { LivingMark(mark, 52.dp); Spacer(Modifier.width(8.dp)); Column { Text(h.s("name"), style = MaterialTheme.typography.titleLarge); Muted(h.s("role"), 1) } }
                         StatusChip(h.s("state"), when (h.s("state")) { "working" -> "Working"; "next" -> "Next"; "later" -> "Later"; else -> null })
@@ -299,20 +322,6 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
             }
         }
     }
-    item(key = "clubh") { Section("Bonbon Club") }
-    item(key = "club") {
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            d.members.forEach { m ->
-                val mark = Marks.members[m.s("id")] ?: return@forEach
-                Surface(Modifier.width(150.dp), shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                    Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        LivingMark(mark, 56.dp); Text(m.s("name"), style = MaterialTheme.typography.titleMedium)
-                        Muted(m.s("doing").ifBlank { m.s("job") }, 3)
-                    }
-                }
-            }
-        }
-    }
     item(key = "pause") {
         Card {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -325,8 +334,12 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit) {
 
 @Composable
 fun Tile(value: String, label: String, bg: Color, fg: Color, modifier: Modifier, onClick: () -> Unit) {
-    Surface(modifier.clickable(onClick = onClick), shape = RoundedCornerShape(24.dp), color = bg, contentColor = fg) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) { Text(value, style = MaterialTheme.typography.headlineMedium, color = fg); Text(label, style = MaterialTheme.typography.labelLarge, color = fg) }
+    Surface(modifier.fillMaxHeight().clip(RoundedCornerShape(24.dp)).bounceClick(onClick), shape = RoundedCornerShape(24.dp), color = bg, contentColor = fg) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
+            // "13/15" used to break into two lines: long values get a smaller size and never wrap.
+            Text(value, style = if (value.length > 3) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium, color = fg, maxLines = 1, softWrap = false)
+            Text(label, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 2)
+        }
     }
 }
 
@@ -410,42 +423,6 @@ fun OfferingCard(o: JSONObject) {
             o.s("last_post_url").takeIf { u -> u.isNotBlank() }?.let { u -> TextButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u))) }) { Text("Watch") } }
         } }
         o.s("next_post_title").takeIf { it.isNotBlank() }?.let { Text("Next: $it · ${inTime(o.s("next_post_at"))}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) }
-    }
-}
-
-// ---------- CHAT with Coco ----------
-@Composable
-fun ChatScreen(vm: Lounge) {
-    val list = rememberLazyListState()
-    val msgs = vm.data.chat
-    LaunchedEffect(msgs.size) { if (msgs.isNotEmpty()) list.animateScrollToItem(msgs.size) }
-    var text by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().imePadding()) {
-        LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(16.dp, 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            item(key = "intro") { Muted("Tell Coco anything: a task, a question, a rule. Coco answers from the cloud, then acts or asks for your YES.") }
-            items(msgs, key = { "m-" + it.s("id") }) { m ->
-                val mine = m.s("role") == "founder"
-                Row(Modifier.fillMaxWidth().animateItem(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start, verticalAlignment = Alignment.Bottom) {
-                    if (!mine) { LivingMark(Marks.coco, 34.dp); Spacer(Modifier.width(8.dp)) }
-                    Surface(shape = RoundedCornerShape(22.dp, 22.dp, if (mine) 6.dp else 22.dp, if (mine) 22.dp else 6.dp),
-                        color = if (mine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = if (mine) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, modifier = Modifier.widthIn(max = 300.dp)) {
-                        Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                            if (!mine || m.s("author") != vm.name) Text(m.s("author"), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            Text(m.s("body"), style = MaterialTheme.typography.bodyLarge)
-                            Text(when (m.s("status")) { "new" -> "sent · Coco will answer"; "thinking" -> "Coco is working on it"; else -> ago(m.s("created_at")) }, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-            }
-        }
-        Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-            Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(text, { text = it }, placeholder = { Text("Message Coco…") }, modifier = Modifier.weight(1f), maxLines = 4, shape = RoundedCornerShape(24.dp))
-                Spacer(Modifier.width(8.dp))
-                FilledIconButton({ if (text.isNotBlank()) { vm.sendChat(text.trim()); text = "" } }, enabled = text.isNotBlank(), modifier = Modifier.size(52.dp)) { Icon(Icons.AutoMirrored.Rounded.Send, "Send") }
-            }
-        }
     }
 }
 
@@ -639,7 +616,7 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
                 var msg by remember { mutableStateOf("") }
                 AlertDialog(onDismissRequest = { msgOpen = false }, title = { Text("Message to ${dev.s("name")}") },
                     text = { OutlinedTextField(msg, { msg = it }, placeholder = { Text("Type anything, emojis ok 😊") }, minLines = 2, modifier = Modifier.fillMaxWidth()) },
-                    confirmButton = { Button({ if (msg.isNotBlank()) send("notify", JSONObject().put("text", msg.trim())); msgOpen = false }) { Text("Send") } },
+                    confirmButton = { MuButton({ if (msg.isNotBlank()) send("notify", JSONObject().put("text", msg.trim())); msgOpen = false }) { Text("Send") } },
                     dismissButton = { TextButton({ msgOpen = false }) { Text("Cancel") } })
             }
             Eyebrow(if (pc) "Power" else "Phone")
@@ -660,11 +637,11 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
     confirm?.takeIf { it == "close_all" || it.startsWith("switch_") }?.let { op -> AlertDialog(onDismissRequest = { confirm = null },
         title = { Text(if (op == "close_all") "Close everything on ${dev.s("name")}?" else "Switch ${dev.s("name")} to ${op.removePrefix("switch_")} mode?") },
         text = { Text(if (op == "close_all") "All tabs, windows and app sessions on the laptop close. The session is saved first. Apps with unsaved work ask and stay open. Coco and the Claude terminals keep running." else "The open windows are saved, then closed, and the ${op.removePrefix("switch_")} apps open.") },
-        confirmButton = { Button({ send("workspace", JSONObject().put("op", op)); confirm = null }) { Text(if (op == "close_all") "Close all" else "Switch") } },
+        confirmButton = { MuButton({ send("workspace", JSONObject().put("op", op)); confirm = null }) { Text(if (op == "close_all") "Close all" else "Switch") } },
         dismissButton = { TextButton({ confirm = null }) { Text("Cancel") } }) }
     confirm?.takeIf { it == "restart" || it == "shutdown" }?.let { a -> AlertDialog(onDismissRequest = { confirm = null }, title = { Text(if (a == "restart") "Restart ${dev.s("name")}?" else "Switch off ${dev.s("name")}?") },
         text = { Text("It happens in 60 seconds. Unsaved work on that PC can be lost. You can cancel from here.") },
-        confirmButton = { Button({ send(a, JSONObject()); confirm = null }) { Text(if (a == "restart") "Restart" else "Switch off") } },
+        confirmButton = { MuButton({ send(a, JSONObject()); confirm = null }) { Text(if (a == "restart") "Restart" else "Switch off") } },
         dismissButton = { TextButton({ confirm = null }) { Text("Keep it on") } }) }
 }
 
@@ -672,7 +649,7 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
 fun LazyListScope.moreMenu(vm: Lounge, open: (MorePage) -> Unit) {
     val waiting = vm.data.approvals.count { it.s("state") == "waiting" }
     items(MorePage.entries, key = { "more-" + it.name }) { p ->
-        Surface(Modifier.fillMaxWidth().clickable { open(p) }, shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Surface(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).bounceClick { open(p) }, shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
             Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(p.icon, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(14.dp))
                 Text(p.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -697,7 +674,7 @@ fun ApprovalCard(vm: Lounge, a: JSONObject) {
         Row(verticalAlignment = Alignment.CenterVertically) { Text("${a.s("code")} · ${a.s("team")}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f)); StatusChip(a.s("state")) }
         Text(a.s("what"), style = MaterialTheme.typography.bodyMedium)
         Muted(listOfNotNull(a.s("raised_on").takeIf { it.isNotBlank() }, a.s("decided_by").takeIf { it.isNotBlank() }?.let { "decided by $it" }).joinToString(" · "))
-        if (a.s("state") == "waiting") Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Button({ vm.decide(a, true) }) { Text("YES") }; TextButton({ vm.decide(a, false) }) { Text("No") } }
+        if (a.s("state") == "waiting") Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { MuButton({ vm.decide(a, true) }) { Text("YES") }; TextButton({ vm.decide(a, false) }) { Text("No") } }
     }
 }
 
@@ -711,7 +688,7 @@ fun LazyListScope.board(vm: Lounge) {
                 vm.data.houses.forEach { h -> FilterChip(house == h.s("id"), { house = h.s("id") }, { Text(h.s("name")) }, leadingIcon = { LivingMark(Marks.houses[h.s("id")] ?: Marks.coco, 22.dp) }) }
             }
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) { listOf("any" to "Anywhere", "cloud" to "Cloud", "pc" to "PC").forEachIndexed { i, (v, l) -> SegmentedButton(needs == v, { needs = v }, SegmentedButtonDefaults.itemShape(i, 3)) { Text(l) } } }
-            Button({ if (title.isNotBlank()) { vm.submitTask(title.trim(), null, house, needs); title = "" } }, enabled = title.isNotBlank()) { Text("Send to Coco") }
+            MuButton({ if (title.isNotBlank()) { vm.submitTask(title.trim(), null, house, needs); title = "" } }, enabled = title.isNotBlank()) { Text("Send to Coco") }
         }
     }
     val open = vm.data.tasks.filter { it.s("status") !in setOf("done", "stopped", "merged") }
@@ -734,7 +711,7 @@ fun TaskCard(vm: Lounge, t: JSONObject) {
         vm.data.notes.filter { it.s("task_id") == id }.forEach { Muted("+ ${it.s("note")} (${it.s("by_email")})") }
         t.s("result").takeIf { it.isNotBlank() }?.let { Text("Result: $it", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold) }
         if (t.s("status") in setOf("queued", "running", "waiting_pc", "needs_yes")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton({ vm.dialog = Lounge.Dialog.AddPoints(id, t.s("title")) }) { Text("Add points") }; TextButton({ vm.stopTask(id, t.s("title")) }) { Text("Stop") }
+            MuTonal({ vm.dialog = Lounge.Dialog.AddPoints(id, t.s("title")) }) { Text("Add points") }; TextButton({ vm.stopTask(id, t.s("title")) }) { Text("Stop") }
         }
     }
 }
@@ -746,7 +723,7 @@ fun LazyListScope.rules(vm: Lounge) {
             Text("Set a rule for all of Good Space", style = MaterialTheme.typography.titleLarge); Muted("Every device, every team and Coco follow it at once.")
             OutlinedTextField(title, { title = it }, label = { Text("Rule in a few words") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(body, { body = it }, label = { Text("Details") }, minLines = 2, modifier = Modifier.fillMaxWidth())
-            Button({ vm.addRule(title.trim(), body.trim()); title = ""; body = "" }, enabled = title.isNotBlank() && body.isNotBlank()) { Text("Save rule for everyone") }
+            MuButton({ vm.addRule(title.trim(), body.trim()); title = ""; body = "" }, enabled = title.isNotBlank() && body.isNotBlank()) { Text("Save rule for everyone") }
         }
     }
     items(vm.data.rules, key = { "rule-" + it.s("id") }) { r -> Box(Modifier.animateItem()) { Card { Text(r.s("title"), style = MaterialTheme.typography.titleLarge); Text(r.s("body").take(700), style = MaterialTheme.typography.bodyMedium) } } }
@@ -763,16 +740,16 @@ fun LazyListScope.devices(vm: Lounge) {
             }
             Muted("${if (d.s("key_hash").isNotBlank()) "paired ${ago(d.s("paired_at"))}" else "not paired yet"} · seen ${ago(d.s("last_seen"))}")
             if (mine) Text("This device", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-            else if (d.optBoolean("active", true)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilledTonalButton({ vm.makePairingCode(id) }) { Text("Make pairing code") }; var ask by remember { mutableStateOf(false) }; TextButton({ ask = true }) { Text("Switch off") }
+            else if (d.optBoolean("active", true)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { MuTonal({ vm.makePairingCode(id) }) { Text("Make pairing code") }; var ask by remember { mutableStateOf(false) }; TextButton({ ask = true }) { Text("Switch off") }
                 if (ask) AlertDialog(onDismissRequest = { ask = false }, title = { Text("Switch off ${d.s("name")}?") }, text = { Text("It will stop opening Good Space and stop taking commands until you switch it on again.") },
-                    confirmButton = { TextButton({ vm.switchOff(id); ask = false }) { Text("Switch off") } }, dismissButton = { Button({ ask = false }) { Text("Keep it on") } }) }
-            else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { Text("Switched off", color = LocalLux.current.bad, style = MaterialTheme.typography.labelLarge); FilledTonalButton({ vm.switchOn(id) }) { Text("Switch on") } }
+                    confirmButton = { TextButton({ vm.switchOff(id); ask = false }) { Text("Switch off") } }, dismissButton = { MuButton({ ask = false }) { Text("Keep it on") } }) }
+            else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { Text("Switched off", color = LocalLux.current.bad, style = MaterialTheme.typography.labelLarge); MuTonal({ vm.switchOn(id) }) { Text("Switch on") } }
         }
     }
 }
 
 fun LazyListScope.settings(vm: Lounge) {
-    item(key = "s-account") { Card { Eyebrow("Account"); Text("${vm.name} · ${vm.callMe}", style = MaterialTheme.typography.titleLarge); Muted(vm.cloud.email.orEmpty()); OutlinedButton({ vm.signOut() }) { Text("Sign out") } } }
+    item(key = "s-account") { Card { Eyebrow("Account"); Text("${vm.name} · ${vm.callMe}", style = MaterialTheme.typography.titleLarge); Muted(vm.cloud.email.orEmpty()); MuOutlined({ vm.signOut() }) { Text("Sign out") } } }
     item(key = "s-notify") { Card {
         Eyebrow("Notifications")
         key(vm.notifyTick) { listOf("approvals" to "Approvals waiting for YES", "done" to "Tasks finished", "merged" to "Coco merged a task", "tasks" to "Tasks from the other founder", "rules" to "New rules").forEach { (k, label) ->
@@ -782,15 +759,16 @@ fun LazyListScope.settings(vm: Lounge) {
         Eyebrow("Appearance")
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) { listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEachIndexed { i, (v, l) -> SegmentedButton(vm.theme == v, { vm.chooseTheme(v) }, SegmentedButtonDefaults.itemShape(i, 3)) { Text(l) } } }
         Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Calm motion", style = MaterialTheme.typography.bodyLarge); Muted("Logos and screens keep still") }; Switch(vm.calm, { vm.chooseCalm(it) }) }
-        OutlinedButton({ vm.refreshNow() }) { Text("Refresh now") }
+        if (android.os.Build.VERSION.SDK_INT >= 31) Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Match my wallpaper", style = MaterialTheme.typography.bodyLarge); Muted("Material You colours from your wallpaper instead of the Good Space palette") }; Switch(vm.wallpaper, { vm.chooseWallpaper(it) }) }
+        MuOutlined({ vm.refreshNow() }) { Text("Refresh now") }
     } }
     item(key = "s-remote") { Card {
         val ctx = androidx.compose.ui.platform.LocalContext.current
         Eyebrow("Remote control when the app is closed")
         Muted(if (android.provider.Settings.canDrawOverlays(ctx)) "On: your PC can open YouTube and other apps here even when Coco Lounge is closed." else "Off: allow \"Display over other apps\" once, so your PC can open apps here even when Coco Lounge is closed.")
-        if (!android.provider.Settings.canDrawOverlays(ctx)) Button({ ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + ctx.packageName))) }) { Text("Allow") }
+        if (!android.provider.Settings.canDrawOverlays(ctx)) MuButton({ ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + ctx.packageName))) }) { Text("Allow") }
     } }
-    item(key = "s-update") { Card { Eyebrow("Updates"); Text("Coco Lounge ${vm.appVersion}", style = MaterialTheme.typography.titleLarge); Muted("Updates install by themselves. Tap to check right now."); Button({ vm.checkUpdate() }) { Text("Check for update") } } }
+    item(key = "s-update") { Card { Eyebrow("Updates"); Text("Coco Lounge ${vm.appVersion}", style = MaterialTheme.typography.titleLarge); Muted("Updates install by themselves. Tap to check right now."); MuButton({ vm.checkUpdate() }) { Text("Check for update") } } }
     item(key = "s-about") { Card { Eyebrow("About"); Text("Coco Lounge ${vm.appVersion} · Android", style = MaterialTheme.typography.titleLarge); Muted("Good Space, managed by Coco. House theme: Material You Design Theme v1. Private: founder login plus this device's key.") } }
 }
 

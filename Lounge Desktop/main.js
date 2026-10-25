@@ -629,7 +629,7 @@ function startIslandHelper() {
       let m; try { m = JSON.parse(line); } catch { continue; }
       if (m.t === 'media' && island) island.webContents.send('island-media', m);
       if (m.t === 'full') { islandFull = !!m.on; islandVisible(); dockVisible(); }
-      if (['net', 'bright', 'max', 'vol', 'radio', 'wifilist', 'wifiresult', 'btlist'].includes(m.t) && island) island.webContents.send('island-sys', m);
+      if (['net', 'bright', 'max', 'vol', 'radio', 'wifilist', 'wifiresult', 'wifipass', 'btlist'].includes(m.t) && island) island.webContents.send('island-sys', m);
       if (m.t === 'wins') { dockWins = m.list; dockFront = m.front || 0; sendDockWins(); }
       if (m.t === 'max') islandMax = !!m.on;
     }
@@ -847,6 +847,10 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
     return say(pw == null ? 'wifi connect ' + ssid : 'wifi join ' + ssid + '\t' + pw);
   }
   if (action === 'radio') { const k = args && args.kind, on = !!(args && args.on); return k === 'wifi' || k === 'bt' ? say(`radio ${k} ${on ? 'on' : 'off'}`) : 'bad'; }
+  // Show a password THIS PC already saved (own networks only). The value never touches a log or disk; it goes straight to the island window.
+  if (action === 'wifipass') { const s = String(args && args.ssid || ''); return s ? say('wifi pass ' + s) : 'bad'; }
+  // After joining an open network, open the sign-in page (captive portal) at a place.
+  if (action === 'portal') { shell.openExternal('http://www.msftconnecttest.com/redirect'); return 'ok'; }
   if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
 });

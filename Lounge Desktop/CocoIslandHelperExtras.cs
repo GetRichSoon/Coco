@@ -217,6 +217,25 @@ static partial class Program
         return list;
     }
 
+    // The password of a network THIS PC has already saved (same as Windows Settings > "Show password"). Owner's own
+    // networks only: netsh can only read profiles stored on this machine, never a network we have not joined.
+    static void WifiPassword(string ssid)
+    {
+        string pw = "", why = "";
+        try
+        {
+            ProcessStartInfo psi = new ProcessStartInfo("netsh", "wlan show profile name=\"" + ssid.Replace("\"", "") + "\" key=clear");
+            psi.UseShellExecute = false; psi.RedirectStandardOutput = true; psi.CreateNoWindow = true;
+            string o; using (Process p = Process.Start(psi)) { o = p.StandardOutput.ReadToEnd(); p.WaitForExit(5000); }
+            var m = System.Text.RegularExpressions.Regex.Match(o, @"Key Content\s*:\s*(.+?)\s*$", System.Text.RegularExpressions.RegexOptions.Multiline);
+            if (m.Success) pw = m.Groups[1].Value;
+            else if (System.Text.RegularExpressions.Regex.IsMatch(o, @"Security key\s*:\s*Absent")) why = "This is an open network, it has no password";
+            else why = "Not saved on this PC";
+        }
+        catch (Exception e) { why = e.Message; }
+        Emit("{\"t\":\"wifipass\",\"ssid\":" + J(ssid) + ",\"password\":" + J(pw) + ",\"why\":" + J(why) + "}");
+    }
+
     static void WifiConnect(string ssid, string password)
     {
         string why = "";
@@ -225,6 +244,12 @@ static partial class Program
         {
             var a = Adapter();
             WiFiAvailableNetwork net = a == null ? null : a.NetworkReport.AvailableNetworks.FirstOrDefault(n => n.Ssid == ssid);
+            if (net == null && a != null)
+            {
+                // At a new place the network may not be in the last scan yet: scan once more, then look again.
+                var sc = a.ScanAsync(); for (int i = 0; i < 1600 && sc.Status == AsyncStatus.Started; i++) Thread.Sleep(5);
+                net = a.NetworkReport.AvailableNetworks.FirstOrDefault(n => n.Ssid == ssid);
+            }
             if (net == null) why = "Network not in range";
             else
             {

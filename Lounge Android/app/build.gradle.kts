@@ -11,12 +11,15 @@ android {
         applicationId = "com.goodspace.cocolounge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 13
-        versionName = "2.7.0"
+        versionCode = 14
+        versionName = "2.8.0"
     }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8: smaller APK (faster self-update) and faster, smoother Compose (2026-10-25, measured on the Nord CE 2).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Private app for the founders' two phones: signed with the local debug key, never uploaded to a store.
             signingConfig = signingConfigs.getByName("debug")
         }
@@ -25,6 +28,7 @@ android {
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
     lint { abortOnError = false }
+    testOptions { unitTests.isReturnDefaultValues = true }
 }
 
 dependencies {
@@ -40,4 +44,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    testImplementation("junit:junit:4.13.2")
+    // the real org.json for unit tests (the Android stub returns empty values)
+    testImplementation("org.json:json:20240303")
 }

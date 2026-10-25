@@ -46,6 +46,7 @@ class Connected : Service() {
             .setContentTitle("Coco connected").setContentText("Your devices can reach this phone").setOngoing(true).setContentIntent(open).build()
         startForeground(7, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         if (stopListen == null) loop()
+        com.goodspace.cocolounge.island.Island.boot(this)
         return START_STICKY
     }
 
@@ -93,6 +94,6 @@ class Connected : Service() {
 
     /** Phone restarted or the app was updated: connect again by itself. */
     class Boot : BroadcastReceiver() {
-        override fun onReceive(ctx: Context, intent: Intent) { if (Cloud(ctx).signedIn) start(ctx) }
+        override fun onReceive(ctx: Context, intent: Intent) { if (Cloud(ctx).signedIn || com.goodspace.cocolounge.island.runtime.IslandRuntime.isEnabled(ctx)) start(ctx) }
     }
 }

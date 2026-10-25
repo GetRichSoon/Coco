@@ -71,6 +71,10 @@ object Marks {
     )
 }
 
+/** Angles of the 96 outline points, worked out once (the outline is redrawn every frame). */
+private val MARK_COS = FloatArray(MuShapes.COUNT) { k -> cos((k.toFloat() / MuShapes.COUNT) * 2f * PI.toFloat() - PI.toFloat() / 2f) }
+private val MARK_SIN = FloatArray(MuShapes.COUNT) { k -> sin((k.toFloat() / MuShapes.COUNT) * 2f * PI.toFloat() - PI.toFloat() / 2f) }
+
 private fun easeInOut(x: Float) = if (x < 0.5f) 4 * x * x * x else 1 - (-2 * x + 2).toDouble().pow(3.0).toFloat() / 2
 
 /** Living logo: the shape morphs, turns and breathes; only drawing changes, so it stays smooth at 60 fps. */
@@ -81,17 +85,17 @@ fun LivingMark(mark: Mark, size: Dp, modifier: Modifier = Modifier) {
     val cycle by t.animateFloat(0f, mark.shapes.size.toFloat(), infiniteRepeatable(tween(3200 * mark.shapes.size, easing = LinearEasing)), label = "morph")
     val turn by t.animateFloat(0f, 360f, infiniteRepeatable(tween((360f / kotlin.math.abs(mark.spin) * 1000).toInt(), easing = LinearEasing)), label = "turn")
     val breathe by t.animateFloat(0.97f, 1.03f, infiniteRepeatable(tween(1800), RepeatMode.Reverse), label = "breathe")
+    val p = androidx.compose.runtime.remember { Path() }   // one outline, reused every frame (no garbage while it moves)
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(size).graphicsLayer { val s = if (calm) 1f else breathe; scaleX = s; scaleY = s }) {
             val c = if (calm) 0f else cycle
             val i = c.toInt() % mark.shapes.size; val f = easeInOut(c - c.toInt())
             val a = mark.shapes[i]; val b = mark.shapes[(i + 1) % mark.shapes.size]
             val r = this.size.minDimension / 2f * 0.96f; val cx = this.size.width / 2f; val cy = this.size.height / 2f
-            val p = Path()
+            p.reset()
             for (k in 0 until MuShapes.COUNT) {
                 val rr = (a[k] + (b[k] - a[k]) * f) * r
-                val ang = (k.toFloat() / MuShapes.COUNT) * 2f * PI.toFloat() - PI.toFloat() / 2f
-                val x = cx + cos(ang) * rr; val y = cy + sin(ang) * rr
+                val x = cx + MARK_COS[k] * rr; val y = cy + MARK_SIN[k] * rr
                 if (k == 0) p.moveTo(x, y) else p.lineTo(x, y)
             }
             p.close()

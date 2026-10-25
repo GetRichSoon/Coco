@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         if (intent.getBooleanExtra("install", false)) Updater.install(this)
         if (Build.VERSION.SDK_INT >= 33) registerForActivityResult(ActivityResultContracts.RequestPermission()) {}.launch(Manifest.permission.POST_NOTIFICATIONS)
         setContent {
-            LoungeTheme(vm.theme) { androidx.compose.runtime.CompositionLocalProvider(LocalCalm provides vm.calm) {
+            LoungeTheme(vm.theme, vm.wallpaper) { androidx.compose.runtime.CompositionLocalProvider(LocalCalm provides vm.calm) {
                 AnimatedContent(vm.gate, transitionSpec = { fadeIn(tween(260, 80)) togetherWith fadeOut(tween(80)) }, label = "gate") { g ->
                     when (g) {
                         Lounge.Gate.SignIn -> SignIn(vm)

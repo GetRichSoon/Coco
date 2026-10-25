@@ -234,6 +234,7 @@ static partial class Program
                     if (cmd == "bt list") new Thread(BtList) { IsBackground = true }.Start();
                     if (cmd.StartsWith("wifi connect ")) { string id = cmd.Substring(13); new Thread(() => WifiConnect(id, null)) { IsBackground = true }.Start(); }
                     if (cmd.StartsWith("wifi join ") && cmd.IndexOf('	') > 10) { string id = cmd.Substring(10, cmd.IndexOf('	') - 10), pw = cmd.Substring(cmd.IndexOf('	') + 1); new Thread(() => WifiConnect(id, pw)) { IsBackground = true }.Start(); }
+                    if (cmd.StartsWith("wifi pass ")) { string id = cmd.Substring(10); new Thread(() => WifiPassword(id)) { IsBackground = true }.Start(); }
                     if (cmd == "taskbar hide") { hideBar = true; AutoHide(true); Bars(false); }
                     if (cmd == "taskbar show") { hideBar = false; Bars(true); AutoHide(false); }
                 }

@@ -33,6 +33,9 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     var calm by mutableStateOf(sp.getBoolean("calm", false))
     fun chooseTheme(v: String) { theme = v; sp.edit().putString("theme", v).apply() }
     fun chooseCalm(v: Boolean) { calm = v; sp.edit().putBoolean("calm", v).apply() }
+    /** Material You dynamic colour (Android 12+). Off by default: the Good Space palette is the product (THEME.md). */
+    var wallpaper by mutableStateOf(sp.getBoolean("wallpaper", false))
+    fun chooseWallpaper(v: Boolean) { wallpaper = v; sp.edit().putBoolean("wallpaper", v).apply() }
     fun notifyOn(kind: String) = sp.getBoolean("n_$kind", true)
     fun setNotify(kind: String, v: Boolean) { sp.edit().putBoolean("n_$kind", v).apply(); notifyTick++ }
     var notifyTick by mutableStateOf(0)

@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 
 /** Good Space house theme: Material You Design Theme v1 (founder default since 14 Oct 2026). */
 object Mu {
@@ -71,10 +72,23 @@ private val Type = Typography(
     labelSmall = TextStyle(fontFamily = Body, fontWeight = FontWeight(600), fontSize = 12.sp),
 )
 
+/** Expressive shape scale: generous corners everywhere (cards 24, sheets and dialogs 32). */
+private val MuShapeScale = androidx.compose.material3.Shapes(
+    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(8.dp), small = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+    medium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp), large = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+    extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+)
+
 @Composable
-fun LoungeTheme(mode: String = "system", content: @Composable () -> Unit) {
+fun LoungeTheme(mode: String = "system", wallpaper: Boolean = false, content: @Composable () -> Unit) {
     val dark = when (mode) { "dark" -> true; "light" -> false; else -> isSystemInDarkTheme() }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val scheme = when {
+        wallpaper && android.os.Build.VERSION.SDK_INT >= 31 -> if (dark) androidx.compose.material3.dynamicDarkColorScheme(ctx) else androidx.compose.material3.dynamicLightColorScheme(ctx)
+        dark -> Dark
+        else -> Light
+    }
     CompositionLocalProvider(LocalLux provides if (dark) darkLux else lightLux) {
-        MaterialTheme(colorScheme = if (dark) Dark else Light, typography = Type, content = content)
+        MaterialTheme(colorScheme = scheme, typography = Type, shapes = MuShapeScale, content = content)
     }
 }

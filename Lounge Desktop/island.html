@@ -61,6 +61,10 @@ button.tilebtn:hover, .tl:hover, .tilebtn:focus-visible { background: #3a3a3c; o
 .netrow:hover { background: #1c1c1e; } .netrow.now b { color: var(--blue); } .netrow .g { flex: 1; min-width: 0; } .netrow b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .netrow small { color: var(--dim); }
 .wbars { display: inline-flex; align-items: flex-end; gap: 2px; width: 18px; } .wbars i { width: 3px; background: #fff; border-radius: 1px; }
 .lock { color: var(--dim); font-size: 11px; } .ti.small { width: 24px; height: 24px; }
+.wifiitem { display: flex; align-items: center; gap: 2px; } .wifiitem .netrow { flex: 1; }
+.keybtn { background: none; border: 0; color: var(--dim); cursor: pointer; padding: 6px 8px; border-radius: 8px; font-size: 14px; } .keybtn:hover, .keybtn:focus-visible { background: #1c1c1e; color: #fff; outline: none; }
+.passline { display: flex; align-items: center; gap: 8px; padding: 2px 8px 8px 36px; } .passline code { flex: 1; background: #1c1c1e; border-radius: 8px; padding: 5px 9px; font-family: ui-monospace, Consolas, monospace; user-select: text; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note { color: var(--dim); font-size: 11px; line-height: 1.4; margin: 2px 2px 6px; } .tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: var(--green); color: #000; margin-left: 6px; }
 .join { display: flex; gap: 8px; padding: 4px 8px 8px 36px; } .join input { flex: 1; background: #1c1c1e; border: 1px solid #3a3a3c; color: #fff; border-radius: 10px; padding: 0 10px; font: inherit; }
 .join .btn { height: 34px; min-width: 0; } .msg { margin: 0 0 4px; color: var(--orange); font-size: 12px; } .btn.wide { width: 100%; height: 34px; margin-top: 6px; font-size: 13px; }
 .tilebtn b { display: block; font-weight: 600; } .tilebtn small { display: block; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
@@ -123,15 +127,18 @@ const ICON = {
 let vol = { level: null, mute: false }, radio = {};
 const appName = (id) => String(id || '').replace(/\.exe$/i, '').split(/[._!]/)[0];
 const tile = (k, icon, name, on, sub) => `<div class="tilebtn${on ? ' on' : ''}${on == null ? ' off' : ''}"><button class="ti" data-radio="${k}" aria-pressed="${!!on}" aria-label="${name} ${on ? 'on' : 'off'}" ${on == null ? 'disabled' : ''}>${icon}</button><button class="tl" data-sub="${k}" aria-label="${name} list"><b>${name}</b><small>${sub || (on == null ? 'Not available' : '')}</small><span class="chev">›</span></button></div>`;
-let sub = null, wifiList = null, btList = null, joinSsid = null, wifiMsg = '';
+let sub = null, wifiList = null, btList = null, joinSsid = null, wifiMsg = '', passShown = null;
 const bars = (n) => `<span class="wbars">${[1, 2, 3, 4].map((i) => `<i style="height:${3 + i * 2}px;opacity:${i <= n ? 1 : .25}"></i>`).join('')}</span>`;
 function subPanel() {
   const head = (title, k, on) => `<div class="subhead"><button class="back" data-sub="" aria-label="Back">‹</button><b>${title}</b><button class="sw${on ? ' on' : ''}" data-radio="${k}" aria-pressed="${!!on}" aria-label="${title} ${on ? 'on' : 'off'}"><i></i></button></div>`;
   if (sub === 'wifi') {
     const rows = wifiList == null ? '<p class="muted">Looking for networks…</p>' : !wifiList.length ? `<p class="muted">${esc(wifiMsg || 'No networks found')}</p>`
-      : wifiList.map((n) => `<button class="netrow${n.now ? ' now' : ''}" data-net="${esc(n.ssid)}" data-saved="${n.saved || !n.secure ? 1 : 0}">${bars(n.bars)}<span class="g"><b>${esc(n.ssid)}</b><small>${n.now ? 'Connected' : n.saved ? 'Saved' : n.secure ? 'Secured' : 'Open'}</small></span>${n.secure ? '<span class="lock">🔒︎</span>' : ''}</button>`
-        + (joinSsid === n.ssid ? `<div class="join"><input type="password" id="wpw" placeholder="Password" aria-label="Password for ${esc(n.ssid)}" autocomplete="off"><button class="btn big" data-join="${esc(n.ssid)}">Join</button></div>` : '')).join('');
-    return head('Wi-Fi', 'wifi', radio.wifi) + (wifiMsg && wifiList && wifiList.length ? `<p class="msg">${esc(wifiMsg)}</p>` : '') + `<div class="list">${radio.wifi === false ? '<p class="muted">Wi-Fi is off.</p>' : rows}</div>`;
+      : wifiList.map((n) => `<div class="wifiitem"><button class="netrow${n.now ? ' now' : ''}" data-net="${esc(n.ssid)}" data-saved="${n.saved || !n.secure ? 1 : 0}">${bars(n.bars)}<span class="g"><b>${esc(n.ssid)}${!n.secure ? '<span class="tag">OPEN</span>' : ''}</b><small>${n.now ? 'Connected' : n.saved ? 'Saved · tap to connect' : n.secure ? 'Locked · needs its password' : 'Open · tap to connect, no password'}</small></span>${n.secure ? '<span class="lock">🔒︎</span>' : ''}</button>`
+        + (n.saved && n.secure ? `<button class="keybtn" data-pass="${esc(n.ssid)}" aria-label="Show saved password for ${esc(n.ssid)}" title="Show my saved password">🔑</button>` : '') + `</div>`
+        + (passShown && passShown.ssid === n.ssid ? `<div class="passline">${passShown.loading ? '<small class="muted">Reading…</small>' : passShown.password ? `<code>${esc(passShown.password)}</code><button class="btn" data-copy="${esc(passShown.password)}" style="height:30px;min-width:0;padding:0 12px">Copy</button>` : `<small class="muted">${esc(passShown.why || 'No saved password')}</small>`}</div>` : '')
+        + (n.now && !n.secure ? `<div class="join"><button class="btn big" data-portal="1">Open sign-in page</button></div>` : '')
+        + (joinSsid === n.ssid ? `<div class="join"><input type="password" id="wpw" placeholder="Password from the place" aria-label="Password for ${esc(n.ssid)}" autocomplete="off"><button class="btn big" data-join="${esc(n.ssid)}">Join</button></div>` : '')).join('');
+    return head('Wi-Fi', 'wifi', radio.wifi) + (wifiMsg && wifiList && wifiList.length ? `<p class="msg">${esc(wifiMsg)}</p>` : '') + `<div class="list">${radio.wifi === false ? '<p class="muted">Wi-Fi is off.</p>' : rows}</div><p class="note">Open networks need no password — but they are not encrypted, so avoid banking on them. A locked network needs its own password from the place; Coco cannot open it without that.</p>`;
   }
   const rows = btList == null ? '<p class="muted">Reading devices…</p>' : !btList.length ? '<p class="muted">No paired devices</p>'
     : btList.map((d) => `<div class="netrow${d.connected ? ' now' : ''}"><span class="ti small">${ICON.bt}</span><span class="g"><b>${esc(d.name)}</b><small>${d.connected ? 'Connected' : 'Paired'}</small></span></div>`).join('');
@@ -239,14 +246,17 @@ function renderFull() {
 }
 
 pill.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join]'); if (!t) return;
+  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal]'); if (!t) return;
   const d = t.dataset;
   if (d.tab) { tab = d.tab; renderFull(); }
   if (d.open) { I.openCoco(d.open); I.close(); }
   if (d.media) I.act('media', { key: d.media });
   if (d.vol) I.act('volume', { key: d.vol, steps: 2 });
   if (d.radio && !t.disabled) { radio[d.radio] = !radio[d.radio]; renderFull(); I.act('radio', { kind: d.radio, on: radio[d.radio] }); }
-  if (d.sub !== undefined) { sub = d.sub || null; joinSsid = null; wifiMsg = ''; if (sub === 'wifi') { wifiList = null; I.act('wifiscan'); } if (sub === 'bt') { btList = null; I.act('btlist'); } renderFull(); }
+  if (d.sub !== undefined) { sub = d.sub || null; joinSsid = null; wifiMsg = ''; passShown = null; if (sub === 'wifi') { wifiList = null; I.act('wifiscan'); } if (sub === 'bt') { btList = null; I.act('btlist'); } renderFull(); }
+  if (d.pass) { passShown = { ssid: d.pass, loading: true }; I.act('wifipass', { ssid: d.pass }); renderFull(); }
+  if (d.copy) { navigator.clipboard && navigator.clipboard.writeText(d.copy); t.textContent = 'Copied'; }
+  if (d.portal) I.act('portal');
   if (d.net) { if (d.saved === '1') { wifiMsg = 'Connecting to ' + d.net + '…'; I.act('wificonnect', { ssid: d.net }); } else joinSsid = joinSsid === d.net ? null : d.net; renderFull(); }
   if (d.join) { const pw = $('#wpw'); if (pw && pw.value) { wifiMsg = 'Connecting to ' + d.join + '…'; I.act('wificonnect', { ssid: d.join, password: pw.value }); pw.value = ''; joinSsid = null; renderFull(); } }
   if (d.set) I.openSettings(d.set);
@@ -309,6 +319,7 @@ I.onSys((m) => {
   if (m.t === 'net') net = m; if (m.t === 'bright') bright = m.level; if (m.t === 'vol') vol = m; if (m.t === 'radio') radio = { wifi: m.wifi, bt: m.bt };
   if (m.t === 'wifilist') { wifiList = m.list; if (m.why) wifiMsg = m.why; }
   if (m.t === 'btlist') btList = m.list;
+  if (m.t === 'wifipass') { passShown = { ssid: m.ssid, password: m.password, why: m.why }; }
   if (m.t === 'wifiresult') { wifiMsg = m.ok ? 'Connected to ' + m.ssid : 'Could not connect to ' + m.ssid + (m.why ? ': ' + m.why : ''); if (m.ok) I.act('wifiscan'); }
   renderCompact();
   if (open && tab === 'control' && !['vol', 'bright', 'wpw'].includes(document.activeElement?.id) && Date.now() - slideAt > 600) renderFull();
