@@ -52,3 +52,8 @@
 - [Nova AI company HQ](project_nova_hq.md) — nova-hq repo, 16 team agents, 5 cloud routines with IDs, approval gate (OLD, 2026-10-06: repo is now GetRichSoon/CocoMaison, team is the lean core; trust newer memories)
 - [GitHub repo layout](project_github_repo_layout.md) — private code repos + public <name>-website repos; sync script; Extension .env.example has live keys
 - [WhatsApp Enhancer = Projects/SpaceGuard](project_whatsapp_enhancer.md) — renamed extension; keep SpaceGuard storage key/identifiers; what he wants from it
+- [Shared session memory](project_shared_session_memory.md) — since 2026-10-25 all sessions share Good Space\Coco\memory\Sessions (junctions + GetRichSoon/Coco); no secrets; Link Sessions.ps1 for new folders
+- [No company names outside](feedback_no_company_names_external.md) — external subdomains/URLs/accounts use the product name, never Fenwick/Good Space/Coco
+- [Paid extensions only](feedback_paid_extensions_only.md) — publish only extensions with a Pro tier + working checkout + license activation
+- [Company level-up plan](project_company_level_up.md) — 2026-10-25 ideas file, new + big-money Houses (micro-drama, audio, exam-prep, AI agency), Coco's order D→C→A/B
+- [Plan means plan](feedback_plan_means_plan.md) — on plan/setup requests give structure only, no research or building until YES

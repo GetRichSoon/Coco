@@ -35,3 +35,11 @@ Keys stay in Coco Vault (later Bitwarden / cloud secret settings).
 ## Account
 Coco Cloud (Supabase project bfnhnkxvppqmklfpslfm) is owned by the Google account mangesh.lokade.dev@gmail.com (Boss, 2026-10-21).
 Private bucket `apk` holds Coco Lounge phone builds + latest.json (founders can read; created 2026-10-21).
+
+## Backup (Boss, 2026-10-25: code on GitHub, live data here, backups on Google Drive)
+The free plan has no backups, so `Cloud Backup.mjs` runs every night at 23:30 (task "Coco Cloud Backup"):
+- Every table except `pulse` is saved as JSON to Google Drive > Good Space Backup > Coco Cloud > <weekday>, overwritten
+  each week, plus a monthly folder on the 1st. It checks that the row counts match and writes `backup info.json`.
+- New release APKs from Lounge Android\Releases and the Coco Halo Releases are copied to Drive > Good Space Backup > APK Archive.
+- One activity line in Coco: backed up, or failed and why (for example "Google Drive (G:) is not connected").
+Restore: each `<table>.json` is the plain row list, so it can be inserted back with the service key.
