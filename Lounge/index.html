@@ -350,7 +350,7 @@ async function loadAll() {
     q('houses', '*', ['sort', true]), q('categories', '*', ['code', true]), q('offerings', '*', ['name', true]), q('platforms', '*', ['sort', true]),
     q('members', '*', ['sort', true]), q('member_houses'), q('tools', '*', ['name', true]), q('member_tools'),
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
-    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(20), q('founders'), q('rules', '*', ['updated_at', false]),
+    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(100), q('founders'), q('rules', '*', ['updated_at', false]),
     q('commands', '*', ['created_at', false]).limit(15), q('integrations', '*', ['platform', true]),
     q('agent_messages', '*', ['at', false]).limit(40),
   ]);
@@ -392,7 +392,7 @@ function cocoHQ(D) {
     if (yes) { state = 'needs_yes'; line = yes.title; } else if (run) { state = 'working'; line = run.title; } else if (m.doing) { state = 'working'; line = m.doing; } else if (q) { state = 'queued'; line = q.title; }
     return { id: m.id, name: m.name, state, line: String(line || '').slice(0, 90) };
   });
-  return { working: members.filter((m) => m.state === 'working').length, queued: (D.tasks || []).filter((t) => t.status === 'queued').length, needsYes: (D.approvals || []).filter((a) => a.state === 'waiting').length, members };
+  return { working: Math.max(members.filter((m) => m.state === 'working').length, (D.tasks || []).filter((t) => RUN.includes(t.status)).length, (D.houses || []).filter((h) => h.state === 'working').length), queued: (D.tasks || []).filter((t) => t.status === 'queued' && !t.stale).length, needsYes: (D.approvals || []).filter((a) => a.state === 'waiting').length, members };
 }
 
 // Coco Island on this PC: the same live data, summed up, every time it changes.
@@ -401,10 +401,13 @@ function pushIsland() {
   const today = new Date().toISOString().slice(0, 10), tasks = {};
   for (const t of D.tasks || []) tasks[t.status] = (tasks[t.status] || 0) + 1;
   const done = (D.tasks || []).filter((t) => ['done', 'merged'].includes(t.status) && String(t.updated_at || t.created_at || '').slice(0, 10) === today);
+  // done today = finished tasks + shipped/merged/posted activity lines of today (local day), so the count is real when work is logged only as activity
+  const day = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }, nowDay = day(Date.now());
+  const doneAct = (D.activity || []).filter((a) => (['merged', 'published', 'posted', 'done'].includes(a.action) || /(done|ready|published|shipped|rendered|posted|released|fixed|live)/i.test((a.action || '') + ' ' + (a.detail || ''))) && day(a.at) === nowDay);
   window.cocoDesktop.islandPush({
     approvals: (D.approvals || []).filter((a) => a.state === 'waiting' || a.state === 'on-hold').map((a) => ({ id: a.id, code: a.code, team: a.team, what: String(a.what || '').slice(0, 120) })),
     tasks: { ...tasks, working: (tasks.working || 0) + (tasks.running || 0) + (tasks.in_progress || 0) },
-    doneToday: done.length, recentDone: done.slice(0, 3).map((t) => String(t.title || '').slice(0, 80)),
+    doneToday: done.length + doneAct.length, recentDone: done.map((t) => t.title).concat(doneAct.map((a) => a.action === 'update' ? a.detail : a.action)).slice(0, 3).map((t) => String(t || '').slice(0, 80)),
     hq: cocoHQ(D), talk: teamTalk(D),
   });
 }
@@ -430,13 +433,15 @@ async function decideApproval(id, yes) {
 if (window.cocoDesktop && window.cocoDesktop.onApprove) window.cocoDesktop.onApprove((d) => { if (founder) decideApproval(d.id, d.yes); });
 // The island must stay current even when the live channel is down: a light 15 s poll of approvals only,
 // re-pushed only when something actually changed (at the office, approvals live ONLY on the island).
-let approvalsKey = '', feedKey = '';
+let approvalsKey = '', feedKey = '', countKey = '';
 async function pollApprovals() {
   if (!founder) return;
-  const [ap, ac, am] = await Promise.all([sb.from('approvals').select('*').order('raised_on', { ascending: false }), sb.from('activity').select('*').order('at', { ascending: false }).limit(20), sb.from('agent_messages').select('*').order('at', { ascending: false }).limit(40)]);
+  const [ap, ac, am, tk, ho, dv] = await Promise.all([sb.from('approvals').select('*').order('raised_on', { ascending: false }), sb.from('activity').select('*').order('at', { ascending: false }).limit(100), sb.from('agent_messages').select('*').order('at', { ascending: false }).limit(40), sb.from('tasks').select('*').order('created_at', { ascending: false }), sb.from('houses').select('*').order('sort', { ascending: true }), sb.from('devices').select('*').order('id', { ascending: true })]);
   let changed = false;
   if (!ap.error && ap.data) { const k = ap.data.map(a => a.id + ':' + a.state).join(','); if (k !== approvalsKey) { approvalsKey = k; D.approvals = ap.data; changed = true; } }
   if (!ac.error && !am.error && ac.data && am.data) { const k = (ac.data[0] || {}).id + '|' + (am.data[0] || {}).id; if (k !== feedKey) { feedKey = k; D.activity = ac.data; D.agentMessages = am.data; changed = true; } }
+  // counters (tasks by status, houses working, devices online) come from the same cloud rows
+  if (!tk.error && !ho.error && !dv.error && tk.data && ho.data && dv.data) { const k = tk.data.map(t => t.id + t.status + (t.updated_at || '')).join() + '|' + ho.data.map(h => h.id + h.state).join() + '|' + dv.data.map(d => d.id + d.last_seen).join(); if (k !== countKey) { countKey = k; D.tasks = tk.data; D.houses = ho.data; D.devices = dv.data; changed = true; } }
   if (!changed) return;
   pushIsland(); diffAndNotify(); renderStrip(); if (!document.hidden) render();
 }
@@ -453,6 +458,8 @@ function connectLive() {
   if (channel) { try { sb.removeChannel(channel); } catch {} channel = null; }
   channel = sb.channel('pulse-' + Date.now())
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { runMyCommands(); if (!pulseTimer) pulseTimer = setTimeout(() => { pulseTimer = null; loadAll(); }, document.hidden ? 10000 : 1500); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, feedSoon)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'houses' }, feedSoon)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity' }, feedSoon)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_messages' }, feedSoon)
     .subscribe((s) => {
@@ -476,7 +483,7 @@ async function heartbeat() {
   // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
   // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
   // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.1', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.2', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
@@ -505,7 +512,7 @@ const V = {
     const live = D.offerings.filter(o => o.status === 'live').length, running = D.tasks.filter(t => ['running', 'working'].includes(t.status)).length, wait = D.approvals.filter(a => a.state === 'waiting').length;
     return `<div class="hero"><h3 style="font-size:24px">Hello ${esc(founder ? founder.call_me : '')}</h3>
       <div>${wait ? `${wait} things wait for your YES.` : 'Nothing waits for you.'} ${running ? `${running} tasks are running now.` : ''}</div>
-      <div class="stats"><div class="stat"><b>${D.houses.filter(h => h.state === 'working').length}</b><span>Houses working</span></div><div class="stat"><b>${running}</b><span>tasks running</span></div><div class="stat"><b>${D.offerings.length}</b><span>channels and products</span></div><div class="stat"><b>${D.devices.filter(online).length}/4</b><span>devices online</span></div></div></div>
+      <div class="stats"><div class="stat"><b>${D.houses.filter(h => h.state === 'working').length}</b><span>Houses working</span></div><div class="stat"><b>${running}</b><span>tasks running</span></div><div class="stat"><b>${D.offerings.length}</b><span>channels and products</span></div><div class="stat"><b>${D.devices.filter(online).length}/${D.devices.length}</b><span>devices online</span></div></div></div>
       <div class="grid">${D.houses.map(h => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(h.name)}</h3>${chip(h.state)}</div><span class="muted">${esc(h.role)}</span><div>${esc(h.doing || '')}</div><span class="muted">Next: ${esc(h.next || '')}</span></div>`).join('')}</div>
       <h3 style="margin:22px 0 8px">Connections</h3><div class="card2">${(D.integrations || []).map(c => `<div class="row"><img src="${LOGO[c.id] ? 'https://www.google.com/s2/favicons?sz=64&domain=' + LOGO[c.id] : 'coco.svg'}" alt="" width="28" height="28" style="border-radius:6px;flex:none"><div class="grow"><b>${esc(c.platform)}</b>${c.account ? ' · ' + esc(c.account) : ''}<div class="muted">${esc(c.error || c.next_action || (c.capabilities || []).join(', '))}${c.last_ok_at ? ' · checked ' + ago(c.last_ok_at) : ''}</div></div>${chip(c.state)}</div>`).join('') || '<span class="muted">No connections listed yet.</span>'}</div>
       <h3 style="margin:22px 0 8px">Latest activity</h3><div class="card2">${D.activity.map(a => `<div class="row"><div class="grow"><b>${esc(a.action)}</b> · ${esc(a.detail || '')}<div class="muted">${esc(a.actor)} ${a.device_id ? '· ' + esc(deviceName(a.device_id)) : ''} · ${ago(a.at)}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;

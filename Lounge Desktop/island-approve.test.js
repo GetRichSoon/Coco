@@ -37,4 +37,6 @@ assert.ok(lounge.includes("from('agent_messages').select('*').order('at', { asce
   mk(false, 9999)({ target: chip }); assert.equal(sent.length, 0, 'closed pill: YES does nothing');
   mk(true, 100)({ target: chip }); assert.equal(sent.length, 0, 'panel just opened: YES does nothing');
   mk(true, 900)({ target: chip }); assert.equal(sent.length, 1, 'settled open panel: YES works'); }
-console.log('approve tests: 19 passed');
+assert.ok(lounge.includes("table: 'tasks' }, feedSoon") && lounge.includes("from('tasks').select('*')") && lounge.includes('doneAct'), 'counters: tasks/houses realtime + poll, done today from tasks + activity');
+assert.ok(!lounge.includes('/4</b>'), 'no hardcoded device total');
+console.log('approve tests: 21 passed');

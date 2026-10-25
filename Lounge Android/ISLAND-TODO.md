@@ -35,3 +35,7 @@ brightness / battery LIVE | Weather LIVE (hourly) | Focus calendar LIVE (clock),
 disturb" tile STATIC link to Windows settings (kept, it is an action) | DEAD, removed: `.strip` and `.hqrow/.chip2` CSS,
 `data-vol` handler (no element emitted it).
 Still open: APK Halo feed (needs Kotlin), shared template for island.html and the in-page strip.
+Counters (item 1, Boss addition): island + Home numbers are now real and live. working = max(members working, tasks running, houses working);
+queued = tasks queued and not stale; need YES = approvals waiting; done = tasks done today + today's activity lines saying done/ready/published/shipped/
+rendered/posted/released/fixed/live (was tasks only, so it showed 0); devices online = real device count (was a hardcoded /4). Fed by realtime on
+tasks/houses/activity/agent_messages plus the 15 s poll (tasks, houses, devices, approvals, activity, agent_messages). No counter without a source remains.
