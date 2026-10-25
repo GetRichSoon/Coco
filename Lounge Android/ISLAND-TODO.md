@@ -20,3 +20,18 @@ Electron; `CocoIslandHelper.exe` is only its media/system helper child process).
 island strip was added to the Lounge page 2026-10-26, so the app window shows the same approvals
 strip at the top. Remaining nice-to-have: share one template between `island.html` and the
 in-page strip so the two renderings cannot drift.
+
+## 2026-10-26 (Nono) Live island feed + module audit
+Boss order: the island must never be static. Built (Lounge page 2.1 / Desktop 1.0.1):
+- Feed = `agent_messages` + `activity` merged by `teamTalk()` (newest first, 20 rows). Realtime INSERT on both tables
+  (`feedSoon`) plus the 15 s poll (`pollApprovals`, now approvals + activity + agent_messages, re-pushes only on change).
+- Compact pill: rotating ticker, newest 5 lines, one every 4 s (home only; office stays approvals only, by the law above).
+  Open panel: "Live team feed" with new rows sliding in. In-app strip: same ticker line under the approvals.
+- Safety: chips are `pointer-events:none` unless the panel is open, and clicks within 400 ms of opening are ignored.
+
+Module audit (island.html): Coco stats + HQ counts LIVE | Approvals chips LIVE | Team feed LIVE (was a list refreshed
+only on the full load, now streamed) | Claude-at-work sessions LIVE (main.js) | Music LIVE (helper) | Control Wi-Fi / Bluetooth / volume /
+brightness / battery LIVE | Weather LIVE (hourly) | Focus calendar LIVE (clock), Pomodoro LIVE (local) | "Focus / Do not
+disturb" tile STATIC link to Windows settings (kept, it is an action) | DEAD, removed: `.strip` and `.hqrow/.chip2` CSS,
+`data-vol` handler (no element emitted it).
+Still open: APK Halo feed (needs Kotlin), shared template for island.html and the in-page strip.

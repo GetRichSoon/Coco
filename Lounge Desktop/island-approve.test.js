@@ -23,4 +23,18 @@ const lounge = fs.readFileSync(require('path').join(__dirname, '..', 'Lounge', '
 assert.ok(lounge.includes('function decideApproval'), 'Lounge page has the one decide path');
 assert.ok(lounge.includes('id="islandStrip"') && lounge.includes('function renderStrip'), 'in-app island strip exists');
 assert.ok(lounge.includes('setInterval(pollApprovals, 15000)'), '15 s approvals poll armed');
-console.log('approve tests: 11 passed');
+// Live feed + chip safety (Boss 2026-10-26, after one accidental click rejected A-001)
+assert.ok(page.includes('#pill:not(.open) .abtn { pointer-events: none; }'), 'chips are inert on the compact pill');
+assert.ok(page.includes('(d.ayes || d.ano || d.aig) && (!open || Date.now() - openedAt < 400)) return'), 'chip clicks need the opened panel (and 400 ms settle)');
+assert.ok(page.includes('live feed ticker') && page.includes('Live team feed'), 'island streams the team feed (pill ticker + panel)');
+assert.ok(lounge.includes("table: 'agent_messages' }, feedSoon") && lounge.includes("table: 'activity' }, feedSoon"), 'realtime on activity + agent_messages');
+assert.ok(lounge.includes("from('agent_messages').select('*').order('at', { ascending: false }).limit(40)") && lounge.includes('setInterval(pollApprovals, 15000)'), '15 s feed poll fallback');
+// behaviour: run the real click handler with a fake pill
+{ const m = page.match(/pill\.addEventListener\('click', \(e\) => \{[\s\S]*?\n\}\);/)[0]; const sent = [];
+  const mk = (isOpen, age) => { const h = { }; const pill = { addEventListener: (n, f) => { if (n === 'click') h.f = f; } };
+    new Function('pill', 'I', 'open', 'openedAt', 'Date', 'hiddenApprovals', 'renderCompact', 'renderFull', 'setTimeout', m)(pill, { act: (a, x) => sent.push(a + x.id) }, isOpen, 1000 - age, { now: () => 1000 }, new Set(), () => {}, () => {}, () => {}); return h.f; };
+  const chip = { closest: () => ({ dataset: { ayes: '7' } }) };
+  mk(false, 9999)({ target: chip }); assert.equal(sent.length, 0, 'closed pill: YES does nothing');
+  mk(true, 100)({ target: chip }); assert.equal(sent.length, 0, 'panel just opened: YES does nothing');
+  mk(true, 900)({ target: chip }); assert.equal(sent.length, 1, 'settled open panel: YES works'); }
+console.log('approve tests: 19 passed');

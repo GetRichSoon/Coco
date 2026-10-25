@@ -11,5 +11,6 @@ contextBridge.exposeInMainWorld('cocoDesktop', {
   beat: () => ipcRenderer.send('lounge-beat'),
   needSignIn: (which) => ipcRenderer.send('lounge-need', String(which)),
   transcribe: (bytes, mime) => ipcRenderer.invoke('transcribe', { bytes, mime }),
+  atOffice: () => ipcRenderer.sendSync('at-office'),
   platform: 'windows',
 });

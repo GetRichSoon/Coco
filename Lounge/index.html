@@ -370,7 +370,7 @@ function agentName(raw, members) {
 }
 function teamTalk(D) {
   const members = D.members || [], out = [];
-  for (const m of (D.agentMessages || [])) { const t = String(m.text || ''); if (!t) continue; out.push({ from: agentName(m.from_agent, members), to: m.to_agent ? agentName(m.to_agent, members) : null, text: t.slice(0, 160), at: m.at }); }
+  for (const m of (D.agentMessages || [])) { const t = String(m.text || ''); if (!t) continue; out.push({ from: agentName(m.from_agent, members), to: m.to_agent ? agentName(m.to_agent, members) : null, text: t.slice(0, 160), at: m.at, k: 'm' + m.id }); }
   const phrase = { 'task added': 'gave a task', merged: 'merged duplicate work', 'rule set': 'set a rule', approved: 'approved', declined: 'said no to', published: 'published', posted: 'published' };
   for (const a of (D.activity || [])) {
     const act = a.action, det = String(a.detail || ''); let lead, body;
@@ -379,9 +379,9 @@ function teamTalk(D) {
     else if (det) { lead = String(act || '').replace(/_/g, ' '); body = det; }
     else continue;
     const who = String(a.actor || ''); if (!who) continue;
-    out.push({ from: agentName(who, members), to: null, text: (body ? lead + ': ' + body : lead).slice(0, 160), at: a.at });
+    out.push({ from: agentName(who, members), to: null, text: (body ? lead + ': ' + body : lead).slice(0, 160), at: a.at, k: 'a' + a.id });
   }
-  return out.sort((x, y) => String(y.at).localeCompare(String(x.at))).slice(0, 12);
+  return out.sort((x, y) => String(y.at).localeCompare(String(x.at))).slice(0, 20);
 }
 function cocoHQ(D) {
   const RUN = ['running', 'working', 'in_progress'], YES = ['needs_yes', 'waiting_yes', 'need_approval'];
@@ -414,8 +414,11 @@ const igLocal = new Set();
 function renderStrip() {
   const el = $('#islandStrip'); if (!el) return;
   const w = (D.approvals || []).filter((a) => a.state === 'waiting' && !igLocal.has(String(a.id)));
-  el.hidden = !w.length;
-  el.innerHTML = w.slice(0, 2).map((a) => `<div class="isrow"><span class="isdot"></span><div class="isg"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(String(a.what || '').slice(0, 110))}</small></div><button class="isbtn yes" data-yes="${esc(a.id)}">YES</button><button class="isbtn no" data-no="${esc(a.id)}">NO</button><button class="isbtn" data-ig="${esc(a.id)}">Ignore</button></div>`).join('');
+  const quiet = window.cocoDesktop && window.cocoDesktop.atOffice && window.cocoDesktop.atOffice();   // office: approvals only
+  const f = quiet ? [] : teamTalk(D).slice(0, 5), fi = f.length ? Math.floor(Date.now() / 4000) % f.length : 0;
+  el.hidden = !w.length && !f.length;
+  const tick = f.length ? `<div class="isrow" aria-live="off"><span class="isdot" style="background:#4FE3F2"></span><div class="isg"><small><b>${esc(f[fi].from)}</b> ${esc(f[fi].text.slice(0, 110))}</small></div></div>` : '';
+  el.innerHTML = tick + w.slice(0, 2).map((a) => `<div class="isrow"><span class="isdot"></span><div class="isg"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(String(a.what || '').slice(0, 110))}</small></div><button class="isbtn yes" data-yes="${esc(a.id)}">YES</button><button class="isbtn no" data-no="${esc(a.id)}">NO</button><button class="isbtn" data-ig="${esc(a.id)}">Ignore</button></div>`).join('');
 }
 // One decide path for every YES/NO (Approvals page buttons AND the island pill, Boss 2026-10-26).
 async function decideApproval(id, yes) {
@@ -427,15 +430,20 @@ async function decideApproval(id, yes) {
 if (window.cocoDesktop && window.cocoDesktop.onApprove) window.cocoDesktop.onApprove((d) => { if (founder) decideApproval(d.id, d.yes); });
 // The island must stay current even when the live channel is down: a light 15 s poll of approvals only,
 // re-pushed only when something actually changed (at the office, approvals live ONLY on the island).
-let approvalsKey = '';
+let approvalsKey = '', feedKey = '';
 async function pollApprovals() {
   if (!founder) return;
-  const { data, error } = await sb.from('approvals').select('*').order('raised_on', { ascending: false });
-  if (error || !data) return;
-  const k = data.map(a => a.id + ':' + a.state).join(',');
-  if (k === approvalsKey) return; approvalsKey = k;
-  D.approvals = data; pushIsland(); diffAndNotify(); if (!document.hidden) render();
+  const [ap, ac, am] = await Promise.all([sb.from('approvals').select('*').order('raised_on', { ascending: false }), sb.from('activity').select('*').order('at', { ascending: false }).limit(20), sb.from('agent_messages').select('*').order('at', { ascending: false }).limit(40)]);
+  let changed = false;
+  if (!ap.error && ap.data) { const k = ap.data.map(a => a.id + ':' + a.state).join(','); if (k !== approvalsKey) { approvalsKey = k; D.approvals = ap.data; changed = true; } }
+  if (!ac.error && !am.error && ac.data && am.data) { const k = (ac.data[0] || {}).id + '|' + (am.data[0] || {}).id; if (k !== feedKey) { feedKey = k; D.activity = ac.data; D.agentMessages = am.data; changed = true; } }
+  if (!changed) return;
+  pushIsland(); diffAndNotify(); renderStrip(); if (!document.hidden) render();
 }
+// Live feed (Boss 2026-10-26): new activity / team messages reach the island at once (realtime), the 15 s poll above is the fallback.
+let feedTimer = null;
+const feedSoon = () => { if (!feedTimer) feedTimer = setTimeout(() => { feedTimer = null; pollApprovals(); }, 800); };
+setInterval(() => { if (!document.hidden) renderStrip(); }, 4000);   // rotates the in-app ticker line
 let pulseTimer = null;
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
 let channel = null, isLive = false, retryTimer = null, tries = 0;
@@ -445,6 +453,8 @@ function connectLive() {
   if (channel) { try { sb.removeChannel(channel); } catch {} channel = null; }
   channel = sb.channel('pulse-' + Date.now())
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { runMyCommands(); if (!pulseTimer) pulseTimer = setTimeout(() => { pulseTimer = null; loadAll(); }, document.hidden ? 10000 : 1500); })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity' }, feedSoon)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_messages' }, feedSoon)
     .subscribe((s) => {
       if (s === 'SUBSCRIBED') { tries = 0; setLive(true); loadAll(); }
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
@@ -466,7 +476,7 @@ async function heartbeat() {
   // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
   // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
   // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.1', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }

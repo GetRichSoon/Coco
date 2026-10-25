@@ -46,6 +46,8 @@ html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.
 /* Approval YES / NO / Ignore: Material You chips, same motion language as the tiles */
 .abtn { flex: none; border: 0; border-radius: 10px; padding: 5px 9px; font: 600 11px inherit; cursor: pointer; background: var(--chip); color: #fff; transition: transform .15s var(--ease), filter .15s; }
 .abtn.yes { background: var(--green); color: #000; } .abtn.no { background: var(--red); }
+#pill:not(.open) .abtn { pointer-events: none; }   /* safety: the compact pill / toast never reacts to chips */
+.fresh { animation: fresh .6s var(--ease); } @keyframes fresh { from { opacity: 0; transform: translateY(-8px); background: #ffffff30; } }
 .abtn:hover, .abtn:focus-visible { filter: brightness(1.2); transform: scale(1.06); outline: none; } .abtn:active { transform: scale(.94); }
 .big-time { font: 600 40px "Segoe UI Variable Display", "Segoe UI", sans-serif; text-align: center; margin: 6px 0; }
 #toastFace { display: flex; align-items: center; gap: 12px; padding: 0 20px; }
@@ -89,7 +91,6 @@ button.tilebtn:hover, .tl:hover, .tilebtn:focus-visible { background: #3a3a3c; o
 .batt::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 4px; border-radius: 0 2px 2px 0; background: rgba(255,255,255,.55); }
 .batt i { display: block; height: 100%; border-radius: 2px; background: #fff; }
 .batt.low i { background: var(--red); } .batt.chg i { background: var(--green); }
-.strip { display: flex; gap: 8px; } .strip .stat { padding: 7px 10px; } .strip .stat b { font-size: 14px; }
 input[type=range] { width: 100%; accent-color: #fff; }
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 11px; }
 .cal span { padding: 3px 0; border-radius: 8px; color: var(--dim); } .cal b { color: var(--dim); font-weight: 600; font-size: 10px; }
@@ -97,7 +98,6 @@ input[type=range] { width: 100%; accent-color: #fff; }
 .split { display: flex; gap: 14px; } .split > div { flex: 1; }
 .trow { padding: 5px 8px; border-radius: 10px; line-height: 1.38; font-size: 12px; } .trow:hover { background: #ffffff14; }
 .tw { font-weight: 700; color: var(--accent); } .tto { color: var(--dim); font-weight: 400; } .tt { color: var(--fg); }
-.hqrow { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 4px; } .chip2 { display: inline-flex; align-items: center; gap: 5px; background: #ffffff14; border-radius: 50px; padding: 3px 9px; font-size: 11px; } .chip2 .d { width: 7px; height: 7px; border-radius: 50%; }
 </style></head>
 <body>
 <div id="pill" tabindex="0" role="button" aria-label="Coco Island. Press Enter to open." aria-expanded="false">
@@ -207,8 +207,9 @@ paint();
 I.onHover((v) => setOpen(v));
 pill.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === pill) setOpen(!open); if (e.key === 'Escape') { setOpen(false); I.blur(); } });
 
+let openedAt = 0;   // chips ignore clicks for 400 ms after the panel starts opening (a click aimed at the page behind must never hit YES/NO)
 function setOpen(v) {
-  if (v === open) return; open = v;
+  if (v === open) return; open = v; openedAt = Date.now();
   pill.setAttribute('aria-expanded', v);
   if (v) renderFull();
   mode(v ? 'open' : 'compact');
@@ -228,6 +229,10 @@ function renderCompact() {
   if (modules.coco && ap) { set(l, `<span class="dot orange pulse"></span><span>${ap} approval${ap > 1 ? 's' : ''}</span>`); set(r, `<span class="muted">YES?</span>`); }
   else if (modules.music && media && media.playing) { set(l, `${media.art ? `<img src="${media.art}" alt="" style="width:20px;height:20px;border-radius:6px;object-fit:cover">` : `<span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg></span>`}<span style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(media.title)}</span>`); set(r, '<span class="bars on"><i></i><i></i><i></i></span>'); }
   else if (pomo) { const left = Math.max(0, pomo.end - Date.now()); set(l, `<span class="dot ${pomo.brk ? '' : 'orange'}"></span><span>${pomo.brk ? 'Break' : 'Focus'}</span>`); set(r, `<span style="color:var(--orange)">${fmt(left)}</span>`); }
+  else if (modules.coco === true && (S.talk || []).length) {   // live feed ticker: newest team lines, one every 4 s (office: no Coco status)
+    const f = S.talk.slice(0, 5)[Math.floor(Date.now() / 4000) % Math.min(5, S.talk.length)];
+    set(l, `<span class="dot pulse"></span><span style="max-width:128px;overflow:hidden;text-overflow:ellipsis"><b>${esc(f.from)}</b> ${esc(f.text)}</span>`); set(r, `<span class="muted">${working || S.doneToday}</span>`);
+  }
   else if (modules.coco === true && working) { set(l, `<span class="dot pulse"></span><span>${working} working</span>`); set(r, `<span class="muted">${S.doneToday} done</span>`); }   // office ('approvals'): no other Coco status
   else { set(l, `<span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><span class="muted">${esc(weather)}</span>`); set(r, statusIcons()); }
   pill.setAttribute('aria-label', 'Coco Island: ' + $('#compact').innerText.replace(/\s+/g, ' ') + '. Press Enter to open.');
@@ -245,8 +250,8 @@ function renderFull() {
     const hq = S.hq || { working: 0, queued: 0 }, talk = S.talk || [];
     $('#p-coco').innerHTML = `<div class="stats"><div class="stat"><b>${hq.working}</b><small>working</small></div><div class="stat"><b>${hq.queued}</b><small>queued</small></div><div class="stat"><b>${appr().length}</b><small>need YES</small></div><div class="stat"><b>${S.doneToday}</b><small>done</small></div></div>`
       + (appr().length ? '<h3>Waiting for your YES</h3>' + apprRows() : '')
-      + '<h3>Team talk</h3>'
-      + (talk.length ? talk.map((t) => `<div class="trow"><span class="tw">${esc(t.from)}${t.to ? ' <span class="tto">\u2192 ' + esc(t.to) + '</span>' : ''}</span> <span class="tt">${esc(t.text)}</span></div>`).join('') : '<p class="muted">Quiet right now. The team talks to each other here as they work.</p>')
+      + '<h3><span class="dot pulse" style="display:inline-block;margin-right:6px"></span>Live team feed</h3>'
+      + (talk.length ? talk.map((t) => `<div class="trow${seenTalk && !seenTalk.has(t.k) ? ' fresh' : ''}"><span class="tw">${esc(t.from)}${t.to ? ' <span class="tto">\u2192 ' + esc(t.to) + '</span>' : ''}</span> <span class="tt">${esc(t.text)}</span></div>`).join('') : '<p class="muted">Quiet right now. The team talks to each other here as they work.</p>')
       + (S.sessions.length ? '<h3>Claude at work</h3>' + S.sessions.slice(0, 2).map((s) => `<div class="row" tabindex="0" data-open="board"><span class="dot pulse"></span><div class="g"><b>${esc(s.now)}</b><small>${esc(s.ago)}</small></div></div>`).join('') : '');
   }
   if (tab === 'music') $('#p-music').innerHTML = media && !media.none
@@ -270,8 +275,9 @@ function renderFull() {
 }
 
 pill.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal],[data-ayes],[data-ano],[data-aig]'); if (!t) return;
+  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal],[data-ayes],[data-ano],[data-aig]'); if (!t) return;
   const d = t.dataset;
+  if ((d.ayes || d.ano || d.aig) && (!open || Date.now() - openedAt < 400)) return;
   if (d.ayes || d.ano) {
     const id = d.ayes || d.ano; I.act('approve', { id, yes: !!d.ayes });
     hiddenApprovals.add(id);   // shortcut: optimistic hide; if the cloud write failed the row returns in 30 s
@@ -282,7 +288,6 @@ pill.addEventListener('click', (e) => {
   if (d.tab) { tab = d.tab; renderFull(); }
   if (d.open) { I.openCoco(d.open); I.close(); }
   if (d.media) I.act('media', { key: d.media });
-  if (d.vol) I.act('volume', { key: d.vol, steps: 2 });
   if (d.radio && !t.disabled) { radio[d.radio] = !radio[d.radio]; renderFull(); I.act('radio', { kind: d.radio, on: radio[d.radio] }); }
   if (d.sub !== undefined) { sub = d.sub || null; joinSsid = null; wifiMsg = ''; passShown = null; if (sub === 'wifi') { wifiList = null; I.act('wifiscan'); } if (sub === 'bt') { btList = null; I.act('btlist'); } renderFull(); }
   if (d.pass) { passShown = { ssid: d.pass, loading: true }; I.act('wifipass', { ssid: d.pass }); renderFull(); }
@@ -324,12 +329,13 @@ function toast(title, sub, color) {
 }
 
 // ---- data in ----
-let seenApprovals = null, seenDone = null;
+let seenApprovals = null, seenDone = null, seenTalk = null;
 I.onData((d) => {
   const ids = new Set(d.approvals.map((a) => a.id));
   if (seenApprovals) for (const a of d.approvals) if (!seenApprovals.has(a.id)) toast('Approval needed', a.code + ' · ' + a.what);
   if (seenDone != null && d.doneToday > seenDone && d.recentDone[0]) toast('Job done', d.recentDone[0]);
-  seenApprovals = ids; seenDone = d.doneToday; S = d; renderCompact(); if (open) renderFull();
+  S = d; renderCompact(); if (open) renderFull();
+  seenApprovals = ids; seenDone = d.doneToday; seenTalk = new Set((d.talk || []).map((t) => t.k));   // after the render: rows not in the last set animate in
 });
 I.onMedia((m) => { media = m.none ? null : m; renderCompact(); if (open && tab === 'music') renderFull(); });
 I.onModules((m) => { modules = m; renderCompact(); if (open) renderFull(); });

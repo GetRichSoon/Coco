@@ -642,6 +642,7 @@ function islandSend() {
   const sessions = liveSessions().sort((a, b) => b.at - a.at).map((x) => ({ now: x.steps[x.steps.length - 1], ago: Math.max(0, Math.round((Date.now() - x.at) / 60000)) + ' min ago' }));
   if (island) island.webContents.send('island-data', { ...islandLast, sessions });
 }
+ipcMain.on('at-office', (e) => { e.returnValue = atOffice(); });
 ipcMain.on('island-push', (_e, d) => { islandLast = d; islandSend(); sendDockWins(); });
 setInterval(islandSend, 60000);   // session files have no change event worth watching across every project folder
 // Material You: the island tints itself from the Windows accent colour (same idea as the phone using the wallpaper).
