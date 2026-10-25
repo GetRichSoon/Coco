@@ -85,7 +85,7 @@ fun ChatScreen(vm: Lounge) {
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
 
-    Column(Modifier.fillMaxSize().imePadding().padding(bottom = if (WindowInsets.isImeVisible) 0.dp else NavRoom)) {
+    Column(Modifier.fillMaxSize().imePadding()) {
         CocoPresence(thinking, vm.live)
         LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(14.dp, 6.dp, 14.dp, 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             if (msgs.isEmpty()) item(key = "empty") { EmptyChat() }

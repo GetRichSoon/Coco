@@ -52,6 +52,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         val chat: List<JSONObject> = emptyList(), val commands: List<JSONObject> = emptyList(), val controls: List<JSONObject> = emptyList(),
         val events: List<JSONObject> = emptyList(), val pipelines: List<JSONObject> = emptyList(),
         val integrations: List<JSONObject> = emptyList(),
+        val agentMessages: List<JSONObject> = emptyList(),
     ) {
         val paused get() = controls.firstOrNull { it.optString("id") == "coco_paused" }?.optString("value") == "true"
     }
@@ -152,6 +153,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 events = cloud.list("events", "select=*&order=due_at.asc.nullsfirst").objects(),
                 pipelines = cloud.list("pipelines", "select=*&order=house_id.asc").objects(),
                 integrations = runCatching { cloud.list("integrations", "select=*&order=platform.asc").objects() }.getOrDefault(emptyList()),
+                agentMessages = runCatching { cloud.list("agent_messages", "select=*&order=at.desc&limit=40").objects() }.getOrDefault(emptyList()),
             )
             Alerts.compareAndNotify(getApplication(), data, d, name)
             data = d

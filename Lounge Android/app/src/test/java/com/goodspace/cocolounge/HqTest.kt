@@ -52,3 +52,41 @@ class HqTest {
         assertEquals("Still up, Boss?", greeting(2, "Boss"))
     }
 }
+
+/** Team talk: names, which activity becomes a line, newest first. */
+class TalkTest {
+    private fun member(id: String, name: String) = JSONObject().put("id", id).put("name", name)
+    private val members = listOf(member("lola", "Lola"), member("remy", "Remy"))
+    private fun msg(from: String, to: String?, text: String, at: String) = JSONObject().put("from_agent", from).put("to_agent", to ?: JSONObject.NULL).put("text", text).put("at", at).put("kind", "say")
+    private fun act(actor: String, action: String, detail: String, at: String) = JSONObject().put("actor", actor).put("action", action).put("detail", detail).put("at", at)
+
+    @Test fun namesMapToMembersCocoAndTidyIds() {
+        assertEquals("Coco", TalkRules.name("coco", members))
+        assertEquals("Coco", TalkRules.name("core.nova", members))
+        assertEquals("Lola", TalkRules.name("lola", members))
+        assertEquals("Lola", TalkRules.name("Lola", members))
+        assertEquals("Scout", TalkRules.name("core.scout", members))
+        assertEquals("Ext builder", TalkRules.name("ext-builder", members))
+    }
+
+    @Test fun talkMergesMessagesAndActivityNewestFirst() {
+        val msgs = listOf(msg("coco", "lola", "Find 10 topics", "2026-10-07T10:00:00Z"))
+        val acts = listOf(
+            act("Lola", "task added", "Build the extension", "2026-10-07T12:00:00Z"),
+            act("Mangesh", "pc command", "", "2026-10-07T11:00:00Z"),   // no detail -> dropped
+            act("Coco", "merged", "same Short already running", "2026-10-07T09:00:00Z"),
+        )
+        val t = TalkRules.talk(msgs, acts, members)
+        assertEquals(3, t.size)
+        assertEquals("Lola", t[0].from)   // 12:00 newest
+        assertEquals("Coco", t[1].from); assertEquals("Lola", t[1].to)   // the 10:00 message: Coco -> Lola
+        assertEquals("Find 10 topics", t[1].text)
+        assertEquals("Coco", t[2].from)   // 09:00 oldest
+        assertTrue(t[0].text.contains("gave a task"))
+        assertTrue(t[2].text.contains("merged duplicate work"))
+    }
+
+    @Test fun blankMessagesAreSkipped() {
+        assertTrue(TalkRules.talk(listOf(msg("coco", null, "", "2026-10-07T10:00:00Z")), emptyList(), members).isEmpty())
+    }
+}

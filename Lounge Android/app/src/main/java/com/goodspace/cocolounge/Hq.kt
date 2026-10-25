@@ -88,6 +88,57 @@ object HqRules {
     }
 }
 
+// ---------- team talk (pure, unit tested) ----------
+
+/** One line of the team talking: who said it, to whom, the words, and when. */
+data class Talk(val from: String, val to: String?, val text: String, val kind: String, val atIso: String)
+
+object TalkRules {
+    /** Pretty name for an agent id or actor: a Bonbon Club member's name, Coco, or the id tidied up. */
+    fun name(raw: String?, members: List<JSONObject>): String {
+        val s = (raw ?: "").trim()
+        val low = s.lowercase()
+        if (low.isEmpty()) return ""
+        if (low == "coco" || low.endsWith("nova") || low == "core.nova") return "Coco"
+        members.firstOrNull { it.optString("id").equals(low, true) || it.optString("name").equals(s, true) }?.let { return it.optString("name") }
+        // "core.scout" / "ext-builder" -> "Scout" / "Ext builder" (sentence case)
+        val tail = low.substringAfterLast('.').replace('_', ' ').replace('-', ' ').trim()
+        return tail.replaceFirstChar { it.uppercase() }.ifBlank { s }
+    }
+
+    /** How an activity row reads as a line of team talk (null = not team talk, skip it). */
+    private fun fromActivity(a: JSONObject): Pair<String, String>? {
+        val detail = a.optString("detail").let { if (it == "null") "" else it }
+        return when (a.optString("action")) {
+            "task added" -> "gave a task" to detail
+            "merged" -> "merged duplicate work" to detail
+            "rule set" -> "set a rule" to detail
+            "update" -> (detail.substringBefore(" | ").ifBlank { "update" }) to detail.substringAfter(" | ", "")
+            "approved" -> "approved" to detail
+            "declined" -> "said no to" to detail
+            "published", "posted" -> "published" to detail
+            else -> if (detail.isNotBlank()) a.optString("action").replace('_', ' ') to detail else null
+        }
+    }
+
+    /** The live conversation: direct agent messages first, then what the team did (activity), newest first. */
+    fun talk(agentMessages: List<JSONObject>, activity: List<JSONObject>, members: List<JSONObject>, limit: Int = 30): List<Talk> {
+        val out = ArrayList<Talk>()
+        for (m in agentMessages) {
+            val t = m.optString("text").let { if (it == "null") "" else it }
+            if (t.isBlank()) continue
+            out += Talk(name(m.optString("from_agent"), members), m.optString("to_agent").takeIf { it.isNotBlank() && it != "null" }?.let { name(it, members) }, t, m.optString("kind").ifBlank { "say" }, m.optString("at"))
+        }
+        for (a in activity) {
+            val f = fromActivity(a) ?: continue
+            val who = a.optString("actor").let { if (it == "null") "" else it }
+            if (who.isBlank()) continue
+            out += Talk(name(who, members), null, if (f.second.isBlank()) f.first else "${f.first}: ${f.second}", "did", a.optString("at"))
+        }
+        return out.sortedByDescending { it.atIso }.take(limit)
+    }
+}
+
 // ---------- Coco HQ ----------
 
 /**
@@ -348,4 +399,34 @@ fun rememberTicker(ms: Long): Long {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(ms) { while (true) { delay(ms); now = System.currentTimeMillis() } }
     return now
+}
+
+// ---------- team talk row (used in the Home list) ----------
+
+/** One line of the team talking, like a chat message between teammates. */
+@Composable
+fun TalkRow(vm: Lounge, t: Talk) {
+    val cs = MaterialTheme.colorScheme
+    val fromMark = Marks.members[t.from.lowercase()] ?: if (t.from == "Coco") Marks.coco else null
+    Surface(shape = RoundedCornerShape(18.dp), color = cs.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
+            if (fromMark != null) CompositionLocalProvider(LocalCalm provides true) { LivingMark(fromMark, 34.dp) }
+            else Surface(Modifier.size(34.dp), shape = androidx.compose.foundation.shape.CircleShape, color = cs.secondaryContainer) {
+                Box(contentAlignment = Alignment.Center) { Text(t.from.take(1).uppercase(), color = cs.onSecondaryContainer, fontWeight = FontWeight.Bold) }
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(t.from, style = MaterialTheme.typography.titleSmall, color = cs.primary)
+                    if (t.to != null) {
+                        Text("  →  ", style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)
+                        Text(t.to, style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text(ago(t.atIso), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant, maxLines = 1)
+                }
+                Text(t.text, style = MaterialTheme.typography.bodyMedium, color = cs.onSurface, maxLines = 4, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
 }

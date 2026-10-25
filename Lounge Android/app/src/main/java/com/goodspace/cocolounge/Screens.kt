@@ -202,19 +202,17 @@ fun LoungeApp(vm: Lounge) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
+        bottomBar = { FloatingNav(tab, waiting, { t -> tab = t; if (t == Tab.More) more = null }) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { pad ->
-      // The screens run under the floating glass nav (iOS 26 style): it shows them blurred through itself.
-      val backdrop = rememberBackdrop()
-      Box(Modifier.fillMaxSize().padding(top = pad.calculateTopPadding())) {
-        AnimatedContent(tab to more, Modifier.fillMaxSize().backdropSource(backdrop), transitionSpec = {
+        AnimatedContent(tab to more, Modifier.padding(pad).consumeWindowInsets(pad), transitionSpec = {
             // Shared-axis spring: screens to the right slide in from the right, going back slides from the left.
             val dir = (targetState.first.ordinal - initialState.first.ordinal).let { if (it == 0) (if (targetState.second != null) 1 else -1) else Integer.signum(it) }
             (slideInHorizontally(MuMotion.spatial()) { w -> dir * w / 5 } + fadeIn(tween(220, delayMillis = 60))) togetherWith
                 (slideOutHorizontally(MuMotion.spatial()) { w -> -dir * w / 5 } + fadeOut(tween(120)))
         }, label = "screens") { (t, m) ->
             if (t == Tab.Chat) ChatScreen(vm)
-            else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 120.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 when (t) {
                     Tab.Home -> home(vm, go) { member = it }
                     Tab.Teams -> teams(vm, house) { house = it }
@@ -232,8 +230,6 @@ fun LoungeApp(vm: Lounge) {
                 }
             }
         }
-        FloatingNav(tab, waiting, { t -> tab = t; if (t == Tab.More) more = null }, Modifier.align(Alignment.BottomCenter), backdrop)
-      }
     }
     member?.let { MemberSheet(vm, it) { member = null } }
     Dialogs(vm)
@@ -286,13 +282,10 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit, onMemb
     item(key = "nexth") { Section("Next up") }
     if (upcoming.isEmpty()) item(key = "nexte") { Muted("Nothing planned yet.") }
     items(upcoming.take(5), key = { "ev-" + it.s("id") }) { e -> Box(Modifier.animateItem()) { EventRow(vm, e) } }
-    item(key = "feedh") { Section("Live feed") }
-    item(key = "feed") {
-        Card {
-            if (d.activity.isEmpty()) Muted("Nothing new yet.")
-            d.activity.take(6).forEach { FeedRow(it) }
-        }
-    }
+    val talk = TalkRules.talk(d.agentMessages, d.activity, d.members)
+    item(key = "talkh") { Section("Team talk") }
+    if (talk.isEmpty()) item(key = "talke") { Muted("Quiet right now. The team's messages to each other show here, live, as they work.") }
+    items(talk.take(14), key = { "talk-" + it.atIso + "-" + it.from }) { t -> Box(Modifier.animateItem()) { TalkRow(vm, t) } }
     item(key = "housesh") { Section("Houses") }
     item(key = "houses") {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
