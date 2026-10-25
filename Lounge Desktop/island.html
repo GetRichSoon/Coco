@@ -43,6 +43,10 @@ html, body { margin: 0; background: transparent; overflow: hidden; font: 13px/1.
 .btn { background: var(--chip); color: #fff; border: 0; border-radius: 22px; min-width: 44px; height: 44px; font: 600 15px inherit; cursor: pointer; padding: 0 14px; }
 .btn:hover, .btn:focus-visible { background: #3a3a3c; outline: none; } .btn.big { background: #fff; color: #000; }
 .muted { color: var(--dim); } h3 { margin: 2px 0 6px; font-size: 13px; color: var(--dim); font-weight: 600; }
+/* Approval YES / NO / Ignore: Material You chips, same motion language as the tiles */
+.abtn { flex: none; border: 0; border-radius: 10px; padding: 5px 9px; font: 600 11px inherit; cursor: pointer; background: var(--chip); color: #fff; transition: transform .15s var(--ease), filter .15s; }
+.abtn.yes { background: var(--green); color: #000; } .abtn.no { background: var(--red); }
+.abtn:hover, .abtn:focus-visible { filter: brightness(1.2); transform: scale(1.06); outline: none; } .abtn:active { transform: scale(.94); }
 .big-time { font: 600 40px "Segoe UI Variable Display", "Segoe UI", sans-serif; text-align: center; margin: 6px 0; }
 #toastFace { display: flex; align-items: center; gap: 12px; padding: 0 20px; }
 /* Command Center tiles and sliders (Bloom-like): white when on, grey when off; sliders fill white to the level */
@@ -210,16 +214,21 @@ function setOpen(v) {
   mode(v ? 'open' : 'compact');
 }
 
+// ---- approvals: YES/NO go to Coco Cloud through the Lounge page; Ignore hides on this PC only ----
+const hiddenApprovals = new Set();
+const appr = () => S.approvals.filter((a) => !hiddenApprovals.has(String(a.id)));
+const apprRows = () => appr().slice(0, 3).map((a) => `<div class="row" style="cursor:default"><span class="dot orange pulse"></span><div class="g"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(a.what)}</small></div><button class="abtn yes" data-ayes="${esc(a.id)}">YES</button><button class="abtn no" data-ano="${esc(a.id)}">NO</button><button class="abtn" data-aig="${esc(a.id)}">Ignore</button></div>`).join('');
+
 // ---- compact: the most important thing first (approval > music > working agents > clock) ----
 // Only touch the DOM when the text changed, so the bars and dots keep animating smoothly.
 const set = (el, h) => { if (el._h !== h) { el.innerHTML = h; el._h = h; } };
 function renderCompact() {
   const l = $('#cl'), r = $('#cr');
-  const working = S.sessions.length + (S.tasks.working || 0);
-  if (modules.coco && S.approvals.length) { set(l, `<span class="dot orange pulse"></span><span>${S.approvals.length} approval${S.approvals.length > 1 ? 's' : ''}</span>`); set(r, `<span class="muted">YES?</span>`); }
+  const working = S.sessions.length + (S.tasks.working || 0), ap = appr().length;
+  if (modules.coco && ap) { set(l, `<span class="dot orange pulse"></span><span>${ap} approval${ap > 1 ? 's' : ''}</span>`); set(r, `<span class="muted">YES?</span>`); }
   else if (modules.music && media && media.playing) { set(l, `${media.art ? `<img src="${media.art}" alt="" style="width:20px;height:20px;border-radius:6px;object-fit:cover">` : `<span aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6A4 4 0 1 0 14 17V7h4V3z"/></svg></span>`}<span style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(media.title)}</span>`); set(r, '<span class="bars on"><i></i><i></i><i></i></span>'); }
   else if (pomo) { const left = Math.max(0, pomo.end - Date.now()); set(l, `<span class="dot ${pomo.brk ? '' : 'orange'}"></span><span>${pomo.brk ? 'Break' : 'Focus'}</span>`); set(r, `<span style="color:var(--orange)">${fmt(left)}</span>`); }
-  else if (modules.coco && working) { set(l, `<span class="dot pulse"></span><span>${working} working</span>`); set(r, `<span class="muted">${S.doneToday} done</span>`); }
+  else if (modules.coco === true && working) { set(l, `<span class="dot pulse"></span><span>${working} working</span>`); set(r, `<span class="muted">${S.doneToday} done</span>`); }   // office ('approvals'): no other Coco status
   else { set(l, `<span>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span><span class="muted">${esc(weather)}</span>`); set(r, statusIcons()); }
   pill.setAttribute('aria-label', 'Coco Island: ' + $('#compact').innerText.replace(/\s+/g, ' ') + '. Press Enter to open.');
 }
@@ -230,10 +239,12 @@ function renderFull() {
   const shown = TABS.filter(([k]) => modules[k]); if (!shown.some(([k]) => k === tab)) tab = (shown[0] || ['coco'])[0];
   $('#tabs').innerHTML = shown.map(([k, n]) => `<button role="tab" aria-selected="${k === tab}" data-tab="${k}">${n}</button>`).join('');
   document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.id === 'p-' + tab));
-  if (tab === 'coco') {
+  if (tab === 'coco' && modules.coco === 'approvals') {   // office mode: ONLY approvals, nothing else (Boss, 2026-10-26)
+    $('#p-coco').innerHTML = appr().length ? '<h3>Waiting for your YES</h3>' + apprRows() : '<p class="muted">Nothing waiting for a YES.</p>';
+  } else if (tab === 'coco') {
     const hq = S.hq || { working: 0, queued: 0 }, talk = S.talk || [];
-    $('#p-coco').innerHTML = `<div class="stats"><div class="stat"><b>${hq.working}</b><small>working</small></div><div class="stat"><b>${hq.queued}</b><small>queued</small></div><div class="stat"><b>${S.approvals.length}</b><small>need YES</small></div><div class="stat"><b>${S.doneToday}</b><small>done</small></div></div>`
-      + (S.approvals.length ? '<h3>Waiting for your YES</h3>' + S.approvals.slice(0, 3).map((a) => `<div class="row" tabindex="0" data-open="approvals"><span class="dot orange"></span><div class="g"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(a.what)}</small></div></div>`).join('') : '')
+    $('#p-coco').innerHTML = `<div class="stats"><div class="stat"><b>${hq.working}</b><small>working</small></div><div class="stat"><b>${hq.queued}</b><small>queued</small></div><div class="stat"><b>${appr().length}</b><small>need YES</small></div><div class="stat"><b>${S.doneToday}</b><small>done</small></div></div>`
+      + (appr().length ? '<h3>Waiting for your YES</h3>' + apprRows() : '')
       + '<h3>Team talk</h3>'
       + (talk.length ? talk.map((t) => `<div class="trow"><span class="tw">${esc(t.from)}${t.to ? ' <span class="tto">\u2192 ' + esc(t.to) + '</span>' : ''}</span> <span class="tt">${esc(t.text)}</span></div>`).join('') : '<p class="muted">Quiet right now. The team talks to each other here as they work.</p>')
       + (S.sessions.length ? '<h3>Claude at work</h3>' + S.sessions.slice(0, 2).map((s) => `<div class="row" tabindex="0" data-open="board"><span class="dot pulse"></span><div class="g"><b>${esc(s.now)}</b><small>${esc(s.ago)}</small></div></div>`).join('') : '');
@@ -259,8 +270,15 @@ function renderFull() {
 }
 
 pill.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal]'); if (!t) return;
+  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-vol],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal],[data-ayes],[data-ano],[data-aig]'); if (!t) return;
   const d = t.dataset;
+  if (d.ayes || d.ano) {
+    const id = d.ayes || d.ano; I.act('approve', { id, yes: !!d.ayes });
+    hiddenApprovals.add(id);   // shortcut: optimistic hide; if the cloud write failed the row returns in 30 s
+    setTimeout(() => { hiddenApprovals.delete(id); renderCompact(); if (open) renderFull(); }, 30000);
+    renderCompact(); renderFull();
+  }
+  if (d.aig) { hiddenApprovals.add(d.aig); renderCompact(); renderFull(); }
   if (d.tab) { tab = d.tab; renderFull(); }
   if (d.open) { I.openCoco(d.open); I.close(); }
   if (d.media) I.act('media', { key: d.media });

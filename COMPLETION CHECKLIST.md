@@ -39,3 +39,12 @@ Status words: VERIFIED WORKING · PARTIAL · NOT BUILT · BLOCKED · NEEDS EXTER
 - DONE: coco_reap_stale() runs every 5 min via pg_cron (coco-reap-stale); 6 stuck commands were marked failed.
 - DONE: integrations table with 10 platforms and their real state (RLS: founders read).
 - NEXT: PC + APK read integrations and the new statuses (one shared status component); then the PC↔Android sync test.
+
+## Island approvals + office-mode silence (Boss order 2026-10-26, built by builder)
+- `Lounge Desktop/main.js` — office mode: island module `coco='approvals'` (approvals-only panel, still no toasts); new `approve` IPC action forwards island YES/NO to the Lounge page.
+- `Lounge Desktop/preload.js` — `onApprove` bridge (main → Lounge page).
+- `Lounge Desktop/island.html` — YES / NO / Ignore chips on approval rows (Material You motion); Ignore hides locally; YES/NO optimistically hide 30 s; office panel shows ONLY approvals.
+- `Lounge/index.html` — shared `decideApproval()` (same Supabase write as the Approvals page: state, decided_by, decided_at, decisions row, activity log); 15 s approvals poll; in-app island strip `#islandStrip` at the top of the Coco window with the same YES/NO/Ignore.
+- `Lounge Desktop/island-approve.test.js` — new self-check (11 asserts); hover tests still pass (17).
+- `Lounge Android/ISLAND-TODO.md` — phone-side office silence + Halo approvals (APK not touched tonight; no server push path exists, the phone polls itself).
+- NOTE: during the live test (island open over a maximised VS Code while Boss was typing) approval **A-001 Play Apps / Fuselist flipped to rejected, decided_by Mangesh** — possibly an accidental click on the new NO chip, possibly Boss himself. If accidental, re-raise A-001. Could not revert from here (no DB write access for this session).

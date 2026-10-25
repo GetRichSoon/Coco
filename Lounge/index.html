@@ -89,6 +89,18 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 dialog { border: 0; border-radius: 28px; padding: 22px; background: var(--surface-2); color: var(--on-surface); width: min(480px, 92vw); }
 dialog::backdrop { background: rgba(20, 10, 16, .45); }
+/* In-app Dynamic Island strip (Boss, 2026-10-26): the island lives inside the Coco app too — same
+   approvals, same YES/NO cloud path as the desktop pill, Ignore hides on this device only. */
+#islandStrip { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 60; background: #0b0b0d; color: #fff; border-radius: 0 0 22px 22px; box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 8px 14px; display: grid; gap: 6px; width: min(560px, 92vw); animation: isdrop .45s cubic-bezier(.34,1.32,.5,1); }
+@keyframes isdrop { from { transform: translate(-50%, -100%); } }
+.isrow { display: flex; align-items: center; gap: 10px; }
+.isdot { width: 8px; height: 8px; border-radius: 50%; background: #ff9f0a; animation: ispulse 1.6s ease-in-out infinite; flex: none; }
+@keyframes ispulse { 50% { opacity: .35; } }
+.isg { flex: 1; min-width: 0; } .isg b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.isg small { display: block; color: rgba(255,255,255,.62); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.isbtn { flex: none; border: 0; border-radius: 10px; padding: 5px 10px; font: 800 11px var(--body); cursor: pointer; background: #2c2c2e; color: #fff; transition: transform .15s cubic-bezier(.34,1.32,.5,1), filter .15s; }
+.isbtn.yes { background: #30d158; color: #000; } .isbtn.no { background: #ff453a; }
+.isbtn:hover, .isbtn:focus-visible { filter: brightness(1.2); transform: scale(1.08); outline: none; } .isbtn:active { transform: scale(.94); }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom)); background: var(--on-surface); color: var(--surface); padding: 10px 18px; border-radius: 12px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; }
 #toast.show { opacity: 1; }
 .bottom { display: none; }
@@ -157,6 +169,7 @@ body.calm *, body.calm *::after { animation: none !important; transition: none !
 </section>
 <!-- 3. the lounge -->
 <div class="app" id="app" hidden>
+  <div id="islandStrip" hidden></div>
   <aside class="rail">
     <div class="brand"><img src="coco.svg" alt=""><div><small>Good Space</small><h1 style="font-size:22px">Coco Lounge</h1></div></div>
     <nav class="nav" id="nav"></nav>
@@ -237,7 +250,7 @@ async function boot() {
   if (!data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
   show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000);
+  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(pollApprovals, 15000);
   if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
@@ -394,6 +407,34 @@ function pushIsland() {
     doneToday: done.length, recentDone: done.slice(0, 3).map((t) => String(t.title || '').slice(0, 80)),
     hq: cocoHQ(D), talk: teamTalk(D),
   });
+}
+// The same island strip inside the app window (Boss, 2026-10-26): waiting approvals at the top,
+// YES/NO through the shared data-yes/data-no click path, Ignore hides on this device only.
+const igLocal = new Set();
+function renderStrip() {
+  const el = $('#islandStrip'); if (!el) return;
+  const w = (D.approvals || []).filter((a) => a.state === 'waiting' && !igLocal.has(String(a.id)));
+  el.hidden = !w.length;
+  el.innerHTML = w.slice(0, 2).map((a) => `<div class="isrow"><span class="isdot"></span><div class="isg"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(String(a.what || '').slice(0, 110))}</small></div><button class="isbtn yes" data-yes="${esc(a.id)}">YES</button><button class="isbtn no" data-no="${esc(a.id)}">NO</button><button class="isbtn" data-ig="${esc(a.id)}">Ignore</button></div>`).join('');
+}
+// One decide path for every YES/NO (Approvals page buttons AND the island pill, Boss 2026-10-26).
+async function decideApproval(id, yes) {
+  const a = (D.approvals || []).find(x => String(x.id) === String(id)); if (!a || !['waiting', 'on-hold'].includes(a.state)) return;
+  await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() }).eq('id', a.id);
+  await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `${yes ? 'YES' : 'NO'} ${a.code}: ${String(a.what || '').slice(0, 180)}` });
+  await log(yes ? 'approved' : 'declined', a.code); loadAll();
+}
+if (window.cocoDesktop && window.cocoDesktop.onApprove) window.cocoDesktop.onApprove((d) => { if (founder) decideApproval(d.id, d.yes); });
+// The island must stay current even when the live channel is down: a light 15 s poll of approvals only,
+// re-pushed only when something actually changed (at the office, approvals live ONLY on the island).
+let approvalsKey = '';
+async function pollApprovals() {
+  if (!founder) return;
+  const { data, error } = await sb.from('approvals').select('*').order('raised_on', { ascending: false });
+  if (error || !data) return;
+  const k = data.map(a => a.id + ':' + a.state).join(',');
+  if (k === approvalsKey) return; approvalsKey = k;
+  D.approvals = data; pushIsland(); diffAndNotify(); if (!document.hidden) render();
 }
 let pulseTimer = null;
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
@@ -559,6 +600,7 @@ function render() {
   $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;
   const view = $('#view'); const changed = view.dataset.page !== page; view.innerHTML = V[page](); view.dataset.page = page;
   if (changed) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); }
+  renderStrip();
   wireSettings();
   const f = $('#newTask'); if (f) f.addEventListener('submit', addTask);
   const fr = $('#newRule'); if (fr) fr.addEventListener('submit', addRule);
@@ -628,12 +670,8 @@ document.addEventListener('click', async (e) => {
   if (ds.themeSet) { store.set('gs-theme', ds.themeSet); applyLook(); render(); }
   if (ds.set === 'refresh') { await loadAll(); toast('Up to date'); }
   if (ds.set === 'signout') { await sb.auth.signOut(); show('signin'); }
-  if (ds.yes || ds.no) {
-    const id = ds.yes || ds.no, a = D.approvals.find(x => x.id === id), yes = !!ds.yes;
-    await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() }).eq('id', id);
-    await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `${yes ? 'YES' : 'NO'} ${a.code}: ${a.what.slice(0, 180)}` });
-    await log(yes ? 'approved' : 'declined', a.code); toast(yes ? 'YES saved' : 'No saved'); loadAll();
-  }
+  if (ds.yes || ds.no) { await decideApproval(ds.yes || ds.no, !!ds.yes); toast(ds.yes ? 'YES saved' : 'No saved'); }
+  if (ds.ig) { igLocal.add(String(ds.ig)); renderStrip(); }
   if (ds.stop) { await sb.from('tasks').update({ status: 'stopped', updated_at: new Date().toISOString() }).eq('id', ds.stop); await log('task stopped', (D.tasks.find(t => t.id === ds.stop) || {}).title); loadAll(); }
   if (ds.note) {
     const t = D.tasks.find(x => x.id === ds.note); $('#dupBody').innerHTML = `<p><b>${esc(t.title)}</b></p><label for="extra">Your points<textarea id="extra"></textarea></label>`;

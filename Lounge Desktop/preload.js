@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('cocoDesktop', {
   pcCommand: (action, args) => ipcRenderer.invoke('pc-command', { action, args }),
   liveSnapshot: () => ipcRenderer.invoke('live-snapshot'),
   islandPush: (d) => ipcRenderer.send('island-push', d),
+  onApprove: (f) => ipcRenderer.on('island-approve', (_e, d) => f(d)),
   beat: () => ipcRenderer.send('lounge-beat'),
   needSignIn: (which) => ipcRenderer.send('lounge-need', String(which)),
   transcribe: (bytes, mime) => ipcRenderer.invoke('transcribe', { bytes, mime }),

@@ -588,9 +588,9 @@ function placeIsland() {
   const d = screen.getPrimaryDisplay().bounds, W = 460, H = 310;   // flush with the top edge of the screen, like a notch
   island.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y, width: W, height: H });
 }
-// At the office the island shows no Coco status (Boss, 2026-10-22): the Coco module is switched off there, whatever the tray says.
+// At the office the island shows ONLY approvals (Boss, 2026-10-26): no other Coco status, no toasts (quiet).
 let sentModules = '';
-const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { m.coco = false; m.quiet = true; } return m; };   // quiet = no toasts
+const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { m.coco = 'approvals'; m.quiet = true; } return m; };   // quiet = no toasts
 function sendModules(force) { const m = islandModules(), k = JSON.stringify(m); if (island && (force || k !== sentModules)) { sentModules = k; island.webContents.send('island-modules', m); } }
 function islandVisible() {
   sendModules(false);
@@ -856,6 +856,9 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
   if (action === 'wifipass') { const s = String(args && args.ssid || ''); return s ? say('wifi pass ' + s) : 'bad'; }
   // After joining an open network, open the sign-in page (captive portal) at a place.
   if (action === 'portal') { shell.openExternal('http://www.msftconnecttest.com/redirect'); return 'ok'; }
+  // YES/NO on an approval from the island (Boss, 2026-10-26): the Lounge page writes it to Coco Cloud
+  // with its signed-in Supabase client — the exact same path as the Approvals page buttons.
+  if (action === 'approve') { const id = String((args && args.id) || ''); if (!id || !win) return 'bad'; win.webContents.send('island-approve', { id, yes: !!(args && args.yes) }); return 'ok'; }
   if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
 });
