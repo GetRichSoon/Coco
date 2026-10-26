@@ -1,0 +1,85 @@
+/* Document Toolkit - motion spec as code. Load after tokens.css. Prefix dt-.
+   Feel: a desk of paper that is always gently alive. Idle = slow, small. Hover/press = fast, decisive. Done = a stamp thump.
+   Every loop is switched off by prefers-reduced-motion, or per subtree with data-motion="off". */
+:root {
+  /* durations */
+  --dt-dur-micro: 120ms;   /* press, ripple */
+  --dt-dur-short: 220ms;   /* hover, chip, icon swap */
+  --dt-dur-medium: 380ms;  /* card lift, panel */
+  --dt-dur-long: 640ms;    /* reveal, stamp */
+  --dt-loop-fast: 1.1s;    /* progress stripes */
+  --dt-loop-mid: 2.6s;     /* scan, merge */
+  --dt-loop-slow: 5.5s;    /* idle float */
+  /* easings */
+  --dt-ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --dt-ease-decel: cubic-bezier(.05, .7, .1, 1);
+  --dt-ease-accel: cubic-bezier(.3, 0, .8, .15);
+  --dt-ease-snap: cubic-bezier(.34, 1.56, .64, 1);                       /* small overshoot: tool-card lift, chips */
+  --dt-ease-spring: linear(0, .18 4%, .55 10%, .93 18%, 1.08 26%, 1.12 32%, 1.06 42%, .98 54%, 1.004 66%, 1); /* stamp thump */
+}
+
+/* 1. dt-reveal - staggered rise-in. Set style="--i:n" on each child. */
+@keyframes dt-reveal { from { opacity: 0; transform: translateY(22px) scale(.97); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.dt-reveal { animation: dt-reveal var(--dt-dur-long) var(--dt-ease-decel) both; animation-delay: calc(var(--i, 0) * 70ms); }
+
+/* 2. dt-float - idle sheet bob (slow, 5.5s) */
+@keyframes dt-float { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-6px) rotate(calc(var(--r, 0deg) + 1.2deg)); } }
+.dt-float { animation: dt-float var(--dt-loop-slow) ease-in-out infinite; animation-delay: calc(var(--i, 0) * -.9s); }
+
+/* 3. dt-scan - bright line sweeping a document thumbnail / drop zone (2.6s, alternate) */
+@keyframes dt-scan { from { transform: translateY(0); opacity: .0; } 10% { opacity: 1; } 90% { opacity: 1; } to { transform: translateY(var(--scan-h, 100px)); opacity: 0; } }
+.dt-scan::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--md-sys-color-primary); box-shadow: 0 0 14px 2px var(--dt-accent-glow); animation: dt-scan var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+
+/* 4. dt-stripes - moving barber-pole progress fill (1.1s linear) */
+@keyframes dt-stripes { to { background-position: 28px 0; } }
+.dt-stripes { background: repeating-linear-gradient(115deg, var(--md-sys-color-primary) 0 10px, color-mix(in srgb, var(--md-sys-color-primary) 70%, white) 10px 20px); background-size: 28px 100%; animation: dt-stripes var(--dt-loop-fast) linear infinite; }
+
+/* 5. dt-merge - two sheets slide together, overlap, separate (2.6s) */
+@keyframes dt-merge-l { 0%, 12% { transform: translateX(-14px) rotate(-6deg); } 45%, 62% { transform: translateX(3px) rotate(-1deg); } 100% { transform: translateX(-14px) rotate(-6deg); } }
+@keyframes dt-merge-r { 0%, 12% { transform: translateX(14px) rotate(6deg); } 45%, 62% { transform: translateX(-3px) rotate(1deg); } 100% { transform: translateX(14px) rotate(6deg); } }
+.dt-merge-l { animation: dt-merge-l var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+.dt-merge-r { animation: dt-merge-r var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+
+/* 6. dt-split - a cut line flashes, halves part (2.6s) */
+@keyframes dt-split-a { 0%, 40% { transform: translateX(0); } 60%, 85% { transform: translateX(-7px) rotate(-3deg); } 100% { transform: none; } }
+@keyframes dt-split-b { 0%, 40% { transform: translateX(0); } 60%, 85% { transform: translateX(7px) rotate(3deg); } 100% { transform: none; } }
+@keyframes dt-cut { 0%, 30% { opacity: 0; transform: scaleY(0); } 45%, 80% { opacity: 1; transform: scaleY(1); } 100% { opacity: 0; } }
+.dt-split-a { animation: dt-split-a var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+.dt-split-b { animation: dt-split-b var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+.dt-cut { transform-origin: top; animation: dt-cut var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+
+/* 7. dt-squish - compress: sheet squeezes and springs back (2.6s) */
+@keyframes dt-squish { 0%, 15% { transform: scale(1, 1); } 40%, 60% { transform: scale(.62, 1.04); } 80% { transform: scale(1.06, .98); } 100% { transform: scale(1); } }
+.dt-squish { animation: dt-squish var(--dt-loop-mid) var(--dt-ease-snap) infinite; }
+
+/* 8. dt-swap - convert: two arrows rotate half-turn, pause (2.6s) */
+@keyframes dt-swap { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(180deg); } }
+.dt-swap { animation: dt-swap var(--dt-loop-mid) var(--dt-ease-snap) infinite alternate; transform-origin: center; }
+
+/* 9. dt-draw - signature / underline draws itself (2.6s). Needs pathLength="1" on the path. */
+@keyframes dt-draw { 0% { stroke-dashoffset: 1; } 55%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+.dt-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: dt-draw var(--dt-loop-mid) var(--dt-ease-standard) infinite; }
+
+/* 10. dt-stamp - DONE stamp thump: drops in big, lands with a spring, ring pulse (640ms, once; replay by re-adding the class) */
+@keyframes dt-stamp { 0% { opacity: 0; transform: scale(2.6) rotate(-22deg); } 55% { opacity: 1; transform: scale(.92) rotate(-9deg); } 100% { opacity: 1; transform: scale(1) rotate(-8deg); } }
+@keyframes dt-stamp-ring { from { opacity: .7; transform: scale(.9); } to { opacity: 0; transform: scale(1.7); } }
+.dt-stamp { animation: dt-stamp var(--dt-dur-long) var(--dt-ease-spring) both; }
+.dt-stamp-ring { animation: dt-stamp-ring 900ms var(--dt-ease-decel) 360ms both; }
+.dt-stamp-loop { animation-iteration-count: infinite; animation-duration: 3.6s; }
+
+/* 11. dt-tool-card - hover lift with 3D tilt + accent underline sweep; press squashes */
+.dt-tool { transition: transform var(--dt-dur-medium) var(--dt-ease-snap), box-shadow var(--dt-dur-medium) var(--dt-ease-standard), background-color var(--dt-dur-short) var(--dt-ease-standard); transform-style: preserve-3d; }
+.dt-tool:hover { transform: translateY(-8px) rotateX(3deg) rotateZ(-.6deg); box-shadow: 0 22px 36px -14px var(--dt-accent-glow), 0 3px 0 0 var(--md-sys-color-primary); }
+.dt-tool:active { transform: translateY(-1px) scale(.975); transition-duration: var(--dt-dur-micro); }
+.dt-tool .dt-art { transition: transform var(--dt-dur-medium) var(--dt-ease-snap); }
+.dt-tool:hover .dt-art { transform: scale(1.14) rotate(-3deg); }
+/* idle loops slow down on rest, speed up on hover */
+.dt-tool [class*="dt-merge"], .dt-tool [class*="dt-split"], .dt-tool .dt-squish, .dt-tool .dt-swap, .dt-tool .dt-draw, .dt-tool .dt-cut { animation-duration: 4.4s; }
+.dt-tool:hover [class*="dt-merge"], .dt-tool:hover [class*="dt-split"], .dt-tool:hover .dt-squish, .dt-tool:hover .dt-swap, .dt-tool:hover .dt-draw, .dt-tool:hover .dt-cut { animation-duration: 1.7s; }
+
+/* 12. dt-ink-underline - heading underline grows from left on hover/focus */
+.dt-ink { background: linear-gradient(var(--md-sys-color-primary), var(--md-sys-color-primary)) 0 100% / 0 3px no-repeat; transition: background-size var(--dt-dur-medium) var(--dt-ease-decel); }
+.dt-ink:hover, .dt-ink:focus-visible { background-size: 100% 3px; }
+
+@media (prefers-reduced-motion: reduce) { .dt-reveal, .dt-float, .dt-scan::after, .dt-stripes, [class*="dt-merge"], [class*="dt-split"], .dt-cut, .dt-squish, .dt-swap, .dt-draw, .dt-stamp, .dt-stamp-ring { animation: none !important; opacity: 1; stroke-dashoffset: 0; } .dt-tool { transition: none; } }
+[data-motion="off"] *, [data-motion="off"] *::after { animation: none !important; }

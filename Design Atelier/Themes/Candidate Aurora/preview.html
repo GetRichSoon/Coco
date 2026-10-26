@@ -1,0 +1,114 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candidate Aurora Preview</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="motion.css">
+<style>
+* { box-sizing: border-box; }
+html { background: var(--md-sys-color-surface); }
+body { margin: 0; min-height: 100vh; position: relative; overflow-x: hidden; color: var(--md-sys-color-on-surface); font: 400 16px/1.55 var(--ca-font-body); -webkit-font-smoothing: antialiased; }
+/* sky */
+.sky { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--md-sys-color-secondary) 14%, var(--md-sys-color-surface)), var(--md-sys-color-surface) 70%); }
+.blob { position: absolute; width: 46vw; height: 46vw; border-radius: 50%; filter: blur(90px); opacity: .5; }
+.b1 { left: -8vw; top: -10vw; background: var(--ca-aurora-a); --dx: 18vw; --dy: 6vh; } .b2 { right: -10vw; top: 8vh; background: var(--ca-aurora-b); --dx: -14vw; --dy: 10vh; animation-delay: -8s; } .b3 { left: 28vw; top: 38vh; background: var(--ca-aurora-c); width: 34vw; height: 34vw; opacity: .34; --dx: 10vw; --dy: -12vh; animation-delay: -15s; }
+:root[data-theme="dark"] .blob { opacity: .42; }
+.curtains { position: absolute; left: 0; right: 0; top: 0; height: 70vh; display: flex; justify-content: space-around; mix-blend-mode: screen; opacity: .0; }
+.curtains i { width: 9vw; height: 100%; background: linear-gradient(to top, transparent, var(--ca-aurora-a) 55%, transparent); filter: blur(26px); }
+.curtains i:nth-child(even) { background: linear-gradient(to top, transparent, var(--ca-aurora-b) 50%, transparent); }
+:root[data-theme="dark"] .curtains { opacity: .55; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .curtains { opacity: .55; } :root:not([data-theme="light"]) .blob { opacity: .42; } }
+.wrap { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 22px 36px 48px; }
+/* glass */
+.glass { background: color-mix(in srgb, var(--md-sys-color-surface-container-lowest) 58%, transparent); border: 1px solid color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent); border-radius: var(--md-sys-shape-corner-large); box-shadow: 0 24px 50px -28px color-mix(in srgb, var(--md-sys-color-secondary) 70%, transparent); }
+:root[data-theme="dark"] .glass { background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 52%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .glass { background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 52%, transparent); } }
+/* nav */
+.nav { display: flex; align-items: center; gap: 6px; padding: 8px 10px 8px 16px; border-radius: 999px; width: fit-content; margin: 0 auto; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 20px var(--ca-font-display); margin-right: 18px; letter-spacing: .01em; }
+.brand i { width: 26px; height: 26px; background: conic-gradient(from 20deg, var(--ca-aurora-a), var(--ca-aurora-b), var(--ca-aurora-c), var(--ca-aurora-a)); }
+.nav a { padding: 8px 15px; border-radius: 999px; font: 600 14px var(--ca-font-body); color: var(--md-sys-color-on-surface-variant); text-decoration: none; transition: background var(--ca-dur-short) var(--ca-ease-silk), color var(--ca-dur-short); }
+.nav a:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 9%, transparent); color: var(--md-sys-color-on-surface); } .nav a.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.mode { margin-left: 10px; height: 38px; padding: 0 16px; border-radius: 999px; border: 0; background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface); font: 700 13px var(--ca-font-body); cursor: pointer; transition: transform var(--ca-dur-medium) var(--ca-ease-glide); } .mode:hover { transform: scale(1.06); }
+/* hero */
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; align-items: center; margin-top: 34px; min-height: 420px; }
+.eyebrow { font: 500 12px var(--ca-font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--md-sys-color-primary); }
+h1 { font: 600 clamp(44px, 5.2vw, 74px)/1 var(--ca-font-display); letter-spacing: -.02em; margin: 14px 0 18px; }
+h1 .ca-shimmer { display: block; padding-bottom: .08em; font-weight: 700; }
+.lede { max-width: 31em; font-size: 17px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 26px; }
+.btns { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn { height: 54px; padding: 0 28px; border-radius: 999px; border: 0; font: 700 16px var(--ca-font-body); cursor: pointer; transition: transform var(--ca-dur-medium) var(--ca-ease-glide), box-shadow var(--ca-dur-medium) var(--ca-ease-glide); }
+.btn.fill { background: linear-gradient(110deg, var(--md-sys-color-primary), var(--md-sys-color-secondary)); color: var(--md-sys-color-on-primary); box-shadow: 0 14px 30px -12px var(--md-sys-color-primary); } .btn.fill:hover { transform: translateY(-3px); box-shadow: 0 22px 36px -12px var(--md-sys-color-primary); }
+.btn.line { background: transparent; color: var(--md-sys-color-on-surface); box-shadow: inset 0 0 0 1.5px var(--md-sys-color-outline); } .btn.line:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent); }
+/* orb */
+.orbwrap { position: relative; height: 420px; display: grid; place-items: center; }
+.glow { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, var(--ca-aurora-a), transparent 68%); filter: blur(30px); }
+.orb { position: relative; width: 270px; height: 270px; display: grid; place-items: center; text-align: center; background: conic-gradient(from 200deg, color-mix(in srgb, var(--ca-aurora-a) 70%, transparent), color-mix(in srgb, var(--ca-aurora-b) 70%, transparent), color-mix(in srgb, var(--ca-aurora-c) 70%, transparent), color-mix(in srgb, var(--ca-aurora-a) 70%, transparent)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 30px 60px -30px var(--ca-aurora-b); }
+.orb svg { position: absolute; inset: 14px; width: calc(100% - 28px); height: calc(100% - 28px); transform: rotate(-90deg); fill: none; stroke-linecap: round; } .orb .tr { stroke: rgba(255,255,255,.3); stroke-width: 7; } .orb .pr { stroke: #fff; stroke-width: 7; }
+.orb b { position: relative; display: block; font: 700 58px/1 var(--ca-font-display); color: #fff; text-shadow: 0 2px 18px rgba(20, 10, 60, .35); } .orb span { position: relative; font: 600 12px var(--ca-font-mono); letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.92); text-shadow: 0 1px 10px rgba(20, 10, 60, .4); }
+.sat { margin: -20px 0 0 -52px; width: 104px; height: 40px; display: grid; place-items: center; font: 700 12.5px var(--ca-font-body); border-radius: 999px; }
+.sat.a { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); --r: 175px; } .sat.b { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); --r: 175px; } .sat.c { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); --r: 175px; }
+/* cards */
+.row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 18px; margin-top: 10px; }
+.card { padding: 22px 24px 24px; }
+.card h3 { font: 600 22px var(--ca-font-display); margin: 0 0 4px; } .card .k { font: 500 11px var(--ca-font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--md-sys-color-outline-variant); font-weight: 600; } .li:first-of-type { margin-top: 12px; } .li small { margin-left: auto; font: 500 12px var(--ca-font-mono); color: var(--md-sys-color-on-surface-variant); }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.big { font: 700 64px/1 var(--ca-font-display); margin: 10px 0 2px; } .big sup { font: 600 18px var(--ca-font-body); color: var(--md-sys-color-on-surface-variant); margin-left: 4px; }
+.spark { width: 100%; height: 54px; margin-top: 10px; } .spark path { fill: none; stroke: var(--md-sys-color-primary); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.quote { font: 600 24px/1.2 var(--ca-font-display); margin: 10px 0 14px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; } .chip { padding: 6px 14px; border-radius: 999px; font: 700 12.5px var(--ca-font-body); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); } .chip.t { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); } .chip.p { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.sw { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 18px; } .sw div { height: 46px; border-radius: 14px; font: 500 9.5px var(--ca-font-mono); padding: 5px 7px; display: flex; align-items: flex-end; }
+@media (max-width: 960px) { .hero, .row { grid-template-columns: 1fr; } .wrap { padding: 16px; } .nav a:not(.on) { display: none; } }
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true">
+  <div class="blob b1 ca-drift"></div><div class="blob b2 ca-drift"></div><div class="blob b3 ca-drift"></div>
+  <div class="curtains"><i class="ca-curtain" style="--i:0"></i><i class="ca-curtain" style="--i:1"></i><i class="ca-curtain" style="--i:2"></i><i class="ca-curtain" style="--i:3"></i><i class="ca-curtain" style="--i:4"></i><i class="ca-curtain" style="--i:5"></i></div>
+</div>
+<div class="wrap">
+  <nav class="nav glass ca-reveal" style="--i:0"><div class="brand"><i class="ca-morph"></i>Aurora</div><a class="on" href="#">Today</a><a href="#">Plans</a><a href="#">Library</a><a href="#">Insights</a><button class="mode" id="theme">Light / Dark</button></nav>
+  <section class="hero">
+    <div>
+      <div class="eyebrow ca-reveal" style="--i:1">Monday / 26 October / 7:40 pm</div>
+      <h1 class="ca-reveal" style="--i:2">Good evening, Boss.<span class="ca-shimmer">Everything is calm.</span></h1>
+      <p class="lede ca-reveal" style="--i:3">Three things need you today. The rest is handled and waiting quietly in the background.</p>
+      <div class="btns ca-reveal" style="--i:4"><button class="btn fill">Review the three</button><button class="btn line">See what ran</button></div>
+    </div>
+    <div class="orbwrap ca-reveal" style="--i:3">
+      <div class="glow ca-breathe"></div>
+      <div class="orb ca-morph">
+        <svg viewBox="0 0 100 100"><circle class="tr" cx="50" cy="50" r="46"/><circle class="pr ca-ring" cx="50" cy="50" r="46" pathLength="1" style="--v:.72"/></svg>
+        <div><b>72%</b><span>Day done</span></div>
+      </div>
+      <div class="ca-orbit" style="--i:0; --r:178px"><div class="sat a glass">Calendar</div></div>
+      <div class="ca-orbit" style="--i:1; --r:178px"><div class="sat b glass">Inbox 3</div></div>
+      <div class="ca-orbit" style="--i:2; --r:178px"><div class="sat c glass">Focus</div></div>
+    </div>
+  </section>
+  <section class="row">
+    <article class="card glass ca-glass ca-float ca-reveal" style="--i:5; --r:.35deg"><div class="k">Next up</div><h3>Three decisions</h3>
+      <div class="li"><span class="dot" style="background:var(--md-sys-color-primary)"></span>Approve the new theme<small>5 min</small></div>
+      <div class="li"><span class="dot" style="background:var(--md-sys-color-secondary)"></span>Pick this week's idea<small>10 min</small></div>
+      <div class="li"><span class="dot" style="background:var(--md-sys-color-tertiary)"></span>Reply to Big Boss<small>2 min</small></div></article>
+    <article class="card glass ca-glass ca-float ca-reveal" style="--i:6; --r:-.4deg"><div class="k">Focus today</div><div class="big">2h 14<sup>min</sup></div>
+      <div class="chips"><span class="chip p">+18% vs last week</span></div>
+      <svg class="spark" viewBox="0 0 200 54" preserveAspectRatio="none"><path d="M2 44 C 20 40, 28 18, 48 24 S 80 46, 100 30 S 140 6, 160 18 S 190 12, 198 6"/></svg></article>
+    <article class="card glass ca-glass ca-float ca-reveal" style="--i:7; --r:.3deg"><div class="k">Note to self</div><p class="quote">Quiet work beats loud work.</p>
+      <div class="chips"><span class="chip">Calm</span><span class="chip t">Deep work</span><span class="chip p">Saved</span></div></article>
+  </section>
+  <div class="sw ca-reveal" style="--i:8" id="sw"></div>
+</div>
+<script>
+const r = document.documentElement;
+document.getElementById('theme').onclick = () => { const d = r.dataset.theme === 'dark' || (!r.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches); r.dataset.theme = d ? 'light' : 'dark'; paint(); };
+function paint() { const s = getComputedStyle(r); sw.innerHTML = ['primary', 'primary-container', 'secondary', 'secondary-container', 'tertiary', 'tertiary-container'].map((n) => { const v = s.getPropertyValue('--md-sys-color-' + n).trim(); const on = /container/.test(n) ? 'on-surface' : 'surface'; return `<div style="background:${v};color:var(--md-sys-color-${on})">${v}</div>`; }).join(''); }
+if (location.hash === '#dark') r.dataset.theme = 'dark'; paint();
+</script>
+</body>
+</html>
+

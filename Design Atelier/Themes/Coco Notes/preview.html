@@ -1,0 +1,145 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coco Notes Preview</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="motion.css">
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); font: 400 15px/1.45 var(--cn-font-body); -webkit-font-smoothing: antialiased; display: grid; place-items: center; padding: 28px 16px; overflow-x: hidden; }
+body::before { content: ""; position: fixed; inset: -20%; z-index: -1; background: radial-gradient(40% 40% at 20% 25%, color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent), transparent), radial-gradient(35% 35% at 85% 80%, color-mix(in srgb, var(--md-sys-color-secondary) 24%, transparent), transparent); }
+.stage { display: flex; gap: 36px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.label { font: 500 12px var(--cn-font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); text-align: center; margin: 0 0 10px; }
+.phone { position: relative; width: 372px; height: 760px; border-radius: 46px; background: var(--md-sys-color-surface); border: 9px solid var(--md-sys-color-inverse-surface); overflow: hidden; box-shadow: 0 40px 70px -30px color-mix(in srgb, var(--md-sys-color-primary) 55%, transparent); display: flex; flex-direction: column; }
+.status { display: flex; justify-content: space-between; padding: 12px 26px 0; font: 600 12px var(--cn-font-body); }
+.bar { padding: 14px 20px 8px; display: flex; align-items: center; justify-content: space-between; }
+h1 { font: 800 34px/1 var(--cn-font-display); letter-spacing: -.03em; margin: 0; font-variation-settings: "wdth" 90; }
+.avatar { width: 40px; height: 40px; border-radius: 14px; background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); display: grid; place-items: center; font: 800 17px var(--cn-font-display); transform: rotate(6deg); }
+/* capture bar */
+.capture { margin: 4px 16px 10px; height: 60px; border-radius: 22px; background: var(--md-sys-color-surface-container-highest); display: flex; align-items: center; gap: 10px; padding: 0 8px 0 18px; color: var(--md-sys-color-on-surface-variant); transition: box-shadow var(--cn-dur-short); }
+.capture:hover { box-shadow: 0 0 0 2px var(--md-sys-color-primary); }
+.capture span { flex: 1; font-size: 15px; }
+.mic { position: relative; width: 46px; height: 46px; border: 0; border-radius: 16px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); display: grid; place-items: center; cursor: pointer; transition: transform var(--cn-dur-short) var(--cn-ease-bounce); }
+.mic:active { transform: scale(.88); } .mic svg { position: relative; width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mic .cn-ring { position: absolute; inset: 0; border-radius: 16px; background: var(--md-sys-color-primary); }
+/* chips */
+.chips { display: flex; gap: 8px; padding: 0 16px 12px; overflow: hidden; }
+.chip { flex: none; height: 36px; padding: 0 15px; display: inline-flex; align-items: center; gap: 6px; border-radius: 12px; border: 1.5px solid var(--md-sys-color-outline-variant); background: transparent; color: var(--md-sys-color-on-surface); font: 600 13.5px var(--cn-font-body); cursor: pointer; transition: transform var(--cn-dur-short) var(--cn-ease-bounce), background var(--cn-dur-short); }
+.chip:hover { transform: translateY(-2px) rotate(-1.5deg); } .chip:active { transform: scale(.92); }
+.chip.on { background: var(--md-sys-color-primary); border-color: transparent; color: var(--md-sys-color-on-primary); }
+.chip.saver { position: relative; background: var(--md-sys-color-secondary-container); border-color: transparent; color: var(--md-sys-color-on-secondary-container); }
+.chip.saver svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* notes */
+.notes { flex: 1; overflow: hidden; padding: 0 16px; columns: 2; column-gap: 12px; }
+.card { break-inside: avoid; margin-bottom: 12px; padding: 14px 15px 15px; border-radius: 22px; background: var(--md-sys-color-surface-container-high); cursor: pointer; }
+.card b { display: block; font: 700 17px/1.15 var(--cn-font-display); letter-spacing: -.01em; margin-bottom: 5px; }
+.card p { margin: 0; font-size: 13.5px; color: inherit; opacity: .85; }
+.card small { display: block; margin-top: 10px; font: 500 11px var(--cn-font-mono); opacity: .7; }
+.card.pk { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); --tilt: 1.4deg; }
+.card.sc { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.card.tc { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); --tilt: 1.8deg; }
+.card.hi { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+.todo { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13.5px; } .todo i { width: 16px; height: 16px; border-radius: 6px; border: 2px solid currentColor; flex: none; } .todo i.d { background: currentColor; }
+.fab { position: absolute; right: 18px; bottom: 90px; width: 62px; height: 62px; border: 0; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); display: grid; place-items: center; cursor: pointer; box-shadow: 0 10px 22px -6px var(--cn-capture-glow); } .fab svg { width: 28px; height: 28px; stroke: currentColor; stroke-width: 2.6; fill: none; stroke-linecap: round; }
+.nav { display: flex; justify-content: space-around; padding: 10px 8px 16px; background: var(--md-sys-color-surface-container); }
+.nav a { display: grid; justify-items: center; gap: 3px; font: 600 11.5px var(--cn-font-body); color: var(--md-sys-color-on-surface-variant); text-decoration: none; width: 70px; }
+.nav a i { width: 58px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background var(--cn-dur-short), transform var(--cn-dur-short) var(--cn-ease-bounce); } .nav a:hover i { transform: scale(1.1); }
+.nav a.on { color: var(--md-sys-color-on-surface); } .nav a.on i { background: var(--md-sys-color-secondary-container); } .nav svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ticker */
+.ticker { overflow: hidden; margin: 0 0 10px; mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.ticker .chip { height: 30px; font-size: 12.5px; border-radius: 10px; background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); border: 0; }
+/* idea saver sheet phone */
+.dim { flex: 1; background: color-mix(in srgb, var(--md-sys-color-scrim) 28%, var(--md-sys-color-surface)); position: relative; }
+.sheet { background: var(--md-sys-color-surface-container-low); border-radius: 32px 32px 0 0; padding: 14px 20px 22px; box-shadow: 0 -10px 30px -10px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent); }
+.grab { width: 38px; height: 5px; border-radius: 3px; background: var(--md-sys-color-outline-variant); margin: 0 auto 14px; }
+.sheet h2 { font: 800 26px/1 var(--cn-font-display); letter-spacing: -.02em; margin: 0 0 4px; } .sheet .sub { color: var(--md-sys-color-on-surface-variant); font-size: 14px; margin: 0 0 14px; }
+.field { min-height: 116px; border-radius: 22px; background: var(--md-sys-color-surface-container-highest); padding: 16px 18px; font: 500 19px/1.35 var(--cn-font-display); letter-spacing: -.01em; }
+.caretbar { display: inline-block; width: 3px; height: 1.05em; margin-left: 2px; vertical-align: -3px; background: var(--md-sys-color-primary); border-radius: 2px; }
+.waves { display: flex; align-items: center; gap: 4px; height: 44px; margin: 14px 0 4px; }
+.waves i { flex: 1; height: 100%; max-width: 6px; border-radius: 4px; background: var(--md-sys-color-primary); } .waves i:nth-child(3n) { background: var(--md-sys-color-tertiary); } .waves i:nth-child(4n+1) { background: var(--md-sys-color-secondary); }
+.dest { display: flex; gap: 8px; margin: 12px 0 16px; flex-wrap: wrap; }
+.save { position: relative; width: 100%; height: 56px; border: 0; border-radius: 20px; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font: 800 17px var(--cn-font-display); cursor: pointer; transition: transform var(--cn-dur-short) var(--cn-ease-bounce), border-radius var(--cn-dur-medium) var(--cn-ease-bounce); }
+.save:hover { border-radius: 28px; } .save:active { transform: scale(.94); }
+.toast { position: absolute; left: 50%; top: 52px; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 8px; padding: 10px 16px 10px 12px; border-radius: 18px; background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface); font: 700 14px var(--cn-font-body); white-space: nowrap; }
+.toast .ok { position: relative; width: 26px; height: 26px; border-radius: 9px; background: var(--md-sys-color-inverse-primary); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; } .toast .ok svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.toast .cn-burst { position: absolute; inset: 0; border-radius: 9px; border: 2px solid var(--md-sys-color-inverse-primary); }
+.stack { position: absolute; right: 30px; top: 86px; width: 120px; height: 74px; } .stack span, .stack b { position: absolute; inset: 0; border-radius: 18px; } .stack span:nth-child(1) { background: var(--md-sys-color-secondary-container); transform: rotate(-7deg) translate(-8px, 4px); } .stack span:nth-child(2) { background: var(--md-sys-color-tertiary-container); transform: rotate(5deg) translate(6px, 2px); } .stack b { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; font: 800 17px var(--cn-font-display); } .flynote { position: absolute; left: 40px; top: 205px; width: 90px; height: 34px; border-radius: 12px; background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); font: 700 11px/34px var(--cn-font-body); text-align: center; z-index: 4; --fx: 175px; --fy: -100px; }
+/* side kit */
+.kit { width: 300px; display: grid; gap: 14px; }
+.panel { background: var(--md-sys-color-surface); border-radius: 28px; padding: 18px; }
+.panel h3 { font: 800 18px var(--cn-font-display); margin: 0 0 10px; }
+.sw { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } .sw div { height: 50px; border-radius: 14px; font: 500 9.5px var(--cn-font-mono); padding: 5px; display: flex; align-items: flex-end; }
+.type b { display: block; font: 800 38px/1 var(--cn-font-display); letter-spacing: -.03em; } .type span { display: block; margin-top: 6px; font-size: 14px; } .type small { font: 500 11px var(--cn-font-mono); color: var(--md-sys-color-on-surface-variant); }
+.switch { display: flex; align-items: center; justify-content: space-between; } .tog { width: 52px; height: 32px; border-radius: 16px; background: var(--md-sys-color-surface-container-highest); border: 2px solid var(--md-sys-color-outline); position: relative; cursor: pointer; transition: background var(--cn-dur-short); }
+.tog::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--md-sys-color-outline); transition: transform var(--cn-dur-medium) var(--cn-ease-bounce), width var(--cn-dur-short), background var(--cn-dur-short); }
+.tog.on { background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); } .tog.on::after { transform: translateX(20px); width: 24px; height: 24px; top: 2px; background: var(--md-sys-color-on-primary); }
+.pill { height: 40px; padding: 0 18px; border-radius: 14px; border: 0; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); font: 700 14px var(--cn-font-body); cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div>
+    <p class="label">Notes tab</p>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G  86%</span></div>
+      <div class="bar"><h1>Notes</h1><div class="avatar">B</div></div>
+      <div class="capture cn-pop" style="--i:0"><span>Type or speak a note...</span>
+        <button class="mic" aria-label="Record"><span class="cn-ring"></span><span class="cn-ring b"></span><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button></div>
+      <div class="chips">
+        <button class="chip on cn-pop" style="--i:1">All</button>
+        <button class="chip saver cn-pop" style="--i:2"><svg class="cn-wiggle" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Idea Saver</button>
+        <button class="chip cn-pop" style="--i:3">Tasks</button>
+        <button class="chip cn-pop" style="--i:4">Voice</button>
+      </div>
+      <div class="ticker"><div class="cn-marquee"><div class="cn-marquee-track">
+        <span class="chip">Saved: rain sound app</span><span class="chip">Saved: PDF scan tip</span><span class="chip">Saved: Short about sleep</span><span class="chip">Saved: widget for habits</span>
+        <span class="chip">Saved: rain sound app</span><span class="chip">Saved: PDF scan tip</span><span class="chip">Saved: Short about sleep</span><span class="chip">Saved: widget for habits</span>
+      </div></div></div>
+      <div class="notes">
+        <div class="card pk cn-note cn-pop" style="--i:3"><b>Habit widget</b><p>Streak flame that grows each day you keep it.</p><small>IDEA / 2 min ago</small></div>
+        <div class="card sc cn-note cn-pop" style="--i:4"><b>Buy list</b><div class="todo"><i class="d"></i>Tripod</div><div class="todo"><i></i>Ring light</div><div class="todo"><i></i>Mic cover</div></div>
+        <div class="card tc cn-note cn-pop" style="--i:5"><b>Short idea</b><p>Why you wake at 3 am. 20 sec, one twist at the end.</p><small>VOICE / 0:24</small></div>
+        <div class="card hi cn-note cn-pop" style="--i:6"><b>Call mom</b><p>Sunday, after lunch.</p></div>
+        <div class="card cn-note cn-pop" style="--i:7"><b>Extension: tab sorter</b><p>Group tabs by topic with one click.</p><small>IDEA / yesterday</small></div>
+      </div>
+      <button class="fab cn-fab" aria-label="New note"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <nav class="nav"><a class="on" href="#"><i><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM9 12h7M9 16h5"/></svg></i>Notes</a><a href="#"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></i>Recent</a><a href="#"><i><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></i>Starred</a></nav>
+    </div>
+  </div>
+  <div>
+    <p class="label">Idea Saver capture</p>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G  86%</span></div>
+      <div class="toast"><span class="ok"><span class="cn-burst cn-burst-loop"></span><svg class="cn-saved cn-saved-loop" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Idea saved to Notes</div>
+      <div class="dim"><div class="stack cn-bump"><span></span><span></span><b>Notes 12</b></div><div class="flynote cn-fly">Habit widget</div></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h2>Idea Saver</h2><p class="sub">Say it or type it. We file it for you.</p>
+        <div class="field"><span class="cn-type" style="--chars:27">Widget that grows a plant</span><span class="caretbar cn-caret"></span></div>
+        <div class="waves" aria-hidden="true"></div>
+        <div class="dest"><span class="chip on">Apps</span><span class="chip">Extensions</span><span class="chip">Videos</span><span class="chip">Other</span></div>
+        <button class="save">Save idea</button>
+      </div>
+    </div>
+  </div>
+  <div class="kit">
+    <p class="label">Accent kit</p>
+    <div class="panel type"><b>Capture it.</b><span>Bricolage Grotesque 800 for titles, DM Sans for notes.</span><small>DM MONO / 0:24 / 2 MIN AGO</small></div>
+    <div class="panel"><h3>Colour roles</h3><div class="sw" id="sw"></div></div>
+    <div class="panel"><h3>Controls</h3><div class="switch"><span>Quick capture</span><div class="tog on" id="t1"></div></div><div style="display:flex;gap:8px;margin-top:14px"><button class="pill" id="theme">Light / Dark</button><button class="chip on">Pinned</button></div></div>
+  </div>
+</div>
+<script>
+const r = document.documentElement;
+document.getElementById('theme').onclick = () => { r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; paint(); };
+document.getElementById('t1').onclick = (e) => e.currentTarget.classList.toggle('on');
+const w = document.querySelector('.waves'); w.innerHTML = Array.from({ length: 36 }, (_, i) => `<i class="cn-wave" style="--i:${i}"></i>`).join('');
+function paint() { const s = getComputedStyle(r); sw.innerHTML = ['primary', 'primary-container', 'secondary', 'secondary-container', 'tertiary', 'tertiary-container', 'inverse-surface', 'surface-container-highest'].map((n) => { const v = s.getPropertyValue('--md-sys-color-' + n).trim(); const on = /container|highest/.test(n) ? 'on-surface' : 'surface'; return `<div style="background:${v};color:var(--md-sys-color-${on})">${v}</div>`; }).join(''); }
+if (location.hash === '#dark') r.dataset.theme = 'dark'; paint();
+</script>
+</body>
+</html>
+

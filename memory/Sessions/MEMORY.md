@@ -57,3 +57,8 @@
 - [Paid extensions only](feedback_paid_extensions_only.md) — publish only extensions with a Pro tier + working checkout + license activation
 - [Company level-up plan](project_company_level_up.md) — 2026-10-25 ideas file, new + big-money Houses (micro-drama, audio, exam-prep, AI agency), Coco's order D→C→A/B
 - [Plan means plan](feedback_plan_means_plan.md) — on plan/setup requests give structure only, no research or building until YES
+- [STT database move](project_stt_db_move.md) — Supabase to Cloudflare D1 with zero data loss: per-device sync rows, no sync deletes, verified import, 60-day fallback
+- [Answer in English](feedback_answer_in_english.md) — Boss speaks Hindi/Hinglish but wants every reply in English (2026-10-26)
+- [User copy standard](feedback_user_copy_standard.md) — user-facing text the standard polished way; never mention servers, databases, migrations or vendors
+- [Token discipline](feedback_token_discipline.md) — fewer tokens: no repeat work, one full brief per agent, pause agents near limits, token tool approved 2026-10-26
+- [Company handoff](project_company_handoff.md) — new sessions read company/HANDOFF.md on main first: full context, live state, 30-min check duty
