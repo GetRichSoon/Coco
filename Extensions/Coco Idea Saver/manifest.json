@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Coco Idea Saver",
+  "version": "1.0.0",
+  "description": "Save any page, video, link, image or selection as an idea into Coco Notes. Private: talks only to the Coco heart server on this PC.",
+  "permissions": ["contextMenus", "storage", "alarms"],
+  "host_permissions": ["http://localhost:7777/*", "http://127.0.0.1:7777/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*", "*://m.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["chip.css"]
+    }
+  ]
+}

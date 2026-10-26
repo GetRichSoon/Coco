@@ -14,6 +14,7 @@ Theme for all of them: `..\Design Atelier\Material You Theme` (each extension ge
 | Resume ↔ JD Matcher | `Resume JD Matcher` | Draft — founder is deleting it from the store | — | none yet |
 | Tempo Controller | `Tempo Controller` | Published | 5 | Mangesh347/Tempo |
 | Tic Tac Toe — Neon Arena | `Tic Tac Toe` (code 3.2.0) | Published | 6 | Mangesh347/tictactoe-extension |
+| Coco Idea Saver | `Coco Idea Saver` (exception: tracked IN the Coco repo — private tool, never for the store) | Private — load unpacked in Brave (see its LOAD.md) | 1 (Boss) | GetRichSoon/Coco |
 
 ## Older copies left in place (not deleted)
 `Projects\From Downloads\*` and `Projects\From C Drive\Extension\*` still hold older versions

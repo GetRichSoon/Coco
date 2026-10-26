@@ -17,3 +17,4 @@ Gatekeeper/Gatekeeper Log.txt
 
 # Each extension is its own git repo (pushed to GitHub); Coco tracks only the index
 Extensions/*/
+!Extensions/Coco Idea Saver/

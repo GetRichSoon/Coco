@@ -7,6 +7,7 @@ import { execFile } from 'node:child_process';
 import { networkInterfaces } from 'node:os';
 import { ROOT, loadBrain, update, firstHome } from './brain.mjs';
 import { importNova } from './import-nova.mjs';
+import { saveNote } from './notes_route.mjs';
 
 const PORT = +(process.env.COCO_PORT || 7777);
 const VAULT = firstHome(process.env.COCO_VAULT, join(ROOT, '..', 'Coco Vault'), 'C:/Users/Lenovo/Coco Vault');
@@ -88,6 +89,7 @@ export async function handle(req, res) {
       });
       return send(res, 200, { ok: true, handed });
     }
+    if (req.method === 'POST' && url.pathname === '/api/notes') { const r = await saveNote(await body(req)); return send(res, r.code, r); }
     return send(res, 404, { error: 'unknown' });
   }
   // the app itself
