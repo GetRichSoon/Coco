@@ -40,3 +40,24 @@ assert.ok(lounge.includes("from('agent_messages').select('*').order('at', { asce
 assert.ok(lounge.includes("table: 'tasks' }, feedSoon") && lounge.includes("from('tasks').select('*')") && lounge.includes('doneAct'), 'counters: tasks/houses realtime + poll, done today from tasks + activity');
 assert.ok(!lounge.includes('/4</b>'), 'no hardcoded device total');
 console.log('approve tests: 21 passed');
+
+// Island ON/OFF (Boss, 2026-10-26): toggle state persists in island.json and islandVisible() obeys it.
+const os = require('os'), pth = require('path'); const tmp = fs.mkdtempSync(pth.join(os.tmpdir(), 'isl-'));
+const file = pth.join(tmp, 'island.json');
+const sl = src.split('\n'); const grab = (p) => sl.find((l) => l.startsWith(p));
+const ctx = new Function('fs', 'ISLAND_FILE', grab('const islandSettings') + ';' + grab('const saveIsland') + '; return { islandSettings, saveIsland };')(fs, () => file);
+assert.equal(ctx.islandSettings().enabled, true, 'default: island on');
+let s = ctx.islandSettings(); s.enabled = false; ctx.saveIsland(s);
+assert.equal(ctx.islandSettings().enabled, false, 'OFF survives a restart (re-read from disk)');
+assert.equal(ctx.islandSettings().modules.coco, true, 'other island settings kept');
+s = ctx.islandSettings(); s.enabled = true; ctx.saveIsland(s); assert.equal(ctx.islandSettings().enabled, true, 'ON restores');
+assert.ok(src.includes('function setIslandEnabled') && src.includes("action === 'hide'"), 'main has one toggle + island hide action');
+assert.ok(src.includes('click: (i) => setIslandEnabled(i.checked)'), 'tray/dock menus use the toggle');
+assert.ok(page.includes('id="hideIsland"') && page.includes("I.act('hide')"), 'island has a Hide island chip');
+assert.ok(lounge.includes('id="showIsland"') && lounge.includes('setIsland'), 'Lounge settings has the island switch');
+assert.ok(src.includes('islandSettings().enabled && !islandFull'), 'hidden island still runs, approvals keep reaching the app window');
+console.log('island toggle tests passed');
+assert.ok(src.includes("action === 'module'") && page.includes('data-mod') && page.includes('id="gearIsland"'), 'island has a gear with one switch per module');
+assert.ok(page.includes('warnCoco'), 'hiding Coco (approvals) warns first');
+office = true; { const m2 = new Function('atOffice', 'islandSettings', line + '; return islandModules;')(() => true, () => ({ modules: { coco: false, music: true } }))(); assert.equal(m2.coco, false, 'office: Coco section off stays off'); }
+console.log('module toggle tests passed');

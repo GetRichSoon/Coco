@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const UI = path.join(__dirname, '..', 'Lounge', 'index.html');
 const ICON = path.join(__dirname, 'coco.ico');
 const RULES_FILE = path.join(__dirname, '..', 'memory', 'Cloud Rules.md');
-let win = null, tray = null, quitting = false;
+let win = null, tray = null, quitting = false, trayMenu = null;
 
 // Office mode (founder rule): at the office the Lounge never pops up; it stays in the tray, connected,
 // so phone commands still run. The place comes from the Home/Office switcher.
@@ -45,18 +45,19 @@ function createTray() {
   tray = new Tray(nativeImage.createFromPath(ICON));
   tray.setToolTip('Coco Lounge · Good Space');
   const open = (hash) => { win.show(); win.focus(); if (hash) win.webContents.executeJavaScript(`location.hash = '${hash}'`); };
-  tray.setContextMenu(Menu.buildFromTemplate([
+  trayMenu = () => Menu.buildFromTemplate([
     { label: 'Open Coco Lounge', click: () => open() },
     { label: 'Board', click: () => open('board') },
     { label: 'Approvals', click: () => open('approvals') },
     { type: 'separator' },
-    { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
+    { label: 'Show Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => setIslandEnabled(i.checked) },
     { label: 'Coco Dock (hides the Windows taskbar)', type: 'checkbox', checked: islandSettings().dock !== false, click: (i) => { const s = islandSettings(); s.dock = i.checked; saveIsland(s); if (i.checked) createDock(); else removeDock(); } },
     { label: 'Island modules', submenu: [['coco', 'Coco Brain'], ['music', 'Music'], ['control', 'Control Center'], ['focus', 'Focus']].map(([k, label]) => ({ label, type: 'checkbox', checked: islandSettings().modules[k] !== false,
       click: (i) => { const s = islandSettings(); s.modules = { ...s.modules, [k]: i.checked }; saveIsland(s); sendModules(true); } })) },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings(loginArgs(i.checked)) },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },
-  ]));
+  ]);
+  tray.setContextMenu(trayMenu());
   tray.on('click', () => open());
 }
 
@@ -590,7 +591,7 @@ function placeIsland() {
 }
 // At the office the island shows ONLY approvals (Boss, 2026-10-26): no other Coco status, no toasts (quiet).
 let sentModules = '';
-const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { m.coco = 'approvals'; m.quiet = true; } return m; };   // quiet = no toasts
+const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { if (m.coco !== false) m.coco = 'approvals'; m.quiet = true; } return m; };   // quiet = no toasts
 function sendModules(force) { const m = islandModules(), k = JSON.stringify(m); if (island && (force || k !== sentModules)) { sentModules = k; island.webContents.send('island-modules', m); } }
 function islandVisible() {
   sendModules(false);
@@ -598,6 +599,18 @@ function islandVisible() {
   const show = islandSettings().enabled && !islandFull;   // shows at the office too (Boss, 2026-10-22); only the big window stays hidden there
   if (show && !island.isVisible()) island.showInactive(); else if (!show && island.isVisible()) island.hide();
 }
+// Island ON/OFF (Boss, 2026-10-26): one switch for the island's chip, the tray, the Dock menu and the Lounge settings.
+// Saved in island.json (restart-safe). Hidden = only the floating overlay goes; approvals still count in the app window.
+function setIslandEnabled(on) {
+  const s = islandSettings(); s.enabled = !!on; saveIsland(s);
+  if (on) createIsland();
+  islandVisible();
+  if (tray && trayMenu) tray.setContextMenu(trayMenu());
+  if (win) win.webContents.send('island-enabled', s.enabled);
+  return s.enabled;
+}
+ipcMain.handle('island-enabled-get', () => islandSettings().enabled);
+ipcMain.handle('island-enabled-set', (_e, on) => setIslandEnabled(!!on));
 function createIsland() {
   if (island || !islandSettings().enabled) return;
   island = new BrowserWindow({
@@ -783,7 +796,7 @@ function dockMenu() {
     { label: 'Open Coco Lounge', click: () => { win.show(); win.focus(); } },
     { label: 'Approvals', click: () => { win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = 'approvals'`); } },
     { type: 'separator' },
-    { label: 'Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => { const s = islandSettings(); s.enabled = i.checked; saveIsland(s); if (i.checked) createIsland(); islandVisible(); } },
+    { label: 'Show Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => setIslandEnabled(i.checked) },
     { label: 'Turn off Coco Dock (Windows taskbar back)', click: () => { const s = islandSettings(); s.dock = false; saveIsland(s); removeDock(); } },
     { label: 'Task Manager', click: () => shell.openPath('taskmgr.exe') },
     { label: 'Taskbar settings', click: () => shell.openExternal('ms-settings:taskbar') },
@@ -859,6 +872,8 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
   if (action === 'portal') { shell.openExternal('http://www.msftconnecttest.com/redirect'); return 'ok'; }
   // YES/NO on an approval from the island (Boss, 2026-10-26): the Lounge page writes it to Coco Cloud
   // with its signed-in Supabase client — the exact same path as the Approvals page buttons.
+  if (action === 'module') { const k = String(args && args.k); if (!['coco', 'music', 'control', 'focus'].includes(k)) return 'bad'; const s = islandSettings(); s.modules = { ...s.modules, [k]: !!args.on }; saveIsland(s); sendModules(true); if (tray && trayMenu) tray.setContextMenu(trayMenu()); return 'ok'; }
+  if (action === 'hide') { setIslandEnabled(false); return 'ok'; }
   if (action === 'approve') { const id = String((args && args.id) || ''); if (!id || !win) return 'bad'; win.webContents.send('island-approve', { id, yes: !!(args && args.yes) }); return 'ok'; }
   if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';

@@ -483,7 +483,7 @@ async function heartbeat() {
   // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
   // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
   // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.2', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.3', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
@@ -568,6 +568,7 @@ const V = {
     return `<div class="grid">
       <div class="card2"><span class="eyebrow">Account</span><h3>${esc(founder ? `${founder.name} · ${founder.call_me}` : '')}</h3><span class="muted">${esc(me.email)}</span><button class="btn gold" data-set="signout" style="justify-self:start">Sign out</button></div>
       <div class="card2"><span class="eyebrow">This device</span><h3>${esc(me_.name || 'This device')}</h3><span class="muted">Paired ${ago(me_.paired_at)} · one of the four Good Space devices. Lost it? Switch it off from another device.</span>
+        ${window.cocoDesktop && window.cocoDesktop.setIsland ? `<div class="settings-row"><span>Show Dynamic Island</span><input type="checkbox" class="switch" id="showIsland" aria-label="Show Dynamic Island"></div>` : ''}
         ${window.cocoDesktop ? `<div class="settings-row"><span>Start with Windows</span><input type="checkbox" class="switch" id="startup" aria-label="Start with Windows"></div>` : ''}
         <button class="btn tonal" data-set="refresh" style="justify-self:start">Refresh now</button></div>
       <div class="card2"><span class="eyebrow">Notifications</span>${kinds.map(([k, l]) => `<div class="settings-row"><span>${l}</span><input type="checkbox" class="switch" data-notify="${k}" ${store.get('gs-n-' + k) === '0' ? '' : 'checked'} aria-label="${l}"></div>`).join('')}</div>
@@ -632,6 +633,7 @@ function applyLook() {
 function wireSettings() {
   document.querySelectorAll('[data-notify]').forEach(s => s.onchange = () => store.set('gs-n-' + s.dataset.notify, s.checked ? '1' : '0'));
   const c = $('#calm'); if (c) c.onchange = () => { store.set('gs-calm', c.checked ? '1' : '0'); applyLook(); };
+  const si = $('#showIsland'); if (si) { window.cocoDesktop.getIsland().then(v => si.checked = v); si.onchange = () => window.cocoDesktop.setIsland(si.checked); window.cocoDesktop.onIsland(v => { si.checked = v; }); }
   const su = $('#startup'); if (su && window.cocoDesktop.getStartup) { window.cocoDesktop.getStartup().then(v => su.checked = v); su.onchange = () => window.cocoDesktop.setStartup(su.checked); }
 }
 applyLook();

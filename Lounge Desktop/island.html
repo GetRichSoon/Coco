@@ -104,11 +104,12 @@ input[type=range] { width: 100%; accent-color: #fff; }
   <div class="face" id="compact"><div class="l" id="cl"></div><div class="r" id="cr"></div></div>
   <div class="face" id="toastFace"><span class="dot orange"></span><div class="g"><b id="tT"></b><small class="muted" id="tS"></small></div></div>
   <div class="face" id="full">
-    <div class="tabs" role="tablist" id="tabs"></div>
+    <div style="display:flex;gap:6px;align-items:center"><div class="tabs" role="tablist" id="tabs" style="flex:1"></div><button class="keybtn" id="gearIsland" style="background:var(--chip);border-radius:12px;padding:6px 9px;font-size:14px" aria-label="Island settings" title="Island settings">&#x2699;</button><button class="keybtn" id="hideIsland" style="background:var(--chip);border-radius:12px;padding:6px 10px;font-size:12px;white-space:nowrap" aria-label="Hide island" title="Hide island (bring it back from the tray or Coco settings)">Hide &#x2715;</button></div>
     <div class="panel" id="p-coco" role="tabpanel"></div>
     <div class="panel" id="p-music" role="tabpanel"></div>
     <div class="panel" id="p-control" role="tabpanel"></div>
     <div class="panel" id="p-focus" role="tabpanel"></div>
+    <div class="panel" id="p-set"></div>
   </div>
 </div>
 <script>
@@ -161,7 +162,7 @@ function subPanel() {
   return head('Bluetooth', 'bt', radio.bt) + `<div class="list">${radio.bt === false ? '<p class="muted">Bluetooth is off.</p>' : rows}</div><button class="btn wide" data-set="ms-settings:bluetooth">Connect or add a device…</button>`;
 }
 const slider = (id, icon, v, label, missing) => missing ? '' : `<label class="sl" style="--v:${v}%"><span class="si">${icon}</span><input type="range" min="0" max="100" value="${v}" id="${id}" aria-label="${label}"><span class="sv">${v}</span></label>`;
-let tab = 'coco', open = false, pomo = null, toastTimer = null, net = null, bright = null, charging = false, chargeSecs = Infinity;
+let gear = false, warnCoco = false, tab = 'coco', open = false, pomo = null, toastTimer = null, net = null, bright = null, charging = false, chargeSecs = Infinity;
 const wifiIcon = () => {
   if (!net || !net.on) return '<svg width="16" height="14" viewBox="0 0 24 20" aria-label="No Wi-Fi"><path d="M2 2l20 16" stroke="#ff453a" stroke-width="2.4"/><path d="M12 18l3-4a5 5 0 0 0-6 0z" fill="rgba(255,255,255,.4)"/></svg>';
   const n = net.signal >= 70 ? 3 : net.signal >= 40 ? 2 : 1, op = (i) => (i <= n ? '#fff' : 'rgba(255,255,255,.3)');
@@ -240,7 +241,13 @@ function renderCompact() {
 const fmt = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
 // ---- expanded ----
+function renderSettings() {   // one Material You switch per module (Boss, 2026-10-26); the real setting (not the office override) is shown
+  const on = (k) => modules[k] !== false && modules._off !== k;
+  $('#p-set').innerHTML = '<h3>Island sections</h3>' + TABS.map(([k, n]) => `<div class="subhead"><b>${n}</b><button class="sw${on(k) ? ' on' : ''}" data-mod="${k}" aria-pressed="${on(k)}" aria-label="${n} ${on(k) ? 'on' : 'off'}"><i></i></button></div>`).join('')
+    + (warnCoco ? '<p class="muted" style="color:var(--orange)">Coco holds your approvals. Hidden, they still count in the Coco app but will not float here. Tap the switch again to hide.</p>' : '');
+}
 function renderFull() {
+  if (gear) { renderSettings(); $('#tabs').innerHTML = ''; document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.id === 'p-set')); return; }
   const shown = TABS.filter(([k]) => modules[k]); if (!shown.some(([k]) => k === tab)) tab = (shown[0] || ['coco'])[0];
   $('#tabs').innerHTML = shown.map(([k, n]) => `<button role="tab" aria-selected="${k === tab}" data-tab="${k}">${n}</button>`).join('');
   document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.id === 'p-' + tab));
@@ -274,9 +281,12 @@ function renderFull() {
     : `<div class="big-time">25:00</div><p class="muted" style="text-align:center">25 min focus, 5 min break</p><div class="btns"><button class="btn big" data-pomo="start">Start</button></div>`) + '</div></div>';
 }
 
+$('#gearIsland').addEventListener('click', () => { gear = !gear; warnCoco = false; renderFull(); });
+$('#hideIsland').addEventListener('click', () => I.act('hide'));
 pill.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal],[data-ayes],[data-ano],[data-aig]'); if (!t) return;
+  const t = e.target.closest('[data-tab],[data-open],[data-media],[data-set],[data-pomo],[data-radio],[data-sub],[data-net],[data-join],[data-pass],[data-copy],[data-portal],[data-ayes],[data-mod],[data-ano],[data-aig]'); if (!t) return;
   const d = t.dataset;
+  if (d.mod) { const k = d.mod, on = modules[k] !== false; if (k === 'coco' && on && !warnCoco) warnCoco = true; else { warnCoco = false; modules = { ...modules, [k]: !on }; I.act('module', { k, on: !on }); } renderFull(); return; }
   if ((d.ayes || d.ano || d.aig) && (!open || Date.now() - openedAt < 400)) return;
   if (d.ayes || d.ano) {
     const id = d.ayes || d.ano; I.act('approve', { id, yes: !!d.ayes });
