@@ -1,6 +1,23 @@
 // node "Extensions/Coco Idea Saver/test.mjs" — asserts for the pure logic (no chrome needed).
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
 import { buildPayload, saveNote, flushQueue, QUEUE_CAP } from './lib.mjs';
+
+// Load-order check: run content.js in a DOM stub so TDZ/syntax bugs fail here, not in Brave
+// (caught the real "closeBox before initialization" bug on 2026-10-26).
+const el = () => ({ style: {}, addEventListener() {}, append() {}, appendChild() {}, remove() {},
+  setPointerCapture() {}, getBoundingClientRect: () => ({ left: 0, top: 0, bottom: 0 }),
+  offsetLeft: 0, offsetTop: 0, offsetWidth: 100, offsetHeight: 30 });
+const chipEl = el();
+vm.runInNewContext(readFileSync(new URL('./content.js', import.meta.url), 'utf8'), {
+  window: {}, innerWidth: 1200, innerHeight: 800,
+  location: { pathname: '/watch', href: 'https://www.youtube.com/watch?v=x' },
+  document: { createElement: () => chipEl, documentElement: el(), addEventListener() {}, title: 'Vid - YouTube' },
+  chrome: { storage: { local: { get: async () => ({}), set: async () => {} } }, runtime: { sendMessage() {} } },
+  addEventListener() {}, setTimeout, clearTimeout,
+});
+assert.equal(chipEl.style.display, 'block'); // sync() ran at load on a /watch page without throwing
 
 const tab = { url: 'https://example.com/post', title: 'A Post' };
 

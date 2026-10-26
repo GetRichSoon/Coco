@@ -20,6 +20,9 @@
     place(chipPos ? chipPos.x : innerWidth - 160, chipPos ? chipPos.y : 72);
   });
 
+  let box = null;
+  function closeBox() { if (box) { box.remove(); box = null; } }
+
   const onWatch = () => location.pathname === '/watch';
   const sync = () => { chip.style.display = onWatch() ? 'block' : 'none'; closeBox(); };
   document.addEventListener('yt-navigate-finish', sync);
@@ -40,9 +43,7 @@
     } }, (r) => show(r && r.ok ? '✓ Saved' : '⏳ Queued', r && r.ok ? 'coco-ok' : 'coco-queued'));
   };
 
-  // one-line "why this idea" box
-  let box = null;
-  const closeBox = () => { if (box) { box.remove(); box = null; } };
+  // one-line "why this idea" box (box/closeBox declared above, before first sync())
   const openBox = () => {
     if (box) return;
     box = document.createElement('div');
