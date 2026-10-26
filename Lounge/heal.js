@@ -2,9 +2,11 @@
 // Error classes come from the real failed rows of Coco Cloud (84 failed of 420): see COMPLETION CHECKLIST 2026-10-26.
 (function (root) {
   // Safe to run a second time (no side effect that doubles): one automatic retry is allowed only for these.
-  const RETRY_SAFE = new Set(['status', 'notify', 'open_app', 'open_url', 'play_youtube', 'screenshot', 'find_file', 'speak', 'fun', 'close_player']);
+  const RETRY_SAFE = new Set(['status', 'notify', 'open_app', 'open_url', 'screenshot', 'find_file', 'fun']);
   // Harmless even when late: a status or a notice that waited for a sleeping PC is still worth running (up to 2 h).
   const LATE_OK = new Set(['status', 'notify', 'screenshot']);
+  // Voice intents go stale fast: a spoken wish (say, a song, media keys, volume, keys) is never run late and never run twice (Boss, 2026-10-26).
+  const VOICE = new Set(['say', 'play_youtube', 'media', 'volume', 'key', 'type_text', 'speak', 'close_player']);
   const MIN = 60000;
 
   // Which class is this result? ok | not_understood | no_browser | app_missing | timeout | transient | failed_other
@@ -29,8 +31,8 @@
     if (cls === 'no_browser') return action === 'key';
     return (cls === 'timeout' || cls === 'transient') && RETRY_SAFE.has(action);
   }
-  // How long a queued command may wait for its PC: 10 min, but harmless ones 2 h.
-  const ageLimitMs = (action) => (LATE_OK.has(action) ? 120 * MIN : 10 * MIN);
+  // How long a queued command may wait for its PC: 10 min; voice intents 2 min; harmless ones 2 h.
+  const ageLimitMs = (action) => (LATE_OK.has(action) ? 120 * MIN : VOICE.has(action) ? 2 * MIN : 10 * MIN);
   // What the sweep does with a row so the queue never clogs (null = leave it). 'now' in ms.
   function sweepVerdict(row, now, deviceLastSeen) {
     const age = now - new Date(row.created_at).getTime(), args = row.args || {};
@@ -43,6 +45,6 @@
     }
     return null;
   }
-  const api = { RETRY_SAFE, LATE_OK, classify, prep, canRetry, ageLimitMs, sweepVerdict };
+  const api = { VOICE, RETRY_SAFE, LATE_OK, classify, prep, canRetry, ageLimitMs, sweepVerdict };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.CocoHeal = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -48,3 +48,9 @@ Counters (item 1, Boss addition): island + Home numbers are now real and live. w
 queued = tasks queued and not stale; need YES = approvals waiting; done = tasks done today + today's activity lines saying done/ready/published/shipped/
 rendered/posted/released/fixed/live (was tasks only, so it showed 0); devices online = real device count (was a hardcoded /4). Fed by realtime on
 tasks/houses/activity/agent_messages plus the 15 s poll (tasks, houses, devices, approvals, activity, agent_messages). No counter without a source remains.
+
+## 2026-10-26 (Nono) Command errors + auto-heal + auto-update, phone side DONE in code (APK 2.8.2, versionCode 16)
+Real failed commands in Coco Cloud (84 of 420 at 12:35): 50 "too old, not run" (device asleep/offline), 26 "Not understood" (greetings, "gana laga de"), 8 with no reason (stuck "running").
+Phone side built: `Heal.kt` is now the ONE command runner for the app and the always-on service (the two old copies are gone). One smart retry for network failures on safe actions only, never for say/song/media/volume; spoken commands expire after 2 min, others after 10 min, status/notify after 2 h; one "needs Nono" activity line per kind per day; a sweeper every 5 min closes stuck/old rows with a "stale:" reason; a failed update check is reported once a day. `HealTest.kt` covers it. Updater (on open, every 30 min, auto-install when allowed) was already there and is unchanged.
+Honest limits: Android still shows its own "Update" confirm button for a side-loaded app unless "Install unknown apps" is allowed for Coco Lounge; the first install of 2.8.2 on each phone may need one tap. A phone in deep doze can still answer late (that is Android background limits), and then the command is closed as "too old" instead of running stale.
+Still open: sender-side warning ("PC offline, will not run") before queuing from the phone UI; Halo approvals and office silence items above.

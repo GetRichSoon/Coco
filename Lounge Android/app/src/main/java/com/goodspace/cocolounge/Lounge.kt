@@ -165,14 +165,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     private val handled = mutableSetOf<String>()
     private fun runMyCommands(list: List<JSONObject>) {
         val me = cloud.deviceId ?: return
-        list.filter { it.optString("target_device") == me && it.optString("status") == "queued" && handled.add(it.optString("id")) }.forEach { c ->
-            viewModelScope.launch {
-                val id = c.optString("id")
-                if (!runCatching { cloud.claim("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "running")) }.getOrDefault(false)) return@launch
-                val age = runCatching { java.time.Duration.between(java.time.OffsetDateTime.parse(c.optString("created_at")).toInstant(), Instant.now()).seconds }.getOrDefault(0L)
-                val result = if (age > 600) "failed: too old (over 10 minutes), not run" else runCatching { PhoneRemote.run(getApplication(), c.optString("action"), c.optJSONObject("args") ?: JSONObject()) }.getOrElse { "failed: ${it.message}" }
-                runCatching { cloud.update("commands", "id=eq.$id", JSONObject().put("status", if (result.startsWith("failed") || result.startsWith("Not understood")) "failed" else "done").put("result", result).put("done_at", Instant.now().toString())) }
-            }
+        list.filter { it.optString("target_device") == me && it.optString("status") == "queued" && handled.add(Heal.runKey(it)) }.forEach { c ->
+            viewModelScope.launch { Heal.runOne(getApplication(), cloud, c) }
         }
     }
 

@@ -59,7 +59,8 @@ class Connected : Service() {
                 if (cloud.signedIn && cloud.paired) {
                     runQueued(cloud)
                     if (n % 4 == 0) beat(cloud)
-                    if (n % 120 == 0) runCatching { Updater.check(applicationContext) }
+                    if (n % 120 == 0) runCatching { Updater.check(applicationContext) }.onFailure { Heal.note(applicationContext, cloud, "update", "Phone update check failed: ${it.message}") }
+                    if (n % 20 == 5) runCatching { Heal.sweep(cloud) }   // every 5 min: nothing may clog the queue
                 }
                 n++; delay(15_000)
             }
@@ -80,13 +81,8 @@ class Connected : Service() {
         val list = runCatching { cloud.list("commands", "select=*&target_device=eq.$me&status=eq.queued&order=created_at.asc") }.getOrNull() ?: return
         for (i in 0 until list.length()) {
             val c = list.getJSONObject(i)
-            val id = c.optString("id")
-            if (!handled.add(id)) continue
-            if (!runCatching { cloud.claim("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "running")) }.getOrDefault(false)) continue
-            val age = runCatching { java.time.Duration.between(java.time.OffsetDateTime.parse(c.optString("created_at")).toInstant(), Instant.now()).seconds }.getOrDefault(0L)
-            val result = if (age > 600) "failed: too old (over 10 minutes), not run"
-                else runCatching { PhoneRemote.run(applicationContext, c.optString("action"), c.optJSONObject("args") ?: JSONObject()) }.getOrElse { "failed: ${it.message}" }
-            runCatching { cloud.update("commands", "id=eq.$id", JSONObject().put("status", if (result.startsWith("failed") || result.startsWith("Not understood")) "failed" else "done").put("result", result).put("done_at", Instant.now().toString())) }
+            if (!handled.add(Heal.runKey(c))) continue
+            Heal.runOne(applicationContext, cloud, c)
         }
     }
 

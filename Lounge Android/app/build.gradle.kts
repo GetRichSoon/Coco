@@ -11,8 +11,8 @@ android {
         applicationId = "com.goodspace.cocolounge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 15
-        versionName = "2.8.1"
+        versionCode = 16
+        versionName = "2.8.2"
     }
     buildTypes {
         release {

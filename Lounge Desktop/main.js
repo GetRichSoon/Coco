@@ -151,6 +151,13 @@ function understand(text, kind) {
   if (/\b(screenshot|screen ?shot|ss|screen dikha(?:o)?|screen bhej(?:o)?)\b/.test(t)) return { action: 'screenshot', args: {} };
   const found = raw.match(/^(?:find|search|dhundo|dhoondo|dhund)\s+(.+?)(?:\s+(?:file|files|wali file))?$/i) || raw.match(/^(.+?)\s+(?:wali )?(?:file )?(?:dhundo|dhoondo|dhund do|find karo|search karo)$/i);
   if (found && !/\b(pc|laptop|phone)\b$/i.test(found[1].trim())) return { action: 'find_file', args: { q: found[1].trim() } };
+  // Failed as "Not understood" 10 times in the cloud log (2026-10-26): greetings, "which screen is on", and a song asked without a name.
+  if (/\bscreen\b.*\bdikha(?:o|do)?$/.test(t) && !/full/.test(t)) return { action: 'screenshot', args: {} };
+  if ((/^(hi+e*|hello+|hey+|namaste|yes|ok|okay|haan|thanks|thank you)\b/.test(t) && t.split(' ').length <= 2) || (/\bkya chal raha hai\b/.test(t) && t.split(' ').length <= 5)) return { action: 'status', args: {} };
+  if (/\b(gaana|gana|gaane|song|music)\b/.test(t) && /\b(laga|lagao|lagado|lagana|chala|chalao|bajao|baja|sunao|suna|play)/.test(t)) {
+    const q = t.replace(/\b(i'm|laga|lagao|lagado|lagana|dena|de|do|chala|chalao|baja|bajao|sunao|suna|play|koi|ek|to|se|ya|nahin|nahi|youtube|yt|per|pe|par|mein|me|gaana|gana|gaane|song|music|ka|ki|ke|kar|karo|bro)\b/g, ' ').replace(/\s+/g, ' ').trim();
+    return { action: 'play_youtube', args: { q: !q ? 'trending hindi songs' : q.split(' ').length <= 1 ? q + ' songs' : q } };
+  }
   if (/\b(confetti|party|celebrate|jashn)\b/.test(t)) return { action: 'fun', args: { kind: 'party' } };
   if (/\b(joke|chutkula|hasao|hasa do)\b/.test(t)) return { action: 'fun', args: { kind: 'joke' } };
   if (/\b(fact|gyaan|kuch naya batao)\b/.test(t)) return { action: 'fun', args: { kind: 'fact' } };
@@ -925,12 +932,25 @@ app.whenReady().then(() => {
 // ---------- self update (Boss, 2026-10-15): both founders' PCs stay on the latest Coco from GitHub GetRichSoon/Coco ----------
 // Every 30 minutes: fast-forward pull only (never overwrites local edits). If the Lounge changed, restart into it.
 const COCO_DIR = path.join(__dirname, '..');
+// startHead = the commit this process started on. Updating = "HEAD is no longer startHead and Lounge files differ", so a pull by
+// anything (this timer, a session, Daily Seal) is noticed, and after the restart startHead is the new HEAD: no restart loop is possible.
+// Extra guard: never restart twice within 10 minutes. Runs 1 min after start, then every 30 min (so at least daily).
+let startHead = null;
+exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']).then((h) => { startHead = /^[0-9a-f]{40}$/.test(h) ? h : null; });
+const RESTART_FILE = () => path.join(app.getPath('userData'), 'last-update-restart.txt');
 async function selfUpdate() {
-  const before = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
-  const pull = await exec('git', ['-C', COCO_DIR, 'pull', '--ff-only', '--quiet']);
+  if (!startHead) return;
+  const log = (m) => { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} update: ${m}\n`); } catch {} };
+  const pull = await new Promise((r) => execFile('git', ['-C', COCO_DIR, 'pull', '--ff-only', '--quiet'], { windowsHide: true, timeout: 90000 }, (e, so, se) => r(e ? `failed: ${(e.killed ? 'timed out after 90 s' : (se || e.message)).toString().slice(0, 160)}` : 'ok')));   // the shared exec() gives up after 15 s, too short for a pull right after wake-up
+  if (/failed/.test(pull)) log('pull did not run: ' + pull.slice(0, 120));
   const after = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
-  if (/failed/.test(pull) || before === after) return;
-  const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', before, after]);
+  if (after === startHead || !/^[0-9a-f]{40}$/.test(after)) return;
+  const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', startHead, after]);
   if (/package\.json/.test(changed)) await exec('cmd.exe', ['/c', 'npm', 'install', '--no-audit', '--no-fund', '--prefix', __dirname]);
-  if (/^(Lounge|Lounge Desktop)\//m.test(changed)) { app.relaunch({ args: [...(app.isPackaged ? [] : [path.resolve(__dirname)]), '--hidden'] }); app.exit(0); } // keep the app folder, or a bare electron.exe starts
+  if (!/^(Lounge|Lounge Desktop)\//m.test(changed)) { startHead = after; return; }   // memory, teams, the phone app: nothing to restart for
+  let last = 0; try { last = Number(fs.readFileSync(RESTART_FILE(), 'utf8')) || 0; } catch {}
+  if (Date.now() - last < 10 * 60 * 1000) { log('restart held back (updated less than 10 min ago)'); return; }
+  try { fs.writeFileSync(RESTART_FILE(), String(Date.now())); } catch {}
+  log(`restarting into ${after.slice(0, 7)} (was ${startHead.slice(0, 7)})`);
+  app.relaunch({ args: [...(app.isPackaged ? [] : [path.resolve(__dirname)]), '--hidden'] }); app.exit(0);   // keep the app folder, or a bare electron.exe starts
 }

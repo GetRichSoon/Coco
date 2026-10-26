@@ -251,7 +251,7 @@ async function boot() {
   if (!data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
   show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(pollApprovals, 15000); healQueue(); setInterval(healQueue, 300000);
+  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(pollApprovals, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
   if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
@@ -374,21 +374,25 @@ async function runMyCommands() {
 // Queue sweeper (every 5 min): nothing may clog the queue. Interrupted commands run once more if safe; commands waiting over 30 min
 // for a dead device and failures older than a day are closed with an honest "stale:" reason (the status list has no "stale" value).
 async function healQueue() {
-  if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId || runningCmds) return;
+  if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId) return;
   try {
+    const mine = `target_device.eq.${deviceId},created_device.eq.${deviceId}`;   // Coco Cloud lets a device change only its own commands
     const [open, old] = await Promise.all([
-      within(sb.from('commands').select('*').in('status', ['queued', 'running']), 15000, 'sweep'),
-      within(sb.from('commands').select('*').eq('status', 'failed').not('result', 'ilike', 'stale%').lt('created_at', new Date(Date.now() - 864e5).toISOString()).limit(200), 15000, 'sweep'),
+      within(sb.from('commands').select('*').in('status', ['queued', 'running']).or(mine), 15000, 'sweep'),
+      within(sb.from('commands').select('*').eq('status', 'failed').or('result.is.null,result.not.ilike.stale%').or(mine).lt('created_at', new Date(Date.now() - 864e5).toISOString()).limit(200), 15000, 'sweep'),
     ]);
     const seen = (id) => ((D.devices || []).find((d) => d.id === id) || {}).last_seen;
-    let n = 0;
+    let n = 0, tried = 0;
     for (const r of [...(open.data || []), ...(old.data || [])]) {
-      if (r.status === 'running' && r.target_device !== deviceId) continue;   // another PC owns it
+      if (r.status === 'running' && (r.target_device !== deviceId || runningCmds)) continue;   // another device owns it, or this app is running commands right now
       const v = H.sweepVerdict(r, Date.now(), seen(r.target_device)); if (!v) continue;
       const { data: got } = await within(sb.from('commands').update({ ...v, ...(v.status === 'failed' ? { done_at: new Date().toISOString() } : {}) }).eq('id', r.id).eq('status', r.status).select('id'), 15000, 'sweep');
-      if (got && got.length) n++;
+      if (got && got.length) n++; else tried++;
     }
-    if (n) log('queue cleaned', n + ' stale or interrupted command(s) closed or retried');
+    console.warn('Coco sweep: saw ' + ((open.data || []).length) + ' open and ' + ((old.data || []).length) + ' old failed, closed ' + n);
+    if (tried) console.warn('Coco sweep: ' + tried + ' command(s) could not be changed from this device');
+    if (open.error || old.error) console.warn('Coco sweep: cannot read the queue: ' + ((open.error || old.error).message || 'error'));
+    else if (n) { console.warn('Coco sweep: ' + n + ' closed or retried'); log('queue cleaned', n + ' stale or interrupted command(s) closed or retried'); }
   } catch (e) { console.error('Coco sweep: ' + e.message); }
 }
 async function loadAll() {
@@ -533,7 +537,7 @@ async function heartbeat() {
   // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
   // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
   // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.5', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.6', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
