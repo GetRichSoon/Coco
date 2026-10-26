@@ -423,6 +423,8 @@ function renderStrip() {
   const tick = f.length ? `<div class="isrow" aria-live="off"><span class="isdot" style="background:#4FE3F2"></span><div class="isg"><small><b>${esc(f[fi].from)}</b> ${esc(f[fi].text.slice(0, 110))}</small></div></div>` : '';
   el.innerHTML = tick + w.slice(0, 2).map((a) => `<div class="isrow"><span class="isdot"></span><div class="isg"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(String(a.what || '').slice(0, 110))}</small></div><button class="isbtn yes" data-yes="${esc(a.id)}">YES</button><button class="isbtn no" data-no="${esc(a.id)}">NO</button><button class="isbtn" data-ig="${esc(a.id)}">Ignore</button></div>`).join('');
 }
+// Island switch in Settings follows the island's own Hide chip / tray (registered once, not per render).
+if (window.cocoDesktop && window.cocoDesktop.onIsland) window.cocoDesktop.onIsland(v => { const c = document.getElementById('showIsland'); if (c) c.checked = v; });
 // One decide path for every YES/NO (Approvals page buttons AND the island pill, Boss 2026-10-26).
 async function decideApproval(id, yes) {
   const a = (D.approvals || []).find(x => String(x.id) === String(id)); if (!a || !['waiting', 'on-hold'].includes(a.state)) return;
@@ -633,7 +635,7 @@ function applyLook() {
 function wireSettings() {
   document.querySelectorAll('[data-notify]').forEach(s => s.onchange = () => store.set('gs-n-' + s.dataset.notify, s.checked ? '1' : '0'));
   const c = $('#calm'); if (c) c.onchange = () => { store.set('gs-calm', c.checked ? '1' : '0'); applyLook(); };
-  const si = $('#showIsland'); if (si) { window.cocoDesktop.getIsland().then(v => si.checked = v); si.onchange = () => window.cocoDesktop.setIsland(si.checked); window.cocoDesktop.onIsland(v => { si.checked = v; }); }
+  const si = $('#showIsland'); if (si) { window.cocoDesktop.getIsland().then(v => si.checked = v); si.onchange = () => window.cocoDesktop.setIsland(si.checked); }
   const su = $('#startup'); if (su && window.cocoDesktop.getStartup) { window.cocoDesktop.getStartup().then(v => su.checked = v); su.onchange = () => window.cocoDesktop.setStartup(su.checked); }
 }
 applyLook();
