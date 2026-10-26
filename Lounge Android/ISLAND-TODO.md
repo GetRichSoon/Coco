@@ -14,6 +14,15 @@ silence on the phone needs APK changes (not built tonight, per the order):
    `state approved/rejected`, `decided_by`, `decided_at` on the `approvals` table (same columns the
    PC uses); Ignore hides locally only.
 3. Re-test: office mode → zero Android notifications, approvals visible and decidable in the island.
+4. **Share-to-Coco notes intake** (Boss 2026-10-26, specced only — do not build without the build order):
+   register the APK for `ACTION_SEND` (`text/plain`), so sharing any reel / Pinterest pin / YouTube
+   link (or plain text) from another app shows a tiny "Keep in Coco" sheet with an optional comment
+   field. On confirm, insert ONE row into Coco Cloud `public.notes` over the same signed-in
+   Supabase path the APK uses for approvals: `kind` = 'link' when the shared text contains a URL
+   else 'note', `source_url` = first URL, `text` = shared text (+ comment), `status` = 'new',
+   `created_by` = the founder, `device_id` = this phone. Nothing else: the card appears in the
+   Lounge "Notes" tab, and the PC analyzer (`nova-hq/scripts/notes_analyze.mjs`) + Coco's checks
+   do the studying. Offline: queue the row locally and send on the next poll.
 
 Full merge note: on the PC the island overlay and the Coco app are already ONE app (Lounge Desktop
 Electron; `CocoIslandHelper.exe` is only its media/system helper child process). The in-window

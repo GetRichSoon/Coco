@@ -187,6 +187,7 @@ body.calm *, body.calm *::after { animation: none !important; transition: none !
 </form></dialog>
 <div id="toast" role="status"></div>
 
+<script src="heal.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 const URL_ = 'https://bfnhnkxvppqmklfpslfm.supabase.co';
@@ -235,7 +236,7 @@ document.addEventListener('click', async (e) => {
 });
 let me = null, founder = null, deviceId = store.get('gs-device-id'), page = location.hash.slice(1) || 'home', D = {}, sub = 'houses';
 
-const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
+const PAGES = [['home', 'Home', 'home'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
@@ -250,7 +251,7 @@ async function boot() {
   if (!data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
   show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(pollApprovals, 15000);
+  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(pollApprovals, 15000); healQueue(); setInterval(healQueue, 300000);
   if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
@@ -321,28 +322,74 @@ async function pushLive() {
   }
 }
 // ---------- PC Control mode: this PC runs the commands sent to it from a founder phone ----------
-let runningCmds = false, cmdsAgain = false;
+let runningCmds = false, cmdsAgain = false, runStarted = 0;
+const H = window.CocoHeal;
+const within = (p, ms, what) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(what + ' timed out')), ms))]);
+// One stuck command must never block the ones behind it: give up after 30 s (saving, closing and starting apps can take a minute).
+const pcRun = (action, args, limit) => Promise.race([window.cocoDesktop.pcCommand(action, args || {}), new Promise((r) => setTimeout(() => r('failed: took longer than ' + limit / 1000 + ' seconds'), limit))]).catch((e) => 'failed: ' + e.message);
+// A problem nobody can heal by itself goes to Coco activity ONCE per kind per day for Nono, never as spam (Boss, 2026-10-26).
+function needsNono(kind, detail) {
+  const day = new Date().toISOString().slice(0, 10), k = 'gs-nono-' + kind;
+  if (store.get(k) === day) return; store.set(k, day);
+  sb.from('activity').insert({ actor: 'Coco', device_id: deviceId, action: 'needs Nono', detail: String(detail).slice(0, 300) }).then(() => {});
+}
+// The answer must reach Coco Cloud, or the row stays "running" for ever: three tries.
+async function report(id, patch) {
+  for (let i = 0; i < 3; i++) { try { const r = await within(sb.from('commands').update({ ...patch, done_at: new Date().toISOString() }).eq('id', id), 15000, 'report'); if (!r.error) return; } catch {} await new Promise((r) => setTimeout(r, 2000)); }
+  console.error('Coco: could not report command ' + id);
+}
 async function runMyCommands() {
   if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId) return;
+  // Watchdog (bug 2026-10-26: 4 phone commands sat queued while the PC showed online): a hung request kept this flag set for ever.
+  if (runningCmds && Date.now() - runStarted > 180000) { console.error('Coco: command runner was stuck for 3 min, reset'); runningCmds = false; }
   if (runningCmds) { cmdsAgain = true; return; }   // a command came in while busy: look again right after, never skip it
-  runningCmds = true;
+  runningCmds = true; runStarted = Date.now();
   try {
-    const { data } = await sb.from('commands').select('*').eq('target_device', deviceId).eq('status', 'queued').order('created_at', { ascending: true });
+    const { data } = await within(sb.from('commands').select('*').eq('target_device', deviceId).eq('status', 'queued').order('created_at', { ascending: true }), 15000, 'reading commands');
     for (const c of data || []) {
-      const { data: got } = await sb.from('commands').update({ status: 'running' }).eq('id', c.id).eq('status', 'queued').select('id');
+      const { data: got } = await within(sb.from('commands').update({ status: 'running' }).eq('id', c.id).eq('status', 'queued').select('id'), 15000, 'claiming');
       if (!got || !got.length) continue;
-      if (Date.now() - new Date(c.created_at) > 600000) { await sb.from('commands').update({ status: 'failed', result: 'Too old (over 10 minutes), not run', done_at: new Date().toISOString() }).eq('id', c.id); continue; }
-      let result;
-      // One stuck command must never block the ones behind it: give up after 30 s.
-      const limit = c.action === 'workspace' ? 120000 : 30000;   // saving, closing and starting apps can take a minute
-      try { result = await Promise.race([window.cocoDesktop.pcCommand(c.action, c.args || {}), new Promise((r) => setTimeout(() => r('failed: took longer than ' + limit / 1000 + ' seconds'), limit))]); } catch (e) { result = 'failed: ' + e.message; }
+      runStarted = Date.now();
+      const args = c.args || {};
+      if (Date.now() - new Date(c.created_at) > H.ageLimitMs(c.action)) {
+        await report(c.id, { status: 'failed', result: 'Too old (over ' + H.ageLimitMs(c.action) / 60000 + ' minutes), not run: this PC was asleep or offline' });
+        needsNono('offline', 'A phone command expired before it could run: this PC was asleep or offline (' + c.action + '). Commands older than 10 min are never run late, for safety.');
+        continue;
+      }
+      const limit = c.action === 'workspace' ? 120000 : 30000;
+      let result = await pcRun(c.action, args, limit), cls = H.classify(result);
+      if (cls !== 'ok' && H.canRetry(c.action, args, cls)) {   // one smart retry: put the missing thing right first (e.g. open the browser), then run again
+        for (const p of H.prep(cls)) await pcRun(p.action, p.args, 30000);
+        const again = await pcRun(c.action, { ...args, _retried: 1 }, limit); cls = H.classify(again);
+        result = (cls === 'ok' ? 'retried ok: ' : 'retried, still failing: ') + again;
+      }
       if (c.action === 'workspace') { infoAt = 0; heartbeat(); }   // every device sees the new mode at once
-      const ok = !/^failed|not allowed|not understood/i.test(result);
-      // Report in the background so the next command starts at once.
-      sb.from('commands').update({ status: ok ? 'done' : 'failed', result, done_at: new Date().toISOString() }).eq('id', c.id).then(() => {});
-      log('pc command', `${c.action} on ${deviceName(deviceId)}: ${result}`);
+      if (cls !== 'ok') needsNono(cls + '-' + c.action, `PC command "${c.action}" failed (${cls}): ${String(c.action === 'say' ? (args.text || '') + ' -> ' : '').slice(0, 80)}${String(result).slice(0, 120)}`);
+      report(c.id, { status: cls === 'ok' ? 'done' : 'failed', result });   // in the background so the next command starts at once
+      log('pc command', `${c.action} on ${deviceName(deviceId)}: ${String(result).slice(0, 200)}`);
     }
-  } finally { runningCmds = false; if (cmdsAgain) { cmdsAgain = false; runMyCommands(); } }
+  } catch (e) { console.error('Coco commands: ' + e.message); }
+  finally { runningCmds = false; if (cmdsAgain) { cmdsAgain = false; runMyCommands(); } }
+}
+// Queue sweeper (every 5 min): nothing may clog the queue. Interrupted commands run once more if safe; commands waiting over 30 min
+// for a dead device and failures older than a day are closed with an honest "stale:" reason (the status list has no "stale" value).
+async function healQueue() {
+  if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId || runningCmds) return;
+  try {
+    const [open, old] = await Promise.all([
+      within(sb.from('commands').select('*').in('status', ['queued', 'running']), 15000, 'sweep'),
+      within(sb.from('commands').select('*').eq('status', 'failed').not('result', 'ilike', 'stale%').lt('created_at', new Date(Date.now() - 864e5).toISOString()).limit(200), 15000, 'sweep'),
+    ]);
+    const seen = (id) => ((D.devices || []).find((d) => d.id === id) || {}).last_seen;
+    let n = 0;
+    for (const r of [...(open.data || []), ...(old.data || [])]) {
+      if (r.status === 'running' && r.target_device !== deviceId) continue;   // another PC owns it
+      const v = H.sweepVerdict(r, Date.now(), seen(r.target_device)); if (!v) continue;
+      const { data: got } = await within(sb.from('commands').update({ ...v, ...(v.status === 'failed' ? { done_at: new Date().toISOString() } : {}) }).eq('id', r.id).eq('status', r.status).select('id'), 15000, 'sweep');
+      if (got && got.length) n++;
+    }
+    if (n) log('queue cleaned', n + ' stale or interrupted command(s) closed or retried');
+  } catch (e) { console.error('Coco sweep: ' + e.message); }
 }
 async function loadAll() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
@@ -352,9 +399,10 @@ async function loadAll() {
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
     q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(100), q('founders'), q('rules', '*', ['updated_at', false]),
     q('commands', '*', ['created_at', false]).limit(15), q('integrations', '*', ['platform', true]),
-    q('agent_messages', '*', ['at', false]).limit(40),
+    q('agent_messages', '*', ['at', false]).limit(40), q('notes', '*', ['created_at', false]),
   ]);
-  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations', 'agentMessages'].forEach((k, i) => D[k] = res[i].data || []);
+  // D.notes = per-task notes (task_notes); D.notebook = the founders' Notes tab (public.notes).
+  ['houses', 'categories', 'offerings', 'platforms', 'members', 'memberHouses', 'tools', 'memberTools', 'tasks', 'notes', 'approvals', 'devices', 'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations', 'agentMessages', 'notebook'].forEach((k, i) => D[k] = res[i].data || []);
   if (!document.hidden) render(); diffAndNotify(); runMyCommands();   // hidden in the tray: no drawing, only data
   pushIsland();
 }
@@ -475,7 +523,7 @@ function listen() {
   addEventListener('offline', () => setLive(false));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { heartbeat(); if (!isLive) connectLive(); else loadAll(); } });
   setInterval(() => { if (!isLive && navigator.onLine) connectLive(); }, 45000);
-  setInterval(() => { if (!isLive) runMyCommands(); }, 5000); // commands still arrive while the live link is rebuilding
+  setInterval(runMyCommands, 5000);   // always poll: a missed realtime event must never leave a command waiting (bug 2026-10-26)
 }
 // Each device reports its own live data (battery, storage, memory) with its heartbeat, so every device sees it.
 let infoAt = 0, info = null;
@@ -485,7 +533,7 @@ async function heartbeat() {
   // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
   // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
   // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.3', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.5', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
@@ -496,7 +544,7 @@ const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id |
 const founderName = () => founder ? founder.name : (me && me.email);
 async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
 
-const chipFor = (s) => ({ planned: ['', 'Planned'], need_approval: ['warn', 'Needs YES'], blocked: ['bad', 'Blocked'], verifying: ['warn', 'Verifying'], paused: ['', 'Paused'], cancelled: ['', 'Cancelled'], connected: ['good', 'Connected'], partial: ['warn', 'Partly connected'], not_connected: ['bad', 'Not connected'], error: ['bad', 'Error'], queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
+const chipFor = (s) => ({ new: ['', 'New'], analyzing: ['warn', 'Analyzing'], analyzed: ['good', 'Analyzed'], planned: ['', 'Planned'], need_approval: ['warn', 'Needs YES'], blocked: ['bad', 'Blocked'], verifying: ['warn', 'Verifying'], paused: ['', 'Paused'], cancelled: ['', 'Cancelled'], connected: ['good', 'Connected'], partial: ['warn', 'Partly connected'], not_connected: ['bad', 'Not connected'], error: ['bad', 'Error'], queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
 const LOGO = { youtube: 'youtube.com', github: 'github.com', supabase: 'supabase.com', chrome_store: 'chromewebstore.google.com', play_console: 'play.google.com', autodraft: 'autodraft.in', roblox: 'roblox.com', meta: 'facebook.com', udemy: 'udemy.com', coursera: 'coursera.org' };
 const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
 
@@ -518,6 +566,28 @@ const V = {
       <div class="grid">${D.houses.map(h => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(h.name)}</h3>${chip(h.state)}</div><span class="muted">${esc(h.role)}</span><div>${esc(h.doing || '')}</div><span class="muted">Next: ${esc(h.next || '')}</span></div>`).join('')}</div>
       <h3 style="margin:22px 0 8px">Connections</h3><div class="card2">${(D.integrations || []).map(c => `<div class="row"><img src="${LOGO[c.id] ? 'https://www.google.com/s2/favicons?sz=64&domain=' + LOGO[c.id] : 'coco.svg'}" alt="" width="28" height="28" style="border-radius:6px;flex:none"><div class="grow"><b>${esc(c.platform)}</b>${c.account ? ' · ' + esc(c.account) : ''}<div class="muted">${esc(c.error || c.next_action || (c.capabilities || []).join(', '))}${c.last_ok_at ? ' · checked ' + ago(c.last_ok_at) : ''}</div></div>${chip(c.state)}</div>`).join('') || '<span class="muted">No connections listed yet.</span>'}</div>
       <h3 style="margin:22px 0 8px">Latest activity</h3><div class="card2">${D.activity.map(a => `<div class="row"><div class="grow"><b>${esc(a.action)}</b> · ${esc(a.detail || '')}<div class="muted">${esc(a.actor)} ${a.device_id ? '· ' + esc(deviceName(a.device_id)) : ''} · ${ago(a.at)}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;
+  },
+  // Notes (Boss 12:50 PM, 2026-10-26): one tab = notepad + idea inbox + planner. Paste any link (reel, pin,
+  // YouTube) and it is kept as kind=link; the analyzer (nova-hq/scripts/notes_analyze.mjs) studies status=new
+  // cards and Coco's checks deepen them. Same cloud path as every other page (decideApproval-style sb calls).
+  notes() {
+    const rows = (D.notebook || []).filter(n => n.status !== 'archived').sort((a, b) => ((b.pinned === true) - (a.pinned === true)) || String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    const icon = { link: 'link', idea: 'lightbulb', plan: 'map', note: 'sticky_note_2' };
+    const card = (n) => `<div class="card2"${n.pinned ? ' style="box-shadow:inset 0 0 0 2px var(--gold)"' : ''}>
+      <div style="display:flex;gap:8px;align-items:center"><i class="ms" style="color:var(--gold)">${icon[n.kind] || 'sticky_note_2'}</i>${chip(n.status)}<span class="muted" style="margin-left:auto">${ago(n.created_at)}</span></div>
+      ${n.title ? `<h3 style="font-size:17px">${esc(n.title)}</h3>` : ''}
+      <div style="white-space:pre-wrap;word-break:break-word">${esc(n.text || '')}</div>
+      ${n.source_url ? `<a href="${esc(n.source_url)}" target="_blank" rel="noreferrer" style="color:var(--primary);font-weight:700;font-size:13px;word-break:break-all">${esc(n.source_url)}</a>` : ''}
+      ${n.analysis ? `<div style="background:var(--surface-2);border-radius:14px;padding:10px 12px;white-space:pre-wrap;font-size:13px">${esc(n.analysis)}</div>` : ''}
+      <div class="actions">${n.status === 'analyzed' ? `<button class="btn filled" data-nplan="${esc(n.id)}"><i class="ms">map</i> Make it a plan</button>` : ''}
+        <button class="btn text" data-npin="${esc(n.id)}"><i class="ms">keep</i> ${n.pinned ? 'Unpin' : 'Pin'}</button>
+        <button class="btn text" data-nedit="${esc(n.id)}">Edit</button>
+        <button class="btn text" data-narch="${esc(n.id)}">Archive</button></div></div>`;
+    return `<form class="form" id="newNote"><h3>Drop a thought or a link</h3>
+      <label for="nText">Anything on your mind — or paste a reel, pin or video link<textarea id="nText" required placeholder="an idea, a plan, a YouTube / Instagram / Pinterest link…"></textarea></label>
+      <button class="btn filled" style="justify-self:start"><i class="ms">add</i> Keep it</button>
+      <span class="muted">Links are spotted by themselves. Coco studies every new card and writes what it could become for Good Space.</span></form>
+      <div class="grid">${rows.map(card).join('') || '<span class="muted">Nothing kept yet. Write the first one above.</span>'}</div>`;
   },
   board() {
     const open = D.tasks.filter(t => !['done', 'stopped', 'cancelled'].includes(t.status)), closed = D.tasks.filter(t => ['done', 'stopped', 'cancelled'].includes(t.status)).slice(0, 15);
@@ -624,6 +694,7 @@ function render() {
   wireSettings();
   const f = $('#newTask'); if (f) f.addEventListener('submit', addTask);
   const fr = $('#newRule'); if (fr) fr.addEventListener('submit', addRule);
+  const fn = $('#newNote'); if (fn) fn.addEventListener('submit', addNote);
 }
 addEventListener('hashchange', () => { page = location.hash.slice(1) || 'home'; render(); scrollTo(0, 0); });
 
@@ -647,6 +718,14 @@ async function addRule(e) {
   if (error) return toast(error.message);
   await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `New rule: ${title}. ${body}` });
   await log('rule set', title); toast('Rule saved for all devices'); loadAll();
+}
+async function addNote(e) {
+  e.preventDefault();
+  const text = $('#nText').value.trim(); if (!text) return;
+  const url = (text.match(/https?:\/\/\S+/) || [])[0] || null;   // any pasted link makes it kind=link for the analyzer
+  const { error } = await sb.from('notes').insert({ kind: url ? 'link' : 'note', source_url: url, text, status: 'new', created_by: founderName(), device_id: deviceId });
+  if (error) return toast(error.message);
+  $('#newNote').reset(); toast(url ? 'Link kept — Coco will study it' : 'Kept'); loadAll();
 }
 async function addTask(e) {
   e.preventDefault();
@@ -687,6 +766,23 @@ document.addEventListener('click', async (e) => {
     if (error) return toast('Could not send: ' + error.message);
     if (a === 'play_youtube') rSong = ''; if (a === 'say') rSay = '';
     await log('remote command', a + ' to ' + deviceName(rTarget)); toast('Sent to ' + deviceName(rTarget)); loadAll();
+  }
+  if (ds.npin || ds.narch || ds.nplan) {
+    const id = ds.npin || ds.narch || ds.nplan, n = (D.notebook || []).find(x => String(x.id) === String(id)); if (!n) return;
+    const patch = ds.npin ? { pinned: !n.pinned } : ds.narch ? { status: 'archived' } : { status: 'planned', kind: 'plan' };
+    const { error } = await sb.from('notes').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', n.id);
+    if (error) return toast(error.message);
+    if (ds.nplan) { await log('note planned', (n.title || n.text || '').slice(0, 120)); toast('It is a plan now — Coco picks it up'); }
+    if (ds.narch) toast('Archived');
+    loadAll();
+  }
+  if (ds.nedit) {
+    const n = (D.notebook || []).find(x => String(x.id) === String(ds.nedit)); if (!n) return;
+    const t = prompt('Edit the note:', n.text || ''); if (t === null || !t.trim()) return;
+    const url = (t.match(/https?:\/\/\S+/) || [])[0] || n.source_url || null;
+    const { error } = await sb.from('notes').update({ text: t.trim(), source_url: url, updated_at: new Date().toISOString() }).eq('id', n.id);
+    if (error) return toast(error.message);
+    loadAll();
   }
   if (ds.themeSet) { store.set('gs-theme', ds.themeSet); applyLook(); render(); }
   if (ds.set === 'refresh') { await loadAll(); toast('Up to date'); }
