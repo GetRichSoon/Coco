@@ -1,0 +1,178 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>morph tests</title>
+<!--
+  Does patching the screen really leave the person's state alone?
+
+  This runs in a real browser because that is the only honest place to test DOM patching: a stub DOM
+  would pass whatever it was written to pass. It lifts morph()/morphChildren()/morphNode()/once()
+  straight out of index.html, so it tests the shipped code, not a copy of it.
+
+  Open it in any browser, or: node morph.test.js
+-->
+<body style="font:14px/1.6 system-ui;padding:24px;background:#111;color:#eee">
+<h1 style="font-size:18px">morph tests</h1>
+<pre id="out"></pre>
+<div id="sandbox" style="position:fixed;left:-9999px;top:0"></div>
+
+<script type="module">
+const out = document.getElementById('out');
+const box = document.getElementById('sandbox');
+let pass = 0, fail = 0;
+const log = (s) => { out.textContent += s + '\n'; };
+const t = (name, fn) => {
+  try { fn(); pass++; log('PASS ' + name); }
+  catch (e) { fail++; log('FAIL ' + name + ' — ' + e.message); }
+};
+const eq = (a, b, m = '') => { if (a !== b) throw new Error(`${m} expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`); };
+const ok = (v, m = 'expected truthy') => { if (!v) throw new Error(m); };
+
+// ---------------------------------------------------------------- lift the real code out of the page
+const src = await (await fetch('index.html', { cache: 'no-store' })).text();
+const slice = (startMark, endMark) => {
+  const a = src.indexOf(startMark), b = src.indexOf(endMark);
+  if (a < 0 || b <= a) throw new Error(`could not find ${startMark} … ${endMark} in index.html`);
+  return src.slice(a, b);
+};
+const code = slice('const SKIP_ATTR =', 'function render()');
+const { morph, once } = new Function(code + '\n return { morph, once };')();
+log('lifted ' + code.length + ' characters of the real morph code\n');
+
+const set = (html) => { box.innerHTML = html; return box.firstElementChild; };
+
+// ---------------------------------------------------------------- the point of the whole exercise
+t('a changed number is patched without replacing the node', () => {
+  const before = set('<div id="card"><b>Tokens</b><span>1000</span></div>');
+  morph(box, '<div id="card"><b>Tokens</b><span>2000</span></div>');
+  eq(box.firstElementChild, before, 'the node must survive, not be rebuilt');
+  eq(box.querySelector('span').textContent, '2000');
+});
+
+t('what the person is typing is never overwritten', () => {
+  set('<form><input id="v" name="v" value="1000"></form>');
+  const input = document.getElementById('v');
+  input.focus();
+  input.value = '77';                                  // mid-typing
+  morph(box, '<form><input id="v" name="v" value="9999"></form>');
+  eq(input.value, '77', 'a focused field keeps what is being typed');
+  eq(document.activeElement, input, 'and keeps focus');
+  input.blur();
+});
+
+t('an untouched field follows the server when the server changes', () => {
+  set('<form><input id="w" value="1000"></form>');
+  const input = document.getElementById('w');
+  morph(box, '<form><input id="w" value="4000"></form>');
+  eq(input.value, '4000');
+});
+
+t('a blurred draft is not thrown away by an unrelated refresh', () => {
+  set('<form><input id="x" value="1000"></form>');
+  const input = document.getElementById('x');
+  input.value = '250';                                 // typed, then clicked elsewhere
+  morph(box, '<form><input id="x" value="1000"></form>'); // the server said nothing new
+  eq(input.value, '250', 'the draft survives a refresh that changed nothing');
+});
+
+t('an open section stays open', () => {
+  set('<details id="d"><summary>Teams</summary><p>body</p></details>');
+  const d = document.getElementById('d');
+  d.open = true;
+  morph(box, '<details id="d"><summary>Teams</summary><p>body</p></details>');
+  ok(d.open, 'the person opened it; a refresh must not shut it');
+});
+
+t('a checked box stays checked', () => {
+  set('<label><input type="checkbox" id="c"> Calm</label>');
+  const c = document.getElementById('c');
+  c.checked = true;
+  morph(box, '<label><input type="checkbox" id="c"> Calm</label>');
+  ok(c.checked);
+});
+
+t('scroll position survives, because the scroller survives', () => {
+  set('<div id="s" style="height:60px;overflow:auto"><div style="height:600px">tall</div></div>');
+  const s = document.getElementById('s');
+  s.scrollTop = 120;
+  morph(box, '<div id="s" style="height:60px;overflow:auto"><div style="height:600px">taller</div></div>');
+  eq(s.scrollTop, 120);
+});
+
+t('which nav link is lit is patched, not rebuilt', () => {
+  set('<a href="#home" class="on">Home</a>');
+  const a = box.firstElementChild;
+  morph(box, '<a href="#home" class="">Home</a>');
+  eq(a.className, '');
+  eq(box.firstElementChild, a, 'same element');
+});
+
+t('new rows are added and gone rows removed', () => {
+  set('<ul><li>a</li><li>b</li></ul>');
+  const ul = box.firstElementChild, first = ul.firstElementChild;
+  morph(box, '<ul><li>a</li><li>b</li><li>c</li></ul>');
+  eq(ul.children.length, 3);
+  eq(ul.firstElementChild, first, 'existing rows are reused');
+  morph(box, '<ul><li>a</li></ul>');
+  eq(ul.children.length, 1);
+});
+
+t('different ids are never patched into each other', () => {
+  set('<section id="teams">teams</section>');
+  const old = box.firstElementChild;
+  morph(box, '<section id="agents">agents</section>');
+  ok(box.firstElementChild !== old, 'a different id means a different thing: replace it');
+  eq(box.firstElementChild.id, 'agents');
+});
+
+t('an attribute the server dropped is dropped', () => {
+  set('<button data-ctl="a|b|c" disabled>Set</button>');
+  const b = box.firstElementChild;
+  morph(box, '<button data-ctl="a|b|c">Set</button>');
+  eq(b.hasAttribute('disabled'), false);
+});
+
+// ---------------------------------------------------------------- the duplicate-listener trap
+t('a surviving form is wired once, however often the screen refreshes', () => {
+  set('<form id="f"><button type="submit">go</button></form>');
+  const f = document.getElementById('f');
+  let fired = 0;
+  const handler = (e) => { e.preventDefault(); fired++; };
+  for (let i = 0; i < 5; i++) {                        // five refreshes of the same screen
+    morph(box, '<form id="f"><button type="submit">go</button></form>');
+    once(document.getElementById('f'), 'submit', handler);
+  }
+  f.dispatchEvent(new Event('submit', { cancelable: true }));
+  eq(fired, 1, 'one submit must do one thing, not five');
+});
+
+t('a replaced form gets its own listener', () => {
+  set('<form id="g"></form>');
+  let fired = 0;
+  const handler = (e) => { e.preventDefault(); fired++; };
+  once(document.getElementById('g'), 'submit', handler);
+  morph(box, '<form id="h"></form>');                  // different id: a genuinely new form
+  once(document.getElementById('h'), 'submit', handler);
+  document.getElementById('h').dispatchEvent(new Event('submit', { cancelable: true }));
+  eq(fired, 1);
+});
+
+// ---------------------------------------------------------------- repeated control changes
+t('twenty refreshes in a row change nothing the person can feel', () => {
+  set('<div id="p"><input id="n" value="1000"><details id="dd"><summary>s</summary></details><div id="sc" style="height:40px;overflow:auto"><div style="height:400px"></div></div></div>');
+  const n = document.getElementById('n'), dd = document.getElementById('dd'), sc = document.getElementById('sc');
+  const root = box.firstElementChild;
+  dd.open = true; sc.scrollTop = 90; n.value = '123';
+  for (let i = 0; i < 20; i++) morph(box, `<div id="p"><input id="n" value="1000"><details id="dd"><summary>s</summary></details><div id="sc" style="height:40px;overflow:auto"><div style="height:400px"></div></div><span>${i}</span></div>`);
+  eq(box.firstElementChild, root, 'never remounted');
+  eq(n.value, '123', 'draft kept');
+  ok(dd.open, 'section still open');
+  eq(sc.scrollTop, 90, 'scroll kept');
+  eq(box.querySelector('span').textContent, '19', 'and the new value did arrive');
+});
+
+box.innerHTML = '';
+log(`\n${pass}/${pass + fail} passed`);
+document.title = fail ? `morph FAIL ${fail}` : `morph ok ${pass}`;
+window.__morphResult = { pass, fail };
+document.body.dataset.done = `${pass}/${fail}`;   // what a runner waits for, and reads the verdict from
+</script>

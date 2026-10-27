@@ -399,7 +399,20 @@ async function healQueue() {
     else if (n) { console.warn('Coco sweep: ' + n + ' closed or retried'); log('queue cleaned', n + ' stale or interrupted command(s) closed or retried'); }
   } catch (e) { console.error('Coco sweep: ' + e.message); }
 }
-async function loadAll() {
+// Several things ask for a reload at once: the click that just changed a control, the pulse that the
+// change itself writes, the heartbeat. Each reads the same forty-odd tables, so overlapping calls are
+// collapsed into one — and if a request arrives while a reload is already in flight, exactly one more
+// runs after it. Nothing is skipped, so a change made on another device is never left unseen.
+let loading = null, loadAgain = false;
+function loadAll() {
+  if (loading) { loadAgain = true; return loading; }
+  loading = (async () => {
+    try { await loadAllNow(); } finally { loading = null; }
+    if (loadAgain) { loadAgain = false; return loadAll(); }
+  })();
+  return loading;
+}
+async function loadAllNow() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
   const res = await Promise.all([
     q('houses', '*', ['sort', true]), q('categories', '*', ['code', true]), q('offerings', '*', ['name', true]), q('platforms', '*', ['sort', true]),
@@ -699,9 +712,11 @@ function cpChain(chain) {
 function nav() {
   const wait = D.approvals.filter(a => a.state === 'waiting').length;
   const link = ([id, name, ic]) => `<a href="#${id}" class="${id === page ? 'on' : ''}"><span class="pill"><i class="ms">${ic}</i></span><span>${name}</span>${id === 'approvals' && wait ? `<span class="badge">${wait}</span>` : ''}</a>`;
-  $('#nav').innerHTML = PAGES.map(p => link(p).replace('<span class="pill">', '').replace('</i></span>', '</i>')).join('');
-  $('#bottom').innerHTML = BOTTOM.map(id => PAGES.find(p => p[0] === id)).filter(Boolean).map(link).join('');
-  $('#me').innerHTML = `<b>${esc(founder ? `${founder.name} · ${founder.call_me}` : me.email)}</b><span class="muted">${esc(deviceName(deviceId))}</span><button class="btn text" style="justify-self:start;padding:4px 0" id="signOut2">Sign out</button>`;
+  // morph, not innerHTML: the sidebar only ever changes which link is lit and what the badge says,
+  // so rebuilding it on every data refresh was flicker for nothing.
+  morph($('#nav'), PAGES.map(p => link(p).replace('<span class="pill">', '').replace('</i></span>', '</i>')).join(''));
+  morph($('#bottom'), BOTTOM.map(id => PAGES.find(p => p[0] === id)).filter(Boolean).map(link).join(''));
+  morph($('#me'), `<b>${esc(founder ? `${founder.name} · ${founder.call_me}` : me.email)}</b><span class="muted">${esc(deviceName(deviceId))}</span><button class="btn text" style="justify-self:start;padding:4px 0" id="signOut2">Sign out</button>`);
   $('#signOut2').onclick = async () => { await sb.auth.signOut(); show('signin'); };
 }
 
@@ -1045,26 +1060,97 @@ const V = {
   },
 };
 
+// ---------------------------------------------------------------- patch the screen, never rebuild it
+// Changing one control used to run `view.innerHTML = V[page]()`, which threw the whole screen away
+// and built it again. That is what the flicker was, and why the scroll jumped, a half-typed number
+// vanished and an open section snapped shut — and a control change fires TWICE (once from the click,
+// once from the pulse that the change itself writes), so it happened twice a click.
+//
+// morph() walks the freshly rendered HTML against the live DOM and touches only what differs, so a
+// number changing in Coco Cloud moves that number and nothing else. Every node that survives keeps
+// its focus, its selection, its scroll position and its listeners. The views are untouched: they
+// still return the same HTML strings they always did.
+const SKIP_ATTR = { DETAILS: ['open'], INPUT: ['checked'], OPTION: ['selected'] };   // the person's state, not the server's
+const FIELD = { INPUT: 1, TEXTAREA: 1, SELECT: 1 };
+
+function morph(live, html) {
+  const next = document.createElement(live.tagName);
+  next.innerHTML = html;
+  morphChildren(live, next);
+}
+
+// Same kind of node in the same place? Then reuse it. An id, when present, must match too, so two
+// different sections never get patched into each other.
+const reusable = (a, b) => a.nodeType === b.nodeType
+  && (a.nodeType !== 1 || (a.tagName === b.tagName && (a.id || '') === (b.id || '')));
+
+function morphChildren(live, next) {
+  const have = Array.from(live.childNodes);
+  const want = Array.from(next.childNodes);
+  for (let i = 0; i < want.length; i++) {
+    if (!have[i]) { live.appendChild(want[i]); continue; }
+    if (!reusable(have[i], want[i])) { live.replaceChild(want[i], have[i]); continue; }
+    morphNode(have[i], want[i]);
+  }
+  for (let i = have.length - 1; i >= want.length; i--) live.removeChild(have[i]);
+}
+
+function morphNode(have, want) {
+  if (have.nodeType !== 1) { if (have.nodeValue !== want.nodeValue) have.nodeValue = want.nodeValue; return; }
+  // Typing changes a field's value PROPERTY and leaves its value ATTRIBUTE alone, so the attribute
+  // still holds exactly what the server last said. Read it before the attributes are synced below.
+  const lastServed = FIELD[have.tagName] ? have.getAttribute('value') : null;
+  const skip = SKIP_ATTR[have.tagName] || [];
+  for (const { name, value } of Array.from(want.attributes)) {
+    if (skip.includes(name)) continue;
+    if (have.getAttribute(name) !== value) have.setAttribute(name, value);
+  }
+  for (const { name } of Array.from(have.attributes)) {
+    if (!want.hasAttribute(name) && !skip.includes(name)) have.removeAttribute(name);
+  }
+  if (FIELD[have.tagName]) {
+    // What the person is typing outranks what the server says, and so does a draft they typed and
+    // then clicked away from: the field adopts the server's value only when the server's own value
+    // actually changed, and never while the field has focus.
+    const served = want.getAttribute('value');
+    if (served !== null && served !== lastServed && have !== document.activeElement) have.value = served;
+    return;                                          // a field has no children worth walking
+  }
+  morphChildren(have, want);
+}
+
+// A listener belongs to an element, and morphing keeps elements alive, so binding on every render
+// would stack duplicates and submit a form twice. Each element is wired once, for as long as it lives.
+const wired = new WeakSet();
+function once(el, event, fn) {
+  if (!el || wired.has(el)) return;
+  wired.add(el);
+  el.addEventListener(event, fn);
+}
+
 function render() {
   if (!V[page]) page = 'home';
   nav();
   $('#title').textContent = PAGES.find(p => p[0] === page)[1];
   $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;
-  const view = $('#view'); const changed = view.dataset.page !== page; view.innerHTML = V[page](); view.dataset.page = page;
+  const view = $('#view'); const changed = view.dataset.page !== page;
+  if (changed) view.innerHTML = V[page]();      // a different page IS a new screen: build it outright
+  else morph(view, V[page]());                 // the same page with newer numbers: patch it in place
+  view.dataset.page = page;
   if (changed) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); }
   renderStrip();
   wireSettings();
-  const f = $('#newTask'); if (f) f.addEventListener('submit', addTask);
-  const fr = $('#newRule'); if (fr) fr.addEventListener('submit', addRule);
-  const ft = $('#newTeam'); if (ft) ft.addEventListener('submit', addTeam);
-  document.querySelectorAll('form[data-ctlnum]').forEach((f) => f.addEventListener('submit', async (e) => {
+  once($('#newTask'), 'submit', addTask);
+  once($('#newRule'), 'submit', addRule);
+  once($('#newTeam'), 'submit', addTeam);
+  document.querySelectorAll('form[data-ctlnum]').forEach((f) => once(f, 'submit', async (e) => {
     e.preventDefault();
     const [scope, id, key] = f.dataset.ctlnum.split('|');
     const v = Number(new FormData(f).get('v'));
     if (!Number.isFinite(v) || v < 0) return toast('That is not a number');
     await control(scope, id, key, v);
   }));
-  const fn = $('#newNote'); if (fn) fn.addEventListener('submit', addNote);
+  once($('#newNote'), 'submit', addNote);
 }
 const SUB0 = { teams: 'teams', ai: 'calls', system: 'runtime', company: 'houses' };
 // Settings the founders change live in Coco Cloud, so a reload shows what the runtime is really using.
