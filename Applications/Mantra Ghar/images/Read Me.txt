@@ -1,0 +1,6 @@
+Deity and mantra images go here.
+
+Use the file name in the "image" field in mantras.js, e.g. "image":"hanuman.jpg".
+Keep names plain, no dashes needed, lowercase is easiest. JPG, PNG or WEBP.
+Keep each under about 300 KB so the page stays fast offline.
+After adding, run: node check.mjs   (it fails if an image is named but missing)

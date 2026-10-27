@@ -1,0 +1,7 @@
+com.goodspace.mantraghar.app-pngs-0 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\build\generated\res\pngs\release
+com.goodspace.mantraghar.app-resValues-1 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\build\generated\res\resValues\release
+com.goodspace.mantraghar.app-packageReleaseResources-2 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
+com.goodspace.mantraghar.app-packageReleaseResources-3 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
+com.goodspace.mantraghar.app-release-4 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\build\intermediates\merged_res\release\mergeReleaseResources
+com.goodspace.mantraghar.app-main-5 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\src\main\res
+com.goodspace.mantraghar.app-release-6 C:\Users\Lenovo\Good Space\Coco\Applications\Mantra Ghar\android\app\src\release\res

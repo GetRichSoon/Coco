@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mantra Ghar</title>
+<meta name="description" content="Sanatana Dharma ke sabhi devi-devta aur unka sabse shreshth mantra, ek jagah.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<meta name="theme-color" content="#F24E1E">
+<link rel="stylesheet" href="theme/dist/tokens.css">
+<link rel="stylesheet" href="theme/theme.css">
+<link rel="stylesheet" href="theme/shapes-inline.css">
+<style>
+  /* App layout only — every radius, font and loop comes from the Material You theme. */
+  :root { --dev: var(--mu-font-display), 'Nirmala UI', 'Noto Serif Devanagari', 'Sanskrit Text', serif; }
+
+  /* White paper instead of the theme's cream (Boss, 2026-10-27). Only the surface ramp changes:
+     the saffron primary, the type, the shapes and the motion stay exactly as the theme defines them.
+     Dark mode still wins over this — its rules have higher specificity. */
+  :root {
+    --mu-background: #FFFFFF;
+    --mu-surface: #FFFFFF;
+    --mu-surface-container-lowest: #FFFFFF;
+    --mu-surface-container-low: #FAF8F7;
+    --mu-surface-container: #F5F2F1;
+    --mu-surface-container-high: #F0ECEB;
+    --mu-surface-container-highest: #EAE5E3;
+    --mu-surface-variant: #F2EDEB;
+    --mu-on-background: #1F1B1A;
+    --mu-on-surface: #1F1B1A;
+    --mu-on-surface-variant: #5A5250;
+    --mu-outline: #8C8381;
+    --mu-outline-variant: #E4DEDC;
+    --mu-primary-container: #FFEDE4;
+    --mu-secondary-container: #FFE7DC;
+    --mu-on-secondary-container: #3D1000;
+  }
+  .mu-drift > i { opacity: .3; filter: blur(64px); }
+  body { margin: 0; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
+  .dev { font-family: var(--dev); font-variation-settings: var(--mu-display-settings); }
+
+  .hero { position: relative; overflow: hidden; padding: 28px 0 36px; border-radius: 0 0 var(--mu-radius-xl) var(--mu-radius-xl); }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand .mu-seal { --mu-shape-size: 64px; color: var(--mu-primary); flex: none; }
+  .brand .om { font-family: var(--dev); font-size: 30px; color: var(--mu-on-primary); line-height: 1; }
+  .brand h1 { margin: 0; font: var(--mu-type-display-small); font-family: var(--dev); letter-spacing: var(--mu-tracking-display-small); }
+  .brand p { margin: 2px 0 0; color: var(--mu-on-surface-variant); font: var(--mu-type-body-medium); }
+
+  .today { margin-top: 24px; background: var(--mu-primary-container); color: var(--mu-on-primary-container); border-radius: var(--mu-radius-xl); padding: var(--mu-space-5); }
+  .today .mu-label { opacity: .85; }
+  .today .line { font-family: var(--dev); font-size: clamp(24px, 5.2vw, 40px); line-height: 1.45; margin: 10px 0 6px; }
+
+  .bar { position: sticky; top: 0; z-index: 2; background: var(--mu-background); padding: 20px 0 2px; }
+  .controls { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .controls .mu-field { flex: 1 1 240px; }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips .mu-chip { white-space: nowrap; }
+
+  .strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); align-items: start; gap: 12px; overflow-x: auto; padding: 4px 4px 14px; scroll-snap-type: x mandatory; }
+  .strip::-webkit-scrollbar { height: 6px; }
+  .strip button { scroll-snap-align: start; text-align: left; border: 0; cursor: pointer; background: var(--mu-secondary-container); color: var(--mu-on-secondary-container); border-radius: var(--mu-radius-lg); padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+  .strip .big { font-family: var(--dev); font-size: 21px; line-height: 1.4; }
+
+  section.grp { padding: 10px 0 6px; }
+  section.grp > h2 { display: flex; align-items: center; gap: 10px; margin: 18px 0 12px; font: var(--mu-type-headline-medium); font-variation-settings: var(--mu-display-settings); }
+  section.grp > h2 .mu-shape { --mu-shape-size: 22px; color: var(--mu-tertiary); flex: none; }
+  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+  details.m { padding: 0; overflow: hidden; }
+  details.m > summary { list-style: none; cursor: pointer; padding: var(--mu-space-5); display: grid; gap: 8px; }
+  details.m > summary::-webkit-details-marker { display: none; }
+  details.m .who { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  details.m .who b { font-family: var(--dev); font-size: 20px; font-variation-settings: var(--mu-display-settings); }
+  details.m .who span { font: var(--mu-type-label-small); color: var(--mu-on-surface-variant); }
+  details.m .text { font-family: var(--dev); font-size: 19px; line-height: 1.6; }
+  details.m .roman { font: var(--mu-type-body-medium); color: var(--mu-on-surface-variant); font-style: italic; }
+  details.m .body { padding: 0 var(--mu-space-5) var(--mu-space-5); display: grid; gap: 12px; border-top: 1px solid var(--mu-outline-variant); margin-top: 4px; padding-top: var(--mu-space-4); }
+  details.m img { width: 100%; border-radius: var(--mu-radius-md); display: block; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .jap { font-variant-numeric: tabular-nums; font: var(--mu-type-title-medium); }
+  .star { color: var(--mu-primary); }
+
+  footer { padding: 32px 0 48px; color: var(--mu-on-surface-variant); font: var(--mu-type-body-medium); }
+  .empty { padding: 40px 0; text-align: center; color: var(--mu-on-surface-variant); }
+</style>
+</head>
+<body class="mu-root">
+
+<div class="hero">
+  <div class="mu-drift" aria-hidden="true">
+    <i class="mu-shape mu-shape--flower"></i>
+    <i class="mu-shape mu-shape--sunny"></i>
+    <i class="mu-shape mu-shape--soft-burst"></i>
+  </div>
+  <div class="wrap">
+    <div class="brand">
+      <span class="mu-seal mu-loop-breathe" aria-hidden="true">
+        <i class="mu-shape mu-shape--flower mu-loop-spin"></i>
+        <b class="om">ॐ</b>
+      </span>
+      <div>
+        <h1>मंत्र घर</h1>
+        <p>Mantra Ghar — <span id="count"></span> mantras, saare devi-devta, ek jagah</p>
+      </div>
+    </div>
+    <div class="today mu-enter" id="today" hidden>
+      <div class="mu-label">आज का मंत्र · Today</div>
+      <div class="line dev" id="today-text"></div>
+      <div class="mu-body-m" id="today-who"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h2 class="mu-headline-m" style="margin:28px 0 6px">⭐ Top Mantras</h2>
+  <p class="mu-body-m mu-muted" style="margin:0 0 10px">Sabse shreshth — inhi se shuruaat karein.</p>
+  <div class="strip" id="strip"></div>
+
+  <div class="bar">
+    <div class="controls">
+      <label class="mu-field">
+        <span>Search</span>
+        <input id="q" type="search" placeholder="Shiva, Lakshmi, money, health, ॐ …" autocomplete="off">
+      </label>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div id="sections"></div>
+  <p class="empty" id="empty" hidden>Koi mantra nahi mila.</p>
+
+  <footer>
+    Har mantra apne devta ke saath. Jap ke baad <b>ॐ शान्तिः शान्तिः शान्तिः</b> kahein.<br>
+    Naya mantra jodna ho to <code>mantras.js</code> mein ek line add karein — <code>Read Me.md</code> dekhein.
+  </footer>
+</div>
+
+<script src="mantras.js"></script>
+<script>
+(function () {
+  const M = window.MANTRAS || [];
+  const groups = [...new Set(M.map(m => m.group))];
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+
+  document.getElementById('count').textContent = M.length;
+
+  // Aaj ka mantra: same one for everyone, changes at midnight.
+  const tops = M.filter(m => m.top);
+  if (tops.length) {
+    const day = Math.floor(Date.now() / 864e5);
+    const t = tops[day % tops.length];
+    document.getElementById('today-text').textContent = t.mantra;
+    document.getElementById('today-who').textContent = t.deityHi + ' · ' + t.title;
+    document.getElementById('today').hidden = false;
+  }
+
+  document.getElementById('strip').innerHTML = tops.map(m =>
+    `<button type="button" data-go="${esc(m.id)}">
+       <span class="mu-label">${esc(m.deityHi)} · ${esc(m.deity)}</span>
+       <span class="big">${esc(m.mantra)}</span>
+     </button>`).join('');
+
+  const shapes = ['flower', 'cookie', 'clover', 'sunny', 'burst', 'soft-burst', 'wavy-circle', 'pill-blob'];
+  document.getElementById('sections').innerHTML = groups.map((g, i) => `
+    <section class="grp" data-group="${esc(g)}">
+      <h2><i class="mu-shape mu-shape--${shapes[i % shapes.length]} mu-loop-spin" aria-hidden="true"></i>${esc(g)}</h2>
+      <div class="cards">${M.filter(m => m.group === g).map(card).join('')}</div>
+    </section>`).join('');
+
+  function card(m) {
+    return `<details class="m mu-card" id="${esc(m.id)}" data-find="${esc([m.deity, m.deityHi, m.title, m.mantra, m.roman, m.meaning, m.when].join(' ').toLowerCase())}">
+      <summary>
+        <span class="who"><b>${esc(m.deityHi)}</b><span>${esc(m.deity)} · ${esc(m.title)}${m.top ? ' <span class="star">★</span>' : ''}</span></span>
+        <span class="text">${esc(m.mantra)}</span>
+        <span class="roman">${esc(m.roman)}</span>
+      </summary>
+      <div class="body">
+        <p class="mu-body-m" style="margin:0">${esc(m.meaning)}</p>
+        <p class="mu-body-m mu-muted" style="margin:0"><b>Kab:</b> ${esc(m.when)}</p>
+        ${m.image ? `<img src="images/${esc(m.image)}" alt="${esc(m.deity)} ${esc(m.title)}" loading="lazy">` : ''}
+        ${m.source ? `<a class="mu-body-m" href="${esc(m.source)}" target="_blank" rel="noopener">Source</a>` : ''}
+        <div class="row">
+          <button type="button" class="mu-btn mu-btn--tonal" data-jap="${esc(m.id)}" data-target="${m.count}">Jap +1</button>
+          <span class="jap" data-jc="${esc(m.id)}" data-target="${m.count}">0 / ${m.count}</span>
+          <button type="button" class="mu-btn mu-btn--text" data-reset="${esc(m.id)}">Reset</button>
+          <button type="button" class="mu-btn mu-btn--outlined" data-copy="${esc(m.id)}">Copy</button>
+        </div>
+      </div>
+    </details>`;
+  }
+
+  // chips
+  const chips = document.getElementById('chips');
+  chips.innerHTML = ['All', 'Top ★'].concat(groups)
+    .map((g, i) => `<button type="button" class="mu-chip" aria-pressed="${i === 0}" data-f="${esc(g)}">${esc(g)}</button>`).join('');
+
+  const q = document.getElementById('q');
+  let filter = 'All';
+
+  function apply() {
+    const term = q.value.trim().toLowerCase();
+    let shown = 0;
+    document.querySelectorAll('section.grp').forEach(sec => {
+      let vis = 0;
+      sec.querySelectorAll('details.m').forEach(d => {
+        const inGroup = filter === 'All' || (filter === 'Top ★' ? d.querySelector('.star') : sec.dataset.group === filter);
+        const hit = !term || d.dataset.find.includes(term);
+        const ok = !!inGroup && hit;
+        d.hidden = !ok;
+        if (ok) vis++;
+      });
+      sec.hidden = vis === 0;
+      shown += vis;
+    });
+    document.getElementById('empty').hidden = shown > 0;
+  }
+
+  q.addEventListener('input', apply);
+  chips.addEventListener('click', e => {
+    const b = e.target.closest('[data-f]');
+    if (!b) return;
+    filter = b.dataset.f;
+    chips.querySelectorAll('.mu-chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+    apply();
+  });
+
+  // jap counter (per mantra, resets itself on a new day)
+  const today = new Date().toISOString().slice(0, 10);
+  const jkey = id => 'jap:' + today + ':' + id;
+  function paint(id) {
+    const el = document.querySelector(`[data-jc="${id}"]`);
+    if (!el) return;
+    const n = Number(store.get(jkey(id)) || 0);
+    const target = Number(el.dataset.target);
+    el.textContent = n + ' / ' + target + (n >= target ? ' ✓' : '');
+  }
+  M.forEach(m => paint(m.id));
+
+  document.addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) {
+      const d = document.getElementById(go.dataset.go);
+      if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      return;
+    }
+    const jap = e.target.closest('[data-jap]');
+    if (jap) {
+      const id = jap.dataset.jap;
+      store.set(jkey(id), String(Number(store.get(jkey(id)) || 0) + 1));
+      paint(id);
+      return;
+    }
+    const rst = e.target.closest('[data-reset]');
+    if (rst) { store.set(jkey(rst.dataset.reset), '0'); paint(rst.dataset.reset); return; }
+    const cp = e.target.closest('[data-copy]');
+    if (cp) {
+      const m = M.find(x => x.id === cp.dataset.copy);
+      const text = m.mantra + '\n' + m.roman;
+      const done = () => { cp.textContent = 'Copied'; setTimeout(() => { cp.textContent = 'Copy'; }, 1200); };
+      // clipboard API is blocked on file:// — fall back to a hidden textarea
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => legacy(text, done));
+      else legacy(text, done);
+    }
+  });
+
+  function legacy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    ta.remove();
+  }
+
+  apply();
+})();
+</script>
+</body>
+</html>
