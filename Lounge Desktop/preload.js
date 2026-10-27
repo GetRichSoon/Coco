@@ -15,5 +15,8 @@ contextBridge.exposeInMainWorld('cocoDesktop', {
   needSignIn: (which) => ipcRenderer.send('lounge-need', String(which)),
   transcribe: (bytes, mime) => ipcRenderer.invoke('transcribe', { bytes, mime }),
   atOffice: () => ipcRenderer.sendSync('at-office'),
+  // a new Coco is already downloaded; the Lounge decides when to restart into it
+  onUpdate: (f) => ipcRenderer.on('update-ready', (_e, d) => f(d)),
+  restartForUpdate: () => ipcRenderer.send('update-restart'),
   platform: 'windows',
 });

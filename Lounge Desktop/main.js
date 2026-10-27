@@ -950,7 +950,23 @@ async function selfUpdate() {
   if (!/^(Lounge|Lounge Desktop)\//m.test(changed)) { startHead = after; return; }   // memory, teams, the phone app: nothing to restart for
   let last = 0; try { last = Number(fs.readFileSync(RESTART_FILE(), 'utf8')) || 0; } catch {}
   if (Date.now() - last < 10 * 60 * 1000) { log('restart held back (updated less than 10 min ago)'); return; }
+  offerRestart(after, log);
+}
+
+// An update used to close the app under the founder mid-sentence. Now: if nobody is looking - the
+// window is hidden in the tray or minimised, which is most of the time - it restarts straight away
+// exactly as before. If the window IS open, the Lounge says an update is ready and waits to be told.
+// Either way the new code is already on disk; only the restart into it waits.
+let pendingUpdate = null;
+function restartNow() {
   try { fs.writeFileSync(RESTART_FILE(), String(Date.now())); } catch {}
-  log(`restarting into ${after.slice(0, 7)} (was ${startHead.slice(0, 7)})`);
   app.relaunch({ args: [...(app.isPackaged ? [] : [path.resolve(__dirname)]), '--hidden'] }); app.exit(0);   // keep the app folder, or a bare electron.exe starts
 }
+function offerRestart(after, log) {
+  pendingUpdate = after;
+  const inUse = win && !win.isDestroyed() && win.isVisible() && !win.isMinimized();
+  if (!inUse) { log(`restarting into ${after.slice(0, 7)} (was ${startHead.slice(0, 7)}, window not in use)`); restartNow(); return; }
+  log(`update ${after.slice(0, 7)} ready; waiting for the founder to restart`);
+  try { win.webContents.send('update-ready', { commit: after.slice(0, 7) }); } catch {}
+}
+ipcMain.on('update-restart', () => { if (pendingUpdate) restartNow(); });
