@@ -692,5 +692,38 @@
     },
     "_pairs": "the theme's duos: plum-bubblegum, cobalt-sky, forest-butter, cocoa-cream, bubblegum-plum, sky-ink, butter-cocoa"
   },
-  "_source": "Palette, duos and the 9-shape library come from Design Atelier/Material You Theme (tokens.json, dist/shapes). The marks copied from Brand.kt are the approved ones and are never regenerated."
+  "_source": "Palette, duos and the 9-shape library come from Design Atelier/Material You Theme (tokens.json, dist/shapes). The marks copied from Brand.kt are the approved ones and are never regenerated.",
+  "_composition": "A mark is not a shape with an icon on it. It is built in layers: a base silhouette carrying a tonal gradient, a second shape turned and shrunk inside it to cut negative space, an abstract accent, a soft light across the top, and the glyph. Which inner shape, which accent, how far it is turned and how big it sits are all chosen from these tables by a hash of the entity's own id, so the same id always builds the same mark - on both desktops and both phones - and no two neighbours look alike. Android mirrors these tables in Brand.kt.",
+  "composition": {
+    "accents": [
+      "ring",
+      "arc",
+      "wedge",
+      "orbit",
+      "none"
+    ],
+    "innerScale": [
+      0.46,
+      0.54,
+      0.62,
+      0.7
+    ],
+    "innerTurn": [
+      0,
+      18,
+      36,
+      54,
+      72
+    ],
+    "innerAlpha": 0.26,
+    "glossAlpha": 0.2,
+    "accentAlpha": 0.38,
+    "motion": {
+      "_": "only where the mark is shown large; loop easing from the theme's motion.easing.loop",
+      "easing": "cubic-bezier(0.45, 0, 0.55, 1)",
+      "innerTurnSeconds": 26,
+      "breatheSeconds": 5.2,
+      "glossDriftSeconds": 9
+    }
+  }
 }

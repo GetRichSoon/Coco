@@ -41,7 +41,12 @@ assert.ok(src.includes("if (kind === 'team') return addTeam(e)"), 'a new team ke
   assert.ok(!ident.derived.shapes.includes('circle'), 'a derived mark must have a silhouette, not be a disc');
   for (const p of Object.values(ident.platforms)) assert.ok(p.shape, 'every platform mark needs a theme shape');
   assert.ok(!/function markText|markText\(/.test(src), 'nothing may fall back to initials');
-  assert.ok(!/<circle cx="50" cy="50"/.test(src), 'no mark may be drawn as a plain circle');
+  // a stroked ring is an accent inside a composed mark; what is banned is a mark that IS a disc
+  assert.ok(!/<circle cx="50" cy="50" r="4[0-9]"[^>]*fill="(?!none)/.test(src), 'no mark may be a plain filled disc');
+  // and every mark must actually be layered, not a shape with an icon dropped on it
+  assert.ok(src.includes('class="mk-in"') && src.includes('url(#mkgloss)') && src.includes('accentArt('),
+    'a mark must be composed: inner shape, accent and light, not one flat silhouette');
+  assert.ok(/linearGradient id="mkg-/.test(src), 'marks must carry a tonal ramp, not a flat fill');
   assert.ok(src.includes("onerror=\"this.remove()\""), 'a logo that fails to load must fall back to the mark beneath it');
   // every mark named in Brand.kt must still exist here, unchanged - approved identities are never regenerated
   const brand = fs.readFileSync(path.join(__dirname, '..', 'Lounge Android', 'app', 'src', 'main', 'java', 'com', 'goodspace', 'cocolounge', 'Brand.kt'), 'utf8');

@@ -80,16 +80,29 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .row .grow { flex: 1; min-width: 0; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--surface-3); white-space: nowrap; }
 .chip.good { background: var(--good-c); color: var(--good); } .chip.warn { background: var(--warn-c); color: var(--warn); } .chip.bad { background: var(--bad-c); color: var(--bad); } .chip.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
-/* An identity mark: the shape, colour and symbol written down in identity.json, drawn the way the
-   phone draws it. The colour belongs to the thing, so it does not flip with the theme - Lulu is
-   Lulu in the dark too. Only the large marks move, and only when Calm motion is off. */
-.mk { position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; user-select: none; }
-.mk svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.mk i.ms { position: relative; font-size: 15px; line-height: 1; }
+/* An identity mark, built in layers: a silhouette with a tonal ramp, a turned inner shape for
+   negative space, an abstract accent, a soft light, then the glyph. The colour belongs to the
+   thing, so it does not flip with the theme - Lulu is Lulu in the dark too. */
+.mk { position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; user-select: none;
+  filter: drop-shadow(0 1px 2px rgb(61 31 18 / .18)); }
+.mk svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mk i.ms { position: relative; font-size: 15px; line-height: 1; text-shadow: 0 1px 1px rgb(61 31 18 / .22); }
 .mk.s { width: 26px; height: 26px; } .mk.s i.ms { font-size: 11px; }
-.mk.l { width: 48px; height: 48px; } .mk.l i.ms { font-size: 20px; }
-.mk.alive svg { animation: mkspin var(--mk-spin, 45s) linear infinite var(--mk-dir, normal); transform-origin: 50% 50%; }
-.mk.alive i.ms { animation: mkbreathe 1.8s ease-in-out infinite alternate; }
+.mk.s .mk-ac { display: none; }                 /* at 26px an accent is noise, not identity */
+.mk.l { width: 48px; height: 48px; filter: drop-shadow(0 2px 6px rgb(61 31 18 / .22)); } .mk.l i.ms { font-size: 20px; }
+
+/* Only where a mark is shown large, and never when Calm motion is on. Loop easing from the theme. */
+@media (prefers-reduced-motion: no-preference) {
+  .mk.alive .mk-in { animation: mkorbit 26s linear infinite; transform-origin: 50% 50%; animation-direction: var(--mk-dirn, normal); }
+  .mk.alive svg   { animation: mkbreathe 5.2s cubic-bezier(.45,0,.55,1) infinite alternate; transform-origin: 50% 50%; }
+  .mk.alive .mk-gl { animation: mkdrift 9s cubic-bezier(.45,0,.55,1) infinite alternate; transform-origin: 50% 50%; }
+}
+.mk.alive { --mk-dirn: normal; }
+.mk.alive[style*="--mk-turn:-1"] { --mk-dirn: reverse; }
+@keyframes mkorbit { to { transform: rotate(360deg); } }
+@keyframes mkbreathe { to { transform: scale(1.045); } }
+@keyframes mkdrift { to { transform: translate(4%, -3%); } }
+
 /* a real service logo, laid over the Coco mark that shows if it cannot be fetched */
 .logo { position: relative; display: inline-grid; place-items: center; flex: none; }
 .logo img { position: absolute; inset: 0; margin: auto; border-radius: 9px; object-fit: contain; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--outline); }
@@ -717,8 +730,8 @@ function markFor(kind, name, id) {
   for (const ch of `${kind}:${key}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const pair = D.pairs[h % D.pairs.length];
   const icons = (D.icons && (D.icons[kind] || D.icons.agent)) || ['label'];
-  return { name: name || id, bg: pair[0], fg: pair[1], icon: icons[(h >> 3) % icons.length],
-           shapes: [D.shapes[(h >> 5) % D.shapes.length]], spin: 0, derived: true };
+  return { name: name || id, bg: pair[0], fg: pair[1], icon: icons[(h >>> 3) % icons.length],
+           shapes: [D.shapes[(h >>> 5) % D.shapes.length]], spin: 0, derived: true };
 }
 
 // A channel wears its platform's own colours, the way the phone's PlatformMark does.
@@ -733,34 +746,87 @@ function platformMark(platform, size = 's') {
     + `<i class="ms" style="color:${esc(p.fg)}">${esc(p.icon)}</i></span>`;
 }
 
-// Each outline is ~1.2 KB of coordinates, and a page can hold two hundred marks. Defining the nine
-// shapes once and pointing at them keeps a page small enough to diff cheaply on every refresh.
+// Each outline is ~1.2 KB of coordinates, and a page can hold two hundred marks, so the nine shapes
+// and the tonal gradients are defined once and pointed at.
+const hex = (c) => { const h = tone(c).replace('#', ''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
+const blend = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
+const duoKey = (bg, fg) => `${bg}-${fg}`.replace(/[^a-z-]/g, '');
+
+// The shapes and the tonal ramps, built once as markup so the page and any preview use the same one.
+function shapeDefsHtml() {
+  const names = Object.keys((IDENT && IDENT.shapes) || {});
+  if (!names.length) return '';
+  const duos = new Set();
+  for (const m of Object.values((IDENT && IDENT.marks) || {})) duos.add(`${m.bg}|${m.fg}`);
+  for (const [bg, fg] of ((IDENT && IDENT.derived && IDENT.derived.pairs) || [])) duos.add(`${bg}|${fg}`);
+  for (const pl of Object.values((IDENT && IDENT.platforms) || {})) duos.add(`${pl.bg}|${pl.fg}`);
+  const ramps = [...duos].map((d) => {
+    const [bg, fg] = d.split('|');
+    return `<linearGradient id="mkg-${duoKey(bg, fg)}" x1="0" y1="0" x2="0.35" y2="1">
+        <stop offset="0" stop-color="${blend(bg, fg, 0.26)}"/><stop offset="0.55" stop-color="${tone(bg)}"/>
+        <stop offset="1" stop-color="${blend(bg, '#2B1712', 0.22)}"/></linearGradient>`;
+  }).join('');
+  return `<defs>${names.map((n) => `<path id="mkshape-${n}" d="${outline(n)}"/>`).join('')}${ramps}
+      <radialGradient id="mkgloss" cx="0.32" cy="0.24" r="0.78">
+        <stop offset="0" stop-color="#fff" stop-opacity=".46"/><stop offset="0.55" stop-color="#fff" stop-opacity=".06"/>
+        <stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+}
+
 let shapeDefsDone = false;
 function ensureShapeDefs() {
   if (shapeDefsDone || typeof document === 'undefined') return;
-  const names = Object.keys((IDENT && IDENT.shapes) || {});
-  if (!names.length) return;
+  const html = shapeDefsHtml();
+  if (!html) return;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.setAttribute('aria-hidden', 'true');
-  svg.style.position = 'absolute';
-  svg.innerHTML = `<defs>${names.map((n) => `<path id="mkshape-${n}" d="${outline(n)}"/>`).join('')}</defs>`;
+  svg.id = 'mkdefs'; svg.style.position = 'absolute';
+  svg.innerHTML = html;
   document.body.appendChild(svg);
   shapeDefsDone = true;
 }
 
+// The abstract element that stops two marks of the same colour reading as the same mark.
+function accentArt(kind, fg, a) {
+  const o = ` fill="none" stroke="${esc(fg)}" stroke-opacity="${a}" stroke-linecap="round"`;
+  if (kind === 'ring') return `<circle cx="50" cy="50" r="31"${o} stroke-width="5"/>`;
+  if (kind === 'arc') return `<path d="M26 62 A 30 30 0 0 1 74 38"${o} stroke-width="6"/>`;
+  if (kind === 'orbit') return `<ellipse cx="50" cy="50" rx="36" ry="15"${o} stroke-width="4.5"/>`;
+  if (kind === 'wedge') return `<path d="M50 50 L84 34 A 38 38 0 0 1 80 70 Z" fill="${esc(fg)}" fill-opacity="${a * 0.7}"/>`;
+  return '';
+}
+
+// A mark is layered: a silhouette with a tonal ramp, a second shape turned inside it for negative
+// space, an abstract accent, a soft light, then the glyph. Every choice comes from a hash of the
+// entity's id, so it is the same mark on every client and stable for ever.
 const mark = (kind, name, id, size = 'm') => {
   const m = markFor(kind, name, id);
-  const names = (m.shapes && m.shapes.length ? m.shapes : ['circle']);
-  // The phone morphs its logo between shapes every few seconds. Here the shape is fixed and the
-  // motion is a slow turn and breath instead: a morph has to inline every outline it passes
-  // through, which put a quarter of a megabyte of coordinates on the teams page - rebuilt and
-  // diffed on every refresh. The silhouette is what identifies the thing; the morph was decoration.
-  const alive = size === 'l' && m.spin && (typeof store === 'undefined' || store.get('gs-calm') !== '1');
+  const C = (IDENT && IDENT.composition) || { accents: ['ring'], innerScale: [0.56], innerTurn: [24], innerAlpha: 0.26, glossAlpha: 0.2, accentAlpha: 0.38 };
+  const names = (m.shapes && m.shapes.length ? m.shapes : ['cookie']);
+  let h = 0; for (const ch of `${kind}:${String(id || name || '').toLowerCase()}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  // The phone morphs through every shape a mark owns, so no one silhouette is "the" one. Freezing on
+  // names[0] made a third of the company scalloped, because that is what most sets start with. The
+  // base is picked from the mark's OWN set by its id instead: still its approved identity, but the
+  // company reads as a collection rather than one shape in nine colours.
+  const base = names[h % names.length];
+  const all = Object.keys((IDENT && IDENT.shapes) || {});
+  const others = names.filter((n) => n !== base);
+  const inner = others.length ? others[(h >>> 2) % others.length] : (all[(h >>> 2) % Math.max(1, all.length)] || base);
+  const scale = C.innerScale[(h >>> 4) % C.innerScale.length];
+  const turn = C.innerTurn[(h >>> 6) % C.innerTurn.length];
+  const accent = C.accents[(h >>> 8) % C.accents.length];
+  const fg = tone(m.fg), ramp = `url(#mkg-${duoKey(m.bg, m.fg)})`;
+  const alive = size === 'l' && (typeof store === 'undefined' || store.get('gs-calm') !== '1');
+  const off = (100 - 100 * scale) / 2;
   return `<span class="mk ${esc(size)}${alive ? ' alive' : ''}" title="${esc(m.name || name || id || '')}"`
-    + (alive ? ` style="--mk-spin:${Math.abs(360 / m.spin).toFixed(0)}s;--mk-dir:${m.spin < 0 ? 'reverse' : 'normal'}"` : '')
-    + ` aria-hidden="true">`
-    + `<svg viewBox="0 0 100 100"><use href="#mkshape-${esc(names[0])}" fill="${esc(tone(m.bg))}"/></svg>`
-    + `<i class="ms" style="color:${esc(tone(m.fg))}">${esc(m.icon || 'label')}</i></span>`;
+    + ` style="--mk-turn:${m.spin < 0 ? -1 : 1}" aria-hidden="true">`
+    + `<svg viewBox="0 0 100 100">`
+      + `<use href="#mkshape-${esc(base)}" fill="${ramp}"/>`
+      + `<g class="mk-in"><use href="#mkshape-${esc(inner)}" fill="${esc(fg)}" fill-opacity="${C.innerAlpha}"`
+        + ` transform="translate(${off} ${off}) scale(${scale}) rotate(${turn} 50 50)"/></g>`
+      + `<g class="mk-ac">${accentArt(accent, fg, C.accentAlpha)}</g>`
+      + `<use href="#mkshape-${esc(base)}" fill="url(#mkgloss)" class="mk-gl"/>`
+    + `</svg>`
+    + `<i class="ms" style="color:${esc(fg)}">${esc(m.icon || 'label')}</i></span>`;
 };
 
 // Where a thing is a real outside service, it should wear that service's own logo - you recognise
