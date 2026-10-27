@@ -693,37 +693,23 @@
     "_pairs": "the theme's duos: plum-bubblegum, cobalt-sky, forest-butter, cocoa-cream, bubblegum-plum, sky-ink, butter-cocoa"
   },
   "_source": "Palette, duos and the 9-shape library come from Design Atelier/Material You Theme (tokens.json, dist/shapes). The marks copied from Brand.kt are the approved ones and are never regenerated.",
-  "_composition": "A mark is not a shape with an icon on it. It is built in layers: a base silhouette carrying a tonal gradient, a second shape turned and shrunk inside it to cut negative space, an abstract accent, a soft light across the top, and the glyph. Which inner shape, which accent, how far it is turned and how big it sits are all chosen from these tables by a hash of the entity's own id, so the same id always builds the same mark - on both desktops and both phones - and no two neighbours look alike. Android mirrors these tables in Brand.kt.",
-  "composition": {
-    "accents": [
-      "ring",
-      "arc",
-      "wedge",
-      "orbit",
-      "none"
-    ],
-    "innerScale": [
-      0.46,
-      0.54,
-      0.62,
-      0.7
-    ],
-    "innerTurn": [
-      0,
-      18,
-      36,
-      54,
-      72
-    ],
-    "innerAlpha": 0.26,
-    "glossAlpha": 0.2,
-    "accentAlpha": 0.38,
+  "_composition": "Removed. A layered build - gradient ramp, inner cut-out, abstract accent - was tried and rejected: it was a second logo system wearing the first one's colours and it lost the personality of the approved marks. A mark is drawn as the phone has always drawn it: the approved silhouette, the approved colour, the approved symbol.",
+  "_presentation": "Presentation is the only thing that changes. The marks are bigger (28 / 44 / 64 px), and anything above the small size floats, breathes, turns on its own approved spin slowed to a drift, carries a slow sheen and gives the symbol a little parallax against the shape. Every loop returns to where it started, so there is no jump. Reduced motion or Calm leaves the original static logo and nothing else.",
+  "presentation": {
+    "sizes": {
+      "s": 28,
+      "m": 44,
+      "l": 64
+    },
     "motion": {
-      "_": "only where the mark is shown large; loop easing from the theme's motion.easing.loop",
+      "floatSeconds": 6.5,
+      "breatheScale": 1.035,
+      "sheenSeconds": 7.5,
+      "turnSecondsMin": 40,
+      "turnFromSpin": "abs(360 / spin) * 1.6, floored at 40s",
       "easing": "cubic-bezier(0.45, 0, 0.55, 1)",
-      "innerTurnSeconds": 26,
-      "breatheSeconds": 5.2,
-      "glossDriftSeconds": 9
+      "smallestSizeIsStatic": true,
+      "reducedMotion": "the original static logo, no sheen"
     }
   }
 }

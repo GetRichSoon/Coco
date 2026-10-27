@@ -43,10 +43,17 @@ assert.ok(src.includes("if (kind === 'team') return addTeam(e)"), 'a new team ke
   assert.ok(!/function markText|markText\(/.test(src), 'nothing may fall back to initials');
   // a stroked ring is an accent inside a composed mark; what is banned is a mark that IS a disc
   assert.ok(!/<circle cx="50" cy="50" r="4[0-9]"[^>]*fill="(?!none)/.test(src), 'no mark may be a plain filled disc');
-  // and every mark must actually be layered, not a shape with an icon dropped on it
-  assert.ok(src.includes('class="mk-in"') && src.includes('url(#mkgloss)') && src.includes('accentArt('),
-    'a mark must be composed: inner shape, accent and light, not one flat silhouette');
-  assert.ok(/linearGradient id="mkg-/.test(src), 'marks must carry a tonal ramp, not a flat fill');
+  // the approved art is drawn as it always was: its own silhouette, its own flat colour, its own
+  // symbol. A layered rebuild was tried and rejected, so nothing may put it back.
+  assert.ok(!src.includes('accentArt(') && !/linearGradient id="mkg-/.test(src),
+    'a mark must not be recomposed with accents or tonal ramps: that was a second logo system');
+  assert.ok(src.includes('m.shapes[0]'), "a mark must use its identity's own first shape, not one picked by hash");
+  assert.ok(src.includes('fill="${esc(tone(m.bg))}"'), 'the approved colour must be used flat');
+  // motion is presentation only, and reduced motion must leave the original static logo
+  assert.ok(src.includes('@media (prefers-reduced-motion: no-preference)') && src.includes('mkfloat'),
+    'the loop animation must sit behind prefers-reduced-motion');
+  assert.ok(/\.mk \{[^}]*width: 44px/.test(src) && /\.mk\.l \{[^}]*width: 64px/.test(src),
+    'the logos must be shown large');
   assert.ok(src.includes("onerror=\"this.remove()\""), 'a logo that fails to load must fall back to the mark beneath it');
   // every mark named in Brand.kt must still exist here, unchanged - approved identities are never regenerated
   const brand = fs.readFileSync(path.join(__dirname, '..', 'Lounge Android', 'app', 'src', 'main', 'java', 'com', 'goodspace', 'cocolounge', 'Brand.kt'), 'utf8');
