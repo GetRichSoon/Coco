@@ -14,5 +14,9 @@ if (git status --porcelain) {
 }
 git pull -q --rebase origin main 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) { git rebase --abort 2>$null; Log 'NOT SAVED: pull had a conflict, Coco will ask a founder'; exit 1 }
-git push -q origin main 2>&1 | Out-Null
+# HEAD:main, not main: the pull above already rebases the CURRENT branch onto origin/main, so the
+# push has to send that same branch. Naming the local `main` ref instead meant that if the working
+# tree was ever left on another branch - or the local main drifted - the seal rebased one thing and
+# pushed another, and failed with "behind its remote counterpart" while the work sat on the laptop.
+git push -q origin HEAD:main 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) { Log 'saved to GetRichSoon/Coco' } else { Log 'NOT SAVED: push failed (offline?)' }
