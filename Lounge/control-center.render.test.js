@@ -46,9 +46,9 @@ const chip = (s) => `<span class="chip">${esc(s)}</span>`;
 const ago = (iso) => (iso ? '2 min ago' : 'never');
 const store = { get: () => null };   // no browser storage here; Calm motion reads as off
 
-const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago', 'store', 'IDENT_IN',
+const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago', 'store', 'IDENT_IN', 'STRUCT', 'newKind', 'newParent', 'renaming',
   `${constSrc}\n${marksSrc}\nIDENT = IDENT_IN;\n${helpersSrc}\n${controlsSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
-)(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago, store, IDENT);
+)(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago, store, IDENT, state.STRUCT || [], state.newKind || 'subteam', {}, null);
 
 const D0 = { approvals: [], activity: [], houses: [], devices: [], tasks: [], decisions: [], rules: [], integrations: [] };
 const PAGES = ['control', 'teams', 'agents', 'runs', 'ai', 'brain', 'workflows', 'system'];
@@ -107,10 +107,35 @@ for (const [tab, must] of [
   ['categories', withCat.categories[0].file],
   ['channels', withChan.channels[0].id],
   ['heads', withSub.agents.find((a) => a.id === withSub.head_agent_id).name],
-  ['new', 'id="newTeam"'],
+  ['new', 'id="newStruct"'],
 ]) {
   const html = make({ CP, LIVE: null, D: D0, sub: tab }).teams();
   assert.ok(html.includes(must), `the Teams/${tab} tab does not show ${must}`);
+}
+
+// ---------------------------------------------------------------- the Structure screen
+// The company's shape is Team > Sub-team > Category > Channel, and the screen has to be able to
+// make any of the four, ask for the right parents, and show what already exists as a tree.
+{
+  const kinds = { team: [], subteam: ['Team'], category: ['Team', 'Sub-team'], channel: ['Team', 'Sub-team', 'Category'] };
+  for (const [kind, parents] of Object.entries(kinds)) {
+    const html = make({ CP, LIVE: null, D: D0, sub: 'new', newKind: kind }).teams();
+    assert.ok(html.includes(`data-kind="${kind}"`), `the Structure form is not making a ${kind}`);
+    for (const p of parents) assert.ok(new RegExp(`<label>${p}`).test(html), `making a ${kind} must ask for its ${p}`);
+    if (!parents.length) assert.ok(!html.includes('<label>Team'), 'a team has no parent to ask for');
+  }
+  // a channel's Category selector is filled from the company that exists
+  const chan = make({ CP, LIVE: null, D: D0, sub: 'new', newKind: 'channel' }).teams();
+  const aCat = CP.teams.find((t) => t.categories.length).categories[0];
+  assert.ok(chan.includes(`value="${aCat.id}"`), 'the Category selector does not offer a real category');
+  // the tree shows a team, and a sub-team under it, each with what it is
+  assert.ok(/class="trow/.test(chan), 'the Structure screen shows no tree');
+  assert.ok(chan.includes(withSub.subteams[0].name), 'the tree does not show a real sub-team');
+  // live cloud rows appear even before the next cloud cycle rebuilds control-plane.json
+  const live = make({ CP, LIVE: null, D: D0, sub: 'new', newKind: 'channel',
+    STRUCT: [{ id: 'moonveil-audio', kind: 'channel', parent_id: aCat.id, name: 'Moonveil Audio', state: 'paused' }] }).teams();
+  assert.ok(live.includes('Moonveil Audio'), 'a channel created in the cloud is not shown until the next cycle');
+  assert.ok(live.includes('data-sarchive="moonveil-audio"'), 'a live row cannot be archived');
 }
 
 const agents = make({ CP, LIVE: { runs: CP.runs }, D: D0, sub: 'x' }).agents();

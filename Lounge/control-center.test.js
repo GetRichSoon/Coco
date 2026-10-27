@@ -26,7 +26,13 @@ assert.ok(src.includes("fetch('control-plane.json'"), 'the dashboard loads the c
 assert.ok(src.includes('let CP = null'), 'CP holds the snapshot');
 assert.ok(src.includes('const cpWait =') && src.includes('return cpWait('), 'a missing snapshot shows a waiting card, never a guess');
 assert.ok(src.includes("data-cprun=") && src.includes('ds.cprun !== undefined'), 'runs can be opened and closed from any page');
-assert.ok(src.includes('async function addTeam') && src.includes('id="newTeam"'), 'team creation form + handler');
+// The Structure screen makes any of the four kinds. A team still goes the long way round, because
+// it needs agents, permissions, a budget and a Brain scope provisioned after a founder YES.
+assert.ok(src.includes('async function addTeam') && src.includes('id="newStruct"'), 'structure creation form + handler');
+assert.ok(src.includes("if (kind === 'team') return addTeam(e)"), 'a new team keeps its provisioning approval route');
+assert.ok(src.includes("sb.rpc('coco_structure'"), 'structure changes go through the cloud control path, not a local store');
+assert.ok(src.includes("sb.from('structure')"), 'the live structure table is read, so a new channel shows before the next cloud cycle');
+assert.ok(/PARENT_OF = \{ team: null, subteam: 'team', category: 'subteam', channel: 'category' \}/.test(src), 'the hierarchy is Team > Sub-team > Category > Channel');
 assert.ok(src.includes("from('approvals').insert({ code: `A-NEW-"), 'creating a team raises one approval carrying the spec');
 // Phase 7: the four control-plane tables are live, so the dashboard reads them under RLS and keeps
 // the generated snapshot as the cache for the registry side.
