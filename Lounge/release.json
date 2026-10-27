@@ -1,0 +1,30 @@
+{
+  "_": "The one Coco version. Every client shows this number; nothing else is user-facing.",
+  "_why": "The clients had drifted into three unrelated numbers - root package.json said 1.1.0, the desktop app said 1.0.4 and the phone said 2.8.2 - so 'is everyone on the latest Coco?' had no answer. They are one number now, and release.test.js fails the build if they come apart again.",
+  "_number": "2.9.0, not 1.2.0. Two schemes existed and the phone's was the furthest along at 2.8.2; starting a unified line below that would have shown the founders a downgrade on the device they look at most. So the unified line continues from the highest user-facing number, and this release is a minor bump on it.",
+
+  "version": "2.9.0",
+  "name": "Coco 2.9.0",
+  "released": "2026-10-28",
+
+  "notes": [
+    "The screen is patched instead of rebuilt, so changing a control no longer flickers, jumps the scroll or wipes a half-typed number.",
+    "Every part of the company wears the phone's real marks, and three houses that never had one now do.",
+    "Team > Sub-team > Category > Channel can be created, renamed and archived from Structure.",
+    "An update waits for you instead of closing the app mid-sentence."
+  ],
+
+  "_builds": "Internal build numbers stay per platform, because each store and each installer needs its own monotonic counter. They are not shown to the founders.",
+  "builds": {
+    "desktop": "1.0.5",
+    "android": { "versionName": "2.9.0", "versionCode": 16 },
+    "lounge": "served from main"
+  },
+
+  "_rollback": "A bad release is undone with a normal git revert on main. Every desktop fast-forwards this repo every 30 minutes, so the revert reaches both of them within half an hour with no installer, no store and nothing to uninstall. The phones are the exception: they carry a built APK, so rolling them back needs a rebuilt APK, which is the signing work that is deliberately not done yet.",
+  "rollback": {
+    "desktop": "git revert <commit> on main; both desktops pick it up within 30 minutes",
+    "android": "needs a rebuilt APK - blocked until release signing exists",
+    "previous": null
+  }
+}

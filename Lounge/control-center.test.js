@@ -30,6 +30,30 @@ assert.ok(src.includes("data-cprun=") && src.includes('ds.cprun !== undefined'),
 // it needs agents, permissions, a budget and a Brain scope provisioned after a founder YES.
 assert.ok(src.includes('async function addTeam') && src.includes('id="newStruct"'), 'structure creation form + handler');
 assert.ok(src.includes("if (kind === 'team') return addTeam(e)"), 'a new team keeps its provisioning approval route');
+// The identity rule, enforced: a thing without an approved logo gets a Material You mark from the
+// theme's own shapes and contrast-checked duos - never initials, never a plain circle, never an
+// empty box where a logo failed to load.
+{
+  const ident = JSON.parse(fs.readFileSync(path.join(__dirname, 'identity.json'), 'utf8'));
+  const duos = [['plum','bubblegum'],['cobalt','sky'],['forest','butter'],['cocoa','cream'],['bubblegum','plum'],['sky','ink'],['butter','cocoa']];
+  assert.deepStrictEqual(ident.derived.pairs, duos, 'derived marks must use the theme duos, minus the red ones');
+  for (const [bg] of ident.derived.pairs) assert.ok(!/tomato|wine|cherry|marigold/.test(bg), `${bg} is a red/orange hue; those are reserved for failures`);
+  assert.ok(!ident.derived.shapes.includes('circle'), 'a derived mark must have a silhouette, not be a disc');
+  for (const p of Object.values(ident.platforms)) assert.ok(p.shape, 'every platform mark needs a theme shape');
+  assert.ok(!/function markText|markText\(/.test(src), 'nothing may fall back to initials');
+  assert.ok(!/<circle cx="50" cy="50"/.test(src), 'no mark may be drawn as a plain circle');
+  assert.ok(src.includes("onerror=\"this.remove()\""), 'a logo that fails to load must fall back to the mark beneath it');
+  // every mark named in Brand.kt must still exist here, unchanged - approved identities are never regenerated
+  const brand = fs.readFileSync(path.join(__dirname, '..', 'Lounge Android', 'app', 'src', 'main', 'java', 'com', 'goodspace', 'cocolounge', 'Brand.kt'), 'utf8');
+  for (const m of brand.matchAll(/"([a-z]+)" to Mark\("([^"]+)", Mu\.(\w+), Mu\.(\w+)/g)) {
+    const [, id, , bg, fg] = m;
+    const here2 = ident.marks[id];
+    assert.ok(here2, `${id} has a mark on the phone but not in identity.json`);
+    assert.strictEqual(here2.bg, bg, `${id} changed colour between the phone and the desktop`);
+    assert.strictEqual(here2.fg, fg, `${id} changed its second colour between the phone and the desktop`);
+  }
+}
+
 assert.ok(src.includes("sb.rpc('coco_structure'"), 'structure changes go through the cloud control path, not a local store');
 assert.ok(src.includes("sb.from('structure')"), 'the live structure table is read, so a new channel shows before the next cloud cycle');
 assert.ok(/PARENT_OF = \{ team: null, subteam: 'team', category: 'subteam', channel: 'category' \}/.test(src), 'the hierarchy is Team > Sub-team > Category > Channel');

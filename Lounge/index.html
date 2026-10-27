@@ -90,6 +90,9 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .mk.l { width: 48px; height: 48px; } .mk.l i.ms { font-size: 20px; }
 .mk.alive svg { animation: mkspin var(--mk-spin, 45s) linear infinite var(--mk-dir, normal); transform-origin: 50% 50%; }
 .mk.alive i.ms { animation: mkbreathe 1.8s ease-in-out infinite alternate; }
+/* a real service logo, laid over the Coco mark that shows if it cannot be fetched */
+.logo { position: relative; display: inline-grid; place-items: center; flex: none; }
+.logo img { position: absolute; inset: 0; margin: auto; border-radius: 9px; object-fit: contain; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--outline); }
 @keyframes mkspin { to { transform: rotate(360deg); } }
 @keyframes mkbreathe { to { transform: scale(1.06); } }
 /* A value that changed says so for a moment. Only possible now the screen is patched instead of
@@ -108,6 +111,8 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
    warnings, and nothing here is a warning */
 .trow .btn.text { color: var(--muted); padding: 6px 10px; }
 .trow .btn.text:hover { color: var(--primary); background: var(--surface-2); }
+.relnotes { margin: 6px 0 2px; padding-left: 20px; display: grid; gap: 4px; }
+.relnotes li { color: var(--muted); }
 .tkind { font: 800 10px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
 @media (max-width: 560px) { .trow { padding-left: calc(var(--depth, 0) * 14px); flex-wrap: wrap; } }
 
@@ -484,6 +489,8 @@ async function loadAllNow() {
   // The marks are a small fixed list, so it is fetched once and kept. If it cannot be fetched
   // nothing breaks: markFor() falls back to a derived mark from the same curated palette.
   if (!IDENT) { try { const r = await fetch('identity.json'); if (r.ok) { IDENT = await r.json(); OUTLINE.clear(); } } catch {} }
+  // the one Coco version every client reports, so drift between the four is visible rather than guessed
+  if (!RELEASE) { try { const r = await fetch('release.json', { cache: 'no-store' }); if (r.ok) RELEASE = await r.json(); } catch {} }
   try {
     const [rn, ev, ac, bi, po, co, st, ou] = await Promise.all([
       sb.from('runs').select('*').order('opened_at', { ascending: false }).limit(60),
@@ -659,9 +666,6 @@ const founderName = () => founder ? founder.name : (me && me.email);
 async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
 
 const chipFor = (s) => ({ new: ['', 'New'], analyzing: ['warn', 'Analyzing'], analyzed: ['good', 'Analyzed'], planned: ['', 'Planned'], need_approval: ['warn', 'Needs YES'], blocked: ['bad', 'Blocked'], verifying: ['warn', 'Verifying'], paused: ['', 'Paused'], cancelled: ['', 'Cancelled'], connected: ['good', 'Connected'], partial: ['warn', 'Partly connected'], not_connected: ['bad', 'Not connected'], error: ['bad', 'Error'], queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
-const LOGO = { youtube: 'youtube.com', github: 'github.com', supabase: 'supabase.com', chrome_store: 'chromewebstore.google.com', play_console: 'play.google.com', autodraft: 'autodraft.in', roblox: 'roblox.com', meta: 'facebook.com', udemy: 'udemy.com', coursera: 'coursera.org' };
-const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
-
 // ---------------------------------------------------------------- identity marks
 // The phone already had real marks: a colour pair, a Material symbol and a set of shapes the logo
 // morphs through, written by hand in Brand.kt for Coco, the houses and the helpers. The Lounge drew
@@ -669,7 +673,10 @@ const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}"
 // Lounge/identity.json - holding those exact values plus new marks, in the same language, for the
 // parts that never had one. Nothing is invented at render time: a mark is looked up, so Lulu is the
 // same Lulu on both desktops, both phones and in every future release.
+const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
+
 let IDENT = null;                                   // identity.json, loaded once at boot
+let RELEASE = null;                                 // release.json: the one version all four clients report
 const PALETTE = () => (IDENT && IDENT.palette) || {};
 const tone = (c) => PALETTE()[c] || c || '#2F55C4';  // a palette name, or a literal colour
 
@@ -716,10 +723,13 @@ function markFor(kind, name, id) {
 
 // A channel wears its platform's own colours, the way the phone's PlatformMark does.
 function platformMark(platform, size = 's') {
-  const p = (IDENT && IDENT.platforms && IDENT.platforms[String(platform || '').toLowerCase()]);
+  const key = String(platform || '').toLowerCase();
+  const p = (IDENT && IDENT.platforms && IDENT.platforms[key]);
   if (!p) return '';
+  // a theme shape, not a plain disc: a platform should be as recognisable in silhouette as a house
+  const shape = p.shape || 'cookie';
   return `<span class="mk ${esc(size)}" title="${esc(platform)}" aria-hidden="true">`
-    + `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${esc(p.bg)}"/></svg>`
+    + `<svg viewBox="0 0 100 100"><use href="#mkshape-${esc(shape)}" fill="${esc(p.bg)}"/></svg>`
     + `<i class="ms" style="color:${esc(p.fg)}">${esc(p.icon)}</i></span>`;
 }
 
@@ -752,6 +762,30 @@ const mark = (kind, name, id, size = 'm') => {
     + `<svg viewBox="0 0 100 100"><use href="#mkshape-${esc(names[0])}" fill="${esc(tone(m.bg))}"/></svg>`
     + `<i class="ms" style="color:${esc(tone(m.fg))}">${esc(m.icon || 'label')}</i></span>`;
 };
+
+// Where a thing is a real outside service, it should wear that service's own logo - you recognise
+// GitHub's mark faster than any shape we could draw for it. The domain is all that is needed; the
+// favicon service does the rest, and anything not listed falls back to a Coco mark rather than a
+// broken image.
+const LOGO = { youtube: 'youtube.com', github: 'github.com', supabase: 'supabase.com', chrome_store: 'chromewebstore.google.com', play_console: 'play.google.com', autodraft: 'autodraft.in', roblox: 'roblox.com', meta: 'facebook.com', udemy: 'udemy.com', coursera: 'coursera.org',
+  vercel: 'vercel.com', drive: 'drive.google.com', gdrive: 'drive.google.com', gmail: 'mail.google.com', google: 'google.com', anthropic: 'anthropic.com', claude: 'claude.com',
+  instagram: 'instagram.com', facebook: 'facebook.com', kdp: 'kdp.amazon.com', amazon: 'amazon.com', gumroad: 'gumroad.com', shopify: 'shopify.com', payhip: 'payhip.com',
+  razorpay: 'razorpay.com', paypal: 'paypal.com', cloudflare: 'cloudflare.com', skillshare: 'skillshare.com', webtoon: 'webtoons.com', tapas: 'tapas.io', spotify: 'spotify.com',
+  steam: 'store.steampowered.com', itch: 'itch.io', pinterest: 'pinterest.com', x: 'x.com', twitter: 'x.com', android: 'android.com', play: 'play.google.com', chrome: 'chrome.google.com' };
+// The official logo when we know the service, the written-down platform mark when we do not, and a
+// derived mark as the last resort. Never a broken image: a favicon needs the network.
+function serviceLogo(id, name, size = 's') {
+  const px = size === 'l' ? 48 : size === 'm' ? 36 : 26;
+  const domain = LOGO[String(id || '').toLowerCase()] || LOGO[String(name || '').toLowerCase().replace(/[^a-z]/g, '')];
+  const own = platformMark(id, size) || mark('channel', name, id, size);
+  if (!domain) return own;
+  // The service's own logo sits on top of its Coco mark. If the favicon cannot be fetched - offline,
+  // or a service that has none - the img removes itself and the mark underneath is what shows. There
+  // is never an empty square, and never a letter standing in for a logo.
+  return `<span class="logo ${esc(size)}" title="${esc(name || id || '')}">${own}`
+    + `<img src="https://www.google.com/s2/favicons?sz=64&domain=${esc(domain)}" alt="" width="${px}" height="${px}"`
+    + ` loading="lazy" onerror="this.remove()"></span>`;
+}
 
 // ---------------------------------------------------------------- control plane (Coco = control centre)
 // Pure helpers, kept top-level so Lounge/control-center.test.js can drive the real code.
@@ -1043,7 +1077,7 @@ const V = {
     const T = CP.teams || [];
     if (sub === 'subteams') return bar + `<div class="card2">${T.flatMap(t => (t.subteams || []).map(s => `<div class="row">${mark('subteam', s.name, s.id)}<div class="grow"><b>${esc(s.name)}</b> <span class="muted">${esc(t.name)}</span><div class="muted">${esc(s.id)} · agent ${esc(s.agent_id)} · category ${esc(s.category || 'none')}</div></div></div>`)).join('') || '<span class="muted">No sub-teams.</span>'}</div>`;
     if (sub === 'categories') return bar + `<div class="card2">${T.flatMap(t => (t.categories || []).map(c => `<div class="row">${mark('category', c.name, c.code || c.id)}<div class="grow"><b>${esc(c.name)}</b> <span class="muted">${esc(t.name)}</span><div class="muted">${esc(c.id)} · ${esc(c.file)}</div></div></div>`)).join('') || '<span class="muted">No categories.</span>'}</div>`;
-    if (sub === 'channels') return bar + `<div class="card2">${T.flatMap(t => (t.channels || []).map(c => `<div class="row">${mark('channel', c.title || c.id, c.id)}<div class="grow"><b>${esc(c.title || c.id)}</b> ${chip(c.status === 'connected' ? 'connected' : c.status === 'waiting-founder' ? 'needs_yes' : 'later')}<div class="muted">${esc(t.name)} · ${esc(c.id)} · category ${esc(c.category || c.category_label || 'none')}</div></div></div>`)).join('') || '<span class="muted">No channels.</span>'}</div>`;
+    if (sub === 'channels') return bar + `<div class="card2">${T.flatMap(t => (t.channels || []).map(c => `<div class="row">${serviceLogo(c.platform || c.kind || c.id, c.title || c.id, 'm')}<div class="grow"><b>${esc(c.title || c.id)}</b> ${chip(c.status === 'connected' ? 'connected' : c.status === 'waiting-founder' ? 'needs_yes' : 'later')}<div class="muted">${esc(t.name)} · ${esc(c.id)} · category ${esc(c.category || c.category_label || 'none')}</div></div></div>`)).join('') || '<span class="muted">No channels.</span>'}</div>`;
     if (sub === 'heads') return bar + `<div class="card2">${T.map(t => { const h = (t.agents || []).find(a => a.id === t.head_agent_id); return `<div class="row">${mark('agent', h ? h.name : t.name, h ? h.id : t.id)}<div class="grow"><b>${esc(h ? h.name : 'no head')}</b> <span class="muted">${esc(t.name)}</span><div class="muted">${esc(h ? h.role : '')} · ${esc(h ? h.model : '')} · Claude ${esc(h ? h.claude : '')}</div></div>${chip(t.paused ? 'paused' : 'working')}</div>`; }).join('')}</div>`;
     if (sub === 'new') return bar + structurePage();
     return bar + `<div class="grid">${T.map(t => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="display:flex;gap:10px;align-items:center;min-width:0">${mark('team', t.name, t.id, 'l')}<h3 style="min-width:0;overflow-wrap:anywhere">${esc(t.name)}</h3></div>${chip(t.paused ? 'paused' : 'working')}</div>
@@ -1164,7 +1198,14 @@ const V = {
     if (!CP) return cpWait('The system page');
     const sys = CP.system || {}, cr = CP.cloud_runtime || {}, pol = CP.policies || {};
     const tabs = ['runtime', 'claude', 'policies', 'stop', 'audit'].map(t => `<button class="btn ${sub === t ? 'tonal' : 'text'}" data-sub="${t}">${t === 'stop' ? 'Emergency stop' : t === 'claude' ? 'Claude' : t[0].toUpperCase() + t.slice(1)}</button>`).join('');
-    const bar = `<div class="actions" style="margin-bottom:12px">${tabs}</div>`;
+    const bar = `<div class="actions" style="margin-bottom:12px">${tabs}</div>`
+      + (RELEASE ? `<div class="card2" style="margin-bottom:12px"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          ${mark('company', 'Coco', 'coco', 'l')}
+          <div class="grow"><h3 style="margin:0">${esc(RELEASE.name || ('Coco ' + RELEASE.version))}</h3>
+            <div class="muted">Released ${esc(RELEASE.released || '')} · this client: ${esc(window.cocoDesktop ? 'desktop build ' + ((RELEASE.builds || {}).desktop || '?') : 'web')}</div></div>
+        </div>
+        ${(RELEASE.notes || []).length ? `<ul class="relnotes">${RELEASE.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+        <div class="muted">All four Coco clients report this number. Internal build numbers stay per platform.</div></div>` : '');
     if (sub === 'policies') return bar + Object.entries(pol).map(([k, v]) => `<div class="card2" style="margin-bottom:12px"><h3>${esc(k.replace(/_/g, ' '))}</h3>${(v || []).map(line => `<div class="row"><div class="grow">${esc(line)}</div></div>`).join('')}</div>`).join('');
     if (sub === 'audit') return bar + `<div class="card2"><h3>Every control change</h3><div class="muted">What was changed, by whom, and whether it needed a YES.</div>${CONTROL_OPS.map(o => `<div class="row"><div class="grow"><b>${esc(o.scope)} ${esc(o.scope_id)} · ${esc(CONTROL_LABEL[o.key] || o.key)}</b> ${chip(o.state === 'applied' ? 'done' : o.state === 'needs_approval' ? 'waiting' : o.state === 'rejected' ? 'rejected' : 'failed')}
         <div class="muted">${esc(JSON.stringify(o.old_value) || 'unset')} → <b>${esc(JSON.stringify(o.new_value))}</b></div>
@@ -1206,7 +1247,7 @@ const V = {
       <div>${wait ? `${wait} things wait for your YES.` : 'Nothing waits for you.'} ${running ? `${running} tasks are running now.` : ''}</div>
       <div class="stats"><div class="stat"><b>${D.houses.filter(h => h.state === 'working').length}</b><span>Houses working</span></div><div class="stat"><b>${running}</b><span>tasks running</span></div><div class="stat"><b>${D.offerings.length}</b><span>channels and products</span></div><div class="stat"><b>${D.devices.filter(online).length}/${D.devices.length}</b><span>devices online</span></div></div></div>
       <div class="grid">${D.houses.map(h => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(h.name)}</h3>${chip(h.state)}</div><span class="muted">${esc(h.role)}</span><div>${esc(h.doing || '')}</div><span class="muted">Next: ${esc(h.next || '')}</span></div>`).join('')}</div>
-      <h3 style="margin:22px 0 8px">Connections</h3><div class="card2">${(D.integrations || []).map(c => `<div class="row"><img src="${LOGO[c.id] ? 'https://www.google.com/s2/favicons?sz=64&domain=' + LOGO[c.id] : 'coco.svg'}" alt="" width="28" height="28" style="border-radius:6px;flex:none"><div class="grow"><b>${esc(c.platform)}</b>${c.account ? ' · ' + esc(c.account) : ''}<div class="muted">${esc(c.error || c.next_action || (c.capabilities || []).join(', '))}${c.last_ok_at ? ' · checked ' + ago(c.last_ok_at) : ''}</div></div>${chip(c.state)}</div>`).join('') || '<span class="muted">No connections listed yet.</span>'}</div>
+      <h3 style="margin:22px 0 8px">Connections</h3><div class="card2">${(D.integrations || []).map(c => `<div class="row">${serviceLogo(c.id, c.platform, 'm')}<div class="grow"><b>${esc(c.platform)}</b>${c.account ? ' · ' + esc(c.account) : ''}<div class="muted">${esc(c.error || c.next_action || (c.capabilities || []).join(', '))}${c.last_ok_at ? ' · checked ' + ago(c.last_ok_at) : ''}</div></div>${chip(c.state)}</div>`).join('') || '<span class="muted">No connections listed yet.</span>'}</div>
       <h3 style="margin:22px 0 8px">Latest activity</h3><div class="card2">${D.activity.map(a => `<div class="row"><div class="grow"><b>${esc(a.action)}</b> · ${esc(a.detail || '')}<div class="muted">${esc(a.actor)} ${a.device_id ? '· ' + esc(deviceName(a.device_id)) : ''} · ${ago(a.at)}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;
   },
   // Notes (Boss 12:50 PM, 2026-10-26): one tab = notepad + idea inbox + planner. Paste any link (reel, pin,
@@ -1233,7 +1274,7 @@ const V = {
   },
   board() {
     const open = D.tasks.filter(t => !['done', 'stopped', 'cancelled'].includes(t.status)), closed = D.tasks.filter(t => ['done', 'stopped', 'cancelled'].includes(t.status)).slice(0, 15);
-    const row = (t) => { const notes = D.notes.filter(n => n.task_id === t.id); return `<div class="row"><div class="grow"><b>${esc(t.title)}</b> ${chip(t.status)}
+    const row = (t) => { const notes = D.notes.filter(n => n.task_id === t.id); return `<div class="row">${mark('team', (D.houses.find(h => h.id === t.house_id) || {}).name || 'Coco', t.house_id || 'coco')}<div class="grow"><b>${esc(t.title)}</b> ${chip(t.status)}
       <div class="muted">${esc((D.houses.find(h => h.id === t.house_id) || {}).name || 'Coco')} · by ${esc(t.created_by)}${t.created_device ? ' on ' + esc(deviceName(t.created_device)) : ''} · ${ago(t.created_at)}${t.claimed_by_device ? ` · <b>working on ${esc(deviceName(t.claimed_by_device))}</b>` : ''}</div>
       ${t.details ? `<div>${esc(t.details)}</div>` : ''}${notes.map(n => `<div class="muted">+ ${esc(n.note)} (${esc(n.by_email)})</div>`).join('')}${t.result ? `<div class="chip gold" style="margin-top:6px">Result: ${esc(t.result)}</div>` : ''}
       ${['queued', 'running', 'waiting_pc', 'needs_yes'].includes(t.status) ? `<div class="actions"><button class="btn tonal" data-note="${t.id}">Add points</button><button class="btn text" data-stop="${t.id}">Stop</button></div>` : ''}</div></div>`; };
@@ -1248,7 +1289,7 @@ const V = {
   },
   approvals() {
     const w = D.approvals.filter(a => a.state === 'waiting'), r = D.approvals.filter(a => a.state !== 'waiting');
-    const row = (a) => `<div class="row"><div class="grow"><b>${esc(a.code)} · ${esc(a.team || '')}</b> ${chip(a.state)}<div>${esc(a.what)}</div><div class="muted">${esc(a.raised_on || '')}${a.files ? ' · ' + esc(a.files) : ''}${a.decided_by ? ' · decided by ' + esc(a.decided_by) : ''}</div>
+    const row = (a) => `<div class="row">${mark('team', a.team || 'Coco', a.team || 'coco')}<div class="grow"><b>${esc(a.code)} · ${esc(a.team || '')}</b> ${chip(a.state)}<div>${esc(a.what)}</div><div class="muted">${esc(a.raised_on || '')}${a.files ? ' · ' + esc(a.files) : ''}${a.decided_by ? ' · decided by ' + esc(a.decided_by) : ''}</div>
       ${a.state === 'waiting' ? `<div class="actions"><button class="btn filled" data-yes="${a.id}">YES</button><button class="btn text" data-no="${a.id}">No</button></div>` : ''}</div></div>`;
     return `<p class="muted">Your YES is recorded with your name and device. Nothing goes public, costs money or gets deleted without it.</p>
       <h3 style="margin:8px 0">Waiting (${w.length})</h3><div class="card2">${w.map(row).join('') || '<span class="muted">All clear.</span>'}</div>
