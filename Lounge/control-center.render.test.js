@@ -35,6 +35,8 @@ const helpersSrc = ['cpStatus', 'cpRollup', 'cpWhy', 'cpChain'].map(grab).join('
 const controlsSrc = between(/\n\/\/ -+ real controls\n/, /\n\/\/ 80% warning/);
 const constSrc = [/const cpWait = .*/, /const num = .*/, /const money = .*/, /const CPWHY = .*/]
   .map((re) => { const m = src.match(re); assert.ok(m, `missing ${re}`); return m[0]; }).join('\n');
+// the identity marks the pages draw beside every team, sub-team, category, channel and agent
+const marksSrc = between(/\nconst MARK_SHAPE = /, /\n\/\/ -+ control plane/);
 
 // the few page helpers the control-centre pages borrow from the rest of the Lounge
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -42,7 +44,7 @@ const chip = (s) => `<span class="chip">${esc(s)}</span>`;
 const ago = (iso) => (iso ? '2 min ago' : 'never');
 
 const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago',
-  `${constSrc}\n${helpersSrc}\n${controlsSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
+  `${constSrc}\n${marksSrc}\n${helpersSrc}\n${controlsSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
 )(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago);
 
 const D0 = { approvals: [], activity: [], houses: [], devices: [], tasks: [], decisions: [], rules: [], integrations: [] };
@@ -178,16 +180,18 @@ assert.ok(/data-ctlnum="company\|\*\|daily_tokens"/.test(claudeHtml), 'the compa
 const anAgentId = CP.teams.find((t) => t.agents.length).agents[0].id;
 const POL = [{ scope: 'agent', scope_id: anAgentId, key: 'claude', value: 'blocked' }];
 const shown = make({ CP, LIVE: null, D: D0, sub: 'x', POLICIES: POL }).agents();
-const btns = [...shown.matchAll(/<button class="btn (tonal|text)" data-ctl="([^"]+)"/g)]
-  .map((m) => ({ on: m[1] === 'tonal', ctl: unesc(m[2]) }))
+// the options live in the app's segmented control: the live one carries aria-pressed="true"
+const OPTION = /<button data-ctl="([^"]+)" aria-pressed="(true|false)"/g;
+const btns = [...shown.matchAll(OPTION)]
+  .map((m) => ({ on: m[2] === 'true', ctl: unesc(m[1]) }))
   .filter((b) => b.ctl.startsWith(`agent|${anAgentId}|claude|`));
 assert.ok(btns.length === 3, `expected three Claude options for ${anAgentId}, got ${btns.length}`);
 const live = btns.find((b) => b.on);
 assert.ok(live && live.ctl.endsWith('|"blocked"'), `the live cloud policy must be the highlighted option, got ${JSON.stringify(btns)}`);
 // with no policy row the agent falls back to its registry default, never to a guess
 const bare = make({ CP, LIVE: null, D: D0, sub: 'x', POLICIES: [] }).agents();
-const bareOn = [...bare.matchAll(/<button class="btn (tonal|text)" data-ctl="([^"]+)"/g)]
-  .map((m) => ({ on: m[1] === 'tonal', ctl: unesc(m[2]) }))
+const bareOn = [...bare.matchAll(OPTION)]
+  .map((m) => ({ on: m[2] === 'true', ctl: unesc(m[1]) }))
   .find((b) => b.ctl.startsWith(`agent|${anAgentId}|claude|`) && b.on);
 assert.ok(bareOn && bareOn.ctl.includes(CP.teams.find((t) => t.agents.length).agents[0].claude), 'the registry default is shown when Coco has set nothing');
 
