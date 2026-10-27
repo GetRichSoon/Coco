@@ -51,11 +51,17 @@ data class Mark(val name: String, val bg: Color, val fg: Color, val icon: ImageV
 object Marks {
     private val S = MuShapes
     val coco = Mark("Coco", Mu.plum, Mu.bubblegum, Icons.Rounded.WorkspacePremium, listOf(S.sunny, S.flower, S.wavy, S.cookie))
+    // Kept in step with Lounge/identity.json, which is where these values are written down for all
+    // four clients. Poppy, Mochi and Tilly are houses that exist in Coco Cloud and had no mark, so
+    // the desktop drew them as grey initials while their neighbours had faces.
     val houses = mapOf(
         "gigi" to Mark("Gigi", Mu.tomato, Mu.cream, Icons.Rounded.PlayArrow, listOf(S.cookie, S.wavy, S.sunny, S.flower)),
         "lulu" to Mark("Lulu", Mu.cobalt, Mu.sky, Icons.Rounded.Extension, listOf(S.clover, S.soft, S.wavy, S.cookie), -7f),
         "fifi" to Mark("Fifi", Mu.butter, Mu.cocoa, Icons.Rounded.MenuBook, listOf(S.flower, S.blob, S.cookie, S.wavy)),
         "zaza" to Mark("Zaza", Mu.forest, Mu.butter, Icons.Rounded.SportsEsports, listOf(S.burst, S.sunny, S.soft, S.clover), -9f),
+        "poppy" to Mark("Poppy", Mu.plum, Mu.butter, Icons.Rounded.AutoStories, listOf(S.flower, S.cookie, S.soft, S.blob), 7f),
+        "mochi" to Mark("Mochi", Mu.cobalt, Mu.bubblegum, Icons.Rounded.Draw, listOf(S.blob, S.clover, S.wavy, S.soft), -8f),
+        "tilly" to Mark("Tilly", Mu.forest, Mu.cream, Icons.Rounded.Storefront, listOf(S.clover, S.cookie, S.sunny, S.wavy), 6f),
     )
     val members = mapOf(
         "lola" to Mark("Lola", Mu.marigold, Mu.ink, Icons.Rounded.Lightbulb, listOf(S.sunny, S.burst, S.cookie)),
@@ -68,7 +74,22 @@ object Marks {
         "kiki" to Mark("Kiki", Mu.cobalt, Mu.sky, Icons.Rounded.RocketLaunch, listOf(S.burst, S.soft, S.sunny), -9f),
         "didi" to Mark("Didi", Mu.cherry, Mu.cream, Icons.Rounded.Forum, listOf(S.blob, S.flower, S.wavy)),
         "bibi" to Mark("Bibi", Mu.butter, Mu.cocoa, Icons.Rounded.Payments, listOf(S.clover, S.cookie, S.blob), -6f),
+        "pixie" to Mark("Pixie", Mu.sky, Mu.ink, Icons.Rounded.TaskAlt, listOf(S.wavy, S.circle, S.soft), 7f),
+        "nono" to Mark("Nono", Mu.cocoa, Mu.butter, Icons.Rounded.HealthAndSafety, listOf(S.soft, S.blob, S.cookie), -7f),
     )
+
+    /** The company core itself, which is not a house and not a helper. */
+    val core = Mark("Core", Mu.plum, Mu.sky, Icons.Rounded.Hub, listOf(S.sunny, S.wavy, S.soft), 6f)
+
+    /** Whatever this id is - house, helper or the core - the one mark it wears everywhere. */
+    fun of(id: String?): Mark? {
+        val k = id?.lowercase()?.trim() ?: return null
+        return when (k) {
+            "core" -> core
+            "coco" -> coco
+            else -> houses[k] ?: members[k]
+        }
+    }
 }
 
 /** Angles of the 96 outline points, worked out once (the outline is redrawn every frame). */

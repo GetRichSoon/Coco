@@ -80,20 +80,18 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .row .grow { flex: 1; min-width: 0; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--surface-3); white-space: nowrap; }
 .chip.good { background: var(--good-c); color: var(--good); } .chip.warn { background: var(--warn-c); color: var(--warn); } .chip.bad { background: var(--bad-c); color: var(--bad); } .chip.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
-/* An identity mark. Its hue is derived from the thing's id, so it is the same on every device and
-   after every rebuild; its shape says what kind of thing it is. Red hues are excluded on purpose. */
-.mk { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: var(--mk-r, 30%);
-  background: hsl(var(--mk-h, 210) 56% 87%); color: hsl(var(--mk-h, 210) 68% 25%);
-  box-shadow: inset 0 0 0 1px hsl(var(--mk-h, 210) 38% 77%);
-  font: 800 13px/1 var(--body); letter-spacing: .01em; user-select: none; }
-.mk.s { width: 26px; height: 26px; font-size: 10px; }
-.mk.l { width: 48px; height: 48px; font-size: 17px; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mk {
-  background: hsl(var(--mk-h, 210) 30% 26%); color: hsl(var(--mk-h, 210) 72% 83%);
-  box-shadow: inset 0 0 0 1px hsl(var(--mk-h, 210) 26% 38%); } }
-:root[data-theme="dark"] .mk {
-  background: hsl(var(--mk-h, 210) 30% 26%); color: hsl(var(--mk-h, 210) 72% 83%);
-  box-shadow: inset 0 0 0 1px hsl(var(--mk-h, 210) 26% 38%); }
+/* An identity mark: the shape, colour and symbol written down in identity.json, drawn the way the
+   phone draws it. The colour belongs to the thing, so it does not flip with the theme - Lulu is
+   Lulu in the dark too. Only the large marks move, and only when Calm motion is off. */
+.mk { position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; user-select: none; }
+.mk svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mk i.ms { position: relative; font-size: 15px; line-height: 1; }
+.mk.s { width: 26px; height: 26px; } .mk.s i.ms { font-size: 11px; }
+.mk.l { width: 48px; height: 48px; } .mk.l i.ms { font-size: 20px; }
+.mk.alive svg { animation: mkspin var(--mk-spin, 45s) linear infinite var(--mk-dir, normal); transform-origin: 50% 50%; }
+.mk.alive i.ms { animation: mkbreathe 1.8s ease-in-out infinite alternate; }
+@keyframes mkspin { to { transform: rotate(360deg); } }
+@keyframes mkbreathe { to { transform: scale(1.06); } }
 /* A value that changed says so for a moment. Only possible now the screen is patched instead of
    rebuilt — and only when a handful of things moved, so a first load never strobes. */
 @keyframes mkflash { from { background: var(--primary-c); } to { background: transparent; } }
@@ -468,6 +466,9 @@ async function loadAllNow() {
   // the founder session under RLS). control-plane.json stays as the cache for the parts that are
   // registry, not rows: teams, policies, budgets, workflows. Whichever is missing is said, not guessed.
   try { const r = await fetch('control-plane.json', { cache: 'no-store' }); CP = r.ok ? await r.json() : null; } catch { CP = null; }
+  // The marks are a small fixed list, so it is fetched once and kept. If it cannot be fetched
+  // nothing breaks: markFor() falls back to a derived mark from the same curated palette.
+  if (!IDENT) { try { const r = await fetch('identity.json'); if (r.ok) { IDENT = await r.json(); OUTLINE.clear(); } } catch {} }
   try {
     const [rn, ev, ac, bi, po, co, ou] = await Promise.all([
       sb.from('runs').select('*').order('opened_at', { ascending: false }).limit(60),
@@ -642,34 +643,94 @@ const LOGO = { youtube: 'youtube.com', github: 'github.com', supabase: 'supabase
 const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
 
 // ---------------------------------------------------------------- identity marks
-// Every part of the company gets a mark that is always the same mark: derived from its id, so the
-// Software house is the same colour on the phone, on both desktops and after any rebuild, with
-// nothing to draw by hand and no file to keep in sync.
-//
-// Hue comes from a hash of the id, picked out of a band that deliberately excludes red and orange:
-// in this app red means a failure, and a team is not a failure. The shape says what KIND of thing it
-// is, which is how you can tell a sub-team from the category it works in at a glance.
-const MARK_SHAPE = { company: '30%', house: '30%', team: '30%', subteam: '42%', category: '50%', channel: '50%', agent: '50%' };
-// 60..330 avoids red/orange entirely; stepping by a prime scatters neighbours apart.
-const markHue = (seed) => {
+// The phone already had real marks: a colour pair, a Material symbol and a set of shapes the logo
+// morphs through, written by hand in Brand.kt for Coco, the houses and the helpers. The Lounge drew
+// hash-coloured initials instead, so the same company had two faces. These are now one list -
+// Lounge/identity.json - holding those exact values plus new marks, in the same language, for the
+// parts that never had one. Nothing is invented at render time: a mark is looked up, so Lulu is the
+// same Lulu on both desktops, both phones and in every future release.
+let IDENT = null;                                   // identity.json, loaded once at boot
+const PALETTE = () => (IDENT && IDENT.palette) || {};
+const tone = (c) => PALETTE()[c] || c || '#2F55C4';  // a palette name, or a literal colour
+
+// The same 96-point polar outlines the phone draws, from the same formulas, so a silhouette is
+// identical on every device. Worked out once per shape and kept.
+const OUTLINE = new Map();
+function outline(name) {
+  if (OUTLINE.has(name)) return OUTLINE.get(name);
+  const spec = (IDENT && IDENT.shapes && IDENT.shapes[name]) || { fn: 'circle' };
+  const N = 96, r = new Array(N);
+  for (let i = 0; i < N; i++) {
+    const u = i / N;
+    if (spec.fn === 'wave') r[i] = 1 - spec.depth * (0.5 + 0.5 * Math.cos(u * 2 * Math.PI * spec.k + (spec.phase || 0)));
+    else if (spec.fn === 'lobes') r[i] = 1 - spec.depth * Math.pow(Math.abs(Math.sin((u * spec.k * 2 * Math.PI) / 2)), 1.6);
+    else if (spec.fn === 'blob') r[i] = 0.78 + 0.22 * Math.abs(Math.cos(u * Math.PI));
+    else r[i] = 1;
+  }
+  let d = '';
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * 2 * Math.PI - Math.PI / 2, rr = r[i] * 48;
+    d += `${i ? 'L' : 'M'}${(50 + Math.cos(a) * rr).toFixed(2)} ${(50 + Math.sin(a) * rr).toFixed(2)}`;
+  }
+  d += 'Z';
+  OUTLINE.set(name, d);
+  return d;
+}
+
+// Which written-down mark does this thing wear? A team that IS a house wears that house's mark.
+// Everything else falls back to a mark derived from its own id - still from the curated palette and
+// shape library, never a random colour, and stable because the id is stable.
+function markFor(kind, name, id) {
+  const key = String(id || name || '').toLowerCase();
+  const M = (IDENT && IDENT.marks) || {}, F = (IDENT && IDENT.for) || {};
+  const found = M[key] || M[F[key]] || (kind === 'company' ? M.coco : null);
+  if (found) return found;
+  const D = (IDENT && IDENT.derived) || { pairs: [['cobalt', 'sky']], shapes: ['cookie'], icons: {} };
   let h = 0;
-  for (const ch of String(seed || '?')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return 60 + ((h * 37) % 271);
-};
-// Two words give two initials; one word gives one letter. A category keeps its number, which is what
-// the founders actually call it by.
-const markText = (kind, name, id) => {
-  if (kind === 'category' && /^\d+$/.test(String(id || ''))) return String(id).padStart(2, '0');
-  const words = String(name || id || '?').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return '?';
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
-};
+  for (const ch of `${kind}:${key}`) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const pair = D.pairs[h % D.pairs.length];
+  const icons = (D.icons && (D.icons[kind] || D.icons.agent)) || ['label'];
+  return { name: name || id, bg: pair[0], fg: pair[1], icon: icons[(h >> 3) % icons.length],
+           shapes: [D.shapes[(h >> 5) % D.shapes.length]], spin: 0, derived: true };
+}
+
+// A channel wears its platform's own colours, the way the phone's PlatformMark does.
+function platformMark(platform, size = 's') {
+  const p = (IDENT && IDENT.platforms && IDENT.platforms[String(platform || '').toLowerCase()]);
+  if (!p) return '';
+  return `<span class="mk ${esc(size)}" title="${esc(platform)}" aria-hidden="true">`
+    + `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="${esc(p.bg)}"/></svg>`
+    + `<i class="ms" style="color:${esc(p.fg)}">${esc(p.icon)}</i></span>`;
+}
+
+// Each outline is ~1.2 KB of coordinates, and a page can hold two hundred marks. Defining the nine
+// shapes once and pointing at them keeps a page small enough to diff cheaply on every refresh.
+let shapeDefsDone = false;
+function ensureShapeDefs() {
+  if (shapeDefsDone || typeof document === 'undefined') return;
+  const names = Object.keys((IDENT && IDENT.shapes) || {});
+  if (!names.length) return;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', '0'); svg.setAttribute('height', '0'); svg.setAttribute('aria-hidden', 'true');
+  svg.style.position = 'absolute';
+  svg.innerHTML = `<defs>${names.map((n) => `<path id="mkshape-${n}" d="${outline(n)}"/>`).join('')}</defs>`;
+  document.body.appendChild(svg);
+  shapeDefsDone = true;
+}
+
 const mark = (kind, name, id, size = 'm') => {
-  const seed = `${kind}:${String(id || name || '').toLowerCase()}`;
-  const text = markText(kind, name, id);
-  return `<span class="mk ${esc(size)}" style="--mk-h:${markHue(seed)};--mk-r:${MARK_SHAPE[kind] || '30%'}" `
-    + `title="${esc(name || id || '')}" aria-hidden="true">${esc(text)}</span>`;
+  const m = markFor(kind, name, id);
+  const names = (m.shapes && m.shapes.length ? m.shapes : ['circle']);
+  // The phone morphs its logo between shapes every few seconds. Here the shape is fixed and the
+  // motion is a slow turn and breath instead: a morph has to inline every outline it passes
+  // through, which put a quarter of a megabyte of coordinates on the teams page - rebuilt and
+  // diffed on every refresh. The silhouette is what identifies the thing; the morph was decoration.
+  const alive = size === 'l' && m.spin && (typeof store === 'undefined' || store.get('gs-calm') !== '1');
+  return `<span class="mk ${esc(size)}${alive ? ' alive' : ''}" title="${esc(m.name || name || id || '')}"`
+    + (alive ? ` style="--mk-spin:${Math.abs(360 / m.spin).toFixed(0)}s;--mk-dir:${m.spin < 0 ? 'reverse' : 'normal'}"` : '')
+    + ` aria-hidden="true">`
+    + `<svg viewBox="0 0 100 100"><use href="#mkshape-${esc(names[0])}" fill="${esc(tone(m.bg))}"/></svg>`
+    + `<i class="ms" style="color:${esc(tone(m.fg))}">${esc(m.icon || 'label')}</i></span>`;
 };
 
 // ---------------------------------------------------------------- control plane (Coco = control centre)
@@ -1234,6 +1295,7 @@ function once(el, event, fn) {
 
 function render() {
   if (!V[page]) page = 'home';
+  ensureShapeDefs();
   nav();
   $('#title').textContent = PAGES.find(p => p[0] === page)[1];
   $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;

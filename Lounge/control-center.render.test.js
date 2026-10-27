@@ -35,17 +35,20 @@ const helpersSrc = ['cpStatus', 'cpRollup', 'cpWhy', 'cpChain'].map(grab).join('
 const controlsSrc = between(/\n\/\/ -+ real controls\n/, /\n\/\/ 80% warning/);
 const constSrc = [/const cpWait = .*/, /const num = .*/, /const money = .*/, /const CPWHY = .*/]
   .map((re) => { const m = src.match(re); assert.ok(m, `missing ${re}`); return m[0]; }).join('\n');
-// the identity marks the pages draw beside every team, sub-team, category, channel and agent
-const marksSrc = between(/\nconst MARK_SHAPE = /, /\n\/\/ -+ control plane/);
+// the identity marks the pages draw beside every team, sub-team, category, channel and agent,
+// driven by the real identity.json so the test fails if a mark stops resolving
+const marksSrc = between(/\nlet IDENT = null;/, /\n\/\/ -+ control plane/);
+const IDENT = JSON.parse(fs.readFileSync(path.join(__dirname, 'identity.json'), 'utf8'));
 
 // the few page helpers the control-centre pages borrow from the rest of the Lounge
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const chip = (s) => `<span class="chip">${esc(s)}</span>`;
 const ago = (iso) => (iso ? '2 min ago' : 'never');
+const store = { get: () => null };   // no browser storage here; Calm motion reads as off
 
-const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago',
-  `${constSrc}\n${marksSrc}\n${helpersSrc}\n${controlsSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
-)(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago);
+const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago', 'store', 'IDENT_IN',
+  `${constSrc}\n${marksSrc}\nIDENT = IDENT_IN;\n${helpersSrc}\n${controlsSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
+)(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago, store, IDENT);
 
 const D0 = { approvals: [], activity: [], houses: [], devices: [], tasks: [], decisions: [], rules: [], integrations: [] };
 const PAGES = ['control', 'teams', 'agents', 'runs', 'ai', 'brain', 'workflows', 'system'];
