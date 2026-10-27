@@ -1,7 +1,7 @@
 {
   "name": "coco-lounge-desktop",
   "productName": "Coco Lounge",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Coco Lounge for Windows: the private Good Space app with tray, start with Windows and notifications.",
   "private": true,
   "main": "main.js",
