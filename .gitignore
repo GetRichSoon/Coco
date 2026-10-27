@@ -1,20 +1,16 @@
-node_modules/
-memory/Daily Copies/
-*.tmp
-*.env
-Grand Estate/Portraits/
-Grand Estate/*.blend
-Grand Estate/*.blend1
-Grand Estate/Motion Picture/
+# Downloaded AI model weights. They live on the PC, never in git.
+#
+# The nightly Daily Seal commits whatever is in the folder, and on 26 October that swept in the
+# FLUX.1-schnell weights: 8.7 GB, including one 6.4 GB and one 2.6 GB file. GitHub refuses any Git
+# LFS object over 2 GB, so from that night onward EVERY push from this repo failed - the seal of the
+# 26th, the seal of the 27th, and anything built on top of them. Two nights of company memory sat on
+# one laptop instead of reaching GitHub, and nothing said so out loud.
+#
+# The weights are a reproducible download (Hugging Face), not company memory. They stay on disk and
+# out of history.
+Tools/openvino-models/
 
-Lounge Desktop/node_modules/
-Lounge Android/.gradle/
-Lounge Android/build/
-Lounge Android/app/build/
-Lounge Android/local.properties
-Lounge Android/.kotlin/
-Gatekeeper/Gatekeeper Log.txt
-
-# Each extension is its own git repo (pushed to GitHub); Coco tracks only the index
-Extensions/*/
-!Extensions/Coco Idea Saver/
+# Model weights anywhere else, by extension, so the next download does not repeat this.
+*.onnx
+*.safetensors
+*.gguf
