@@ -1,0 +1,58 @@
+# Builds the Coco Lounge phone app in the cloud, so a broken build is caught here and not on a phone.
+#
+# It BUILDS. It does NOT publish, and it must not pretend to: the two phones run an APK signed with
+# the laptop's debug key, and Android refuses an update signed with any other key. A runner makes its
+# own throwaway debug key, so an APK from here installs on a clean phone and is REFUSED as an update
+# to the existing one. Publishing to the founders' phones therefore still runs from the laptop:
+#
+#   cd "Lounge Android" && ./gradlew assembleRelease && node publish-update.mjs
+#
+# To move publishing here, both of these have to be true, and both are founder decisions:
+#   1. a signing keystore exists and is held as ANDROID_KEYSTORE_BASE64 + _PASSWORD + _KEY_ALIAS +
+#      _KEY_PASSWORD, and app/build.gradle.kts is pointed at it instead of signingConfigs("debug").
+#      Switching away from the current debug key means both phones must uninstall and reinstall once.
+#   2. the Supabase service key publish-update.mjs needs is held as SUPABASE_SERVICE_KEY, since that
+#      script uploads the APK and writes the controls/apk_latest row the phones poll.
+name: android build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Lounge Android/**'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 'Lounge Android'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: what version this is
+        run: grep -E 'versionCode|versionName' app/build.gradle.kts
+
+      - name: build the debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: unit tests, if the app has any
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coco-lounge-debug-apk
+          path: 'Lounge Android/app/build/outputs/apk/debug/*.apk'
+          if-no-files-found: error
+
+      - name: say plainly what this APK is
+        run: echo "Built and signed with a throwaway runner debug key. It cannot update the founders' phones; it proves the app compiles."
