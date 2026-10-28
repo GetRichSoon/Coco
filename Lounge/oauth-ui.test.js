@@ -246,6 +246,30 @@ ok('on a page the bar does show, the control reads More and is not lit', () => {
   assert.match(bar, />More</);
 });
 
+// ------------------------------------------------- the rail has to be able to REACH its own links
+// Boss could not find Integrations on the desktop app, and it was not hidden, filtered or stale:
+// the rail is height:100vh and holds twenty links, so on a window that could not fit them the last
+// five - Integrations, Club, Rules, Devices, Settings - were simply cut off below the fold with
+// nothing to scroll. A nav that cannot reach its own last item is the same bug as a missing item.
+ok('the rail scrolls, so a short window cannot cut links off', () => {
+  const css = src.slice(0, src.indexOf('</style>'));
+  const rail = (css.match(/\n\.rail \{[^}]*\}/) || [''])[0];
+  assert.match(rail, /height:\s*100vh/, 'the rail is a fixed-height column');
+  const navRule = (css.match(/\n\.rail \.nav \{[^}]*\}/) || [''])[0];
+  assert.ok(navRule, 'the rail gives its nav no sizing rule at all, so the links overflow and clip');
+  assert.match(navRule, /overflow-y:\s*auto/, 'the nav cannot be scrolled');
+  // the one that is easy to leave out and silently breaks the whole thing
+  assert.match(navRule, /min-height:\s*0/,
+    'without min-height:0 a flex child will not shrink below its content, so overflow-y does nothing');
+  assert.match(navRule, /flex:\s*1/, 'the nav must take the space left between the brand and the footer');
+});
+
+ok('the brand and the footer stay put while the links scroll', () => {
+  const css = src.slice(0, src.indexOf('</style>'));
+  assert.match(css, /\.rail \.brand \{[^}]*flex:\s*none/, 'the brand would scroll away with the links');
+  assert.match(css, /\.rail \.me \{[^}]*flex:\s*none/, 'the sign-out footer would be pushed off');
+});
+
 // ---------------------------------------------------------------- the page says the right thing
 ok('the founder sees the agreed explanation before connecting', () => {
   assert.match(src.replace(/\s+/g, ' '), /Connect your \$\{esc\(p\.name\)\} account once\. Coco will securely store the authorization in the cloud so publishing can run without your PC\./);
