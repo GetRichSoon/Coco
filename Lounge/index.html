@@ -321,6 +321,11 @@ let me = null, founder = null, deviceId = store.get('gs-device-id'), page = loca
 // which kind the Structure form is making, and the parents chosen so far - kept outside render so
 // the choice survives a refresh landing mid-form.
 let newKind = 'subteam', newParent = {}, renaming = null, connAssign = null, connAdd = null;
+// Which platform the founder has just been sent off to authorise. Held here and nowhere else:
+// oauth_states is deny-all to every client on purpose, so the browser cannot ask the cloud whether
+// a flow is pending. "Connecting" is therefore what this page remembers about the last 10 minutes,
+// and it clears itself the moment a real connected account appears.
+let connConnecting = null, connConnectingAt = 0;
 let CHAT_LOG = [];
 const BOTTOM = ['home', 'control', 'board', 'approvals', 'ai'];
 // CP = the control plane snapshot (nova-hq/scripts/coco-control-snapshot.mjs -> control-plane.json).
@@ -541,6 +546,12 @@ async function loadAllNow() {
     STRUCT = st.data || [];
     CONNS = cn.data || [];
     CONN_LINKS = cl.data || [];
+    // The cloud is the authority on whether a connection happened: once a real account exists for
+    // the platform we were waiting on, "Connecting" has served its purpose and goes away. The flag
+    // is never what tells a founder they are connected - the account row is.
+    if (connConnecting && CONNS.some((c) => c.provider === connConnecting)) {
+      connConnecting = null; connConnectingAt = 0;
+    }
     OUTPUTS = ou.data || [];
     LIVE = (rn.data || ev.data || ac.data || bi.data) ? { runs: rn.data || [], events: ev.data || [], calls: ac.data || [], brain: bi.data || [] } : null;
     if (LIVE) CP = cpMerge(CP, LIVE);
@@ -938,16 +949,30 @@ const OAUTH_PLATFORMS = {
 async function oauthConnect(provider) {
   const p = OAUTH_PLATFORMS[provider];
   if (!p) { toast('No connection flow is built for that platform'); return; }
-  if (!confirm(`Connect ${p.name}?\n\nYou will be sent to ${p.name} to approve it. The token goes `
-    + `straight to Coco Cloud and never to this browser. Publishing stays in ask-me-first mode.`)) return;
+  if (!confirm(`Connect ${p.name}?\n\nConnect your ${p.name} account once. Coco will securely store `
+    + `the authorization in the cloud so publishing can run without your PC.\n\nYou will be sent to `
+    + `${p.name} to approve it. The authorization goes straight to Coco Cloud and never to this `
+    + `browser. Publishing stays in ask-me-first mode afterwards.`)) return;
 
+  // coco_oauth_begin checks is_founder() AND device_ok() inside. A refusal here is the gate doing
+  // its job, so it is shown as it came back rather than retried or routed around.
   const { data, error } = await sb.rpc('coco_oauth_begin', {
     p_provider: provider, p_connection_id: p.connection, p_team: p.team, p_subteam: p.subteam,
   });
-  if (error) { toast(error.message.replace(/^.*?:\s*/, '')); return; }
+  if (error) {
+    const why = error.message.replace(/^.*?:\s*/, '');
+    toast(/founder on a paired device/i.test(why)
+      ? 'Only a founder on a paired device can connect a platform. Check Devices.'
+      : why);
+    return;
+  }
   if (!data || !data.authorize_url) { toast('Coco did not return an authorization link'); return; }
+
+  // The state is the single-use credential for the callback, so it is never written anywhere this
+  // page keeps things. Only the fact that a flow is open is remembered.
+  connConnecting = provider; connConnectingAt = Date.now();
+  render();
   toast(`Sending you to ${p.name}. This link works once, for ten minutes.`);
-  // A new tab, so Coco stays open behind it and the person can come back to a live page.
   window.open(data.authorize_url, '_blank', 'noopener');
 }
 
@@ -1813,20 +1838,55 @@ const V = {
       : [l.team_id, l.subteam_id, l.category_id, l.channel_id].filter(Boolean)
           .map((x) => esc((tree.nodes.get(x) || {}).name || x)).join(' <span class="muted">›</span> ');
 
+    // What a founder needs to know about a connection, in one word. Derived from what the cloud
+    // actually recorded rather than from a status field somebody remembered to set: an account with
+    // a credential reference that is no longer connected needs re-authorising, not re-adding, and
+    // one that has never been checked is not the same as one that failed its check.
+    const connState = (c) => {
+      // The cloud is checked FIRST, always. "Connecting" is only this page's memory of the last ten
+      // minutes, so letting it win would tell a founder a flow was still open about an account that
+      // is already connected and verified.
+      if (c.state === 'error') return 'verification_failed';
+      if (c.state === 'connected') return c.last_verified_at ? 'connected' : 'connected_unverified';
+      if (connConnecting === c.provider && Date.now() - connConnectingAt < 600_000) return 'connecting';
+      if (c.secret_ref) return 'reauth_required';     // it was connected once; the token is gone or stale
+      return 'not_connected';
+    };
+    const CONN_CHIP = {
+      connecting: ['warn', 'Connecting'],
+      connected: ['good', 'Connected'],
+      connected_unverified: ['warn', 'Connected, not yet checked'],
+      verification_failed: ['bad', 'Verification failed'],
+      reauth_required: ['warn', 'Reconnect required'],
+      not_connected: ['bad', 'Not connected'],
+    };
+
     const card = (c) => {
       const l = linkOf(c.connection_id);
+      const st = connState(c);
+      const [cls, label] = CONN_CHIP[st] || ['', st];
+      const oauth = OAUTH_PLATFORMS[c.provider];
       return `<div class="row">${serviceLogo(c.provider, c.external_name, 'm')}
-        <div class="grow"><b>${esc(c.external_name)}</b> ${chip(c.state)}
+        <div class="grow"><b>${esc(c.external_name || c.account_label || c.connection_id)}</b>
+          <span class="chip ${cls}">${esc(label)}</span>
           ${c.external_handle ? `<span class="muted">${esc(c.external_handle)}</span>` : ''}
           <div class="muted">${esc(c.account_label || '')}${c.external_id ? ' · ' + esc(c.external_id) : ''}</div>
           <div class="muted">${where(l)}</div>
-          <div class="muted">${(c.permissions || []).map(esc).join(', ')}${c.last_verified_at ? ' · checked ' + ago(c.last_verified_at) : ' · never checked'}</div>
+          <div class="muted">${(c.permissions || []).map(esc).join(', ')}
+            · ${c.last_verified_at ? 'last verified ' + ago(c.last_verified_at) : 'never verified'}</div>
+          ${c.secret_ref ? `<div class="muted">Authorization held in the cloud vault. Coco never shows it,
+            and this page never receives it.</div>` : ''}
+          ${st === 'verification_failed' || st === 'reauth_required'
+            ? `<div class="muted">${st === 'reauth_required'
+                ? 'Gumroad needs you to approve it again. Nothing publishes until you do.'
+                : 'The last check against the platform did not pass.'}</div>` : ''}
           <div class="actions">
             <button class="btn text" data-cassign="${esc(c.connection_id)}">${l ? 'Change assignment' : 'Assign'}</button>
             <button class="btn text" data-cverify="${esc(c.connection_id)}">Verify</button>
-            ${c.state === 'not_connected'
-              ? `<button class="btn text" data-creconnect="${esc(c.connection_id)}">Reconnect</button>`
-              : `<button class="btn text" data-cdisconnect="${esc(c.connection_id)}">Disconnect</button>`}
+            ${oauth
+              ? `<button class="btn text" data-oauth="${esc(c.provider)}">Reconnect</button>`
+              : `<button class="btn text" data-creconnect="${esc(c.connection_id)}">Reconnect</button>`}
+            <button class="btn text" data-cdisconnect="${esc(c.connection_id)}">Disconnect</button>
           </div>
         </div></div>`;
     };
@@ -1861,19 +1921,24 @@ const V = {
     // Platforms that can be connected from here, in one visit, without touching a PC. Only a
     // platform with a real publishing API belongs on this list: for the rest a person uploads by
     // hand, and offering a Connect button for them would promise something that cannot happen.
-    const oauthReady = (CONNS || []).some((c) => c.provider === 'gumroad');
-    const connectable = oauthReady ? '' : `<div class="card2" style="margin-bottom:14px">
+    const connectable = Object.entries(OAUTH_PLATFORMS).map(([id, p]) => {
+      const mine = (CONNS || []).filter((c) => c.provider === id);
+      if (mine.length) return '';                    // it has its own card below, with its own state
+      const busy = connConnecting === id && Date.now() - connConnectingAt < 600_000;
+      return `<div class="card2" style="margin-bottom:14px">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          ${serviceLogo('gumroad', 'Gumroad', 'l')}
-          <div class="grow"><h3 style="margin:0">Gumroad</h3>
-            <div class="muted">The one store Coco can publish to on its own. Connect it once here and
-              the cloud keeps working with this computer switched off.</div></div>
-          <button class="btn filled" data-oauth="gumroad">Connect</button>
+          ${serviceLogo(id, p.name, 'l')}
+          <div class="grow"><h3 style="margin:0">${esc(p.name)}</h3>
+            <span class="chip ${busy ? 'warn' : 'bad'}">${busy ? 'Connecting' : 'Not connected'}</span></div>
+          <button class="btn filled" data-oauth="${esc(id)}">${busy ? 'Try again' : 'Connect ' + esc(p.name)}</button>
         </div>
-        <div class="muted" style="margin-top:8px">You will be sent to Gumroad to approve it. The
-          token comes back to Coco Cloud, never to this browser, and publishing stays in
-          <b>ask-me-first</b> mode afterwards.</div>
+        <div class="muted" style="margin-top:8px">Connect your ${esc(p.name)} account once. Coco will
+          securely store the authorization in the cloud so publishing can run without your PC.</div>
+        ${busy ? `<div class="muted" style="margin-top:6px">Waiting for you to finish on ${esc(p.name)}.
+          Once you have approved it, come back and press Refresh — the link works once and lasts ten
+          minutes.</div>` : ''}
       </div>`;
+    }).join('');
 
     const body = providers.map((p) => {
       const mine = (CONNS || []).filter((c) => c.provider === p.id);

@@ -50,13 +50,22 @@ const LINKS = [
   { connection_id: 'yt-moonveil', integration_id: 'youtube', team_id: 'youtube', subteam_id: 'sleep-ambient', category_id: 'lofi-sleep', channel_id: null, enabled: true },
 ];
 
+// The Integrations screen also knows which platforms can be connected from the browser, and
+// whether a flow was started in the last ten minutes. Both are real page state, so they are
+// supplied here rather than stubbed away: a platform missing from OAUTH_PLATFORMS would
+// otherwise make this file pass while the screen itself threw.
+const OAUTH_PLATFORMS = { gumroad: { name: 'Gumroad', connection: 'poppy', team: 'ebooks', subteam: 'ebooks/practical-skills' } };
+
 const make = (state = {}) => new Function(
   'CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago', 'store', 'IDENT_IN',
   'STRUCT', 'newKind', 'newParent', 'renaming', 'CONNS', 'CONN_LINKS', 'connAssign', 'connAdd', 'OUTPUTS',
+  'OAUTH_PLATFORMS', 'connConnecting', 'connConnectingAt', 'serviceLogo',
   `${marksSrc}\nIDENT = IDENT_IN;\n${structSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
 )(state.CP || CP, null, { integrations: state.providers || PROVIDERS, approvals: [] }, 'x', null, [], [],
   esc, chip, ago, store, IDENT, state.STRUCT || [], 'subteam', {}, null,
-  state.CONNS || CONNS, state.LINKS || LINKS, state.connAssign || null, state.connAdd || null, []);
+  state.CONNS || CONNS, state.LINKS || LINKS, state.connAssign || null, state.connAdd || null, [],
+  state.OAUTH_PLATFORMS || OAUTH_PLATFORMS, state.connConnecting || null, state.connConnectingAt || 0,
+  (id, name) => '<i>' + esc(name || id) + '</i>');
 
 let pass = 0;
 const t = (name, fn) => { fn(); pass++; console.log(`  ok  ${name}`); };
