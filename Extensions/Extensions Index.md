@@ -6,7 +6,7 @@ Theme for all of them: `..\Design Atelier\Material You Theme` (each extension ge
 | Extension | Folder | Store status (2026-10-23) | Users | Repo |
 |---|---|---|---|---|
 | Screen Time Tracker | not moved (out of scope) | Published | 458 | — |
-| Orbi | `Orbi` → junction to `Projects\Orbi` (VS Code had it open; move when closed) | Rejected (1.0.1), 2.8.0 in progress | 77 | Mangesh347/Orbi-New-Tab-Live-Wallpapers-Shortcuts |
+| Orbi | `Orbi` → junction to `Projects\Orbi` (VS Code had it open; move when closed) | 2.9.1 submitted 29 Oct, pending review (live 1.0.0) | 77 | Mangesh347/Orbi-New-Tab-Live-Wallpapers-Shortcuts |
 | TubeShot Pro | `TubeShot Pro` | Rejected (2.0.0) | — | none yet |
 | XCoda — Clear Audio Booster | `XCoda` | Published | 87 | Mangesh347/Volume-Booster |
 | Claude Enhancer | `Claude Enhancer` | Published | 29 | Mangesh347/claude-enhancer |
