@@ -924,6 +924,33 @@ async function connectionOp(op, connection, extra = {}, confirmWith = null) {
   return data;
 }
 
+// Connecting a platform, once, so the cloud can keep using it afterwards.
+//
+// This browser never sees the token. It asks coco_oauth_begin() for a one-time state and an
+// authorization URL - founder and paired device are checked inside, same as every other change -
+// and then hands the person to the platform. The platform sends its answer to Coco Cloud's own
+// callback, which does the exchange server-side and puts the token in the vault. Nothing secret
+// comes back through here, which is why there is nothing here to store or to leak.
+const OAUTH_PLATFORMS = {
+  gumroad: { name: 'Gumroad', connection: 'poppy', team: 'ebooks', subteam: 'ebooks/practical-skills' },
+};
+
+async function oauthConnect(provider) {
+  const p = OAUTH_PLATFORMS[provider];
+  if (!p) { toast('No connection flow is built for that platform'); return; }
+  if (!confirm(`Connect ${p.name}?\n\nYou will be sent to ${p.name} to approve it. The token goes `
+    + `straight to Coco Cloud and never to this browser. Publishing stays in ask-me-first mode.`)) return;
+
+  const { data, error } = await sb.rpc('coco_oauth_begin', {
+    p_provider: provider, p_connection_id: p.connection, p_team: p.team, p_subteam: p.subteam,
+  });
+  if (error) { toast(error.message.replace(/^.*?:\s*/, '')); return; }
+  if (!data || !data.authorize_url) { toast('Coco did not return an authorization link'); return; }
+  toast(`Sending you to ${p.name}. This link works once, for ten minutes.`);
+  // A new tab, so Coco stays open behind it and the person can come back to a live page.
+  window.open(data.authorize_url, '_blank', 'noopener');
+}
+
 // Every change to the company's shape goes through this one call, the same way every control change
 // goes through control(). Founder and paired device are checked inside coco_structure(), so a
 // refusal here is the gate working, not a bug to route around.
@@ -1831,6 +1858,23 @@ const V = {
             <button class="btn text" type="button" data-ccancel="1">Cancel</button></div>
         </form></div>` : '';
 
+    // Platforms that can be connected from here, in one visit, without touching a PC. Only a
+    // platform with a real publishing API belongs on this list: for the rest a person uploads by
+    // hand, and offering a Connect button for them would promise something that cannot happen.
+    const oauthReady = (CONNS || []).some((c) => c.provider === 'gumroad');
+    const connectable = oauthReady ? '' : `<div class="card2" style="margin-bottom:14px">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          ${serviceLogo('gumroad', 'Gumroad', 'l')}
+          <div class="grow"><h3 style="margin:0">Gumroad</h3>
+            <div class="muted">The one store Coco can publish to on its own. Connect it once here and
+              the cloud keeps working with this computer switched off.</div></div>
+          <button class="btn filled" data-oauth="gumroad">Connect</button>
+        </div>
+        <div class="muted" style="margin-top:8px">You will be sent to Gumroad to approve it. The
+          token comes back to Coco Cloud, never to this browser, and publishing stays in
+          <b>ask-me-first</b> mode afterwards.</div>
+      </div>`;
+
     const body = providers.map((p) => {
       const mine = (CONNS || []).filter((c) => c.provider === p.id);
       if (!mine.length && p.state === 'not_connected') return '';
@@ -1846,7 +1890,7 @@ const V = {
     }).join('');
 
     return `<p class="muted">Every platform the company is connected to, and every account under it. An account publishes only where you put it: Team › Sub-team › Category › Channel.</p>
-      ${adding}${form}${body || '<div class="card2"><span class="muted">No platforms yet.</span></div>'}`;
+      ${connectable}${adding}${form}${body || '<div class="card2"><span class="muted">No platforms yet.</span></div>'}`;
   },
 
   club() {
@@ -2154,6 +2198,7 @@ document.addEventListener('click', async (e) => {
   if (ds.sarchive) await structureOp('archive', ds.sarchive, `Archive ${ds.sarchive}? It stays in the company and can be restored.`);
   if (ds.srestore) await structureOp('restore', ds.srestore);
   if (ds.sedit) { renaming = ds.sedit; render(); }
+  if (ds.oauth) await oauthConnect(ds.oauth);
   if (ds.cadd) { connAdd = ds.cadd; connAssign = null; render(); }
   if (ds.cassign) { connAssign = ds.cassign; connAdd = null; render(); }
   if (ds.ccancel) { connAssign = null; connAdd = null; render(); }
