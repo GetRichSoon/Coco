@@ -21,7 +21,13 @@ for (const p of PAGES) {
 for (const p of ['home', 'board', 'notes', 'remote', 'approvals', 'company', 'club', 'rules', 'devices', 'settings']) {
   assert.ok(new RegExp(`\\['${p}',`).test(src), `${p} was lost from the nav`);
 }
-assert.ok(src.includes("const BOTTOM = ['home', 'control', 'board', 'approvals', 'ai']"), 'the bottom bar keeps Approvals reachable in one tap');
+// The bottom bar is four tabs plus a way into everything else. Approvals must still be one tap.
+// This asserted the exact list before, which meant the sheet that fixed fifteen pages being
+// unreachable on a phone read as a regression - the intent was one tap to Approvals, not that
+// particular five ids.
+assert.ok(/const BOTTOM = \[[^\]]*'approvals'[^\]]*\]/.test(src), 'Approvals must stay one tap away in the bottom bar');
+assert.ok(src.includes('data-more="1"'), 'the bottom bar needs a way into the pages it has no room for');
+assert.ok(src.includes('#moreNav'), 'the sheet that reaches every other page is missing');
 assert.ok(src.includes("fetch('control-plane.json'"), 'the dashboard loads the control plane snapshot');
 assert.ok(src.includes('let CP = null'), 'CP holds the snapshot');
 assert.ok(src.includes('const cpWait =') && src.includes('return cpWait('), 'a missing snapshot shows a waiting card, never a guess');

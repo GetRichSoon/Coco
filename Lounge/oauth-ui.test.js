@@ -195,6 +195,57 @@ ok('an unknown platform is refused before any cloud call', async () => {
   assert.match(log.filter((l) => l.toast).map((l) => l.toast).join(' '), /no connection flow/i);
 });
 
+// ---------------------------------------------------------------- can a founder REACH the page
+// The bug this guards against: below 780px the rail is display:none and the bottom bar held five
+// ids, so fifteen pages - Integrations among them - could not be reached at all on a phone. A
+// perfect Connect button is worth nothing if the screen holding it is unreachable.
+function renderNav({ current = 'connections' } = {}) {
+  const navSrc = lift(/\nfunction nav\(\) \{/, '\n}', 'nav()');
+  const pagesSrc = lift(/const PAGES = \[/, '];', 'PAGES');
+  const bottomSrc = lift(/const BOTTOM = \[/, '];', 'BOTTOM');
+  const out = {};
+  const $$ = (sel) => ({ sel, onclick: null, textContent: '' });
+  const morph = (node, html) => { out[node.sel] = html; };
+  const fn = new Function(
+    'D', 'page', 'esc', 'morph', '$', 'founder', 'me', 'deviceName', 'deviceId', 'sb', 'show', 'out',
+    pagesSrc + '\n' + bottomSrc + '\n' + navSrc + '\nnav();\nreturn out;');
+  return fn({ approvals: [] }, current, (s) => String(s == null ? '' : s), morph, $$,
+    { name: 'Boss', call_me: 'Boss' }, { email: 'x@y.z' }, () => 'This PC', 'dev1',
+    { auth: { signOut: async () => {} } }, () => {}, out);
+}
+
+ok('every page is reachable from the bottom bar, directly or through the sheet', () => {
+  const pagesSrc = lift(/const PAGES = \[/, '];', 'PAGES');
+  const ids = new Function(pagesSrc + '\nreturn PAGES.map((p) => p[0]);')();
+  const out = renderNav();
+  const reachable = new Set();
+  for (const key of ['#bottom', '#moreNav']) {
+    for (const m of String(out[key] || '').matchAll(/href="#([a-z-]+)"/g)) reachable.add(m[1]);
+  }
+  const missing = ids.filter((id) => !reachable.has(id));
+  assert.deepEqual(missing, [], 'unreachable on a phone: ' + missing.join(', '));
+});
+
+ok('Integrations specifically is reachable, and it is the page Connect lives on', () => {
+  const out = renderNav();
+  assert.match(String(out['#moreNav']), /href="#connections"/);
+  assert.match(String(out['#moreNav']), /Integrations/);
+});
+
+ok('the bottom bar offers a way into the rest, and says where you are', () => {
+  const out = renderNav({ current: 'connections' });
+  assert.match(String(out['#bottom']), /data-more="1"/, 'no way to reach the hidden pages');
+  // when the current page is one the bar cannot show, the control names it rather than saying More
+  assert.match(String(out['#bottom']), /Integrations/,
+    'the bar should name the current page when it is one of the hidden ones');
+});
+
+ok('on a page the bar does show, the control reads More and is not lit', () => {
+  const bar = String(renderNav({ current: 'home' })['#bottom']);
+  assert.match(bar, /data-more="1"/);
+  assert.match(bar, />More</);
+});
+
 // ---------------------------------------------------------------- the page says the right thing
 ok('the founder sees the agreed explanation before connecting', () => {
   assert.match(src.replace(/\s+/g, ' '), /Connect your \$\{esc\(p\.name\)\} account once\. Coco will securely store the authorization in the cloud so publishing can run without your PC\./);
