@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-27T11:11:54.081Z",
+  "generated_at": "2026-10-28T07:34:29.856Z",
   "generated_by": "scripts/coco-control-snapshot.mjs",
   "company": {
     "id": "good-space",
@@ -18,23 +18,23 @@
     "control_plane": "Coco",
     "stopped": {
       "by": "mangesh",
-      "at": "2026-10-26T12:54:40.030Z",
-      "reason": "Boss: stop company work (token loss)"
+      "at": "2026-10-27T12:33:16.385Z",
+      "reason": "Migration: company work stopped while the cloud runtime is deployed and proven (tonight's Short is already uploaded and scheduled on YouTube)"
     },
     "counts": {
       "teams": 28,
-      "live_teams": 12,
+      "live_teams": 13,
       "agents": 204,
       "subteams": 37,
       "categories": 48,
-      "channels": 15
+      "channels": 16
     }
   },
   "system": {
     "stopped": {
       "by": "mangesh",
-      "at": "2026-10-26T12:54:40.030Z",
-      "reason": "Boss: stop company work (token loss)"
+      "at": "2026-10-27T12:33:16.385Z",
+      "reason": "Migration: company work stopped while the cloud runtime is deployed and proven (tonight's Short is already uploaded and scheduled on YouTube)"
     },
     "paused_teams": [
       {
@@ -75,12 +75,6 @@
       },
       {
         "id": "content",
-        "by": "mangesh",
-        "at": "2026-10-07T05:48:09.933Z",
-        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
-      },
-      {
-        "id": "youtube",
         "by": "mangesh",
         "at": "2026-10-07T05:48:09.933Z",
         "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
@@ -142,15 +136,495 @@
     "provider": null,
     "provider_note": "no model provider in the cloud yet: model steps report \"no_provider\" and are never faked",
     "workflows": [
+      "android-build.yml",
+      "capability-proof.yml",
+      "claude-proof.yml",
       "cloud-cycle.yml",
-      "tests.yml"
+      "tests.yml",
+      "workflow-proof.yml"
     ],
     "pipelines": [
+      {
+        "id": "appcare-pick",
+        "title": "Nono App Care: pick the next piece of work",
+        "team": "appcare",
+        "agent": "appcare.nono",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "comics-pick",
+        "title": "Mochi Comics Manga and Anime: pick the next piece of work",
+        "team": "comics",
+        "agent": "comics.comics-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "commerce-pick",
+        "title": "Tilly Commerce and Dropshipping: pick the next piece of work",
+        "team": "commerce",
+        "agent": "commerce.commerce-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "courses-pick",
+        "title": "Fifi Courses: pick the next piece of work",
+        "team": "courses",
+        "agent": "courses.courses-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "design-guild-pick",
+        "title": "Vivi Design: pick the next piece of work",
+        "team": "design-guild",
+        "agent": "design-guild.vivi",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "ebook-daily",
+        "title": "Poppy Ebooks: build the workbook EPUB",
+        "team": "ebooks",
+        "agent": "ebooks.ebooks-head",
+        "steps": [
+          {
+            "id": "build",
+            "kind": "cloud",
+            "job": "build-artifact",
+            "purpose": null
+          },
+          {
+            "id": "record",
+            "kind": "output",
+            "job": null,
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "ebooks-pick",
+        "title": "Poppy Ebooks and Workbooks: pick the next piece of work",
+        "team": "ebooks",
+        "agent": "ebooks.ebooks-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "games-pick",
+        "title": "Zaza Games: pick the next piece of work",
+        "team": "games",
+        "agent": "games.games-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "keeper-pick",
+        "title": "Pixie Keeper: pick the next piece of work",
+        "team": "keeper",
+        "agent": "keeper.pixie",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "research-pick",
+        "title": "Lili Research Guild: pick the next piece of work",
+        "team": "research",
+        "agent": "research.lili",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "social-pick",
+        "title": "Gigi Social Media: pick the next piece of work",
+        "team": "social",
+        "agent": "social.social-media-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "software-pick",
+        "title": "Lulu Software: pick the next piece of work",
+        "team": "software",
+        "agent": "software.software-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
       {
         "id": "topic-pick",
         "title": "Pick the next topic from collected candidates",
         "team": "core",
         "agent": "core.quill",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "youtube-pick",
+        "title": "YouTube Studio: pick the next piece of work",
+        "team": "youtube",
+        "agent": "youtube.marquee",
         "steps": [
           {
             "id": "rank",
@@ -257,10 +731,34 @@
       "repo": "GetRichSoon/CocoMaison",
       "connected": false,
       "note": "no GitHub token in this runtime: showing what the repository says, not live run status",
-      "branch": "app/coco-halo",
-      "head": "ccd0d16 token plan: 3-layer runtime, Claude only for decisions and new code (Boss)",
-      "head_at": "2026-10-27T00:33:52+05:30",
+      "branch": "cloud-foundation",
+      "head": "e37f412 the company's first workflow that makes something real",
+      "head_at": "2026-10-28T13:01:23+05:30",
       "workflows": [
+        {
+          "file": "android-build.yml",
+          "name": "android build",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": []
+        },
+        {
+          "file": "capability-proof.yml",
+          "name": "capability proof",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": []
+        },
+        {
+          "file": "claude-proof.yml",
+          "name": "claude proof",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": [
+            "ANTHROPIC_API_KEY",
+            "SUPABASE_ENGINE_KEY"
+          ]
+        },
         {
           "file": "cloud-cycle.yml",
           "name": "cloud cycle",
@@ -281,6 +779,15 @@
           "schedules": [],
           "manual": true,
           "needs_secrets": []
+        },
+        {
+          "file": "workflow-proof.yml",
+          "name": "workflow proof",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": [
+            "SUPABASE_ENGINE_KEY"
+          ]
         }
       ],
       "runs": []
@@ -366,10 +873,10 @@
     "usage": {
       "day": {
         "window": "day",
-        "since": "2026-10-26T18:30:00.000Z",
-        "calls": 1,
+        "since": "2026-10-27T18:30:00.000Z",
+        "calls": 0,
         "done": 0,
-        "blocked": 1,
+        "blocked": 0,
         "tokens": 0,
         "output_tokens": 0,
         "cache_read_tokens": 0,
@@ -382,9 +889,7 @@
         "unverified_tokens": 0,
         "over_budget_calls": 0,
         "consumed_unrecorded": 0,
-        "blocked_by_reason": {
-          "stopped": 1
-        }
+        "blocked_by_reason": {}
       },
       "week": {
         "window": "week",
@@ -501,6 +1006,7 @@
       "claude_calls_done": 0,
       "claude_calls_refused": 1,
       "cloud_jobs_available": [
+        "build-artifact",
         "build-package",
         "filter-rank",
         "store-result"
@@ -509,19 +1015,52 @@
   },
   "brain": {
     "stats": {
-      "items": 95,
+      "items": 97,
       "retired": 0,
       "by_kind": {
-        "decision": 95
+        "decision": 95,
+        "knowledge": 2
       },
       "by_team": {
-        "none": 95
+        "none": 95,
+        "youtube": 2
       },
       "by_visibility": {
-        "company": 95
+        "company": 95,
+        "team": 2
       }
     },
     "items": [
+      {
+        "id": "BRN-2026-10-27-0097",
+        "kind": "knowledge",
+        "title": "pycairo select_font_face fails silently: our Inter videos were never Inter",
+        "team_id": "youtube",
+        "category_id": null,
+        "visibility": "team",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T20:44:06.529Z",
+        "created_by": "nova",
+        "source": null,
+        "run_id": null,
+        "chars": 903
+      },
+      {
+        "id": "BRN-2026-10-27-0096",
+        "kind": "knowledge",
+        "title": "Long sleep/ambient videos: render one periodic segment, loop it losslessly",
+        "team_id": "youtube",
+        "category_id": "youtube/lofi-sleep",
+        "visibility": "team",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T20:43:53.388Z",
+        "created_by": "nova",
+        "source": null,
+        "run_id": null,
+        "chars": 1114
+      },
       {
         "id": "BRN-2026-10-27-0095",
         "kind": "decision",
@@ -1091,40 +1630,37 @@
         "source": "company/DECISIONS.md",
         "run_id": null,
         "chars": 139
-      },
-      {
-        "id": "BRN-2026-10-27-0057",
-        "kind": "decision",
-        "title": "YES: The Flow posts exactly 1 Short per day (not 2 yet). It posts at the first PC start of the day, which is usually abo",
-        "team_id": null,
-        "category_id": null,
-        "visibility": "company",
-        "approved": true,
-        "seen": 1,
-        "created_at": "2026-10-27T09:48:37.798Z",
-        "created_by": "mangesh",
-        "source": "company/DECISIONS.md",
-        "run_id": null,
-        "chars": 260
-      },
-      {
-        "id": "BRN-2026-10-27-0056",
-        "kind": "decision",
-        "title": "YES to A-010: mutual remote access between the two PCs, Shreya's 3 terminals always connected, latest Nova installed on ",
-        "team_id": null,
-        "category_id": null,
-        "visibility": "company",
-        "approved": true,
-        "seen": 1,
-        "created_at": "2026-10-27T09:48:37.791Z",
-        "created_by": "mangesh",
-        "source": "company/DECISIONS.md",
-        "run_id": null,
-        "chars": 154
       }
     ]
   },
   "runs": [
+    {
+      "run_id": "RUN-2026-10-27-000002",
+      "parent_run_id": null,
+      "root_run_id": "RUN-2026-10-27-000002",
+      "depth": 0,
+      "kind": "manual",
+      "title": "local gate dry-run",
+      "status": "open",
+      "chain": {
+        "company": "good-space",
+        "team": "core",
+        "subteam": null,
+        "category": null,
+        "channel": null,
+        "agent": "core.quill",
+        "task": null
+      },
+      "opened_at": "2026-10-27T15:56:51.650Z",
+      "closed_at": null,
+      "opened_by": "nova",
+      "result": null,
+      "tokens": 0,
+      "cost": 0,
+      "children": [],
+      "ai_calls": [],
+      "events": []
+    },
     {
       "run_id": "RUN-2026-10-27-000001",
       "parent_run_id": null,
@@ -1576,7 +2112,7 @@
           "name": "Ebooks Head",
           "role": "Head of Ebooks and Workbooks House",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -1709,7 +2245,7 @@
           "name": "Comics Head",
           "role": "Head of Comics, Manga and Anime House",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -1855,7 +2391,7 @@
           "name": "Courses Head",
           "role": "Head of Courses House",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -1999,7 +2535,7 @@
           "name": "Social Media Head",
           "role": "Head of Social Media House",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -2145,7 +2681,7 @@
           "name": "Games Head",
           "role": "Head of Games House",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -2315,7 +2851,7 @@
           "name": "Commerce Head",
           "role": "Head of Commerce and Dropshipping House",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -2413,7 +2949,7 @@
           "name": "Pixie",
           "role": "Task Keeper and Token Watchdog",
           "level": "director",
-          "model": "opus",
+          "model": "haiku",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -2447,7 +2983,7 @@
           "name": "Nono",
           "role": "App Care Head",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -2516,7 +3052,7 @@
           "name": "Vivi",
           "role": "UI UX Design Head",
           "level": "director",
-          "model": "opus",
+          "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
           "paused": false,
@@ -3648,15 +4184,11 @@
         "youtube_api"
       ],
       "head_agent_id": "youtube.marquee",
-      "paused": {
-        "by": "mangesh",
-        "at": "2026-10-07T05:48:09.933Z",
-        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
-      },
+      "paused": null,
       "counts": {
         "subteams": 0,
         "categories": 14,
-        "channels": 15,
+        "channels": 16,
         "agents": 16
       },
       "budget_share_pct": null,
@@ -3882,6 +4414,15 @@
           "category": "youtube/kahani-ghar",
           "category_label": "Hindi Family Stories",
           "yt_category_id": "1"
+        },
+        {
+          "id": "moonveil-audio",
+          "title": "Moonveil Audio",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": null,
+          "category_label": "Lofi / Sleep",
+          "yt_category_id": "10"
         }
       ],
       "agents": [
@@ -3893,7 +4434,7 @@
           "model": "opus",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3904,7 +4445,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3915,7 +4456,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3926,7 +4467,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": ".claude/agents-paused/script-writer.md"
         },
         {
@@ -3937,7 +4478,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3948,7 +4489,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3959,7 +4500,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3970,7 +4511,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -3981,7 +4522,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": ".claude/agents/video-producer.md"
         },
         {
@@ -3992,7 +4533,7 @@
           "model": "haiku",
           "claude": "on_demand",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -4003,7 +4544,7 @@
           "model": "haiku",
           "claude": "on_demand",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -4014,7 +4555,7 @@
           "model": "haiku",
           "claude": "on_demand",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -4025,7 +4566,7 @@
           "model": "haiku",
           "claude": "on_demand",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -4036,7 +4577,7 @@
           "model": "sonnet",
           "claude": "allowed",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         },
         {
@@ -4047,7 +4588,7 @@
           "model": "haiku",
           "claude": "on_demand",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": ".claude/agents-paused/social-publisher.md"
         },
         {
@@ -4058,7 +4599,7 @@
           "model": "haiku",
           "claude": "on_demand",
           "subteam_id": null,
-          "paused": true,
+          "paused": false,
           "prompt": null
         }
       ]
@@ -4889,30 +5430,519 @@
       ]
     }
   ],
+  "capabilities": {
+    "capabilities": 14,
+    "cloud_ready": 7,
+    "pc_only": 7,
+    "by_status": {
+      "ready": 7,
+      "blocked": 6,
+      "needs_money": 1
+    },
+    "uses": 0,
+    "by_capability": [],
+    "list": [
+      {
+        "id": "analytics-tokens",
+        "name": "Token and cost analytics",
+        "kind": "analytics",
+        "teams": [
+          "core",
+          "keeper"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "build-android",
+        "name": "Android app build",
+        "kind": "build",
+        "teams": [
+          "software",
+          "core"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "build-ebook-epub",
+        "name": "EPUB build from Markdown",
+        "kind": "build",
+        "teams": [
+          "ebooks",
+          "courses"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "build-ebook-pdf",
+        "name": "Print-fidelity PDF build from Markdown",
+        "kind": "build",
+        "teams": [
+          "ebooks",
+          "courses"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "build-roblox",
+        "name": "Roblox experience build",
+        "kind": "build",
+        "teams": [
+          "games"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "build-web-vercel",
+        "name": "Website and web app build/deploy",
+        "kind": "build",
+        "teams": [
+          "software",
+          "core"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "image-openvino",
+        "name": "Local image generation (FLUX.1-schnell on OpenVINO)",
+        "kind": "image",
+        "teams": [
+          "comics",
+          "youtube",
+          "publishing"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "needs_money",
+        "uses": 0
+      },
+      {
+        "id": "pc-control",
+        "name": "PC control and device automation",
+        "kind": "device",
+        "teams": [
+          "core",
+          "appcare"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "publish-chrome-store",
+        "name": "Chrome Web Store publishing",
+        "kind": "publish",
+        "teams": [
+          "software"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "publish-youtube",
+        "name": "YouTube upload and scheduling",
+        "kind": "publish",
+        "teams": [
+          "youtube"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "qa-video",
+        "name": "Video quality check",
+        "kind": "qa",
+        "teams": [
+          "youtube",
+          "comics"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "research-trends",
+        "name": "Demand research (trends, suggestions, competition)",
+        "kind": "research",
+        "teams": [
+          "youtube",
+          "software",
+          "commerce",
+          "publishing",
+          "games",
+          "research"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "video-render-cairo",
+        "name": "2D video render (pycairo)",
+        "kind": "render",
+        "teams": [
+          "youtube",
+          "comics"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "voice-kokoro",
+        "name": "Offline voice (Kokoro TTS)",
+        "kind": "audio",
+        "teams": [
+          "youtube",
+          "comics",
+          "publishing"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      }
+    ],
+    "gaps": [
+      {
+        "id": "build-android",
+        "name": "Android app build",
+        "cloud_status": "blocked",
+        "why": "Proved in a runner on 2026-10-27 (Actions run 40551081504): all three apps build a debug APK with no laptop - cleanbar 7.7 MB, nova-island 8.0 MB, fast-nova 78.6 MB. The toolchain is NOT the blocker any more; release signing is. Every app still signs with the debug key, which Play rejects, and no release keystore exists for any of them. Stays pc-only so a cloud run cannot pick it and ship a debug-signed APK; flip to [pc, cloud] once ANDROID_KEYSTORE_BASE64 and its three companions exist (docs/CLOUD_SECRETS.md).",
+        "blocking_dependencies": [
+          "Flutter SDK (fast-nova only): cloned in the workflow; needs Gradle >= 8.14 and AGP >= 8.11.1",
+          "release signing keystore: 4 GitHub secrets; founder must create the keystore"
+        ]
+      },
+      {
+        "id": "build-ebook-pdf",
+        "name": "Print-fidelity PDF build from Markdown",
+        "cloud_status": "blocked",
+        "why": "Two laptop-only assumptions, both fixable in code and neither needing money: the browser is a hardcoded Windows path, and the fonts live outside git. Point it at any Chromium on PATH and commit (or licence-check) the fonts, and this becomes cloud-ready like the EPUB build. See also MISTAKES 16-17: a font that is not installed is substituted silently, so the fallback must never be assumed to look right.",
+        "blocking_dependencies": []
+      },
+      {
+        "id": "build-roblox",
+        "name": "Roblox experience build",
+        "cloud_status": "blocked",
+        "why": "Studio is a Windows desktop application; only the Open Cloud publish step could move.",
+        "blocking_dependencies": [
+          "Roblox Studio: no headless equivalent",
+          "Roblox Open Cloud key: would need a secret"
+        ]
+      },
+      {
+        "id": "image-openvino",
+        "name": "Local image generation (FLUX.1-schnell on OpenVINO)",
+        "cloud_status": "needs_money",
+        "why": "The cloud equivalent is a hosted image model, which costs money. Local stays free.",
+        "blocking_dependencies": [
+          "FLUX.1-schnell int4: must be fetched; several GB",
+          "Intel CPU/iGPU: no iGPU in a standard runner"
+        ]
+      },
+      {
+        "id": "pc-control",
+        "name": "PC control and device automation",
+        "cloud_status": "blocked",
+        "why": "A device capability by nature: the cloud can queue a command, only the PC can perform it.",
+        "blocking_dependencies": []
+      },
+      {
+        "id": "publish-chrome-store",
+        "name": "Chrome Web Store publishing",
+        "cloud_status": "blocked",
+        "why": "Code is ready for the cloud: cws_publish.mjs takes CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN / CWS_PUBLISHER_ID from the environment and falls back to the laptop vault. Still blocked because CWS_REFRESH_TOKEN has never been obtained - one founder Google consent. Proved on 2026-10-27 that it refuses with NOT CONNECTED before uploading anything when the token is absent.",
+        "blocking_dependencies": [
+          "CWS client id/secret/refresh token: needs a one-time founder Google consent"
+        ]
+      },
+      {
+        "id": "publish-youtube",
+        "name": "YouTube upload and scheduling",
+        "cloud_status": "blocked",
+        "why": "Code is stdlib and env-driven, so it would run anywhere: YT_CLIENT_ID / YT_CLIENT_SECRET / YT_REFRESH_TOKEN as GitHub secrets is all it needs. It is policy, not capability, that keeps it on the laptop - the founder's rule that publishing happens there, and 13 channel credentials in one place being a bigger blast radius than one. See docs/CLOUD_SECRETS.md.",
+        "blocking_dependencies": [
+          "YT_CLIENT_ID / YT_CLIENT_SECRET / YT_REFRESH_TOKEN: would need the same values as GitHub secrets; founder rule keeps publishing on the laptop"
+        ]
+      }
+    ],
+    "note": "runs_on says where a capability may actually run. A cloud run can never pick a PC-only one."
+  },
+  "templates": {
+    "templates": 10,
+    "uses": 0,
+    "by_template": [],
+    "tokens_used": {
+      "value": 0,
+      "basis": "measured",
+      "source": "recorded on each use from the gateway"
+    },
+    "tokens_saved_measured": {
+      "value": 0,
+      "basis": "measured",
+      "source": "templates whose baseline was actually measured"
+    },
+    "tokens_saved_estimated": {
+      "value": 0,
+      "basis": "estimated",
+      "source": "templates whose baseline is an estimate of what the work used to cost"
+    },
+    "unknown_baselines": [],
+    "note": "saved = the recorded baseline minus what the reuse actually spent. A saving is only as good as its baseline, so the two are reported apart.",
+    "list": [
+      {
+        "id": "comic-episode",
+        "version": "1.0.0",
+        "name": "Comic or manga episode",
+        "team": "comics",
+        "category": "comics/webcomics",
+        "kind": "comic",
+        "summary": "One episode of an original series: script, panel layout, art and the per-platform export. Characters and plots are the company's own.",
+        "uses": 0
+      },
+      {
+        "id": "course-outline-pack",
+        "version": "1.0.0",
+        "name": "Course outline and lesson pack",
+        "team": "courses",
+        "category": "courses/udemy",
+        "kind": "course",
+        "summary": "A course in the company's shape: promise, module and lesson outline, scripts, exercises and the platform listing pack.",
+        "uses": 0
+      },
+      {
+        "id": "ebook-kdp-workbook",
+        "version": "1.0.0",
+        "name": "Workbook or ebook for KDP and direct sale",
+        "team": "ebooks",
+        "category": "ebooks/kdp",
+        "kind": "document",
+        "summary": "A workbook or short non-fiction ebook in the company's shape: structure, interior layout, cover brief, front and back matter, and the KDP + direct listing pack. Original content only.",
+        "uses": 0
+      },
+      {
+        "id": "extension-mv3-pro",
+        "version": "1.0.0",
+        "name": "Chrome MV3 extension with a Pro tier",
+        "team": "software",
+        "category": "software/extensions",
+        "kind": "software",
+        "summary": "A Manifest V3 extension with the company's standard shape: options page, storage, Material You theme, a Pro tier with checkout and licence activation, and a store listing pack. The billing stack and the theme are written and proven; only the feature and its UI change.",
+        "uses": 0
+      },
+      {
+        "id": "flow-short-habit",
+        "version": "2.1.0",
+        "name": "Kai and Orbi explainer Short",
+        "team": "youtube",
+        "category": "youtube/science",
+        "kind": "video",
+        "summary": "A 28-35 s vertical explainer with Kai and Orbi: illustrated beats, pro captions, animated watermark, lip sync, camera push and synth sound design. The engine is written and proven; only the topic, the scene art and the colours change per episode.",
+        "uses": 0
+      },
+      {
+        "id": "product-landing-site",
+        "version": "1.0.0",
+        "name": "Product landing site",
+        "team": "software",
+        "category": "software/web",
+        "kind": "site",
+        "summary": "The one-page site every product gets: what it does, who it is for, pricing, privacy and the legal pages, in the company design system. Deployed on push.",
+        "uses": 0
+      },
+      {
+        "id": "roblox-experience",
+        "version": "1.0.0",
+        "name": "Roblox experience",
+        "team": "games",
+        "category": "games/roblox",
+        "kind": "game",
+        "summary": "A Roblox experience in the company's shape: place structure, Luau systems, a monetisation surface and the publish pack. The build and publish steps are known; only the game design changes.",
+        "uses": 0
+      },
+      {
+        "id": "shop-product-listing",
+        "version": "1.0.0",
+        "name": "Shop product listing",
+        "team": "commerce",
+        "category": "commerce/shopops",
+        "kind": "listing",
+        "summary": "A product listing in the company's shape: supplier check, pricing with real margins, images, copy and the store upload pack.",
+        "uses": 0
+      },
+      {
+        "id": "sleep-ambient-loop",
+        "version": "1.1.0",
+        "name": "Long-form sleep / ambient loop",
+        "team": "youtube",
+        "category": "youtube/lofi-sleep",
+        "kind": "video",
+        "summary": "A 6-10 hour sleep or ambient video with original synthesised music and a calm night scene. An 8 h video cannot be rendered frame by frame, so one exactly-periodic 128 s segment is rendered and repeated losslessly by ffmpeg. Production calls no model at all: every sample is additive synthesis and every pixel is pycairo. Only the palette and the chord progression change per video.",
+        "uses": 0
+      },
+      {
+        "id": "social-post-pack",
+        "version": "1.0.0",
+        "name": "Social post pack",
+        "team": "social",
+        "category": "social/instagram",
+        "kind": "post",
+        "summary": "A pack of posts for one idea across the platforms a team is connected to: image or clip, caption, hashtags and the posting plan. Nothing is published without a founder YES.",
+        "uses": 0
+      }
+    ]
+  },
   "controls": {
-    "pulled_at": "2026-10-27T11:05:06.867Z",
-    "count": 0,
+    "pulled_at": "2026-10-28T07:31:06.522Z",
+    "count": 6,
     "by_scope": {
-      "company": 0,
-      "team": 0,
+      "company": 1,
+      "team": 5,
       "subteam": 0,
       "agent": 0,
       "workflow": 0,
       "channel": 0
     },
-    "company_stopped": false,
-    "policies": [],
+    "company_stopped": true,
+    "live": {
+      "source": "cache (not read yet)",
+      "fetched_at": null,
+      "age_ms": null,
+      "stale": false,
+      "error": null,
+      "count": 0,
+      "cloud_available": true,
+      "reads": 0,
+      "avg_read_ms": null
+    },
+    "policies": [
+      {
+        "scope": "company",
+        "scope_id": "*",
+        "key": "paused",
+        "value": true,
+        "updated_at": "2026-10-27T12:45:00.894745+00:00",
+        "updated_by": "mangesh"
+      },
+      {
+        "scope": "team",
+        "scope_id": "youtube",
+        "key": "paused",
+        "value": false,
+        "updated_at": "2026-10-27T17:12:30.255949+00:00",
+        "updated_by": "cloud-session"
+      },
+      {
+        "scope": "team",
+        "scope_id": "design",
+        "key": "paused",
+        "value": false,
+        "updated_at": "2026-10-27T18:07:43.866139+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      },
+      {
+        "scope": "team",
+        "scope_id": "design-guild",
+        "key": "paused",
+        "value": true,
+        "updated_at": "2026-10-27T18:11:40.770541+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      },
+      {
+        "scope": "team",
+        "scope_id": "design-guild",
+        "key": "daily_tokens",
+        "value": 0,
+        "updated_at": "2026-10-27T18:11:44.50882+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      },
+      {
+        "scope": "team",
+        "scope_id": "core",
+        "key": "paused",
+        "value": false,
+        "updated_at": "2026-10-27T19:08:47.312716+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      }
+    ],
     "keys": [
       "paused",
       "enabled",
+      "archived",
+      "scheduling",
+      "publishing",
+      "external_api",
+      "cloud_execution",
+      "daily_tokens",
+      "monthly_tokens",
+      "calls_per_day",
+      "calls_per_run",
+      "concurrent_runs",
+      "max_agents",
+      "tasks_per_day",
+      "max_retries",
+      "max_tasks",
+      "cost_limit",
+      "outputs_per_day",
+      "outputs_per_week",
+      "outputs_per_month",
       "claude",
       "model",
-      "daily_tokens",
-      "max_tasks",
+      "priority",
       "authority",
       "permissions",
       "thresholds",
-      "note"
+      "note",
+      "head",
+      "parent",
+      "output_label"
     ],
     "scopes": [
       "company",
