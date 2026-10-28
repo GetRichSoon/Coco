@@ -1278,11 +1278,16 @@ async function chatAct(it) {
     return r && { text: t.name + ' now runs ' + it.value + '. The scheduler reads this value, not the one in the file.', acted: true };
   }
   if (it.intent === 'run_workflow') {
-    // Honest: a browser cannot start a cloud run. Nothing is faked and nothing is half-done.
-    return { text: 'I cannot start a run from here - the browser has no way to trigger a cloud runner. '
-      + t.name + ' runs on its schedule (' + (policyOf('workflow', t.id, 'schedule') || 'its spec default')
-      + '), or straight away from the PC with: node scripts/executor.mjs run ' + t.id,
-      cards: [{ t: 'Workflow', v: t.id, go: '#workflows' }] };
+    // The browser cannot start a cloud runner, so it asks the cloud to. coco_request_run checks the
+    // founder, the device, the emergency stop and the workflow switch, and answers straight away if
+    // the work could never run; the cloud cycle claims the request and the result comes back here.
+    const { data, error } = await sb.rpc('coco_request_run', { p_workflow: t.id, p_note: 'asked for in Coco Chat' });
+    if (error) return { text: error.message.replace(/^.*?:\s*/, '') };
+    if (!data || data.ok === false) return { text: 'Not queued: ' + ((data && data.reason) || 'the control plane refused it') + '.' };
+    await loadAll();
+    return { text: 'Queued ' + t.name + ' as request ' + data.request_id
+      + '. The next cloud cycle picks it up, and the Run ID appears here and on Runs when it finishes.',
+      acted: true, cards: [{ t: 'Request', v: String(data.request_id) }, { t: 'Workflow', v: t.id, go: '#workflows' }] };
   }
   return null;
 }

@@ -124,11 +124,21 @@ await t('it asks instead of guessing which thing to pause', async () => {
   assert.ok(/which target/i.test(a.text) || /will not guess/i.test(a.text), a.text);
 });
 
-await t('run now is refused honestly, not faked', async () => {
+await t('run now asks the cloud through the gated RPC', async () => {
   const a = await C.chatSend('run ebook-daily now');
-  assert.strictEqual(CALLS.length, 0);
-  assert.ok(/cannot start a run from here/.test(a.text), a.text);
-  assert.ok(/executor\.mjs run ebook-daily/.test(a.text), 'it must say exactly how to do it instead');
+  assert.strictEqual(CALLS.length, 1, 'it must go through one RPC, not run anything itself');
+  assert.strictEqual(CALLS[0].fn, 'coco_request_run');
+  assert.strictEqual(CALLS[0].args.p_workflow, 'ebook-daily');
+  assert.ok(a.acted && /Queued/.test(a.text), a.text);
+});
+
+await t('a refusal from the control plane is reported, never dressed up', async () => {
+  const saved = sb.rpc;
+  sb.rpc = async (fn, args) => { CALLS.push({ fn, args }); return { data: { ok: false, reason: 'the company is stopped (Coco)' }, error: null }; };
+  const a = await C.chatSend('run ebook-daily now');
+  sb.rpc = saved;
+  assert.ok(/Not queued/.test(a.text) && /company is stopped/.test(a.text), a.text);
+  assert.ok(!a.acted, 'a refusal must never be reported as an action');
 });
 
 await t('an unknown message offers what it can do, and changes nothing', async () => {
