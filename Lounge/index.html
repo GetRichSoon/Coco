@@ -1068,6 +1068,7 @@ const CHAT_WORDS = {
   workflow: ['workflow', 'workflows', 'job', 'pipeline'],
   schedule: ['schedule', 'kab', 'timing', 'time set', 'roz', 'daily', 'hourly', 'weekly'],
   runnow: ['run now', 'abhi chalao', 'chalao', 'execute'],
+  create: ['create', 'add ', 'new ', 'banao', 'bana do', 'naya ', 'nayi '],   // not 'make': "make me a sandwich" is not a command
 };
 const chatHas = (text, key) => (CHAT_WORDS[key] || []).some((w) => text.includes(w));
 
@@ -1099,6 +1100,82 @@ function chatFind(text, kinds) {
       return (n.length > 2 && low.indexOf(n) >= 0) || low.indexOf(' ' + String(e.id).toLowerCase() + ' ') >= 0;
     })
     .sort((a, b) => String(b.name).length - String(a.name).length);
+}
+
+// ---------------------------------------------------------------- shaping the company by talking
+// Create, rename, archive and restore a team, sub-team, category or channel - all through
+// coco_structure, the same RPC the Structure screen uses, with the same founder and paired-device
+// checks. Chat never touches a table.
+//
+// The two things that stop this being dangerous: a parent is resolved from the real company or the
+// command stops and asks, and a name that already exists is reported instead of duplicated.
+const CHILD_OF = { team: 'subteam', subteam: 'category', category: 'channel' };
+const KIND_WORDS = [
+  [/\bsub-?teams?\b|\bsubteam\b/, 'subteam'],
+  [/\bcategor(?:y|ies)\b/, 'category'],
+  [/\bchannels?\b|\baccounts?\b/, 'channel'],
+  [/\bteams?\b|\bhouses?\b/, 'team'],
+];
+const slugOf = (name) => String(name || '').toLowerCase().trim()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+
+// "Telegram team", "team called Telegram", "AI News under Telegram" - the name is whatever is left
+// once the command words, the kind word and the parent phrase are taken out.
+function parseCreate(text, found, raw) {
+  const kindWord = KIND_WORDS.filter((k) => k[0].test(text))[0];
+  const parentPhrase = text.match(/\b(?:under|inside|within|in)\s+(.+)$/) || text.match(/(.+?)\s+(?:ke andar|ke under|mein|me)\b/);
+  const named = text.match(/\b(?:called|named|naam)\s+(.+)$/);
+  let name = null;
+  if (named) name = named[1];
+  else {
+    let t = ' ' + text + ' ';
+    if (parentPhrase) t = t.split(parentPhrase[0]).join(' ');
+    t = t.replace(/\b(create|make|add|new|banao|bana do|bana|naya|nayi|ek|a|an|the|please)\b/g, ' ');
+    if (kindWord) t = t.replace(kindWord[0], ' ');
+    name = t;
+  }
+  name = String(name || '').replace(/["']/g, '').replace(/\s+/g, ' ').trim();
+  // the parent is matched against the real company, never taken from the words alone
+  const parent = parentPhrase
+    ? found.filter((e) => ['team', 'subteam', 'category'].indexOf(e.kind) >= 0
+        && (parentPhrase[1] || parentPhrase[1] === '' ? (' ' + parentPhrase[0] + ' ') : ' ')
+          .toLowerCase().indexOf(String(e.name).toLowerCase()) >= 0)[0] || null
+    : null;
+  let kind = kindWord ? kindWord[1] : (parent ? CHILD_OF[parent.kind] : null);
+  // a name that is only the parent's name is not a name
+  if (parent && name && name.toLowerCase() === String(parent.name).toLowerCase()) name = '';
+  // matching happens in lower case, but the founder's own capitalisation is what gets stored
+  if (name && raw) {
+    const at = String(raw).toLowerCase().indexOf(name.toLowerCase());
+    if (at >= 0) name = String(raw).slice(at, at + name.length);
+  }
+  return { kind, name, parent };
+}
+
+// Does the company already have this? Same kind and the same name or id, under the same parent.
+function structureClash(kind, name, parent) {
+  const slug = slugOf(name);
+  const tree = structureTree();
+  return [...tree.nodes.values()].filter((n) => {
+    if (n.kind !== kind) return false;
+    const sameName = String(n.name).toLowerCase() === String(name).toLowerCase() || n.id === slug;
+    if (!sameName) return false;
+    return !parent || !n.parent || n.parent === parent.id;
+  })[0] || null;
+}
+
+// Rename needs both halves: "rename X to Y".
+function parseRename(text, found, raw) {
+  const m = text.match(/\b(?:rename|call it|naam badlo|naam)\b\s*(.*?)\s+(?:to|as|ko)\s+(.+)$/);
+  if (!m) return null;
+  const target = found.filter((e) => (' ' + m[1] + ' ').toLowerCase().indexOf(String(e.name).toLowerCase()) >= 0)[0]
+    || found[0] || null;
+  let name = String(m[2] || '').replace(/["']/g, '').trim();
+  if (name && raw) {                                  // the founder's capitalisation, not the matcher's
+    const at = String(raw).toLowerCase().indexOf(name.toLowerCase());
+    if (at >= 0) name = String(raw).slice(at, at + name.length);
+  }
+  return { target, name };
 }
 
 // What does this message want? Words first, entities second. `missing` is the only thing Coco asks
@@ -1136,6 +1213,26 @@ function chatIntent(message) {
     const target = wf || one('team') || one('connection');
     const op = has('pause') ? 'pause' : 'resume';
     return { intent: op, target, missing: target ? [] : ['target'], entities: found };
+  }
+  if (/\b(archive|restore|band kar do|hatao)\b/.test(rest)) {
+    const target = found.filter((e) => ['team', 'subteam', 'category', 'channel'].indexOf(e.kind) >= 0)[0];
+    const op = /\brestore\b/.test(rest) ? 'restore' : 'archive';
+    return { intent: op, target, missing: target ? [] : ['thing to ' + op], entities: found };
+  }
+  if (/\b(rename|naam badlo)\b/.test(rest)) {
+    const r = parseRename(text, found, message);
+    if (!r || !r.target) return { intent: 'rename', missing: ['which thing to rename'], entities: found };
+    if (!r.name) return { intent: 'rename', missing: ['the new name'], target: r.target, entities: found };
+    return { intent: 'rename', target: r.target, name: r.name, entities: found };
+  }
+  if (has('create')) {
+    const c = parseCreate(text, found, message);
+    if (!c.kind) return { intent: 'create', missing: ['kind'], entities: found };
+    if (!c.name) return { intent: 'create', kind: c.kind, parent: c.parent, missing: ['a name'], entities: found };
+    if (c.kind !== 'team' && !c.parent) {
+      return { intent: 'create', kind: c.kind, name: c.name, missing: [{ team: 'team', subteam: 'team', category: 'sub-team', channel: 'category' }[c.kind]], entities: found };
+    }
+    return { intent: 'create', kind: c.kind, name: c.name, parent: c.parent, entities: found };
   }
   if (has('workflow')) return { intent: wf ? 'workflow_status' : 'workflows', target: wf, entities: found };
   if (has('status') || has('list')) {
@@ -1273,6 +1370,30 @@ async function chatAct(it) {
     }
     return { text: 'I can pause a team, a workflow or a connected account. That is not one of them.' };
   }
+  if (it.intent === 'create') {
+    const clash = structureClash(it.kind, it.name, it.parent);
+    if (clash) return { text: clash.name + ' already exists' + (clash.parent ? ' under ' + clash.parent : '') + '. I did not create a duplicate.',
+      cards: [{ t: clash.kind, v: clash.id, go: '#teams' }] };
+    const id = slugOf(it.name);
+    if (!id) return { text: 'I could not make an id out of that name.' };
+    const made = await structureOp('create', id, null, {
+      p_kind: it.kind, p_parent: it.parent ? it.parent.id : null, p_name: it.name,
+      p_description: 'created from Coco Chat',
+    });
+    return made && { text: 'Created ' + it.kind + ' ' + it.name + ' (' + id + ')'
+      + (it.parent ? ' under ' + it.parent.name : '') + '. It starts paused, as every new part of the company does.',
+      acted: true, cards: [{ t: it.kind, v: id, go: '#teams' }] };
+  }
+  if (it.intent === 'rename') {
+    const made = await structureOp('edit', it.target.id, null, { p_kind: it.target.kind, p_name: it.name });
+    return made && { text: 'Renamed ' + it.target.name + ' to ' + it.name + '.', acted: true };
+  }
+  if (it.intent === 'archive' || it.intent === 'restore') {
+    const made = await structureOp(it.intent, it.target.id,
+      it.intent === 'archive' ? 'Archive ' + it.target.name + '? It stays in the company and can be restored.' : null,
+      { p_kind: it.target.kind });
+    return made && { text: (it.intent === 'archive' ? 'Archived ' : 'Restored ') + it.target.name + '.', acted: true };
+  }
   if (it.intent === 'set_schedule') {
     const r = await control('workflow', t.id, 'schedule', it.value);
     return r && { text: t.name + ' now runs ' + it.value + '. The scheduler reads this value, not the one in the file.', acted: true };
@@ -1302,7 +1423,12 @@ async function chatSend(message) {
       + 'claude usage · integrations · approvals.' };
   }
   if (it.missing && it.missing.length) {
-    return { text: 'Which ' + it.missing[0] + '? I will not guess, because the wrong one would be a real change.' };
+    const want = it.missing[0];
+    const opts = want === 'team' ? chatEntities().filter((e) => e.kind === 'team')
+      : want === 'sub-team' ? chatEntities().filter((e) => e.kind === 'subteam')
+      : want === 'category' ? chatEntities().filter((e) => e.kind === 'category') : [];
+    return { text: 'Which ' + want + '? I will not guess, because the wrong one would be a real change.',
+      cards: opts.slice(0, 6).map((o) => ({ t: o.kind, v: o.name, go: '#teams' })) };
   }
   const read = chatRead(it);
   if (read) return read;

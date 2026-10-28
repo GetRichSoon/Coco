@@ -43,15 +43,17 @@ const POLICIES = [
 
 const make = () => new Function(
   'CP', 'LIVE', 'D', 'OUTPUTS', 'CONNS', 'CONN_LINKS', 'STRUCT', 'POLICIES', 'IDENT_IN',
-  'esc', 'ago', 'store', 'sb', 'toast', 'loadAll', 'num', 'policyOf', 'control', 'connectionOp',
-  `${marksSrc}\nIDENT = IDENT_IN;\n${structSrc}\n${chatSrc}\nreturn { chatIntent, chatRead, chatSend, chatEntities };`,
+  'esc', 'ago', 'store', 'sb', 'toast', 'loadAll', 'num', 'policyOf', 'control', 'connectionOp', 'structureOp', 'confirm',
+  `${marksSrc}\nIDENT = IDENT_IN;\n${structSrc}\n${chatSrc}\nreturn { chatIntent, chatRead, chatSend, chatEntities, structureClash, parseCreate, slugOf };`,
 )(CPREAL, null, { integrations: [{ id: 'youtube', platform: 'YouTube', state: 'connected' }], approvals: [] },
   OUTPUTS, CONNS, CONN_LINKS, [], POLICIES, IDENT,
   esc, ago, store, sb, toast, loadAll,
   (n) => Number(n || 0).toLocaleString(),
   (scope, id, key) => { const r = POLICIES.find((p) => p.scope === scope && p.scope_id === id && p.key === key); return r ? r.value : undefined; },
   async (scope, id, key, value) => { CALLS.push({ fn: 'coco_control', args: { p_scope: scope, p_scope_id: id, p_key: key, p_value: value } }); return { state: 'applied' }; },
-  async (op, id) => { CALLS.push({ fn: 'coco_connection', args: { p_op: op, p_connection: id } }); return { ok: true }; });
+  async (op, id) => { CALLS.push({ fn: 'coco_connection', args: { p_op: op, p_connection: id } }); return { ok: true }; },
+  async (op, id, confirmWith, extra) => { CALLS.push({ fn: 'coco_structure', args: { p_op: op, p_id: id, ...(extra || {}) } }); return { ok: true }; },
+  () => true);
 
 const C = make();
 let pass = 0;
@@ -149,6 +151,80 @@ await t('an unknown message offers what it can do, and changes nothing', async (
 
 await t('nothing in the chat path can reach a model', () => {
   assert.ok(!/anthropic|ai-gateway|invoke\(|MODEL_ID/.test(chatSrc), 'the chat engine must stay deterministic');
+});
+
+
+// ---------------------------------------------------------------- Batch 1: shaping the company
+await t('create a team goes through coco_structure', async () => {
+  const a = await C.chatSend('create a Telegram team');
+  assert.strictEqual(CALLS.length, 1);
+  assert.strictEqual(CALLS[0].fn, 'coco_structure');
+  assert.strictEqual(CALLS[0].args.p_op, 'create');
+  assert.strictEqual(CALLS[0].args.p_kind, 'team');
+  assert.strictEqual(CALLS[0].args.p_id, 'telegram');
+  assert.strictEqual(CALLS[0].args.p_name, 'Telegram');
+  assert.ok(/starts paused/.test(a.text), a.text);
+});
+
+await t('a team that already exists is never duplicated', async () => {
+  const real = CPREAL.teams.filter((x) => /ebooks/i.test(x.id))[0];
+  const a = await C.chatSend('create a ' + real.name + ' team');
+  assert.strictEqual(CALLS.length, 0, 'nothing may be created when it already exists');
+  assert.ok(/already exists/.test(a.text) && /did not create a duplicate/.test(a.text), a.text);
+});
+
+await t('a sub-team with no parent asks which team, and lists real ones', async () => {
+  const a = await C.chatSend('create a new AI News sub-team');
+  assert.strictEqual(CALLS.length, 0, 'it must not guess a parent');
+  assert.ok(/Which team/i.test(a.text), a.text);
+  assert.ok((a.cards || []).length > 0 && a.cards.every((c) => c.t === 'team'), 'it offers the real teams');
+});
+
+await t('a sub-team under a named team resolves the parent from the real company', async () => {
+  const team = CPREAL.teams.filter((x) => x.subteams && x.subteams.length)[0];
+  await C.chatSend('create AI News under ' + team.name);
+  assert.strictEqual(CALLS.length, 1, JSON.stringify(CALLS));
+  assert.strictEqual(CALLS[0].args.p_kind, 'subteam');
+  assert.strictEqual(CALLS[0].args.p_parent, team.id);
+  assert.strictEqual(CALLS[0].args.p_name, 'AI News');
+});
+
+await t('the kind is inferred from the parent: under a sub-team makes a category', async () => {
+  const team = CPREAL.teams.filter((x) => x.subteams && x.subteams.length)[0];
+  const sub = team.subteams[0];
+  await C.chatSend('create Sleep under ' + sub.name);
+  assert.strictEqual(CALLS.length, 1, JSON.stringify(CALLS));
+  assert.strictEqual(CALLS[0].args.p_kind, 'category');
+  assert.strictEqual(CALLS[0].args.p_parent, sub.id);
+});
+
+await t('rename sends an edit with the new name', async () => {
+  const team = CPREAL.teams[0];
+  await C.chatSend('rename ' + team.name + ' to Core Studio');
+  assert.strictEqual(CALLS.length, 1, JSON.stringify(CALLS));
+  assert.strictEqual(CALLS[0].args.p_op, 'edit');
+  assert.strictEqual(CALLS[0].args.p_id, team.id);
+  assert.strictEqual(CALLS[0].args.p_name, 'Core Studio');
+});
+
+await t('archive and restore use the real ops', async () => {
+  const team = CPREAL.teams[1];
+  await C.chatSend('archive ' + team.name);
+  assert.strictEqual(CALLS[0].args.p_op, 'archive');
+  assert.strictEqual(CALLS[0].args.p_id, team.id);
+  CALLS = [];
+  await C.chatSend('restore ' + team.name);
+  assert.strictEqual(CALLS[0].args.p_op, 'restore');
+});
+
+await t('archiving something unnamed asks instead of picking', async () => {
+  const a = await C.chatSend('archive it');
+  assert.strictEqual(CALLS.length, 0);
+  assert.ok(/Which/i.test(a.text), a.text);
+});
+
+await t('chat never writes a table directly', () => {
+  assert.ok(chatSrc.indexOf('sb.from(') === -1, 'the chat path must not touch tables at all');
 });
 
 console.log(`\nchat: ${pass}/${pass} passed · 0 Claude calls by construction`);
