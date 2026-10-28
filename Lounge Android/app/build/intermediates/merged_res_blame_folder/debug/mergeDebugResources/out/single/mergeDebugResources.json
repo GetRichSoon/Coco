@@ -1,0 +1,38 @@
+[
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/drawable_ic_coco_notify.xml.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/drawable/ic_coco_notify.xml"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/drawable_ic_coco_face.xml.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/drawable/ic_coco_face.xml"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/font_bagel.ttf.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/font/bagel.ttf"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/drawable_ic_coco_bg.xml.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/drawable/ic_coco_bg.xml"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/font_figtree.ttf.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/font/figtree.ttf"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/drawable_ic_coco_mark.xml.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/drawable/ic_coco_mark.xml"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/xml_island_accessibility.xml.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/xml/island_accessibility.xml"
+    },
+    {
+        "merged": "com.goodspace.cocolounge.app-debug-54:/font_fraunces.ttf.flat",
+        "source": "com.goodspace.cocolounge.app-main-56:/font/fraunces.ttf"
+    }
+]

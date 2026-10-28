@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.goodspace.cocolounge.TalkTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-26T12:14:15" hostname="LAPTOP-LSVOC2SK" time="0.031">
+  <properties/>
+  <testcase name="talkMergesMessagesAndActivityNewestFirst" classname="com.goodspace.cocolounge.TalkTest" time="0.027"/>
+  <testcase name="namesMapToMembersCocoAndTidyIds" classname="com.goodspace.cocolounge.TalkTest" time="0.001"/>
+  <testcase name="blankMessagesAreSkipped" classname="com.goodspace.cocolounge.TalkTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,6 +1,14 @@
 [
     {
-        "merged": "com.goodspace.mantraghar.app-release-4:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.goodspace.mantraghar.app-main-5:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "com.goodspace.mantraghar.app-release-4:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.goodspace.mantraghar.app-main-5:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\Lenovo\\.gradle\\daemon\\8.12\\com.goodspace.mantraghar.app-release-4:\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Lenovo\\.gradle\\daemon\\8.12\\com.goodspace.mantraghar.app-main-5:\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "com.goodspace.mantraghar.app-release-4:/mipmap-xxxhdpi_ic_launcher_fg.png.flat",
+        "source": "com.goodspace.mantraghar.app-main-5:/mipmap-xxxhdpi/ic_launcher_fg.png"
     }
 ]

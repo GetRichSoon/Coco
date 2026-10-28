@@ -1,0 +1,445 @@
+/* Job Fit Check — full on-page feature panel */
+
+#jfc-root {
+  all: initial;
+  position: fixed !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  z-index: 2147483646 !important;
+  font-family: "Segoe UI", system-ui, sans-serif !important;
+  color: #0b1220 !important;
+  pointer-events: none !important;
+}
+
+#jfc-root * {
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+}
+
+#jfc-root .jfc-pointer {
+  pointer-events: auto !important;
+}
+
+#jfc-fab {
+  width: 52px !important;
+  height: 52px !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  background: #0f766e !important;
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.92) !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#jfc-fab:hover { transform: translateY(-2px) scale(1.03) !important; }
+
+#jfc-fab img {
+  width: 52px !important;
+  height: 52px !important;
+  display: block !important;
+  object-fit: cover !important;
+}
+
+#jfc-panel {
+  position: absolute !important;
+  right: 0 !important;
+  bottom: 64px !important;
+  width: min(360px, calc(100vw - 24px)) !important;
+  max-height: min(72vh, 560px) !important;
+  overflow: hidden !important;
+  display: none !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 118, 110, 0.2) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.22) !important;
+  animation: jfc-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+#jfc-root.jfc-open #jfc-panel {
+  display: flex !important;
+}
+
+.jfc-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 12px 8px !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+.jfc-head-text { flex: 1 !important; min-width: 0 !important; }
+
+.jfc-logo-sm {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+
+.jfc-logo-sm img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.jfc-title {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+}
+
+.jfc-sub {
+  font-size: 11px !important;
+  color: #0f766e !important;
+  margin: 2px 0 0 !important;
+  font-weight: 600 !important;
+}
+
+.jfc-x {
+  width: 28px !important;
+  height: 28px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+
+#jfc-badge {
+  margin: 8px 12px 0 !important;
+}
+
+.jfc-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 10.5px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  padding: 5px 9px !important;
+  border-radius: 999px !important;
+}
+
+.jfc-badge.job { background: rgba(15, 118, 110, 0.12) !important; color: #0f766e !important; }
+.jfc-badge.app { background: rgba(5, 150, 105, 0.14) !important; color: #047857 !important; }
+.jfc-badge.muted { background: #f1f5f9 !important; color: #64748b !important; }
+
+.jfc-badge-dot {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  background: currentColor !important;
+}
+
+.jfc-nav {
+  display: flex !important;
+  gap: 4px !important;
+  padding: 10px 10px 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+.jfc-nav::-webkit-scrollbar { display: none !important; }
+
+.jfc-nav-btn {
+  flex: 0 0 auto !important;
+  border: none !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 6px 10px !important;
+  border-radius: 999px !important;
+  cursor: pointer !important;
+}
+
+.jfc-nav-btn.active {
+  background: #0f766e !important;
+  color: #ffffff !important;
+}
+
+.jfc-body {
+  padding: 10px 12px 8px !important;
+  overflow-y: auto !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+.jfc-status {
+  font-size: 11px !important;
+  color: #0f766e !important;
+  font-weight: 600 !important;
+  min-height: 16px !important;
+  margin: 0 !important;
+  padding: 6px 12px 12px !important;
+}
+
+.jfc-section { margin-bottom: 12px !important; }
+
+.jfc-section-title {
+  margin: 0 0 6px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  color: #64748b !important;
+}
+
+.jfc-hint {
+  margin: 0 0 8px !important;
+  font-size: 11.5px !important;
+  color: #64748b !important;
+  line-height: 1.4 !important;
+}
+
+.jfc-stats {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 6px !important;
+  margin-bottom: 10px !important;
+}
+
+.jfc-stat {
+  background: #f8fafc !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  border-radius: 10px !important;
+  padding: 7px 4px !important;
+  text-align: center !important;
+}
+
+.jfc-stat b {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+}
+
+.jfc-stat span {
+  display: block !important;
+  margin-top: 2px !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+}
+
+.jfc-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+}
+
+.jfc-btn {
+  border: none !important;
+  border-radius: 11px !important;
+  padding: 10px 12px !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+
+.jfc-btn-primary { background: #0f766e !important; color: #fff !important; }
+.jfc-btn-secondary { background: #0f172a !important; color: #fff !important; }
+.jfc-btn-ghost {
+  background: #f8fafc !important;
+  color: #0f766e !important;
+  border: 1px solid rgba(15, 118, 110, 0.2) !important;
+}
+
+.jfc-ready-list { display: flex !important; flex-direction: column !important; gap: 5px !important; }
+
+.jfc-ready {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  padding: 7px 9px !important;
+  border-radius: 9px !important;
+  background: #f8fafc !important;
+}
+
+.jfc-ready.ok { color: #047857 !important; }
+.jfc-ready.miss { color: #b45309 !important; }
+
+.jfc-ready-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: currentColor !important;
+}
+
+.jfc-active-resume {
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  padding: 8px 10px !important;
+  background: rgba(15, 118, 110, 0.08) !important;
+  border-radius: 10px !important;
+}
+
+.jfc-resume-list, .jfc-history-list, .jfc-results {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.jfc-resume-row {
+  text-align: left !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: #fff !important;
+  border-radius: 11px !important;
+  padding: 9px 10px !important;
+  cursor: pointer !important;
+}
+
+.jfc-resume-row.active {
+  border-color: #0f766e !important;
+  background: rgba(15, 118, 110, 0.06) !important;
+}
+
+.jfc-resume-name {
+  display: block !important;
+  font-size: 12.5px !important;
+  font-weight: 750 !important;
+  color: #0f172a !important;
+}
+
+.jfc-resume-meta {
+  display: block !important;
+  margin-top: 2px !important;
+  font-size: 10.5px !important;
+  color: #64748b !important;
+}
+
+.jfc-hist-row, .jfc-card {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 9px 10px !important;
+  border-radius: 11px !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+.jfc-card { flex-direction: column !important; }
+
+.jfc-card-top {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.jfc-hist-row b, .jfc-card b {
+  display: block !important;
+  font-size: 12px !important;
+  color: #0f172a !important;
+}
+
+.jfc-hist-row p, .jfc-card p {
+  margin: 2px 0 0 !important;
+  font-size: 10.5px !important;
+  color: #64748b !important;
+}
+
+.jfc-score {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #0f766e !important;
+}
+
+.jfc-card-err { background: #fff1f2 !important; border-color: rgba(244, 63, 94, 0.2) !important; }
+
+.jfc-meta {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #0f766e !important;
+  margin-bottom: 4px !important;
+}
+
+.jfc-mini-lab {
+  margin: 8px 0 2px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+}
+
+.jfc-tips {
+  margin: 0 !important;
+  padding-left: 16px !important;
+  font-size: 11px !important;
+  color: #334155 !important;
+}
+
+.jfc-field-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 6px 8px !important;
+  border-radius: 8px !important;
+  background: #f8fafc !important;
+  margin-bottom: 4px !important;
+}
+
+.jfc-field-lab {
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  color: #64748b !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 45% !important;
+}
+
+.jfc-field-val {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 50% !important;
+}
+
+.jfc-loading {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  color: #0f766e !important;
+  padding: 8px 0 !important;
+}
+
+.jfc-spin {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid rgba(15, 118, 110, 0.2) !important;
+  border-top-color: #0f766e !important;
+  border-radius: 50% !important;
+  animation: jfc-spin 0.7s linear infinite !important;
+}
+
+.jfc-empty { font-size: 11px !important; color: #64748b !important; margin: 0 !important; }
+
+@keyframes jfc-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes jfc-spin { to { transform: rotate(360deg); } }

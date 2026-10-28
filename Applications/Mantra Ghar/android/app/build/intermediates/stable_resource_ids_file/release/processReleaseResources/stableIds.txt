@@ -1,2 +1,4 @@
-com.goodspace.mantraghar:string/app_name = 0x7f020000
-com.goodspace.mantraghar:mipmap/ic_launcher = 0x7f010000
+com.goodspace.mantraghar:mipmap/ic_launcher_fg = 0x7f020001
+com.goodspace.mantraghar:string/app_name = 0x7f030000
+com.goodspace.mantraghar:mipmap/ic_launcher = 0x7f020000
+com.goodspace.mantraghar:color/icon_background = 0x7f010000

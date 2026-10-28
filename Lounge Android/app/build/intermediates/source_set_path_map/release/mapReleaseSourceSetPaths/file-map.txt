@@ -1,0 +1,58 @@
+com.goodspace.cocolounge.app-lifecycle-livedata-core-2.8.7-0 C:\Users\Lenovo\.gradle\caches\8.12\transforms\028f248eff56e7afd9d184134674d66e\transformed\lifecycle-livedata-core-2.8.7\res
+com.goodspace.cocolounge.app-room-ktx-2.6.1-1 C:\Users\Lenovo\.gradle\caches\8.12\transforms\06bbe8925dfaf90ed7b2c8b8f2f05d48\transformed\room-ktx-2.6.1\res
+com.goodspace.cocolounge.app-animation-core-release-2 C:\Users\Lenovo\.gradle\caches\8.12\transforms\0d5213f4b0236d3432da4c52f112eb07\transformed\animation-core-release\res
+com.goodspace.cocolounge.app-tracing-ktx-1.2.0-3 C:\Users\Lenovo\.gradle\caches\8.12\transforms\1d3c173292faeceea4cc1e7acf02afe9\transformed\tracing-ktx-1.2.0\res
+com.goodspace.cocolounge.app-material-ripple-release-4 C:\Users\Lenovo\.gradle\caches\8.12\transforms\227c32bd8fabd0aefb2a035788606f0d\transformed\material-ripple-release\res
+com.goodspace.cocolounge.app-emoji2-1.3.0-5 C:\Users\Lenovo\.gradle\caches\8.12\transforms\317157d35e5e970be567977a46aa74dd\transformed\emoji2-1.3.0\res
+com.goodspace.cocolounge.app-annotation-experimental-1.4.1-6 C:\Users\Lenovo\.gradle\caches\8.12\transforms\32b446a0dc5f559e59726f9904b7d1cb\transformed\annotation-experimental-1.4.1\res
+com.goodspace.cocolounge.app-graphics-path-1.0.1-7 C:\Users\Lenovo\.gradle\caches\8.12\transforms\398a9ad5ff73b5278964b3c1b7db7ebf\transformed\graphics-path-1.0.1\res
+com.goodspace.cocolounge.app-sqlite-2.4.0-8 C:\Users\Lenovo\.gradle\caches\8.12\transforms\3ae3697a6fcf20aaa00f8d500f643f9e\transformed\sqlite-2.4.0\res
+com.goodspace.cocolounge.app-tracing-1.2.0-9 C:\Users\Lenovo\.gradle\caches\8.12\transforms\41bac5261f9f0ab867ef78110bbeb313\transformed\tracing-1.2.0\res
+com.goodspace.cocolounge.app-lifecycle-livedata-2.8.7-10 C:\Users\Lenovo\.gradle\caches\8.12\transforms\437654680e5961bca55012c657b52d77\transformed\lifecycle-livedata-2.8.7\res
+com.goodspace.cocolounge.app-lifecycle-livedata-core-ktx-2.8.7-11 C:\Users\Lenovo\.gradle\caches\8.12\transforms\43f4a2fe1af24734a3c6c8b6fb644f8b\transformed\lifecycle-livedata-core-ktx-2.8.7\res
+com.goodspace.cocolounge.app-lifecycle-viewmodel-ktx-2.8.7-12 C:\Users\Lenovo\.gradle\caches\8.12\transforms\4ca7b4a029ef30cf4076ca0e48cc0f1e\transformed\lifecycle-viewmodel-ktx-2.8.7\res
+com.goodspace.cocolounge.app-material3-release-13 C:\Users\Lenovo\.gradle\caches\8.12\transforms\4f9c4d4e1d2aeae359056f1527055dd4\transformed\material3-release\res
+com.goodspace.cocolounge.app-activity-ktx-1.9.3-14 C:\Users\Lenovo\.gradle\caches\8.12\transforms\5263fa576a6039da46a4c3fda760e7d6\transformed\activity-ktx-1.9.3\res
+com.goodspace.cocolounge.app-ui-release-15 C:\Users\Lenovo\.gradle\caches\8.12\transforms\5325188ad57c5882f3218b5b78100684\transformed\ui-release\res
+com.goodspace.cocolounge.app-ui-geometry-release-16 C:\Users\Lenovo\.gradle\caches\8.12\transforms\57c835962bb4fc8cb07803cead7290e8\transformed\ui-geometry-release\res
+com.goodspace.cocolounge.app-work-runtime-2.10.0-17 C:\Users\Lenovo\.gradle\caches\8.12\transforms\57d9abd2d144608d6cc9131d5c990498\transformed\work-runtime-2.10.0\res
+com.goodspace.cocolounge.app-runtime-release-18 C:\Users\Lenovo\.gradle\caches\8.12\transforms\5a928c1ce26fe5ead7053656630866a7\transformed\runtime-release\res
+com.goodspace.cocolounge.app-profileinstaller-1.3.1-19 C:\Users\Lenovo\.gradle\caches\8.12\transforms\5ecbca703210783b339fa12b21db859d\transformed\profileinstaller-1.3.1\res
+com.goodspace.cocolounge.app-foundation-layout-release-20 C:\Users\Lenovo\.gradle\caches\8.12\transforms\6ba6680c6bc971d91664b228a7c45ba0\transformed\foundation-layout-release\res
+com.goodspace.cocolounge.app-ui-text-release-21 C:\Users\Lenovo\.gradle\caches\8.12\transforms\6d575996d64e99704e5f373c5b447a40\transformed\ui-text-release\res
+com.goodspace.cocolounge.app-lifecycle-runtime-ktx-release-22 C:\Users\Lenovo\.gradle\caches\8.12\transforms\748e9305d4ab26971e31ef88e4fbc1ec\transformed\lifecycle-runtime-ktx-release\res
+com.goodspace.cocolounge.app-foundation-release-23 C:\Users\Lenovo\.gradle\caches\8.12\transforms\74c813cf0cc5a1c0d55db0e43805e727\transformed\foundation-release\res
+com.goodspace.cocolounge.app-lifecycle-process-2.8.7-24 C:\Users\Lenovo\.gradle\caches\8.12\transforms\793262504e725e9c459dc329e200f394\transformed\lifecycle-process-2.8.7\res
+com.goodspace.cocolounge.app-startup-runtime-1.1.1-25 C:\Users\Lenovo\.gradle\caches\8.12\transforms\7b3c5cd0cb5e1208d7f3aeaeb1675047\transformed\startup-runtime-1.1.1\res
+com.goodspace.cocolounge.app-room-runtime-2.6.1-26 C:\Users\Lenovo\.gradle\caches\8.12\transforms\7c64fa5d8c9cb278d2294cce6a65b568\transformed\room-runtime-2.6.1\res
+com.goodspace.cocolounge.app-customview-poolingcontainer-1.0.0-27 C:\Users\Lenovo\.gradle\caches\8.12\transforms\84f35c47fab1dcf5c1de7aae3980eeb6\transformed\customview-poolingcontainer-1.0.0\res
+com.goodspace.cocolounge.app-lifecycle-runtime-compose-release-28 C:\Users\Lenovo\.gradle\caches\8.12\transforms\861571231abbbc2e35f81f09902aa23b\transformed\lifecycle-runtime-compose-release\res
+com.goodspace.cocolounge.app-lifecycle-runtime-release-29 C:\Users\Lenovo\.gradle\caches\8.12\transforms\88cff5b74b5b04a50c9bb3900bf9b3b6\transformed\lifecycle-runtime-release\res
+com.goodspace.cocolounge.app-material-icons-extended-release-30 C:\Users\Lenovo\.gradle\caches\8.12\transforms\8ae7da1e94232bd569dd4a2ff5ac413d\transformed\material-icons-extended-release\res
+com.goodspace.cocolounge.app-activity-compose-1.9.3-31 C:\Users\Lenovo\.gradle\caches\8.12\transforms\8b244550413e33b8435d5c05c59da80c\transformed\activity-compose-1.9.3\res
+com.goodspace.cocolounge.app-lifecycle-viewmodel-savedstate-2.8.7-32 C:\Users\Lenovo\.gradle\caches\8.12\transforms\92e5f995e0d259af720cc7865889340e\transformed\lifecycle-viewmodel-savedstate-2.8.7\res
+com.goodspace.cocolounge.app-ui-util-release-33 C:\Users\Lenovo\.gradle\caches\8.12\transforms\945a3b47dac7a06778b9fe9e3e31e655\transformed\ui-util-release\res
+com.goodspace.cocolounge.app-sqlite-framework-2.4.0-34 C:\Users\Lenovo\.gradle\caches\8.12\transforms\953f463958ae7b423bce690c90203346\transformed\sqlite-framework-2.4.0\res
+com.goodspace.cocolounge.app-work-runtime-ktx-2.10.0-35 C:\Users\Lenovo\.gradle\caches\8.12\transforms\a47b2478c3e07dcfc3be72237e23b710\transformed\work-runtime-ktx-2.10.0\res
+com.goodspace.cocolounge.app-material-icons-core-release-36 C:\Users\Lenovo\.gradle\caches\8.12\transforms\a9e5b25c0266ba9fb9ac3fb2ce344e8c\transformed\material-icons-core-release\res
+com.goodspace.cocolounge.app-core-1.15.0-37 C:\Users\Lenovo\.gradle\caches\8.12\transforms\ac63091272ba702a76218d39ee3e8b98\transformed\core-1.15.0\res
+com.goodspace.cocolounge.app-ui-graphics-release-38 C:\Users\Lenovo\.gradle\caches\8.12\transforms\ac9d0b0fc58b2fdc2563897d1c2bf196\transformed\ui-graphics-release\res
+com.goodspace.cocolounge.app-core-ktx-1.15.0-39 C:\Users\Lenovo\.gradle\caches\8.12\transforms\c8c088b41b847c832c68586ca83a002f\transformed\core-ktx-1.15.0\res
+com.goodspace.cocolounge.app-lifecycle-viewmodel-compose-release-40 C:\Users\Lenovo\.gradle\caches\8.12\transforms\ca4aa793ea52df47381f314ef95c3599\transformed\lifecycle-viewmodel-compose-release\res
+com.goodspace.cocolounge.app-runtime-saveable-release-41 C:\Users\Lenovo\.gradle\caches\8.12\transforms\cbeb97c5ce396e4b780ddc9b5accb22b\transformed\runtime-saveable-release\res
+com.goodspace.cocolounge.app-core-runtime-2.2.0-42 C:\Users\Lenovo\.gradle\caches\8.12\transforms\d2ff23f0de33ae428230774b71b0a58f\transformed\core-runtime-2.2.0\res
+com.goodspace.cocolounge.app-activity-1.9.3-43 C:\Users\Lenovo\.gradle\caches\8.12\transforms\d309a36acec3c70fffe15bf63c7d6bd7\transformed\activity-1.9.3\res
+com.goodspace.cocolounge.app-savedstate-ktx-1.2.1-44 C:\Users\Lenovo\.gradle\caches\8.12\transforms\daab41a92fd16ced8784f75bf38191e2\transformed\savedstate-ktx-1.2.1\res
+com.goodspace.cocolounge.app-ui-unit-release-45 C:\Users\Lenovo\.gradle\caches\8.12\transforms\dcb9b5c475a38981840ddd36c790c11c\transformed\ui-unit-release\res
+com.goodspace.cocolounge.app-lifecycle-viewmodel-release-46 C:\Users\Lenovo\.gradle\caches\8.12\transforms\e485b23d5bc1bfb33a72e57f861b72ba\transformed\lifecycle-viewmodel-release\res
+com.goodspace.cocolounge.app-animation-release-47 C:\Users\Lenovo\.gradle\caches\8.12\transforms\e66b38905050648425d186a926c862bb\transformed\animation-release\res
+com.goodspace.cocolounge.app-savedstate-1.2.1-48 C:\Users\Lenovo\.gradle\caches\8.12\transforms\faf498ac59950ba2318d2e5e2a02c74b\transformed\savedstate-1.2.1\res
+com.goodspace.cocolounge.app-lifecycle-service-2.8.7-49 C:\Users\Lenovo\.gradle\caches\8.12\transforms\fcf4a5527953531ee9e2a8571a3c67ce\transformed\lifecycle-service-2.8.7\res
+com.goodspace.cocolounge.app-pngs-50 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\build\generated\res\pngs\release
+com.goodspace.cocolounge.app-resValues-51 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\build\generated\res\resValues\release
+com.goodspace.cocolounge.app-packageReleaseResources-52 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\build\intermediates\incremental\release\packageReleaseResources\merged.dir
+com.goodspace.cocolounge.app-packageReleaseResources-53 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\build\intermediates\incremental\release\packageReleaseResources\stripped.dir
+com.goodspace.cocolounge.app-merged-not-compiled-resources-54 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\build\intermediates\merged-not-compiled-resources\release
+com.goodspace.cocolounge.app-release-55 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\build\intermediates\merged_res\release\mergeReleaseResources
+com.goodspace.cocolounge.app-main-56 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\src\main\res
+com.goodspace.cocolounge.app-release-57 C:\Users\Lenovo\Good Space\Coco\Lounge Android\app\src\release\res

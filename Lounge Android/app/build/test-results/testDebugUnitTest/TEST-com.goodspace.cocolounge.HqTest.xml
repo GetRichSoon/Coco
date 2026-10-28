@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.goodspace.cocolounge.HqTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-26T08:34:42" hostname="LAPTOP-LSVOC2SK" time="0.642">
+  <properties/>
+  <testcase name="cocoSpeaksPlainly" classname="com.goodspace.cocolounge.HqTest" time="0.592"/>
+  <testcase name="greetingFollowsTheClock" classname="com.goodspace.cocolounge.HqTest" time="0.008"/>
+  <testcase name="waitingForYesBeatsRunningBeatsDoingBeatsQueued" classname="com.goodspace.cocolounge.HqTest" time="0.011"/>
+  <testcase name="nullDoingAndNoTasksMeansResting" classname="com.goodspace.cocolounge.HqTest" time="0.009"/>
+  <testcase name="finishedTasksDoNotMakeAnyoneBusy" classname="com.goodspace.cocolounge.HqTest" time="0.012"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

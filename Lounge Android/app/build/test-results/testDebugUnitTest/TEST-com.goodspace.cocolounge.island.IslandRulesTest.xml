@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.goodspace.cocolounge.island.IslandRulesTest" tests="27" skipped="0" failures="0" errors="0" timestamp="2026-10-26T08:34:43" hostname="LAPTOP-LSVOC2SK" time="1.165">
+  <properties/>
+  <testcase name="openCardFollowsTheSelectionAndListsTheOthers" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.277"/>
+  <testcase name="meetingSkipsAllDayDismissedAndUntitled" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.239"/>
+  <testcase name="mapsDistanceFirstInTitle" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.034"/>
+  <testcase name="clockFormats" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.084"/>
+  <testcase name="mapsWithoutDistanceKeepsTheInstruction" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.007"/>
+  <testcase name="cleanStatusBarNeverHidesClockOrBattery" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.03"/>
+  <testcase name="recordersGetTheRedDot" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.027"/>
+  <testcase name="stopwatchCountsOnlyWhileRunning" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.008"/>
+  <testcase name="callBeatsEverythingInTheSmallPill" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.025"/>
+  <testcase name="joinLinks" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.009"/>
+  <testcase name="restoreRemovesOnlyOurSlots" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.007"/>
+  <testcase name="mapsDistanceInText" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.0"/>
+  <testcase name="noSideBubbleWhenTheStatusBarHasNoRoom" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.001"/>
+  <testcase name="replyBoxOnlyForTheBannerBeingAnswered" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.011"/>
+  <testcase name="openCardFallsBackToTheTopActivity" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.0"/>
+  <testcase name="finishedShortMeetingIsGone" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.009"/>
+  <testcase name="priorities" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.111"/>
+  <testcase name="everyFaceHasASizeAndTheOpenCardIsBiggerThanThePill" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.087"/>
+  <testcase name="callButtonsInEnglishAndHindi" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.046"/>
+  <testcase name="meetingLabels" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.025"/>
+  <testcase name="mapsInHindi" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.004"/>
+  <testcase name="smallPillNeverWiderThanTheRoomBetweenClockAndBattery" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.023"/>
+  <testcase name="bannerShowsTheNoteThatArrived" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.009"/>
+  <testcase name="meetingShowsTenMinutesBeforeUntilFiveAfter" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.006"/>
+  <testcase name="aNumberInsideAStreetNameIsNotADistance" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.006"/>
+  <testcase name="nothingLiveMeansHidden" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.003"/>
+  <testcase name="earliestMeetingWins" classname="com.goodspace.cocolounge.island.IslandRulesTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

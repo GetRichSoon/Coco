@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="coco_rose">#7B4F6B</color>
+    <color name="icon_bg">#F3C9B5</color>
+    <color name="pearl">#FDF7F4</color>
+    <string name="a11y_desc">Lets Coco Island sit above the status bar like the iPhone island, so it can be tapped and covers the icons under it. It reads nothing on your screen.</string>
+    <style name="Theme.CocoLounge" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/pearl</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

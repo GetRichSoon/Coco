@@ -1,0 +1,60 @@
+    <!-- <section id="panel-match" class="panel active">
+      <p id="app-detected-banner-match" class="app-detected-banner hidden">
+        <span class="app-detected-dot"></span> Application form detected on this page.
+      </p>
+
+      <div id="match-login-gate" class="hidden">
+        <p class="hint">Log in to run matches — every match is saved to your account and you'll get a full-detail email with the result.</p>
+        <button id="match-goto-account-btn" class="btn-primary">Go to Account tab</button>
+      </div>
+
+      <div id="match-content">
+        <div class="row-between">
+          <label class="field-label">Job description</label>
+          <button id="grab-btn" class="btn-ghost-small">Grab from page</button>
+        </div>
+        <textarea id="jd-input" rows="7" placeholder="Click &quot;Grab from page&quot;, paste manually, or select text on the page first."></textarea>
+        <p id="grab-status" class="hint"></p>
+
+        <label class="field-label" style="margin-top:14px;">Compare against</label>
+        <div id="resume-picker" class="chip-row"></div>
+
+        <button id="run-btn" class="btn-primary">Run match</button>
+        <p id="run-status" class="hint"></p>
+
+        <div id="results-area"></div>
+      </div>
+    </section>
+
+    <section id="panel-autofill" class="panel">
+      <p id="app-detected-banner-autofill" class="app-detected-banner hidden">
+        <span class="app-detected-dot"></span> Application form detected on this page — scan it below.
+      </p>
+
+
+     <label class="field-label" style="margin-top:10px;">
+  Choose Resume for AutoFill
+</label>
+      <div id="autofill-resume-picker" class="chip-row"></div>
+      <div id="active-facts-editor"></div>
+
+      <div class="row-gap" style="margin-top:14px;">
+        <button id="scan-form-btn" class="btn-primary">
+  Scan Form & AutoFill
+</button>
+      </div>
+      <p id="scan-status" class="hint"></p>
+
+      <div id="autofill-scan-result"></div>
+
+      <details class="qa-bank-details" style="margin-top:18px;">
+        <summary class="field-label">Saved answers (Q&amp;A bank)</summary>
+        <p class="hint">Every answer you've ever typed in lives here — edit or delete anything, or add one ahead of time.</p>
+        <div id="qa-bank-list" class="qa-list"></div>
+        <div class="row-gap" style="margin-top:8px;">
+          <input type="text" id="new-qa-question" placeholder="Question / field label" style="flex:1;" />
+          <input type="text" id="new-qa-answer" placeholder="Answer" style="flex:1;" />
+          <button id="add-qa-btn" class="btn-ghost-small">Add</button>
+        </div>
+      </details>
+    </section> -->

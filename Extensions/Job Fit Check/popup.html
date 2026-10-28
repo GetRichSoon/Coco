@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Job Fit Check — Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="popup.css" />
+</head>
+<body class="overview-only">
+  <div class="app-shell">
+    <div class="ambient" aria-hidden="true">
+      <span class="ambient-orb ambient-orb-a"></span>
+      <span class="ambient-orb ambient-orb-b"></span>
+      <span class="ambient-grid"></span>
+    </div>
+
+    <div class="wrap">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark brand-mark-img" aria-hidden="true">
+            <img src="icons/jfc-logo.png" alt="" width="34" height="34" />
+          </span>
+          <span class="brand-text">
+            <span class="brand-name">Job Fit Check</span>
+            <span class="brand-tag">Overview dashboard</span>
+          </span>
+        </div>
+        <div class="header-actions">
+          <button id="theme-toggle-btn" class="icon-btn-lg" aria-label="Toggle theme" title="Toggle theme">
+            <svg id="theme-icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <svg id="theme-icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </button>
+          <div class="avatar-wrap">
+            <button id="avatar-btn" class="avatar-btn" aria-label="Profile menu">
+              <span id="avatar-initial">?</span>
+            </button>
+            <div id="profile-menu" class="profile-menu hidden">
+              <div class="profile-menu-head">
+                <div class="avatar-lg" id="avatar-lg"><span id="avatar-initial-lg">?</span></div>
+                <div>
+                  <p class="profile-menu-email" id="profile-menu-email">Not signed in</p>
+                  <p class="profile-menu-plan" id="profile-menu-plan">Free plan</p>
+                </div>
+              </div>
+              <button class="profile-menu-item" data-act="setup">Setup (resumes &amp; key)</button>
+              <button class="profile-menu-item" data-act="account">Account</button>
+              <button class="profile-menu-item" data-act="logout">Log out</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="work-hint surface surface-tight">
+        <div class="work-hint-icon">
+          <img src="icons/jfc-logo.png" alt="" width="28" height="28" />
+        </div>
+        <div>
+          <p class="work-hint-title">Work happens on the page</p>
+          <p class="work-hint-sub">Open a job or application page — use the floating logo to Match &amp; Autofill. This popup is overview only.</p>
+        </div>
+      </div>
+
+      <div id="onboarding-card" class="onboarding-card hidden">
+        <div class="onboarding-head">
+          <p class="onboarding-title">Setup checklist</p>
+          <button id="onboarding-dismiss" class="icon-btn" title="Dismiss" aria-label="Dismiss">&times;</button>
+        </div>
+        <ul class="onboarding-list" id="onboarding-list"></ul>
+      </div>
+
+      <p id="usage-banner" class="usage-banner hidden"></p>
+
+      <section id="panel-overview" class="panel active">
+        <div class="overview-hero">
+          <div class="overview-hero-copy">
+            <p class="panel-kicker">Overview</p>
+            <p class="overview-title" id="overview-greeting">Your job search HQ</p>
+            <p class="panel-lead" id="overview-page-hint">Counts, scores, and history — match from the page logo.</p>
+          </div>
+          <div class="overview-ring" id="overview-usage-ring" aria-label="Daily match usage">
+            <svg viewBox="0 0 72 72" width="72" height="72">
+              <circle cx="36" cy="36" r="30" class="ring-track" />
+              <circle cx="36" cy="36" r="30" class="ring-fill" id="overview-ring-fill" />
+            </svg>
+            <div class="ring-label">
+              <strong id="overview-ring-used">0</strong>
+              <span id="overview-ring-cap">/20</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="overview-grid">
+          <div class="ov-card c-cyan">
+            <span class="ov-label">Matches today</span>
+            <strong class="ov-value" id="ov-today">0</strong>
+            <span class="ov-sub" id="ov-left">20 left</span>
+          </div>
+          <div class="ov-card c-emerald">
+            <span class="ov-label">Lifetime matches</span>
+            <strong class="ov-value" id="ov-total">0</strong>
+            <span class="ov-sub">all time</span>
+          </div>
+          <div class="ov-card c-amber">
+            <span class="ov-label">Applied</span>
+            <strong class="ov-value" id="ov-applied">0</strong>
+            <span class="ov-sub">logged roles</span>
+          </div>
+          <div class="ov-card c-rose">
+            <span class="ov-label">Avg score</span>
+            <strong class="ov-value" id="ov-avg">—</strong>
+            <span class="ov-sub" id="ov-best">Best —</span>
+          </div>
+          <div class="ov-card c-violet">
+            <span class="ov-label">Resumes</span>
+            <strong class="ov-value" id="ov-resumes">0</strong>
+            <span class="ov-sub">in vault</span>
+          </div>
+          <div class="ov-card c-sky">
+            <span class="ov-label">Q&amp;A answers</span>
+            <strong class="ov-value" id="ov-qa">0</strong>
+            <span class="ov-sub">learned</span>
+          </div>
+          <div class="ov-card c-lime">
+            <span class="ov-label">Streak</span>
+            <strong class="ov-value" id="ov-streak">0</strong>
+            <span class="ov-sub">days</span>
+          </div>
+          <div class="ov-card c-fuchsia">
+            <span class="ov-label">Plan</span>
+            <strong class="ov-value" id="ov-plan">Free</strong>
+            <span class="ov-sub" id="ov-ready">Setup</span>
+          </div>
+        </div>
+
+        <div class="surface surface-tight">
+          <div class="row-between">
+            <p class="field-label" style="margin:0;">Page status</p>
+            <span class="live-pill" id="page-live-pill">Checking…</span>
+          </div>
+          <p class="hint" id="page-status-detail" style="margin-top:8px;">Open a job listing or application form to use Match &amp; Autofill via the logo.</p>
+        </div>
+
+        <div class="surface surface-tight">
+          <div class="row-between">
+            <p class="field-label" style="margin:0;">Recent matches</p>
+            <button type="button" class="btn-ghost-small" id="ov-clear-matches">Clear</button>
+          </div>
+          <div id="overview-recent-list" class="overview-recent"></div>
+        </div>
+
+        <div class="surface surface-tight">
+          <div class="row-between">
+            <p class="field-label" style="margin:0;">Applied history</p>
+            <button type="button" class="btn-ghost-small" id="clear-history-btn">Clear</button>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </div>
+      </section>
+
+      <!-- Setup drawer (config only — not match/autofill work) -->
+      <section id="panel-setup" class="panel setup-drawer">
+        <button type="button" class="btn-ghost-small back-btn" id="back-overview">Back to overview</button>
+        <div class="surface">
+          <p class="panel-kicker">Resumes</p>
+          <p class="panel-lead">Upload versions used by the on-page logo for matching &amp; autofill.</p>
+          <div id="resume-slots" class="slot-col"></div>
+        </div>
+        <div class="surface">
+          <p class="panel-kicker">AI key</p>
+          <p class="panel-lead">OpenRouter key stays on this device. Needed for Match on job pages.</p>
+          <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="openrouter-btn">
+            <span class="key-icon"><svg viewBox="0 0 24 24"><path d="M14 10a4 4 0 1 0-7.75 1.4L2 15.65V19h3.35l1.4-1.4H9v-2.25h2.25v-2.24l.39-.39A4 4 0 0 0 14 10Z"/></svg></span>
+            <span>Create API key</span>
+          </a>
+          <div class="row-gap">
+            <input type="password" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off" />
+            <button id="save-key-btn" class="btn-primary-small" type="button">Save</button>
+          </div>
+          <p id="key-status" class="hint"></p>
+        </div>
+      </section>
+
+      <section id="panel-account" class="panel setup-drawer">
+        <button type="button" class="btn-ghost-small back-btn" id="back-overview-2">Back to overview</button>
+        <div id="account-logged-out" class="auth-box surface">
+          <p class="panel-kicker">Account</p>
+          <p class="panel-lead">Sign in to sync streak and email reports.</p>
+          <button id="google-login-btn" class="google-btn" type="button">
+            <img src="icons/google.svg" class="google-icon" alt="" />
+            Continue with Google
+          </button>
+          <div class="or-divider"><span>or email</span></div>
+          <label class="field-label" for="account-email-input">Email</label>
+          <input type="text" id="account-email-input" placeholder="you@example.com" autocomplete="username" />
+          <label class="field-label" for="account-password-input">Password</label>
+          <input type="password" id="account-password-input" placeholder="At least 6 characters" autocomplete="current-password" />
+          <div class="row-gap" style="margin-top:12px;">
+            <button id="account-login-btn" class="btn-primary-small" type="button">Log in</button>
+            <button id="account-signup-btn" class="btn-ghost-small" type="button">Create account</button>
+          </div>
+          <p id="account-status" class="hint"></p>
+        </div>
+        <div id="account-logged-in" class="hidden">
+          <div class="profile-edit-card surface">
+            <p id="account-email-display" class="profile-edit-name"></p>
+            <input type="text" id="account-display-name" placeholder="Display name" style="margin-top:10px;" />
+            <div class="row-gap" style="margin-top:8px;">
+              <input type="text" id="account-avatar-color" placeholder="#06b6d4" />
+              <button id="account-save-profile-btn" class="btn-ghost-small" type="button">Save</button>
+            </div>
+            <button id="account-logout-btn" class="btn-ghost-small" type="button" style="margin-top:10px;">Log out</button>
+          </div>
+          <div id="account-plan-section" style="margin-top:12px;"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="docx_extract.js"></script>
+  <script src="overview.js"></script>
+</body>
+</html>

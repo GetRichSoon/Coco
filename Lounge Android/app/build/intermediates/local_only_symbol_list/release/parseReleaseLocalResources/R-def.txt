@@ -1,0 +1,16 @@
+R_DEF: Internal format may change without notice
+local
+color coco_rose
+color icon_bg
+color pearl
+drawable ic_coco_bg
+drawable ic_coco_face
+drawable ic_coco_mark
+drawable ic_coco_notify
+font bagel
+font figtree
+font fraunces
+mipmap ic_launcher
+string a11y_desc
+style Theme.CocoLounge
+xml island_accessibility

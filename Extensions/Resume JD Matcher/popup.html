@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ORYN - JOB FIT CHECK</title>
+<link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+     <div class="brand">
+  <span class="brand-dot"></span>
+  <span class="brand-text">
+    <span class="job">JOB</span>
+    <span class="fit">FIT</span>
+    <span class="check">CHECK</span>
+  </span>
+</div>
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="icon-btn-lg" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <svg id="theme-icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg id="theme-icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+        <div class="avatar-wrap">
+          <button id="avatar-btn" class="avatar-btn" aria-label="Profile menu">
+            <span id="avatar-initial">?</span>
+          </button>
+          <div id="profile-menu" class="profile-menu hidden">
+            <div class="profile-menu-head">
+              <div class="avatar-lg" id="avatar-lg"><span id="avatar-initial-lg">?</span></div>
+              <div>
+                <p class="profile-menu-email" id="profile-menu-email">Not signed in</p>
+                <p class="profile-menu-plan" id="profile-menu-plan">Free plan</p>
+              </div>
+            </div>
+            <button class="profile-menu-item" data-act="goto-account">Account &amp; profile</button>
+            <button class="profile-menu-item" data-act="goto-upgrade">Upgrade plan</button>
+            <button class="profile-menu-item" data-act="logout">Log out</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="match">Match</button>
+      <button class="tab" data-tab="autofill">Autofill</button>
+      <button class="tab" data-tab="resumes">Resumes</button>
+      <button class="tab" data-tab="settings">Model &amp; key</button>
+      <button class="tab" data-tab="account">Account</button>
+    </nav>
+
+    <p id="usage-banner" class="usage-banner hidden"></p>
+
+
+
+        <section id="panel-match" class="panel active">
+      <!-- <p id="app-detected-banner-match" class="app-detected-banner hidden">
+        <span class="app-detected-dot"></span> Application form detected on this page.
+      </p> -->
+
+      <p id="app-detected-banner-autofill" class="app-detected-banner hidden">
+  <span class="app-detected-dot"></span> Application form detected on this page — scan it below.
+</p>
+
+
+
+      <div id="match-login-gate" class="hidden">
+        <p class="hint">Log in to run matches — every match is saved to your account and you'll get a full-detail email with the result.</p>
+        <button id="match-goto-account-btn" class="btn-primary">Go to Account tab</button>
+      </div>
+
+      <div id="match-content">
+<div class="row-between">
+  <label class="field-label">Job description</label>
+
+  <div style="display:flex; gap:8px;">
+    <button id="clear-jd-btn" class="btn-ghost-small">
+      Clear
+    </button>
+
+    <button id="grab-btn" class="btn-ghost-small">
+      Grab from page
+    </button>
+  </div>
+</div>
+        <textarea id="jd-input" rows="7" placeholder="Click &quot;Grab from page&quot;, paste manually, or select text on the page first."></textarea>
+        <p id="grab-status" class="hint"></p>
+
+        <label class="field-label" style="margin-top:14px;">Compare against</label>
+        <div id="resume-picker" class="chip-row"></div>
+
+        <button id="run-btn" class="btn-primary">Run match</button>
+        <p id="run-status" class="hint"></p>
+
+        <div id="results-area"></div>
+      </div>
+    </section>
+
+    <section id="panel-autofill" class="panel">
+     <p id="app-detected-banner-autofill" class="app-detected-banner hidden">
+  <span class="app-detected-dot"></span> Application form detected on this page — scan it below.
+</p>
+
+
+<div class="row-gap" style="margin-top:14px;">
+  <button id="scan-form-btn" class="btn-primary autofill-cta">
+    <span class="scan-icon">⚡</span>
+     AutoFill Application with Job Fit Check
+  </button>
+</div>
+
+<p id="scan-status" class="hint"></p>
+  <div id="autofill-scan-result"></div>
+
+
+
+   
+
+
+
+<div id="autofill-resume-picker"></div>
+    </section>
+
+
+
+
+
+
+
+<section id="panel-resumes" class="panel">
+
+  <div id="resume-slots" class="slot-col"></div>
+
+  <p class="hint bottom-hint">
+    Upload up to 5 resumes (.txt or .docx). Saved locally in this browser.
+    The first one you add becomes the active autofill profile automatically.
+  </p>
+
+</section>
+
+    <section id="panel-settings" class="panel">
+<p class="hint">
+  Local & secure. AI scoring only.
+</p>
+
+<a
+  href="https://openrouter.ai/keys"
+  target="_blank"
+  rel="noopener noreferrer"
+  class="openrouter-btn"
+>
+  <span class="key-icon">
+    <svg viewBox="0 0 24 24">
+      <path d="M14 10a4 4 0 1 0-7.75 1.4L2 15.65V19h3.35l1.4-1.4H9v-2.25h2.25v-2.24l.39-.39A4 4 0 0 0 14 10Z"/>
+    </svg>
+  </span>
+
+  <span>Create API Key</span>
+</a>
+      <div class="row-gap">
+        <input type="password" id="api-key-input" placeholder="sk-or-v1-..." />
+        <button id="save-key-btn" class="btn-primary-small">Save</button>
+      </div>
+      <p id="key-status" class="hint"></p>
+
+      <div class="row-between" style="margin-top:14px;">
+        <span class="field-label">Free model fallback order</span>
+        <button id="refresh-models-btn" class="btn-ghost-small">Refresh list</button>
+      </div>
+      <p class="hint">Tried in order. If one is rate-limited or down, the next is tried automatically.</p>
+      <div id="model-list" class="slot-col"></div>
+    </section>
+
+    <section id="panel-account" class="panel">
+
+      <!-- LOGGED OUT -->
+      <div id="account-logged-out" class="auth-box">
+
+        <p class="hint">
+          Log in or create a free account to save your matches and get email alerts.
+          Use the same account everywhere you install this extension.
+        </p>
+
+        <button id="google-login-btn" class="google-btn">
+          <img src="icons/google.svg" class="google-icon" />
+          Continue with Google
+        </button>
+
+        <div style="text-align:center;margin:10px 0;">
+          <span>or</span>
+        </div>
+
+        <label class="field-label">Email</label>
+        <input type="text" id="account-email-input" placeholder="you@example.com" />
+
+        <label class="field-label" style="margin-top:10px;">Password</label>
+        <input type="password" id="account-password-input" placeholder="At least 6 characters" />
+
+        <div class="row-gap" style="margin-top:12px;">
+          <button id="account-login-btn" class="btn-primary-small">Log in</button>
+          <button id="account-signup-btn" class="btn-ghost-small">Create account</button>
+        </div>
+
+        <p id="account-status" class="hint"></p>
+
+      </div>
+
+      <!-- LOGGED IN -->
+      <div id="account-logged-in" class="hidden">
+
+        <div class="profile-edit-card">
+          <div class="profile-edit-row">
+            <div class="avatar-lg avatar-lg-editable" id="account-avatar-lg">
+              <span id="account-avatar-initial">?</span>
+            </div>
+            <div style="flex:1;">
+              <p id="account-email-display" class="profile-edit-name"></p>
+              <p class="hint" style="margin:2px 0 0;">Display name and photo are stored locally on this device.</p>
+            </div>
+          </div>
+          <input type="text" id="account-display-name" placeholder="Display name (optional)" style="margin-top:10px;" />
+          <div class="row-gap" style="margin-top:8px;">
+            <input type="text" id="account-avatar-color" placeholder="Avatar color, e.g. #111111" />
+            <button id="account-save-profile-btn" class="btn-ghost-small">Save</button>
+          </div>
+        </div>
+
+        <div class="result-card" style="margin-top:14px;">
+          <div class="result-head">
+            <div>
+              <p class="result-name">Daily streak</p>
+              <p class="result-sub" id="account-streak-sub">
+                Run a match today to start your streak.
+              </p>
+            </div>
+            <p class="result-score" id="account-streak-score" style="color:var(--text);">
+              0🔥
+            </p>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-head">
+            <div>
+              <p class="result-name">Today's matches</p>
+              <p class="result-sub" id="account-usage-sub">0 of 20 used today</p>
+            </div>
+            <p class="result-score" id="account-usage-score">0/20</p>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="account-usage-bar" style="width:0%; background:var(--text);"></div></div>
+        </div>
+
+        <p class="hint">
+          You'll get a full match report by Email after every match, plus login alerts and a daily summary.
+        </p>
+
+        <button id="account-logout-btn" class="btn-ghost-small">Log out</button>
+
+        <div id="account-plan-section" style="margin-top:18px;"></div>
+
+      </div>
+
+    </section>
+  </div>
+
+  <script src="docx_extract.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

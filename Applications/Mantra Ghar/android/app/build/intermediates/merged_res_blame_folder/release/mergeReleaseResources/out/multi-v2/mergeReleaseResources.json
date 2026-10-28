@@ -6,6 +6,36 @@
                 {
                     "source": "C:\\Users\\Lenovo\\Good Space\\Coco\\Applications\\Mantra Ghar\\android\\app\\src\\main\\res\\values\\strings.xml",
                     "from": {
+                        "startLines": "-1",
+                        "startColumns": "-1",
+                        "startOffsets": "-1"
+                    },
+                    "to": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "105",
+                        "endColumns": "48",
+                        "endOffsets": "149"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Lenovo\\Good Space\\Coco\\Applications\\Mantra Ghar\\android\\app\\src\\main\\res\\values\\colors.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "49",
+                        "endOffsets": "100"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "C:\\Users\\Lenovo\\.gradle\\daemon\\8.12\\com.goodspace.mantraghar.app-release-4:\\values_values.arsc.flat",
+            "map": [
+                {
+                    "source": "C:\\Users\\Lenovo\\Good Space\\Coco\\Applications\\Mantra Ghar\\android\\app\\src\\main\\res\\values\\strings.xml",
+                    "from": {
                         "startLines": "2",
                         "startColumns": "4",
                         "startOffsets": "55",
