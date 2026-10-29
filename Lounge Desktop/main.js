@@ -13,6 +13,9 @@ let win = null, tray = null, quitting = false, trayMenu = null;
 // so phone commands still run. The place comes from the Home/Office switcher.
 const PLACE_FILE = path.join(process.env.USERPROFILE || '', 'nova-hq', 'os', 'state', 'local', 'last-place.txt');
 const atOffice = () => { try { return fs.readFileSync(PLACE_FILE, 'utf8').trim().toLowerCase() === 'office'; } catch { return false; } };
+// One line into userData\island.log. The same file the island, dock and updater already write to.
+const logLine = (m) => { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} ${m}
+`); } catch {} };
 setInterval(() => { if (atOffice() && win && win.isVisible() && !win.isFocused()) win.hide(); }, 30000);
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
@@ -35,7 +38,14 @@ function createWindow() {
   });
   win.loadFile(UI);
   logWindow(win, 'lounge');   // page errors (failed heartbeats, sign-in problems) land in island.log
-  win.once('ready-to-show', () => { if (!process.argv.includes('--hidden') && !atOffice()) win.show(); });
+  // Starting hidden is normal: at the office, and after a self-update restart, the window is meant to
+  // stay down. But then nothing anywhere says the app is running, and a founder clicking the shortcut
+  // gets silence - on 29 October that read as "Coco will not open" when it was running the whole time.
+  // So it says so in the log, with the way back in. The behaviour itself is unchanged.
+  win.once('ready-to-show', () => {
+    if (!process.argv.includes('--hidden') && !atOffice()) return win.show();
+    logLine(`window kept hidden (${process.argv.includes('--hidden') ? 'started hidden' : 'shown on demand'}${atOffice() ? ', office mode' : ''}). Coco is running; open it from the Dock or tray menu: Open Coco Lounge.`);
+  });
   win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); } });
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//.test(url)) shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith('file://')) { e.preventDefault(); if (/^https:\/\//.test(url)) shell.openExternal(url); } });
@@ -950,7 +960,22 @@ async function selfUpdate() {
   if (!/^(Lounge|Lounge Desktop)\//m.test(changed)) { startHead = after; return; }   // memory, teams, the phone app: nothing to restart for
   let last = 0; try { last = Number(fs.readFileSync(RESTART_FILE(), 'utf8')) || 0; } catch {}
   if (Date.now() - last < 10 * 60 * 1000) { log('restart held back (updated less than 10 min ago)'); return; }
+  if (!(await versionChecks(log))) return;   // stay on the version that works
   offerRestart(after, log);
+}
+
+// Never restart into a commit that fails its own version check. release.test.js is the canonical
+// source for what version the four clients are on, and it is what catches a Lounge whose release.json,
+// package.json and phone build have come apart - exactly the state that made 2.9.0 unpublishable. A
+// restart into that is a restart into a Coco that reports the wrong thing to the cloud.
+// If node itself cannot run, that is not a failing check and the restart goes ahead as it always did:
+// a missing tool must not be able to freeze updates forever.
+async function versionChecks(log) {
+  const out = await exec('node', [path.join(COCO_DIR, 'Lounge', 'release.test.js')]);
+  if (/^release:/.test(out)) return true;
+  if (/ENOENT|not recognized|cannot find|no such file/i.test(out)) { log('version check skipped, node could not run it: ' + out.slice(0, 90)); return true; }
+  log('NOT restarting: the new commit fails its own version check - ' + out.slice(0, 140));
+  return false;
 }
 
 // An update used to close the app under the founder mid-sentence. Now: if nobody is looking - the
