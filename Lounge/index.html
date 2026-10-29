@@ -329,20 +329,43 @@ const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 1500
 const devVersion = (d) => String(d.app_version || '').replace(/^(desktop|web|android|lounge)-/, '') || '?';
 const releaseDevices = () => {
   const ds = D.devices || [];
-  const latest = (CLOUD_RELEASE && CLOUD_RELEASE.version) || (RELEASE && RELEASE.version) || null;
-  const row = (d) => {
-    const v = devVersion(d);
-    const state = !online(d) ? 'Offline' : d.update_state ? d.update_state.replace(/_/g, ' ') : !latest ? 'Unknown' : v === latest ? 'Updated' : 'Update available';
-    return `<div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid rgba(128,128,128,.22)">
-      <span class="grow">${esc(d.name || d.id)}</span>
-      <span class="muted">${esc(d.kind === 'pc' ? 'Windows' : 'Android')}</span>
-      <span><b>${esc(v)}</b><span class="muted"> / ${esc(latest || '?')}</span></span>
-      <span${state === 'Updated' ? '' : ' class="muted"'}>${esc(state)}</span></div>`;
+  const r = CLOUD_RELEASE;
+  const latest = (r && r.version) || (RELEASE && RELEASE.version) || null;
+  // Android is the one platform here that can refuse an update it is offered: it rejects a build signed
+  // with a key different from the installed one, and manual_step says in words what a founder has to do
+  // about it. A phone sitting at "update available" with no reason is the lie this replaces.
+  const blocked = (d) => d.kind !== 'pc' && r && r.manual_step;
+  const stateOf = (d) => {
+    if (!online(d)) return 'OFFLINE';
+    if (d.update_state) return d.update_state.replace(/_/g, ' ').toUpperCase();
+    if (!latest) return 'UNKNOWN';
+    if (devVersion(d) === latest) return 'UPDATED';
+    return blocked(d) ? 'NEEDS YOU' : 'UPDATE AVAILABLE';
   };
-  const behind = latest ? ds.filter((d) => devVersion(d) !== latest).length : ds.length;
-  return `<div style="margin-top:10px"><span class="eyebrow">Release Center</span>${ds.map(row).join('')}
-    <div class="muted" style="margin-top:8px">${latest ? (behind ? behind + ' of ' + ds.length + ' not yet on ' + esc(latest) : 'all ' + ds.length + ' on ' + esc(latest)) : 'no release to compare against'}
-      · ${CLOUD_RELEASE ? 'cloud release ' + esc(CLOUD_RELEASE.release_id) + ', ' + esc(CLOUD_RELEASE.status) : 'no cloud release row yet, showing the file'}</div></div>`;
+  const row = (d) => {
+    const st = stateOf(d);
+    return `<div style="padding:8px 0;border-top:1px solid rgba(128,128,128,.22)">
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="grow">${esc(d.name || d.id)}</span>
+        <span class="muted">${esc(d.kind === 'pc' ? 'Windows' : 'Android')}</span>
+        <span><b>${esc(devVersion(d))}</b><span class="muted"> / ${esc(latest || '?')}</span></span>
+        <span${st === 'UPDATED' ? '' : ' class="muted"'}>${esc(st)}</span></div>
+      ${st === 'NEEDS YOU' ? `<div class="muted" style="font-size:12px;margin-top:3px">${esc(r.manual_step)}</div>` : ''}</div>`;
+  };
+  const on = latest ? ds.filter((d) => devVersion(d) === latest && online(d)).length : 0;
+  // Why a release is where it is, in its own words. A release cannot be approved or published while
+  // either platform's artifact is missing - Coco Cloud refuses it - so naming the missing half is the
+  // whole answer to "why has nothing reached the phones", and it is read, never assumed.
+  const missing = !r ? [] : [!r.desktop_artifact || !r.desktop_sha256 ? 'desktop' : null,
+    !r.android_artifact || !r.android_sha256 || !r.android_version_code ? 'Android' : null].filter(Boolean);
+  const approval = !r ? '' : r.approved_by ? 'approved by ' + esc(r.approved_by) + (r.approved_at ? ' ' + ago(r.approved_at) : '')
+    : missing.length ? 'cannot be approved yet: no ' + missing.join(' or ') + ' build' : 'built, waiting for a founder\u2019s YES';
+  return `<div style="margin-top:12px"><span class="eyebrow">Release Center</span>
+    <div style="display:flex;align-items:baseline;gap:10px;margin:4px 0 2px">
+      <b style="font-size:19px">${latest ? 'Coco ' + esc(latest) : 'No release'}</b>
+      <span class="${on === ds.length && ds.length ? '' : 'muted'}">${latest ? on + '/' + ds.length + ' devices updated' : 'nothing to compare against'}</span></div>
+    ${ds.map(row).join('')}
+    <div class="muted" style="margin-top:8px">${r ? 'cloud release ' + esc(r.release_id) + ', ' + esc(r.status) + '<br>' + approval + (r.published_at ? ' \u00b7 published ' + ago(r.published_at) : '') : 'no cloud release row yet, showing the file'}</div></div>`;
 };
 
 let sb = makeClient(store.get('gs-device-key'));
@@ -698,7 +721,21 @@ if (window.cocoDesktop && window.cocoDesktop.onIsland) window.cocoDesktop.onIsla
 // One decide path for every YES/NO (Approvals page buttons AND the island pill, Boss 2026-10-26).
 async function decideApproval(id, yes) {
   const a = (D.approvals || []).find(x => String(x.id) === String(id)); if (!a || !['waiting', 'on-hold'].includes(a.state)) return;
-  await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() }).eq('id', a.id);
+  // One approval exists in the cloud for all four clients, so the decision has to be final in the
+  // cloud, not just on the screen that pressed it. The state filter is what makes it final: the row
+  // moves only while it is still undecided, so a second device - or this one holding a card that is
+  // ten seconds stale - changes nothing and is told who got there first. Without it both writes
+  // landed, the later one overwrote the record of who actually pressed YES, and a rejected request
+  // could be flipped to approved on another phone.
+  const done = await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() })
+    .eq('id', a.id).in('state', ['waiting', 'on-hold']).select('id');
+  if (done.error) { toast('Could not save that: ' + (done.error.message || 'Coco Cloud refused it')); return; }
+  if (!done.data || !done.data.length) {
+    await loadAll();
+    const now = (D.approvals || []).find(x => String(x.id) === String(id)) || {};
+    toast(now.decided_by ? `${a.code} was already ${now.state} by ${now.decided_by}` : `${a.code} was already decided on another device`);
+    return;
+  }
   await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `${yes ? 'YES' : 'NO'} ${a.code}: ${String(a.what || '').slice(0, 180)}` });
   await log(yes ? 'approved' : 'declined', a.code); loadAll();
 }
@@ -771,7 +808,11 @@ async function heartbeat() {
   // releases, so the four-client table showed a number no desktop was actually on. If release.json has
   // not loaded yet the field is left alone rather than guessed - a stale truth beats a confident lie.
   const reported = () => RELEASE ? (window.cocoDesktop ? 'desktop-' : 'web-') + RELEASE.version : null;
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), ...(reported() ? { app_version: reported() } : {}), ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  // The desktop also says whether it is mid-update, so a device that is behind because it is busy
+  // reads differently from one that is behind because it is stuck. Only sent when it is doing
+  // something: a device that reports nothing is judged on its version alone, which is the truth.
+  const doing = () => { try { return window.cocoDesktop ? window.cocoDesktop.updateState() : null; } catch { return null; } };
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), ...(reported() ? { app_version: reported() } : {}), ...(info ? { info } : {}), update_state: doing() }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
@@ -779,6 +820,14 @@ async function heartbeat() {
   else console.error('heartbeat failed:', res.error ? (res.error.message || res.error) : 'no row updated (signed out or device key rejected)', 'device', deviceId);
 }
 const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id || '';
+// Which of the four devices pressed YES. The approval row itself records the founder and the time;
+// the device is on the activity line written in the same breath, which is the audit trail. Read from
+// there rather than copied onto the approval, so there is one record of the decision and not two
+// that can disagree.
+const decidedOnDevice = (code) => {
+  const act = (D.activity || []).find((x) => ['approved', 'declined'].includes(x.action) && x.detail === code && x.device_id);
+  return act ? deviceName(act.device_id) : null;
+};
 const founderName = () => founder ? founder.name : (me && me.email);
 async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
 
@@ -2581,9 +2630,14 @@ const V = {
   },
   approvals() {
     const w = D.approvals.filter(a => a.state === 'waiting'), r = D.approvals.filter(a => a.state !== 'waiting');
-    const row = (a) => `<div class="row">${mark('team', a.team || 'Coco', a.team || 'coco')}<div class="grow"><b>${esc(a.code)} · ${esc(a.team || '')}</b> ${chip(a.state)}<div>${esc(a.what)}</div><div class="muted">${esc(a.raised_on || '')}${a.files ? ' · ' + esc(a.files) : ''}${a.decided_by ? ' · decided by ' + esc(a.decided_by) : ''}</div>
+    // The decision in full, on whichever of the four devices is looking: who, when, on what, and the
+    // approval's own id. All four read the one cloud row, so a device that opens an already decided
+    // request sees it decided - there is no per-device YES that could disagree.
+    const decided = (a) => !a.decided_by ? '' : ' · ' + [`${a.state === 'rejected' ? 'No' : 'YES'} by ${esc(a.decided_by)}`,
+      a.decided_at ? ago(a.decided_at) : null, decidedOnDevice(a.code) ? 'on ' + esc(decidedOnDevice(a.code)) : null].filter(Boolean).join(' · ');
+    const row = (a) => `<div class="row">${mark('team', a.team || 'Coco', a.team || 'coco')}<div class="grow"><b>${esc(a.code)} · ${esc(a.team || '')}</b> ${chip(a.state)}<div>${esc(a.what)}</div><div class="muted">${esc(a.raised_on || '')}${a.files ? ' · ' + esc(a.files) : ''}${decided(a)}<div style="font-size:11px;opacity:.55">${esc(a.id)}</div></div>
       ${a.state === 'waiting' ? `<div class="actions"><button class="btn filled" data-yes="${a.id}">YES</button><button class="btn text" data-no="${a.id}">No</button></div>` : ''}</div></div>`;
-    return `<p class="muted">Your YES is recorded with your name and device. Nothing goes public, costs money or gets deleted without it.</p>
+    return `<p class="muted">One approval, four devices: any founder device can decide it, and the other three show that decision within a second. Your YES is recorded with your name, the time and the device. Nothing goes public, costs money or gets deleted without it.</p>
       <h3 style="margin:8px 0">Waiting (${w.length})</h3><div class="card2">${w.map(row).join('') || '<span class="muted">All clear.</span>'}</div>
       <h3 style="margin:18px 0 8px">Decided</h3><div class="card2">${r.map(row).join('')}</div>`;
   },

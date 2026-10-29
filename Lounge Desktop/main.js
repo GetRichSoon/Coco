@@ -954,9 +954,11 @@ const RESTART_FILE = () => path.join(app.getPath('userData'), 'last-update-resta
 async function selfUpdate() {
   if (!startHead) return;
   const log = (m) => { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} update: ${m}\n`); } catch {} };
+  updateState = 'downloading';
   const pull = await new Promise((r) => execFile('git', ['-C', COCO_DIR, 'pull', '--ff-only', '--quiet'], { windowsHide: true, timeout: 90000 }, (e, so, se) => r(e ? `failed: ${(e.killed ? 'timed out after 90 s' : (se || e.message)).toString().slice(0, 160)}` : 'ok')));   // the shared exec() gives up after 15 s, too short for a pull right after wake-up
   if (/failed/.test(pull)) log('pull did not run: ' + pull.slice(0, 120));
   const after = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
+  updateState = null;   // nothing came down, or nothing to restart for: idle again, not stuck mid-update
   if (after === startHead || !/^[0-9a-f]{40}$/.test(after)) return;
   // Bounded to the folders that matter, and never node_modules. The diff spanning the commit that
   // untracked 60,972 files is 67 MB of path names, far past execFile's 1 MB buffer, so exec() came
@@ -990,12 +992,18 @@ async function versionChecks(log) {
 // exactly as before. If the window IS open, the Lounge says an update is ready and waits to be told.
 // Either way the new code is already on disk; only the restart into it waits.
 let pendingUpdate = null;
+// What the updater is doing right now, in the words the Release Center shows: a founder looking at
+// four devices needs to tell "behind and stuck" from "behind and busy". Read by the Lounge with its
+// heartbeat, so the cloud carries it; null means idle and the dashboard compares versions instead.
+let updateState = null;
+ipcMain.on('update-state', (e) => { e.returnValue = updateState; });
 function restartNow() {
   try { fs.writeFileSync(RESTART_FILE(), String(Date.now())); } catch {}
   app.relaunch({ args: [...(app.isPackaged ? [] : [path.resolve(__dirname)]), '--hidden'] }); app.exit(0);   // keep the app folder, or a bare electron.exe starts
 }
 function offerRestart(after, log) {
   pendingUpdate = after;
+  updateState = 'installing';   // the new code is on disk; only the restart into it is left
   const inUse = win && !win.isDestroyed() && win.isVisible() && !win.isMinimized();
   if (!inUse) { log(`restarting into ${after.slice(0, 7)} (was ${startHead.slice(0, 7)}, window not in use)`); restartNow(); return; }
   log(`update ${after.slice(0, 7)} ready; waiting for the founder to restart`);
