@@ -11,5 +11,8 @@
   "devDependencies": {
     "electron": "33.2.1"
   },
-  "coco": "2.9.1"
+  "coco": "2.9.1",
+  "dependencies": {
+    "coco-lounge-desktop": "file:"
+  }
 }

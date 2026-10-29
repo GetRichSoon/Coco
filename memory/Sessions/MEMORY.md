@@ -62,3 +62,4 @@
 - [User copy standard](feedback_user_copy_standard.md) — user-facing text the standard polished way; never mention servers, databases, migrations or vendors
 - [Token discipline](feedback_token_discipline.md) — fewer tokens: no repeat work, one full brief per agent, pause agents near limits, token tool approved 2026-10-26
 - [Company handoff](project_company_handoff.md) — new sessions read company/HANDOFF.md on main first: full context, live state, 30-min check duty
+- [Chrome Web Store publishing](project_cws_publishing.md) — use extension.mjs + os/extensions.json; ask the store, not the repo; one Google account per extension, 2SV gates uploads; cloud secrets die silently
