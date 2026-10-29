@@ -37,15 +37,22 @@ const lift = (startRe, endRe, what) => {
 };
 
 const platformsSrc = lift(/const OAUTH_PLATFORMS = \{/, '};', 'OAUTH_PLATFORMS');
-const connectSrc = lift(/async function oauthConnect\(provider\) \{/, '\n}', 'oauthConnect');
+const connectSrc = lift(/async function oauthConnect\(provider, connection = null\) \{/, '\n}', 'oauthConnect');
+// cloudHeld, busy and mask, which connState is built on. The first `};` after cloudHeld closes
+// mask, so one lift carries all three.
+const helpersSrc = lift(/const cloudHeld = \(c\) =>/, '};', 'cloudHeld / busy / mask');
 const stateSrc = lift(/const connState = \(c\) => \{/, '};', 'connState');
 const chipSrc = lift(/const CONN_CHIP = \{/, '};', 'CONN_CHIP');
 
-// ---------------------------------------------------------------- the five states
+// A credential the cloud can really read is a vault NAME. It appears all through this file, because
+// the difference between this and a path on somebody's laptop is what these states are about.
+const VAULT = 'gumroad_access_token_poppy';
+
+// ---------------------------------------------------------------- the states
 function states({ connecting = null, at = 0 } = {}) {
   const scope = { connConnecting: connecting, connConnectingAt: at, OAUTH_PLATFORMS: {} };
   const fn = new Function('connConnecting', 'connConnectingAt',
-    `${stateSrc}\n${chipSrc}\nreturn { connState, CONN_CHIP };`);
+    `${helpersSrc}\n${stateSrc}\n${chipSrc}\nreturn { connState, CONN_CHIP, cloudHeld };`);
   return fn(scope.connConnecting, scope.connConnectingAt);
 }
 
@@ -56,19 +63,52 @@ ok('a never-connected account reads as Not connected', () => {
 
 ok('a connected and verified account reads as Connected', () => {
   const { connState } = states();
-  assert.equal(connState({ provider: 'gumroad', state: 'connected', last_verified_at: '2026-10-28T00:00:00Z' }), 'connected');
+  assert.equal(connState({ provider: 'gumroad', state: 'connected', secret_ref: VAULT, last_verified_at: '2026-10-28T00:00:00Z' }), 'connected');
+});
+
+// ---------------------------------------------------------------- the lie this screen used to tell
+// Fifteen YouTube channels read "Connected" on every device while their authorizations were files
+// in ~/.nova-secrets on one laptop. No cloud run can open those, so nothing could publish with the
+// PC off - which is the only thing this screen is for. A row saying connected is not a credential.
+ok('a credential that is a file on a PC is NOT reported as connected', () => {
+  const { connState, cloudHeld } = states();
+  const onPc = {
+    connection_id: 'yt-the-flow', provider: 'youtube', state: 'connected',
+    secret_ref: '~/.nova-secrets/youtube.env', last_verified_at: '2026-10-29T03:07:32Z',
+  };
+  assert.equal(cloudHeld(onPc), false);
+  const s = connState(onPc);
+  assert.equal(s, 'pc_only');
+  assert.notEqual(s, 'connected', 'a laptop file was reported as a cloud connection');
+  assert.notEqual(s, 'connected_unverified');
+});
+
+ok('a cloud vault name IS a connection, a path never is', () => {
+  const { cloudHeld } = states();
+  for (const ref of ['youtube_refresh_token_yt_the_flow', VAULT]) {
+    assert.equal(cloudHeld({ secret_ref: ref }), true, ref);
+  }
+  for (const ref of ['~/.nova-secrets/youtube.env', 'C:\\keys\\yt.env', '/home/x/y.env', 'youtube.env', '', null]) {
+    assert.equal(cloudHeld({ secret_ref: ref }), false, String(ref));
+  }
+});
+
+ok('a partly-granted authorization says so instead of reading Connected', () => {
+  const { connState } = states();
+  assert.equal(connState({ provider: 'youtube', state: 'partial', secret_ref: 'youtube_refresh_token_yt_food',
+    last_verified_at: '2026-10-29T04:00:00Z' }), 'missing_permission');
 });
 
 ok('connected but never checked is NOT reported as Connected', () => {
   const { connState } = states();
-  const s = connState({ provider: 'gumroad', state: 'connected', last_verified_at: null });
+  const s = connState({ provider: 'gumroad', state: 'connected', secret_ref: VAULT, last_verified_at: null });
   assert.equal(s, 'connected_unverified');
   assert.notEqual(s, 'connected', 'an unverified connection must not read as verified');
 });
 
 ok('an errored account reads as Verification failed', () => {
   const { connState } = states();
-  assert.equal(connState({ provider: 'gumroad', state: 'error' }), 'verification_failed');
+  assert.equal(connState({ provider: 'gumroad', state: 'error', secret_ref: VAULT }), 'verification_failed');
 });
 
 ok('an account that HAS a credential reference but is not connected needs reconnecting', () => {
@@ -80,28 +120,38 @@ ok('an account that HAS a credential reference but is not connected needs reconn
 });
 
 ok('a flow just started reads as Connecting, and only for ten minutes', () => {
-  const fresh = states({ connecting: 'gumroad', at: Date.now() });
-  assert.equal(fresh.connState({ provider: 'gumroad', state: 'not_connected' }), 'connecting');
-  const stale = states({ connecting: 'gumroad', at: Date.now() - 11 * 60_000 });
-  assert.equal(stale.connState({ provider: 'gumroad', state: 'not_connected' }), 'not_connected',
+  const acc = { connection_id: 'poppy', provider: 'gumroad', state: 'not_connected' };
+  const fresh = states({ connecting: 'poppy', at: Date.now() });
+  assert.equal(fresh.connState(acc), 'connecting');
+  const stale = states({ connecting: 'poppy', at: Date.now() - 11 * 60_000 });
+  assert.equal(stale.connState(acc), 'not_connected',
     'a stale Connecting must not stick: the founder would be told a flow is open when it has expired');
 });
 
+// Fifteen channels share one platform. If Connecting were remembered per PLATFORM, starting one
+// channel's flow would mark the other fourteen cards as connecting too.
+ok('Connecting marks the one account being connected, not its whole platform', () => {
+  const { connState } = states({ connecting: 'yt-the-flow', at: Date.now() });
+  assert.equal(connState({ connection_id: 'yt-the-flow', provider: 'youtube', state: 'not_connected' }), 'connecting');
+  assert.equal(connState({ connection_id: 'yt-food', provider: 'youtube', state: 'not_connected' }), 'not_connected');
+});
+
 ok('the cloud beats the Connecting flag, which is only this page remembering', () => {
-  const { connState } = states({ connecting: 'gumroad', at: Date.now() });
+  const { connState } = states({ connecting: 'poppy', at: Date.now() });
   // The flag is this page's memory of the last ten minutes; the account row is the authority.
   // Letting the flag win would tell a founder a flow is still open about an account that is
   // already connected and verified.
-  assert.equal(connState({ provider: 'gumroad', state: 'connected', last_verified_at: '2026-10-28T00:00:00Z' }),
+  assert.equal(connState({ connection_id: 'poppy', provider: 'gumroad', state: 'connected', secret_ref: VAULT, last_verified_at: '2026-10-28T00:00:00Z' }),
     'connected');
-  assert.equal(connState({ provider: 'gumroad', state: 'error' }), 'verification_failed');
+  assert.equal(connState({ connection_id: 'poppy', provider: 'gumroad', state: 'error', secret_ref: VAULT }), 'verification_failed');
   // and it still applies to an account that genuinely has nothing yet
-  assert.equal(connState({ provider: 'gumroad', state: 'not_connected' }), 'connecting');
+  assert.equal(connState({ connection_id: 'poppy', provider: 'gumroad', state: 'not_connected' }), 'connecting');
 });
 
 ok('every state has a label a founder can read', () => {
   const { CONN_CHIP } = states();
-  for (const s of ['connecting', 'connected', 'connected_unverified', 'verification_failed', 'reauth_required', 'not_connected']) {
+  for (const s of ['connecting', 'connected', 'connected_unverified', 'missing_permission',
+                   'verification_failed', 'reauth_required', 'pc_only', 'not_connected']) {
     assert.ok(CONN_CHIP[s], `no label for ${s}`);
     assert.ok(CONN_CHIP[s][1] && CONN_CHIP[s][1].length > 2, `empty label for ${s}`);
   }
@@ -110,34 +160,60 @@ ok('every state has a label a founder can read', () => {
 // ---------------------------------------------------------------- which platforms are offered
 ok('only a platform that can really be published to is offered a Connect button', () => {
   const PLAT = new Function(`${platformsSrc}\nreturn OAUTH_PLATFORMS;`)();
-  assert.deepEqual(Object.keys(PLAT), ['gumroad'],
-    'the other five destinations have no publishing API; offering Connect would promise what cannot happen');
+  assert.deepEqual(Object.keys(PLAT).sort(), ['gumroad', 'youtube'],
+    'the other destinations have no publishing API; offering Connect would promise what cannot happen');
   assert.equal(PLAT.gumroad.team, 'ebooks');
   assert.ok(PLAT.gumroad.subteam.startsWith('ebooks/'), PLAT.gumroad.subteam);
   assert.ok(/^[a-z0-9][a-z0-9._-]{1,60}$/.test(PLAT.gumroad.connection), PLAT.gumroad.connection);
 });
 
+// Where a platform is signed into once and then chooses WHICH account, the connection cannot be
+// baked into the platform entry: there are fifteen of them. YouTube therefore names no connection,
+// and each card passes its own - which is also why it must not name a team, or signing in would
+// silently decide where a channel publishes.
+ok('a many-account platform names no single connection and no team', () => {
+  const PLAT = new Function(`${platformsSrc}\nreturn OAUTH_PLATFORMS;`)();
+  assert.equal(PLAT.youtube.connection, undefined);
+  assert.equal(PLAT.youtube.team, undefined, 'signing in would have assigned the channel by itself');
+  assert.equal(PLAT.youtube.choose, 'channel', 'the founder must be warned which thing to pick');
+});
+
 // ---------------------------------------------------------------- driving the button
-function run({ rpc, confirmed = true }) {
+const CONNS_FIXTURE = [
+  { connection_id: 'poppy', provider: 'gumroad', external_name: 'Mangesh Lokade', secret_ref: VAULT },
+  { connection_id: 'yt-the-flow', provider: 'youtube', external_name: 'The Flow – Daily Science',
+    secret_ref: '~/.nova-secrets/youtube.env' },
+  { connection_id: 'yt-food', provider: 'youtube', external_name: 'TasteOdessey',
+    secret_ref: '~/.nova-secrets/youtube-food.env' },
+];
+
+function run({ rpc, confirmed = true, conns = CONNS_FIXTURE }) {
   const log = [];
   const opened = [];
+  const asked = [];
   const PLAT = new Function(`${platformsSrc}\nreturn OAUTH_PLATFORMS;`)();
   const scope = {
     OAUTH_PLATFORMS: PLAT,
     sb: { rpc: async (fn, args) => { log.push({ fn, args }); return rpc(fn, args); } },
     toast: (m) => log.push({ toast: m }),
     render: () => log.push({ render: true }),
-    confirm: () => confirmed,
+    confirm: (m) => { asked.push(m); return confirmed; },
     window: { open: (u) => opened.push(u) },
-    connConnecting: null, connConnectingAt: 0,
+    CONNS: conns,
   };
-  const fn = new Function('OAUTH_PLATFORMS', 'sb', 'toast', 'render', 'confirm', 'window',
+  const fn = new Function('OAUTH_PLATFORMS', 'sb', 'toast', 'render', 'confirm', 'window', 'CONNS',
     `let connConnecting = null, connConnectingAt = 0;
      ${connectSrc}
      return { oauthConnect, peek: () => ({ connConnecting, connConnectingAt }) };`);
-  const api = fn(scope.OAUTH_PLATFORMS, scope.sb, scope.toast, scope.render, scope.confirm, scope.window);
-  return { api, log, opened };
+  const api = fn(scope.OAUTH_PLATFORMS, scope.sb, scope.toast, scope.render, scope.confirm,
+    scope.window, scope.CONNS);
+  return { api, log, opened, asked };
 }
+
+const began = (log) => (log.find((l) => l.fn === 'coco_oauth_begin') || {}).args || {};
+const beginOk = (url) => async (fn) => fn === 'coco_oauth_begin'
+  ? { data: { ok: true, state: 'the-single-use-state', authorize_url: url }, error: null }
+  : { data: null, error: { message: 'unexpected call' } };
 
 ok('a founder-and-device refusal is shown, not swallowed', async () => {
   const { api, log, opened } = run({
@@ -193,6 +269,79 @@ ok('an unknown platform is refused before any cloud call', async () => {
   await api.oauthConnect('amazon_kdp');
   assert.equal(log.filter((l) => l.fn).length, 0);
   assert.match(log.filter((l) => l.toast).map((l) => l.toast).join(' '), /no connection flow/i);
+});
+
+// ---------------------------------------------------------------- one channel at a time
+// The bug this guards against: Connect used to read the connection id out of OAUTH_PLATFORMS, so
+// every YouTube card on the screen would have authorised the SAME connection. Fifteen channels
+// would have fought over one row, and fourteen of them could never be connected at all.
+ok('each account connects itself, not whatever the platform entry names', async () => {
+  const { api, log, opened } = run({ rpc: beginOk('https://accounts.google.com/o/oauth2/v2/auth?x=1') });
+  await api.oauthConnect('youtube', 'yt-food');
+  assert.equal(began(log).p_connection_id, 'yt-food');
+  assert.equal(opened.length, 1);
+  const second = run({ rpc: beginOk('https://accounts.google.com/o/oauth2/v2/auth?x=2') });
+  await second.api.oauthConnect('youtube', 'yt-the-flow');
+  assert.equal(began(second.log).p_connection_id, 'yt-the-flow');
+});
+
+ok('connecting a channel never also assigns it', async () => {
+  const { api, log } = run({ rpc: beginOk('https://accounts.google.com/o/oauth2/v2/auth') });
+  await api.oauthConnect('youtube', 'yt-the-flow');
+  const args = began(log);
+  // Where a video lands is the founder's separate decision. If signing in carried a team, picking
+  // a channel on Google's screen would quietly decide what publishes to it.
+  assert.ok(!args.p_team, `a team was sent with the connect: ${args.p_team}`);
+  assert.ok(!args.p_subteam, `a sub-team was sent with the connect: ${args.p_subteam}`);
+});
+
+ok('the founder is told which channel to pick, by name', async () => {
+  const { api, asked } = run({ rpc: beginOk('https://accounts.google.com/o/oauth2/v2/auth') });
+  await api.oauthConnect('youtube', 'yt-the-flow');
+  const said = asked.join(' | ');
+  assert.match(said, /The Flow/, said);
+  assert.match(said, /pick/i, said);
+  assert.match(said, /refuses to store the wrong one/i, said);
+});
+
+ok('a many-account platform with no account named does nothing rather than guess', async () => {
+  const { api, log, opened } = run({ rpc: beginOk('https://x') });
+  await api.oauthConnect('youtube');
+  assert.equal(log.filter((l) => l.fn).length, 0, 'it started a flow without knowing which channel');
+  assert.equal(opened.length, 0);
+  assert.match(log.filter((l) => l.toast).map((l) => l.toast).join(' '), /which account/i);
+});
+
+// ---------------------------------------------------------------- Verify has to be real
+// It used to call coco_connection('verify'), which set last_verified_at = now() and contacted
+// nothing. That is how every YouTube card went green. The screen must now go to the cloud, and must
+// say so plainly where no cloud check exists rather than falling back to the old write.
+ok('Verify does not write a timestamp through the connection RPC', () => {
+  const verifySrc = lift(/async function connectionVerify\(connection\) \{/, '\n}', 'connectionVerify');
+  assert.ok(!/coco_connection/.test(verifySrc),
+    'Verify still goes through coco_connection, which cannot check anything');
+  assert.match(verifySrc, /functions\.invoke/, 'Verify does not call the cloud at all');
+  // The browser sends an id and reads a verdict. It has no part in resolving the credential, which
+  // is why the check cannot live on this side at all.
+  assert.match(verifySrc, /connection_id: connection/);
+  assert.ok(!/\.(access_token|refresh_token)\b/.test(verifySrc),
+    'Verify handles a token itself; the client should attach the sign-in');
+});
+
+ok('a platform with no cloud check is told so, and nothing is changed', () => {
+  const routes = new Function(`${lift(/const CLOUD_VERIFY = \{/, '};', 'CLOUD_VERIFY')}\nreturn CLOUD_VERIFY;`)();
+  assert.ok(routes.youtube, 'YouTube has no verify route');
+  assert.equal(routes.amazon_kdp, undefined);
+});
+
+ok('every verdict the cloud can return has words for it', () => {
+  const said = new Function(`${lift(/const VERIFY_SAID = \{/, '};', 'VERIFY_SAID')}\nreturn VERIFY_SAID;`)();
+  for (const s of ['CONNECTED_VERIFIED', 'NOT_ASSIGNED', 'CONNECTED_WRONG_CHANNEL',
+                   'CONNECTED_EXPIRED', 'CONNECTED_MISSING_PERMISSION', 'NOT_CONNECTED']) {
+    assert.ok(said[s] && said[s].length > 4, `no words for ${s}`);
+  }
+  assert.match(said.CONNECTED_WRONG_CHANNEL, /not safe to publish/i,
+    'the one verdict that must stop a founder reads like any other');
 });
 
 // ---------------------------------------------------------------- can a founder REACH the page

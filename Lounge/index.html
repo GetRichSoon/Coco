@@ -580,10 +580,12 @@ async function loadAllNow() {
     STRUCT = st.data || [];
     CONNS = cn.data || [];
     CONN_LINKS = cl.data || [];
-    // The cloud is the authority on whether a connection happened: once a real account exists for
-    // the platform we were waiting on, "Connecting" has served its purpose and goes away. The flag
-    // is never what tells a founder they are connected - the account row is.
-    if (connConnecting && CONNS.some((c) => c.provider === connConnecting)) {
+    // The cloud is the authority on whether a connection happened: once the account we were waiting
+    // on holds a CLOUD credential - a vault name, not a path on somebody's PC - "Connecting" has
+    // served its purpose and goes away. The flag is never what tells a founder they are connected,
+    // and neither is the mere existence of the row: it is the credential the cloud can read.
+    if (connConnecting && CONNS.some((c) => c.connection_id === connConnecting
+        && c.secret_ref && !/[\\/~.]/.test(c.secret_ref))) {
       connConnecting = null; connConnectingAt = 0;
     }
     OUTPUTS = ou.data || [];
@@ -971,6 +973,49 @@ async function connectionOp(op, connection, extra = {}, confirmWith = null) {
   toast({ add: 'Account added', assign: 'Assigned', verify: 'Checked', disconnect: 'Disconnected', reconnect: 'Reconnected' }[op] || 'Saved');
   await loadAll();
   return data;
+}
+
+// Verify, meaning it.
+//
+// This used to call coco_connection('verify'), which wrote last_verified_at = now() and nothing
+// else. The platform was never contacted, so the button turned a card green on the strength of
+// having been pressed - which is how fifteen YouTube channels whose credentials sat in files on one
+// laptop came to read "Connected" on every device.
+//
+// Now it asks the cloud to do the real work: resolve the credential server-side, authenticate
+// against the platform, read back which account answered, compare it with the account this row
+// claims to be, check the permissions it needs, and only then date the row. The browser gets a
+// verdict and a sentence. It never gets the credential, which is why the check cannot live here.
+const CLOUD_VERIFY = { youtube: 'youtube-oauth/verify' };
+const VERIFY_SAID = {
+  CONNECTED_VERIFIED: 'Verified from the cloud',
+  NOT_ASSIGNED: 'Verified — assignment required',
+  CONNECTED_WRONG_CHANNEL: 'Wrong channel — not safe to publish',
+  CONNECTED_EXPIRED: 'Authorization expired — reconnect',
+  CONNECTED_MISSING_PERMISSION: 'Missing a permission',
+  NOT_CONNECTED: 'Not connected to the cloud',
+  CANNOT_CHECK: 'No cloud check for this platform yet',
+};
+async function connectionVerify(connection) {
+  const c = (CONNS || []).find((x) => x.connection_id === connection) || {};
+  const route = CLOUD_VERIFY[c.provider];
+  if (!route) {
+    // Said plainly rather than quietly doing the old thing. A platform with no cloud check has no
+    // way to be verified from here, and pretending otherwise is the bug this replaced.
+    toast(`Coco cannot check ${c.provider || 'that platform'} from the cloud yet, so nothing was changed.`);
+    return null;
+  }
+  toast('Asking the platform…');
+  // functions.invoke, not fetch: the client already carries the founder's sign-in and this device's
+  // key, so the page never handles either. The cloud re-checks both before it looks at anything.
+  const { data: r, error } = await sb.functions.invoke(route, { body: { connection_id: connection } });
+  if (error || !r) {
+    toast('Coco Cloud could not be reached, so nothing was checked.');
+    return null;
+  }
+  toast(`${VERIFY_SAID[r.status] || r.status}: ${r.detail || ''}`.slice(0, 220));
+  await loadAll();
+  return r;
 }
 
 // Connecting a platform, once, so the cloud can keep using it afterwards.
@@ -2385,11 +2430,11 @@ document.addEventListener('click', async (e) => {
   if (ds.sarchive) await structureOp('archive', ds.sarchive, `Archive ${ds.sarchive}? It stays in the company and can be restored.`);
   if (ds.srestore) await structureOp('restore', ds.srestore);
   if (ds.sedit) { renaming = ds.sedit; render(); }
-  if (ds.oauth) await oauthConnect(ds.oauth);
+  if (ds.oauth) await oauthConnect(ds.oauth, ds.oauthconn || null);
   if (ds.cadd) { connAdd = ds.cadd; connAssign = null; render(); }
   if (ds.cassign) { connAssign = ds.cassign; connAdd = null; render(); }
   if (ds.ccancel) { connAssign = null; connAdd = null; render(); }
-  if (ds.cverify) await connectionOp('verify', ds.cverify);
+  if (ds.cverify) await connectionVerify(ds.cverify);
   if (ds.creconnect) await connectionOp('reconnect', ds.creconnect);
   if (ds.cdisconnect) await connectionOp('disconnect', ds.cdisconnect,
     {}, 'Disconnect this account? Its own assignment is stood down. No other account is touched.');
