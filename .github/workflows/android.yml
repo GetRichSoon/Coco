@@ -1,22 +1,29 @@
-# Builds the Coco Lounge phone app in the cloud, so a broken build is caught here and not on a phone.
+# Builds the Coco Lounge phone app in the cloud, and - since 2026-10-29 - signs and publishes it there
+# too, so a release needs no PC switched on. The laptop is no longer in the path.
 #
-# It BUILDS. It does NOT publish, and it must not pretend to: the two phones run an APK signed with
-# the laptop's debug key, and Android refuses an update signed with any other key. A runner makes its
-# own throwaway debug key, so an APK from here installs on a clean phone and is REFUSED as an update
-# to the existing one. Publishing to the founders' phones therefore still runs from the laptop:
+# A push only ever BUILDS. Publishing is a deliberate act: run this workflow by hand (the Actions tab,
+# which works from a phone) and choose where the APK goes. The founders' approval gate lives in that
+# choice, and nothing reaches a phone without someone making it.
 #
-#   cd "Lounge Android" && ./gradlew assembleRelease && node publish-update.mjs
+#   publish: no        build and sign, keep the APK as an artifact. The default.
+#   publish: pending   upload it and announce it as controls/apk_pending. The phones do NOT offer it.
+#   publish: latest    upload it and announce it as controls/apk_latest. Both phones self-update.
 #
-# To move publishing here, both of these have to be true, and both are founder decisions:
-#   1. a signing keystore exists and is held as ANDROID_KEYSTORE_BASE64 + _PASSWORD + _KEY_ALIAS +
-#      _KEY_PASSWORD, and app/build.gradle.kts is pointed at it instead of signingConfigs("debug").
-#      Switching away from the current debug key means both phones must uninstall and reinstall once.
-#   2. the Supabase service key publish-update.mjs needs is held as SUPABASE_SERVICE_KEY, since that
-#      script uploads the APK and writes the controls/apk_latest row the phones poll.
+# Use 'pending' for the FIRST build after a signing-key change. Up to 2.8.2 the APK was signed with the
+# laptop's debug key; this one is signed with the real release key, and Android refuses an update whose
+# key differs. Announced as apk_latest, the installed app would download it, be refused, delete it and
+# retry every 15 minutes indefinitely. So: publish pending, both founders uninstall and install once
+# from the link, and only then promote to latest. Every release after that updates by itself.
 name: android build
 
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Where the signed APK goes
+        type: choice
+        default: 'no'
+        options: ['no', 'pending', 'latest']
   push:
     paths:
       - 'Lounge Android/**'
@@ -65,5 +72,62 @@ jobs:
           path: 'Lounge Android/app/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
 
-      - name: say plainly what this APK is
-        run: echo "Built and signed with a throwaway runner debug key. It cannot update the founders' phones; it proves the app compiles."
+  # The real thing: signed with the release key held here as a secret, which is what makes a release
+  # possible with both PCs off. Runs only after the debug build and the tests have passed.
+  release:
+    needs: build
+    # Only when a person asks for it. A push does the cheap checks; signing a release on every commit
+    # would double this private repo's Actions minutes for a build nobody is going to send anywhere.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 'Lounge Android'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: take the signing key out of the secret
+        env:
+          B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$B64" || { echo "ANDROID_KEYSTORE_BASE64 is not set, so nothing here can sign a release."; exit 1; }
+          printf '%s' "$B64" | base64 -d > "$RUNNER_TEMP/coco-release.jks"
+          test -s "$RUNNER_TEMP/coco-release.jks"
+
+      - name: build the signed release APK
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/coco-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      # Proves the APK is the release we think it is before anyone can be told about it: right package,
+      # right versionName, right versionCode, and signed with the key whose fingerprint we expect.
+      - name: say what was actually built
+        run: |
+          cat app/build/outputs/apk/release/output-metadata.json
+          APK=app/build/outputs/apk/release/app-release.apk
+          sha256sum "$APK"
+          SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
+          "$SIGNER" verify --print-certs "$APK"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coco-lounge-release-apk
+          path: 'Lounge Android/app/build/outputs/apk/release/app-release.apk'
+          if-no-files-found: error
+
+      - name: tell the phones about it
+        if: github.event_name == 'workflow_dispatch' && inputs.publish != 'no'
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node publish-update.mjs ${{ inputs.publish == 'pending' && '--pending' || '' }}
+
+      - name: or say plainly that nobody was told
+        if: github.event_name != 'workflow_dispatch' || inputs.publish == 'no'
+        run: echo "Signed and kept as an artifact. No phone was told about it. To send it, run this workflow by hand and choose publish pending or latest."

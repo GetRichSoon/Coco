@@ -26,11 +26,21 @@
   "_minimum": "Below this a client is too old to be trusted with today's Coco Cloud rows and must update before it is used. 2.8.0 is the first build that polls controls/apk_latest with a ready download link, so it is the oldest one that can still update itself.",
   "minimum": "2.8.0",
 
-  "_status": "A Coco release is only 'released' when BOTH artifacts exist. 2.9.0 is not: the desktop half reached both PCs through main on 2026-10-28, the phone half was never built, because versionCode 16 was already spent on 2.8.2 and the phones' own updater skips anything at or below the code they run. So 2.9.0 is a half release, and saying 'released' would have been a lie on two of the four clients.",
+  "_status": "A Coco release is only 'released' when BOTH artifacts exist. 2.9.0 is not: the desktop half reached both PCs through the repo on 2026-10-28, the phone half was never built, because versionCode 16 was already spent on 2.8.2 and the phones' own updater skips anything at or below the code they run. So 2.9.0 is a half release, and saying 'released' would have been a lie on two of the four clients.",
   "status": "blocked",
   "platforms": {
-    "desktop": { "state": "shipped", "artifact": "git main, pulled every 30 min", "sha256": null },
-    "android": { "state": "blocked", "artifact": null, "sha256": null, "blocked_by": "no release signing key, so no cloud build can update the phones" }
+    "desktop": { "state": "shipped", "artifact": "the repo, fast-forwarded by each desktop every 30 min", "sha256": null },
+    "android": { "state": "pending", "artifact": null, "sha256": null, "blocked_by": "the cloud can sign and publish from 2026-10-29, but this is the first build on the new key, so both phones need one uninstall and reinstall before it can reach them" }
+  },
+
+  "_signing": "Android release signing, added 2026-10-29, which is the whole reason a release no longer needs a PC. The keystore and its password are in Coco Vault on the laptop and nowhere in git; GitHub holds the same key as ANDROID_KEYSTORE_BASE64 so a cloud run can sign. Up to and including 2.8.2 the APK was signed with the laptop's debug key, and Android refuses an update signed with a different one - which is why this one costs both phones a single uninstall and reinstall, once, forever.",
+  "signing": {
+    "since": "2.9.0",
+    "alias": "coco",
+    "certificate_sha256": "94:01:C6:0E:44:E2:E7:84:5A:12:08:2A:37:89:F3:5F:C6:EB:4C:C8:BB:39:D5:7A:DB:20:07:25:3F:13:A8:6C",
+    "expires": "2054-03-16",
+    "previous_key": "the laptop debug key, up to 2.8.2",
+    "held": "the Coco Keys folder in Coco Vault (laptop) and GitHub Actions secrets (cloud)"
   },
 
   "_history": "Every user-facing Coco version, oldest first, as the Android line recorded them - this is the whole release history and it is append-only. It lived only in git commits until 2026-10-29, which is how versionCode 16 came to be handed out twice. A code that appears here is spent forever; release.test.js refuses to reuse one. Codes 2 and 5 never reached a commit of build.gradle.kts, so they are absent rather than invented.",
@@ -55,7 +65,7 @@
   "_rollback": "A bad release is undone with a normal git revert on main. Every desktop fast-forwards this repo every 30 minutes, so the revert reaches both of them within half an hour with no installer, no store and nothing to uninstall. The phones are the exception: they carry a built APK, so rolling them back needs a rebuilt APK, which is the signing work that is deliberately not done yet.",
   "rollback": {
     "desktop": "git revert <commit> on main; both desktops pick it up within 30 minutes",
-    "android": "needs a rebuilt APK - blocked until release signing exists",
+    "android": "rebuild the older version in the cloud (Actions > android build > publish latest). Possible from 2026-10-29; before that there was no release key and this said blocked.",
     "previous": "2.8.2"
   }
 }

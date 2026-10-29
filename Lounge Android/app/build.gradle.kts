@@ -14,14 +14,32 @@ android {
         versionCode = 17
         versionName = "2.9.0"
     }
+    // The release key (Boss, 2026-10-29). It lives in Coco Vault on the laptop and in GitHub as
+    // ANDROID_KEYSTORE_BASE64, so the cloud can sign a release with every PC switched off. Without the
+    // key the release task fails on a missing storeFile; it deliberately does not fall back to the debug
+    // key, because a debug-signed APK looks publishable, uploads happily, and is then refused by every
+    // phone that has the real one. Debug builds and unit tests are unaffected and still need no key.
+    signingConfigs {
+        create("release") {
+            val ks = System.getenv("ANDROID_KEYSTORE_PATH")
+            if (ks != null) {
+                storeFile = file(ks)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: "coco"
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             // R8: smaller APK (faster self-update) and faster, smoother Compose (2026-10-25, measured on the Nord CE 2).
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Private app for the founders' two phones: signed with the local debug key, never uploaded to a store.
-            signingConfig = signingConfigs.getByName("debug")
+            // Private app for the founders two phones, never uploaded to a store, but signed with a real
+            // key so the cloud can publish it. Up to 2.8.2 this was the laptops debug key, which is why
+            // moving to the cloud costs both phones one uninstall and reinstall.
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }

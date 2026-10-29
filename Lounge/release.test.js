@@ -52,6 +52,12 @@ const plat = rel.platforms || {};
 assert.ok(plat.desktop && plat.android, 'the release must say where each platform stands');
 if (rel.status === 'released') for (const [k, p] of Object.entries(plat)) assert.strictEqual(p.state, 'shipped', `${k} is ${p.state}, so this release is not released`);
 
+// The phones can only be reached from the cloud while the release build uses the real key. A revert to
+// signingConfigs("debug") would build an APK that uploads happily and is then refused by both phones,
+// and the refusal looks like a broken download rather than the wrong key.
+assert.ok(/signingConfig = signingConfigs.getByName\("release"\)/.test(gradle), 'the release build is not signed with the release key');
+assert.ok(rel.signing && /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(rel.signing.certificate_sha256), 'the release must record the fingerprint of the key that signs it');
+
 // the version a client reports must come from this file, never be typed into the app
 assert.ok(!/app_version: '[a-z]+-\d/.test(read('Lounge/index.html')), 'the Lounge is reporting a hardcoded version again');
 
