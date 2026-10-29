@@ -323,6 +323,27 @@ const store = { get: (k) => { try { return localStorage.getItem(k); } catch { re
 const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 2600); };
 const ago = (iso) => { if (!iso) return 'never'; const s = (Date.now() - new Date(iso)) / 1000; return s < 90 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : new Date(iso).toLocaleDateString(); };
 const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000;
+// Release Center: the four devices against the one release the cloud says is current. A device counts as
+// updated only when its own heartbeat reports that version - never inferred, never assumed, because
+// on 29 October the dashboard showed a number no desktop was actually running.
+const devVersion = (d) => String(d.app_version || '').replace(/^(desktop|web|android|lounge)-/, '') || '?';
+const releaseDevices = () => {
+  const ds = D.devices || [];
+  const latest = (CLOUD_RELEASE && CLOUD_RELEASE.version) || (RELEASE && RELEASE.version) || null;
+  const row = (d) => {
+    const v = devVersion(d);
+    const state = !online(d) ? 'Offline' : d.update_state ? d.update_state.replace(/_/g, ' ') : !latest ? 'Unknown' : v === latest ? 'Updated' : 'Update available';
+    return `<div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid rgba(128,128,128,.22)">
+      <span class="grow">${esc(d.name || d.id)}</span>
+      <span class="muted">${esc(d.kind === 'pc' ? 'Windows' : 'Android')}</span>
+      <span><b>${esc(v)}</b><span class="muted"> / ${esc(latest || '?')}</span></span>
+      <span${state === 'Updated' ? '' : ' class="muted"'}>${esc(state)}</span></div>`;
+  };
+  const behind = latest ? ds.filter((d) => devVersion(d) !== latest).length : ds.length;
+  return `<div style="margin-top:10px"><span class="eyebrow">Release Center</span>${ds.map(row).join('')}
+    <div class="muted" style="margin-top:8px">${latest ? (behind ? behind + ' of ' + ds.length + ' not yet on ' + esc(latest) : 'all ' + ds.length + ' on ' + esc(latest)) : 'no release to compare against'}
+      · ${CLOUD_RELEASE ? 'cloud release ' + esc(CLOUD_RELEASE.release_id) + ', ' + esc(CLOUD_RELEASE.status) : 'no cloud release row yet, showing the file'}</div></div>`;
+};
 
 let sb = makeClient(store.get('gs-device-key'));
 function makeClient(deviceKey) {
@@ -568,6 +589,9 @@ async function loadAllNow() {
   if (!IDENT) { try { const r = await fetch('identity.json'); if (r.ok) { IDENT = await r.json(); OUTLINE.clear(); } } catch {} }
   // the one Coco version every client reports, so drift between the four is visible rather than guessed
   if (!RELEASE) { try { const r = await fetch('release.json', { cache: 'no-store' }); if (r.ok) RELEASE = await r.json(); } catch {} }
+  // The cloud release registry is the authority the four devices resolve against - release.json is only
+  // where a release is written. If the cloud has a row, it is the one that counts.
+  try { const rr = await sb.from('releases').select('*').order('created_at', { ascending: false }).limit(1); if (rr.data && rr.data.length) CLOUD_RELEASE = rr.data[0]; } catch {}
   try {
     const [rn, ev, ac, bi, po, co, st, cn, cl, ou] = await Promise.all([
       sb.from('runs').select('*').order('opened_at', { ascending: false }).limit(60),
@@ -769,7 +793,8 @@ const chipFor = (s) => ({ new: ['', 'New'], analyzing: ['warn', 'Analyzing'], an
 const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
 
 let IDENT = null;                                   // identity.json, loaded once at boot
-let RELEASE = null;                                 // release.json: the one version all four clients report
+let RELEASE = null;                                 // release.json: where a release is authored
+let CLOUD_RELEASE = null;                           // public.releases: what the cloud says the four devices should be on
 const PALETTE = () => (IDENT && IDENT.palette) || {};
 const tone = (c) => PALETTE()[c] || c || '#2F55C4';  // a palette name, or a literal colour
 
@@ -2471,7 +2496,8 @@ const V = {
             <div class="muted">Released ${esc(RELEASE.released || '')} · this client: ${esc(window.cocoDesktop ? 'desktop build ' + ((RELEASE.builds || {}).desktop || '?') : 'web')}</div></div>
         </div>
         ${(RELEASE.notes || []).length ? `<ul class="relnotes">${RELEASE.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
-        <div class="muted">All four Coco clients report this number. Internal build numbers stay per platform.</div></div>` : '');
+        <div class="muted">All four Coco clients report this number. Internal build numbers stay per platform.</div>
+        ${releaseDevices()}</div>` : '');
     if (sub === 'policies') return bar + Object.entries(pol).map(([k, v]) => `<div class="card2" style="margin-bottom:12px"><h3>${esc(k.replace(/_/g, ' '))}</h3>${(v || []).map(line => `<div class="row"><div class="grow">${esc(line)}</div></div>`).join('')}</div>`).join('');
     if (sub === 'audit') return bar + `<div class="card2"><h3>Every control change</h3><div class="muted">What was changed, by whom, and whether it needed a YES.</div>${CONTROL_OPS.map(o => `<div class="row"><div class="grow"><b>${esc(o.scope)} ${esc(o.scope_id)} · ${esc(CONTROL_LABEL[o.key] || o.key)}</b> ${chip(o.state === 'applied' ? 'done' : o.state === 'needs_approval' ? 'waiting' : o.state === 'rejected' ? 'rejected' : 'failed')}
         <div class="muted">${esc(JSON.stringify(o.old_value) || 'unset')} → <b>${esc(JSON.stringify(o.new_value))}</b></div>
