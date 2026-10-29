@@ -20,6 +20,10 @@ on:
   push:
     paths:
       - 'Lounge Android/**'
+      - 'Lounge/release.json'
+      - 'Lounge/release.test.js'
+      - 'Lounge Desktop/package.json'
+      - 'package.json'
       - '.github/workflows/android.yml'
 
 permissions:
@@ -38,6 +42,13 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+
+      # Runs before the build, because the thing most likely to be wrong is the number, not the code.
+      # On 2026-10-28 versionCode 16 was given to 2.9.0 when 2.8.2 already had it, and the phones skip
+      # any build at or below the code they run, so that APK could never have installed on either phone.
+      - name: one Coco version across all four clients
+        working-directory: .
+        run: node Lounge/release.test.js
 
       - name: what version this is
         run: grep -E 'versionCode|versionName' app/build.gradle.kts

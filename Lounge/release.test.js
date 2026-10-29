@@ -32,9 +32,28 @@ assert.strictEqual(name, rel.version, 'the phone shows a different Coco version'
 assert.strictEqual(code, rel.builds.android.versionCode, 'the Android build number disagrees with release.json');
 assert.strictEqual(rel.builds.android.versionName, rel.version, 'release.json contradicts itself about Android');
 
-// a version must never go backwards on a client that already shipped a higher one: an Android
-// update is refused if versionCode drops, and a founder reading a smaller number assumes a downgrade
-assert.ok(code >= 16, 'the Android build number must not go backwards from what the phones have');
+// The whole release history, append-only. It is kept here because while it lived only in git commits,
+// versionCode 16 was handed to 2.8.2 and then to 2.9.0, and the phones' own updater skips anything at or
+// below the code they run - so the 2.9.0 phone build could never have reached a founder.
+assert.ok(Array.isArray(rel.history) && rel.history.length >= 15, `the release history must keep all 15 entries, found ${(rel.history || []).length}`);
+const spent = rel.history.filter((h) => h.version !== rel.version).map((h) => h.versionCode);
+assert.ok(!spent.includes(code), `versionCode ${code} was already used by ${(rel.history.find((h) => h.versionCode === code) || {}).version}; a spent code can never be reused`);
+assert.ok(code > Math.max(...spent), `the Android build number must be higher than every one before it (highest so far ${Math.max(...spent)})`);
+const mine = rel.history.find((h) => h.version === rel.version);
+assert.ok(mine && mine.versionCode === code, 'the history entry for this release disagrees with build.gradle.kts');
+
+// the canonical identity every client resolves, and the floor below which one must update before use
+assert.strictEqual(rel.release_id, `coco-${rel.version}`, 'the release id must be coco-<version>');
+assert.ok(/^\d+\.\d+\.\d+$/.test(rel.minimum), 'the release must state a minimum supported version');
+
+// Both artifacts or it is not released. A half release told two of the four clients they were current.
+assert.ok(['blocked', 'ready', 'released'].includes(rel.status), 'status must be blocked, ready or released');
+const plat = rel.platforms || {};
+assert.ok(plat.desktop && plat.android, 'the release must say where each platform stands');
+if (rel.status === 'released') for (const [k, p] of Object.entries(plat)) assert.strictEqual(p.state, 'shipped', `${k} is ${p.state}, so this release is not released`);
+
+// the version a client reports must come from this file, never be typed into the app
+assert.ok(!/app_version: '[a-z]+-\d/.test(read('Lounge/index.html')), 'the Lounge is reporting a hardcoded version again');
 
 // the Lounge has to be able to read it: it is served from the Lounge folder, next to index.html
 assert.ok(fs.existsSync(path.join(here, 'release.json')), 'release.json must sit where the web app can fetch it');

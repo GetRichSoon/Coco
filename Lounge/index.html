@@ -732,7 +732,11 @@ async function heartbeat() {
   // Checked, not fire-and-forget (bug 2026-10-23: after a long sleep the login token had expired, every update failed
   // silently and the PC showed offline for 18 h). On failure refresh the login once and try again; the desktop app is
   // told only about a heartbeat that really reached Coco Cloud, and reloads the page itself if none arrives for 4 min.
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), app_version: 'lounge-2.6', ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
+  // The version is read from release.json, never typed here: this line said 'lounge-2.6' for three
+  // releases, so the four-client table showed a number no desktop was actually on. If release.json has
+  // not loaded yet the field is left alone rather than guessed - a stale truth beats a confident lie.
+  const reported = () => RELEASE ? (window.cocoDesktop ? 'desktop-' : 'web-') + RELEASE.version : null;
+  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), ...(reported() ? { app_version: reported() } : {}), ...(info ? { info } : {}) }).eq('id', deviceId).select('id');
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
@@ -976,22 +980,38 @@ async function connectionOp(op, connection, extra = {}, confirmWith = null) {
 // and then hands the person to the platform. The platform sends its answer to Coco Cloud's own
 // callback, which does the exchange server-side and puts the token in the vault. Nothing secret
 // comes back through here, which is why there is nothing here to store or to leak.
+// `connection` is the account a bare Connect card starts; a platform with many accounts leaves it
+// out and each card passes its own. `choose` is true where the platform asks WHICH account on its
+// own consent screen - YouTube does, because fifteen brand channels sit under one Google sign-in,
+// and picking the wrong one there is the one mistake that would publish to the wrong channel.
 const OAUTH_PLATFORMS = {
   gumroad: { name: 'Gumroad', connection: 'poppy', team: 'ebooks', subteam: 'ebooks/practical-skills' },
+  youtube: { name: 'YouTube', choose: 'channel' },
 };
 
-async function oauthConnect(provider) {
+async function oauthConnect(provider, connection = null) {
   const p = OAUTH_PLATFORMS[provider];
   if (!p) { toast('No connection flow is built for that platform'); return; }
-  if (!confirm(`Connect ${p.name}?\n\nConnect your ${p.name} account once. Coco will securely store `
+  const id = connection || p.connection;
+  if (!id) { toast('Which account? Open its card and press Connect there.'); return; }
+  const acc = (CONNS || []).find((c) => c.connection_id === id);
+  const named = (acc && acc.external_name) || id;
+  if (!confirm(`Connect ${named}?\n\nConnect this ${p.name} account once. Coco will securely store `
     + `the authorization in the cloud so publishing can run without your PC.\n\nYou will be sent to `
     + `${p.name} to approve it. The authorization goes straight to Coco Cloud and never to this `
-    + `browser. Publishing stays in ask-me-first mode afterwards.`)) return;
+    + `browser. Publishing stays in ask-me-first mode afterwards.`
+    + (p.choose ? `\n\nIMPORTANT: on Google's chooser, pick ${named} and nothing else. Coco checks `
+      + `which ${p.choose} you picked and refuses to store the wrong one, so a mistake costs you `
+      + `another try, never a video on the wrong channel.` : ''))) return;
 
   // coco_oauth_begin checks is_founder() AND device_ok() inside. A refusal here is the gate doing
   // its job, so it is shown as it came back rather than retried or routed around.
+  //
+  // No team is sent for a platform whose accounts choose their own place. The callback assigns only
+  // what it was told to assign, so leaving it out is what keeps "connected" and "allowed to publish
+  // here" two separate decisions, both of them the founder's.
   const { data, error } = await sb.rpc('coco_oauth_begin', {
-    p_provider: provider, p_connection_id: p.connection, p_team: p.team, p_subteam: p.subteam,
+    p_provider: provider, p_connection_id: id, p_team: p.team, p_subteam: p.subteam,
   });
   if (error) {
     const why = error.message.replace(/^.*?:\s*/, '');
@@ -1003,8 +1023,10 @@ async function oauthConnect(provider) {
   if (!data || !data.authorize_url) { toast('Coco did not return an authorization link'); return; }
 
   // The state is the single-use credential for the callback, so it is never written anywhere this
-  // page keeps things. Only the fact that a flow is open is remembered.
-  connConnecting = provider; connConnectingAt = Date.now();
+  // page keeps things. Only the fact that a flow is open is remembered - and it is remembered per
+  // ACCOUNT, because with fifteen channels on one platform "a flow is open for YouTube" would mark
+  // all fifteen cards as connecting when one of them is.
+  connConnecting = id; connConnectingAt = Date.now();
   render();
   toast(`Sending you to ${p.name}. This link works once, for ten minutes.`);
   window.open(data.authorize_url, '_blank', 'noopener');
@@ -1882,6 +1904,20 @@ const V = {
       : [l.team_id, l.subteam_id, l.category_id, l.channel_id].filter(Boolean)
           .map((x) => esc((tree.nodes.get(x) || {}).name || x)).join(' <span class="muted">›</span> ');
 
+    // Can the CLOUD use this account, with every PC switched off? That is the only question this
+    // screen exists to answer, and the existence of a database row is not an answer to it.
+    //
+    // A credential Coco can really use lives in the cloud vault, and a vault reference is a NAME:
+    // `youtube_refresh_token_yt_the_flow`. A secret_ref like `~/.nova-secrets/youtube-food.env` is a
+    // FILE ON ONE LAPTOP - no cloud run can open it - so that account is not connected for any
+    // purpose this screen is about, however old the row is. Collapsing those two cases is how
+    // fifteen YouTube channels came to read "Connected" while nothing could publish with the PC off.
+    const cloudHeld = (c) => Boolean(c.secret_ref) && !/[\\/~.]/.test(c.secret_ref);
+    const busy = (id) => connConnecting === id && Date.now() - connConnectingAt < 600_000;
+    // A channel id is not a secret, but it is an identifier for one of the founders' own accounts
+    // and the card only needs enough of it to tell two channels apart at a glance.
+    const mask = (id) => { const s = String(id || ''); return s.length <= 10 ? s : `${s.slice(0, 6)}…${s.slice(-4)}`; };
+
     // What a founder needs to know about a connection, in one word. Derived from what the cloud
     // actually recorded rather than from a status field somebody remembered to set: an account with
     // a credential reference that is no longer connected needs re-authorising, not re-adding, and
@@ -1890,19 +1926,35 @@ const V = {
       // The cloud is checked FIRST, always. "Connecting" is only this page's memory of the last ten
       // minutes, so letting it win would tell a founder a flow was still open about an account that
       // is already connected and verified.
-      if (c.state === 'error') return 'verification_failed';
-      if (c.state === 'connected') return c.last_verified_at ? 'connected' : 'connected_unverified';
-      if (connConnecting === c.provider && Date.now() - connConnectingAt < 600_000) return 'connecting';
-      if (c.secret_ref) return 'reauth_required';     // it was connected once; the token is gone or stale
-      return 'not_connected';
+      if (cloudHeld(c)) {
+        if (c.state === 'error') return 'verification_failed';
+        if (c.state === 'partial') return 'missing_permission';
+        if (c.state === 'connected') return c.last_verified_at ? 'connected' : 'connected_unverified';
+        return 'reauth_required';                     // it was connected once; the token is gone or stale
+      }
+      if (busy(c.connection_id)) return 'connecting';
+      return c.secret_ref ? 'pc_only' : 'not_connected';
     };
     const CONN_CHIP = {
       connecting: ['warn', 'Connecting'],
       connected: ['good', 'Connected'],
       connected_unverified: ['warn', 'Connected, not yet checked'],
+      missing_permission: ['warn', 'Missing a permission'],
       verification_failed: ['bad', 'Verification failed'],
       reauth_required: ['warn', 'Reconnect required'],
+      pc_only: ['bad', 'On your PC only'],
       not_connected: ['bad', 'Not connected'],
+    };
+    // Why a card is not ready, in the founder's words, and what the one next action is. Said on the
+    // card rather than left to be worked out from a chip, because "On your PC only" is new and the
+    // honest version of what used to read "Connected".
+    const CONN_WHY = {
+      pc_only: 'Its authorization is a file on your PC, so the cloud cannot use it. Press Connect to authorise this channel in the cloud — then it works with your PC off.',
+      not_connected: 'No authorization is recorded. Press Connect to authorise this channel.',
+      connected_unverified: 'The cloud holds an authorization for this account, but it has not been checked against the platform yet. Press Verify.',
+      missing_permission: 'The authorization is missing a permission it needs to upload. Press Connect and leave every box ticked.',
+      reauth_required: 'It was connected once and the authorization is no longer usable. Press Connect to approve it again. Nothing publishes until you do.',
+      verification_failed: 'The last real check against the platform did not pass. Verify again to see why, or Connect to re-authorise.',
     };
 
     const card = (c) => {
@@ -1910,26 +1962,35 @@ const V = {
       const st = connState(c);
       const [cls, label] = CONN_CHIP[st] || ['', st];
       const oauth = OAUTH_PLATFORMS[c.provider];
+      const cloud = cloudHeld(c);
+      // The deepest truth on the card: ready means verified AND assigned, because an account that
+      // no run can choose publishes nothing, and one that was never checked might not publish either.
+      const ready = cloud && c.state === 'connected' && c.last_verified_at && l;
+      // Where a connect button is the one useful action, it is the FILLED one. Leaving Assign as the
+      // only emphasised control on an account the cloud cannot use points a founder at the wrong job.
+      const connectBtn = oauth
+        ? `<button class="btn ${cloud ? 'text' : 'filled'}" data-oauth="${esc(c.provider)}" data-oauthconn="${esc(c.connection_id)}">${
+            cloud ? 'Reconnect' : busy(c.connection_id) ? 'Try again' : 'Connect'}</button>`
+        : `<button class="btn text" data-creconnect="${esc(c.connection_id)}">Reconnect</button>`;
       return `<div class="row">${serviceLogo(c.provider, c.external_name, 'm')}
         <div class="grow"><b>${esc(c.external_name || c.account_label || c.connection_id)}</b>
           <span class="chip ${cls}">${esc(label)}</span>
           ${c.external_handle ? `<span class="muted">${esc(c.external_handle)}</span>` : ''}
-          <div class="muted">${esc(c.account_label || '')}${c.external_id ? ' · ' + esc(c.external_id) : ''}</div>
+          <div class="muted">${esc(c.account_label || '')}${c.external_id ? ' · channel ' + esc(mask(c.external_id)) : ''}</div>
           <div class="muted">${where(l)}</div>
           <div class="muted">${(c.permissions || []).map(esc).join(', ')}
-            · ${c.last_verified_at ? 'last verified ' + ago(c.last_verified_at) : 'never verified'}</div>
-          ${c.secret_ref ? `<div class="muted">Authorization held in the cloud vault. Coco never shows it,
+            · ${c.last_verified_at ? 'last checked against the platform ' + ago(c.last_verified_at) : 'never checked against the platform'}</div>
+          <div class="muted">${ready ? 'Ready: Coco can publish to this account with your PC off.'
+            : cloud ? 'Not yet usable from the cloud.' : 'Not usable from the cloud.'}</div>
+          ${cloud ? `<div class="muted">Authorization held in the cloud vault. Coco never shows it,
             and this page never receives it.</div>` : ''}
-          ${st === 'verification_failed' || st === 'reauth_required'
-            ? `<div class="muted">${st === 'reauth_required'
-                ? 'Gumroad needs you to approve it again. Nothing publishes until you do.'
-                : 'The last check against the platform did not pass.'}</div>` : ''}
+          ${CONN_WHY[st] ? `<div class="muted">${CONN_WHY[st]}</div>` : ''}
+          ${cloud && !l ? `<div class="muted">Connected — assignment required. Press Assign and choose
+            where it belongs, or no run will ever pick it.</div>` : ''}
           <div class="actions">
-            <button class="btn text" data-cassign="${esc(c.connection_id)}">${l ? 'Change assignment' : 'Assign'}</button>
+            <button class="btn ${cloud && !l ? 'filled' : 'text'}" data-cassign="${esc(c.connection_id)}">${l ? 'Change assignment' : 'Assign'}</button>
             <button class="btn text" data-cverify="${esc(c.connection_id)}">Verify</button>
-            ${oauth
-              ? `<button class="btn text" data-oauth="${esc(c.provider)}">Reconnect</button>`
-              : `<button class="btn text" data-creconnect="${esc(c.connection_id)}">Reconnect</button>`}
+            ${connectBtn}
             <button class="btn text" data-cdisconnect="${esc(c.connection_id)}">Disconnect</button>
           </div>
         </div></div>`;
@@ -1958,6 +2019,9 @@ const V = {
           <label>Signing-in account <span class="muted">(optional)</span><input name="label" placeholder="sampleshoppp@gmail.com"></label>
           <label>Where its token is kept<input name="secret" placeholder="~/.nova-secrets/youtube-moonveil.env"></label>
           <div class="muted">Coco records <b>where</b> the token lives, never the token. Authorise on the paired PC with the platform's own login, then record it here and assign it.</div>
+          <div class="muted">A path like this is a file on that one PC, so the cloud cannot use it and the
+            account will read <b>On your PC only</b>. For a platform with a Connect button, use that
+            instead: it puts the authorization in the cloud, where Coco can work with your PC off.</div>
           <div class="actions"><button class="btn filled" type="submit">Add account</button>
             <button class="btn text" type="button" data-ccancel="1">Cancel</button></div>
         </form></div>` : '';
@@ -1967,18 +2031,18 @@ const V = {
     // hand, and offering a Connect button for them would promise something that cannot happen.
     const connectable = Object.entries(OAUTH_PLATFORMS).map(([id, p]) => {
       const mine = (CONNS || []).filter((c) => c.provider === id);
-      if (mine.length) return '';                    // it has its own card below, with its own state
-      const busy = connConnecting === id && Date.now() - connConnectingAt < 600_000;
+      if (mine.length || !p.connection) return '';   // it has its own card below, with its own state
+      const waiting = busy(p.connection);
       return `<div class="card2" style="margin-bottom:14px">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           ${serviceLogo(id, p.name, 'l')}
           <div class="grow"><h3 style="margin:0">${esc(p.name)}</h3>
-            <span class="chip ${busy ? 'warn' : 'bad'}">${busy ? 'Connecting' : 'Not connected'}</span></div>
-          <button class="btn filled" data-oauth="${esc(id)}">${busy ? 'Try again' : 'Connect ' + esc(p.name)}</button>
+            <span class="chip ${waiting ? 'warn' : 'bad'}">${waiting ? 'Connecting' : 'Not connected'}</span></div>
+          <button class="btn filled" data-oauth="${esc(id)}" data-oauthconn="${esc(p.connection)}">${waiting ? 'Try again' : 'Connect ' + esc(p.name)}</button>
         </div>
         <div class="muted" style="margin-top:8px">Connect your ${esc(p.name)} account once. Coco will
           securely store the authorization in the cloud so publishing can run without your PC.</div>
-        ${busy ? `<div class="muted" style="margin-top:6px">Waiting for you to finish on ${esc(p.name)}.
+        ${waiting ? `<div class="muted" style="margin-top:6px">Waiting for you to finish on ${esc(p.name)}.
           Once you have approved it, come back and press Refresh — the link works once and lasts ten
           minutes.</div>` : ''}
       </div>`;
