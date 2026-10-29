@@ -60,6 +60,9 @@ assert.ok(rel.signing && /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(rel.signing.cert
 
 // the version a client reports must come from this file, never be typed into the app
 assert.ok(!/app_version: '[a-z]+-\d/.test(read('Lounge/index.html')), 'the Lounge is reporting a hardcoded version again');
+// The About card said "Coco Lounge 1.0" for the whole of the 2.x line. A version a founder can
+// read is a version that has to come from release.json, wherever it is shown.
+assert.ok(!/Coco Lounge \d/.test(read('Lounge/index.html')), 'the Lounge is showing a typed version in About');
 
 // the Lounge has to be able to read it: it is served from the Lounge folder, next to index.html
 assert.ok(fs.existsSync(path.join(here, 'release.json')), 'release.json must sit where the web app can fetch it');

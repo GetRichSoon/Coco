@@ -2792,7 +2792,7 @@ const V = {
       <div class="card2"><span class="eyebrow">Notifications</span>${kinds.map(([k, l]) => `<div class="settings-row"><span>${l}</span><input type="checkbox" class="switch" data-notify="${k}" ${store.get('gs-n-' + k) === '0' ? '' : 'checked'} aria-label="${l}"></div>`).join('')}</div>
       <div class="card2"><span class="eyebrow">Appearance</span><div class="seg" role="group" aria-label="Theme">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button type="button" data-theme-set="${v}" aria-pressed="${theme === v}">${l}</button>`).join('')}</div>
         <div class="settings-row"><span>Calm motion<br><span class="muted">Fewer animations, everything else the same</span></span><input type="checkbox" class="switch" id="calm" ${calm ? 'checked' : ''} aria-label="Calm motion"></div></div>
-      <div class="card2"><span class="eyebrow">About</span><h3>Coco Lounge 1.0 · ${window.cocoDesktop ? 'Windows' : 'Web'}</h3><span class="muted">Good Space, managed by Coco. Follows the Lounge Standard: the same screens, look and rules on all four devices. Private: founder login plus this device's key; keys and personal documents never pass through the app.</span></div>
+      <div class="card2"><span class="eyebrow">About</span><h3>Coco Lounge ${RELEASE ? esc(RELEASE.version) : ''} · ${window.cocoDesktop ? 'Windows' : 'Web'}</h3><span class="muted">Good Space, managed by Coco. Follows the Lounge Standard: the same screens, look and rules on all four devices. Private: founder login plus this device's key; keys and personal documents never pass through the app.</span></div>
     </div>`;
   },
   remote() {
