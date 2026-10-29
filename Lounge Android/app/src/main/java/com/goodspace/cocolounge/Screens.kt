@@ -666,7 +666,14 @@ fun ApprovalCard(vm: Lounge, a: JSONObject) {
     Card {
         Row(verticalAlignment = Alignment.CenterVertically) { Text("${a.s("code")} · ${a.s("team")}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f)); StatusChip(a.s("state")) }
         Text(a.s("what"), style = MaterialTheme.typography.bodyMedium)
-        Muted(listOfNotNull(a.s("raised_on").takeIf { it.isNotBlank() }, a.s("decided_by").takeIf { it.isNotBlank() }?.let { "decided by $it" }).joinToString(" · "))
+        // The same decision the PCs show: who, when, and the approval's own id. There is one approval
+        // row in the cloud for all four devices, so a phone opening a decided request sees it decided.
+        Muted(listOfNotNull(
+            a.s("raised_on").takeIf { it.isNotBlank() },
+            a.s("decided_by").takeIf { it.isNotBlank() }?.let { (if (a.s("state") == "rejected") "No" else "YES") + " by $it" },
+            a.s("decided_at").takeIf { it.isNotBlank() }?.take(16)?.replace('T', ' '),
+            a.s("id").takeIf { it.isNotBlank() },
+        ).joinToString(" · "), maxLines = 2)
         if (a.s("state") == "waiting") Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { MuButton({ vm.decide(a, true) }) { Text("YES") }; TextButton({ vm.decide(a, false) }) { Text("No") } }
     }
 }

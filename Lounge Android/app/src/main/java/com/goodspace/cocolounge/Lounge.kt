@@ -193,9 +193,24 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         try { cloud.insert("task_notes", JSONObject().put("task_id", id).put("note", text).put("by_email", name).put("device_id", cloud.deviceId)); message = "Points added"; reload() } catch (e: Exception) { fail(e) }
     }
 
+    /**
+     * One approval exists in the cloud for all four devices, so the decision is taken, not written:
+     * claim() moves the row only while it is still undecided, so a phone holding a card that another
+     * founder device already answered changes nothing and says so. Before this it was a plain write
+     * by id, which overwrote the record of who really pressed YES and could turn a rejected request
+     * into an approved one.
+     */
     fun decide(a: JSONObject, yes: Boolean) = viewModelScope.launch {
         try {
-            cloud.update("approvals", "id=eq.${a.getString("id")}", JSONObject().put("state", if (yes) "approved" else "rejected").put("decided_by", name).put("decided_at", Instant.now().toString()))
+            val mine = cloud.claim("approvals", "id=eq.${a.getString("id")}&state=in.(waiting,on-hold)",
+                JSONObject().put("state", if (yes) "approved" else "rejected").put("decided_by", name).put("decided_at", Instant.now().toString()))
+            if (!mine) {
+                reload()
+                val now = data.approvals.firstOrNull { it.optString("id") == a.optString("id") }
+                val who = now?.optString("decided_by").orEmpty().takeIf { it.isNotBlank() && it != "null" }
+                message = "${a.optString("code")} was already ${now?.optString("state") ?: "decided"}" + (who?.let { " by $it" } ?: "")
+                return@launch
+            }
             cloud.insert("decisions", JSONObject().put("decided_on", LocalDate.now().toString()).put("by_name", name).put("text", "${if (yes) "YES" else "NO"} ${a.optString("code")}: ${a.optString("what").take(180)}"))
             log(if (yes) "approved" else "declined", a.optString("code")); message = if (yes) "YES saved" else "No saved"; reload()
         } catch (e: Exception) { fail(e) }
