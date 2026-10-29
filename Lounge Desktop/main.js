@@ -38,12 +38,15 @@ function createWindow() {
   });
   win.loadFile(UI);
   logWindow(win, 'lounge');   // page errors (failed heartbeats, sign-in problems) land in island.log
-  // Starting hidden is normal: at the office, and after a self-update restart, the window is meant to
-  // stay down. But then nothing anywhere says the app is running, and a founder clicking the shortcut
-  // gets silence - on 29 October that read as "Coco will not open" when it was running the whole time.
-  // So it says so in the log, with the way back in. The behaviour itself is unchanged.
+  // --hidden decides whether the window comes up, and nothing else. Autostart and the self-update
+  // restart both pass it, so Coco still never appears by itself - at the office or anywhere else.
+  // Without it, a person launched Coco on purpose, and that is answered the same way the tray's
+  // "Open Coco Lounge" is answered at the office: by opening. The place used to veto this too, and
+  // on 29 October that left Boss with no way in at all - the Dock was off, so the tray icon was
+  // buried in the overflow, and the shortcut did nothing while Coco ran and heartbeated all along.
+  // Office mode keeps its real job: no pop-ups, no toasts, no island chatter.
   win.once('ready-to-show', () => {
-    if (!process.argv.includes('--hidden') && !atOffice()) return win.show();
+    if (!process.argv.includes('--hidden')) return win.show();
     logLine(`window kept hidden (${process.argv.includes('--hidden') ? 'started hidden' : 'shown on demand'}${atOffice() ? ', office mode' : ''}). Coco is running; open it from the Dock or tray menu: Open Coco Lounge.`);
   });
   win.on('close', (e) => { if (!quitting) { e.preventDefault(); win.hide(); } });
@@ -932,7 +935,7 @@ app.whenReady().then(() => {
 });
 app.on('web-contents-created', (_e, wc) => wc.on('render-process-gone', (_e2, d) => { if (win && wc === win.webContents) setTimeout(() => reconnect('page crashed: ' + d.reason), 2000); }));
 
-app.on('second-instance', () => { if (win && !atOffice()) { win.show(); win.focus(); } }); // at the office only the tray icon opens it
+app.on('second-instance', () => { if (win) { win.show(); win.focus(); } });   // launching Coco again is a person asking for it, office or not
 app.whenReady().then(() => {
   app.setLoginItemSettings(loginArgs(true)); // always rewrite, so an old broken entry gets fixed
   createWindow(); createTray(); createIsland(); createDock();
