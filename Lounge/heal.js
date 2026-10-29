@@ -32,7 +32,11 @@
     return (cls === 'timeout' || cls === 'transient') && RETRY_SAFE.has(action);
   }
   // How long a queued command may wait for its PC: 10 min; voice intents 2 min; harmless ones 2 h.
-  const ageLimitMs = (action) => (LATE_OK.has(action) ? 120 * MIN : VOICE.has(action) ? 2 * MIN : 10 * MIN);
+  // 'update' never expires. Every other command is a thing a founder asked for a moment ago, and
+  // running it late is worse than dropping it. An update is the opposite: a device that was off for
+  // two days must still take it the moment it comes back, or the cloud loses the only instruction
+  // that matters. The cloud re-offers it anyway, so expiry would only add a window where it is lost.
+  const ageLimitMs = (action) => (action === 'update' ? Infinity : LATE_OK.has(action) ? 120 * MIN : VOICE.has(action) ? 2 * MIN : 10 * MIN);
   // What the sweep does with a row so the queue never clogs (null = leave it). 'now' in ms.
   function sweepVerdict(row, now, deviceLastSeen) {
     const age = now - new Date(row.created_at).getTime(), args = row.args || {};

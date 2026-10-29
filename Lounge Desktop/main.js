@@ -470,6 +470,16 @@ async function runAction(action, args = {}) {
       launchDetached(file); front(); return 'Opened ' + args.app;
     }
     // Home / Office workspace (Boss, 2026-10-22): office-mode.exe saves (verified), closes, restores and switches; its report is the result.
+    // The cloud sends this to every device it finds below the current release, so an update starts
+    // without anyone opening Coco and looking. Idempotent: the queue already guarantees one run per
+    // command, and selfUpdate on an up-to-date checkout is a no-op that says so.
+    case 'update': {
+      const want = String(args.version || 'the current release');
+      await selfUpdate();
+      if (updateState === 'FAILED') return 'failed: could not fetch ' + want + ', will retry';
+      if (updateState === 'RESTART_REQUIRED') return 'downloaded and verified ' + want + ', waiting to restart';
+      return 'already on the current build, nothing to fetch for ' + want;
+    }
     case 'workspace': {
       const flag = { close_all: ['--close-all'], save: ['--save-session'], restore_home: ['--restore', 'home'], restore_office: ['--restore', 'office'], switch_home: ['--switch', 'home'], switch_office: ['--switch', 'office'] }[String(args.op)];
       if (!flag) return 'failed: unknown workspace step ' + args.op;
@@ -954,22 +964,23 @@ const RESTART_FILE = () => path.join(app.getPath('userData'), 'last-update-resta
 async function selfUpdate() {
   if (!startHead) return;
   const log = (m) => { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} update: ${m}\n`); } catch {} };
-  updateState = 'downloading';
+  updateState = 'CHECKING';
   const pull = await new Promise((r) => execFile('git', ['-C', COCO_DIR, 'pull', '--ff-only', '--quiet'], { windowsHide: true, timeout: 90000 }, (e, so, se) => r(e ? `failed: ${(e.killed ? 'timed out after 90 s' : (se || e.message)).toString().slice(0, 160)}` : 'ok')));   // the shared exec() gives up after 15 s, too short for a pull right after wake-up
-  if (/failed/.test(pull)) log('pull did not run: ' + pull.slice(0, 120));
+  if (/failed/.test(pull)) { updateState = 'FAILED'; log('pull did not run: ' + pull.slice(0, 120)); }
   const after = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
-  updateState = null;   // nothing came down, or nothing to restart for: idle again, not stuck mid-update
-  if (after === startHead || !/^[0-9a-f]{40}$/.test(after)) return;
+  if (after === startHead || !/^[0-9a-f]{40}$/.test(after)) { if (updateState === 'CHECKING') updateState = null; return; }
+  updateState = 'DOWNLOADING';   // new commits are on disk; what they contain decides the rest
   // Bounded to the folders that matter, and never node_modules. The diff spanning the commit that
   // untracked 60,972 files is 67 MB of path names, far past execFile's 1 MB buffer, so exec() came
   // back 'failed', nothing matched, and the app quietly stopped updating itself while looking fine.
   // Bounded, the same diff is 51 bytes.
   const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', startHead, after, '--', 'Lounge', 'Lounge Desktop', ':(exclude)Lounge Desktop/node_modules']);
-  if (/package\.json/.test(changed)) await exec('cmd.exe', ['/c', 'npm', 'install', '--no-audit', '--no-fund', '--prefix', __dirname]);
-  if (!/^(Lounge|Lounge Desktop)\//m.test(changed)) { startHead = after; return; }   // memory, teams, the phone app: nothing to restart for
+  if (/package\.json/.test(changed)) { updateState = 'INSTALLING'; await exec('cmd.exe', ['/c', 'npm', 'install', '--no-audit', '--no-fund', '--prefix', __dirname]); }
+  if (!/^(Lounge|Lounge Desktop)\//m.test(changed)) { startHead = after; updateState = null; return; }   // memory, teams, the phone app: nothing to restart for
   let last = 0; try { last = Number(fs.readFileSync(RESTART_FILE(), 'utf8')) || 0; } catch {}
   if (Date.now() - last < 10 * 60 * 1000) { log('restart held back (updated less than 10 min ago)'); return; }
-  if (!(await versionChecks(log))) return;   // stay on the version that works
+  updateState = 'VERIFYING';
+  if (!(await versionChecks(log))) { updateState = 'FAILED'; return; }   // stay on the version that works
   offerRestart(after, log);
 }
 
@@ -992,18 +1003,23 @@ async function versionChecks(log) {
 // exactly as before. If the window IS open, the Lounge says an update is ready and waits to be told.
 // Either way the new code is already on disk; only the restart into it waits.
 let pendingUpdate = null;
-// What the updater is doing right now, in the words the Release Center shows: a founder looking at
-// four devices needs to tell "behind and stuck" from "behind and busy". Read by the Lounge with its
-// heartbeat, so the cloud carries it; null means idle and the dashboard compares versions instead.
+// Every phase of an update, in the words the cloud and the Release Center use, so a founder looking
+// at four devices can tell "behind and stuck" from "behind and busy" and from "tried and failed".
+// Read by the Lounge with its heartbeat, so the cloud carries it. null means this PC has nothing to
+// say, and then the cloud judges it on its reported version alone - which is the honest fallback.
+// The cloud sets UPDATE_REQUIRED and UPDATED itself; those are its to decide, not this process's.
 let updateState = null;
 ipcMain.on('update-state', (e) => { e.returnValue = updateState; });
+// A restart for an update is the one moment the cloud hears nothing at all. Saying RECONNECTING on
+// the way back up means the gap reads as part of the update instead of as a device going dark.
+try { if (Date.now() - Number(fs.readFileSync(RESTART_FILE(), 'utf8') || 0) < 3 * 60 * 1000) updateState = 'RECONNECTING'; } catch {}
 function restartNow() {
   try { fs.writeFileSync(RESTART_FILE(), String(Date.now())); } catch {}
   app.relaunch({ args: [...(app.isPackaged ? [] : [path.resolve(__dirname)]), '--hidden'] }); app.exit(0);   // keep the app folder, or a bare electron.exe starts
 }
 function offerRestart(after, log) {
   pendingUpdate = after;
-  updateState = 'installing';   // the new code is on disk; only the restart into it is left
+  updateState = 'RESTART_REQUIRED';   // verified and on disk; only the restart into it is left
   const inUse = win && !win.isDestroyed() && win.isVisible() && !win.isMinimized();
   if (!inUse) { log(`restarting into ${after.slice(0, 7)} (was ${startHead.slice(0, 7)}, window not in use)`); restartNow(); return; }
   log(`update ${after.slice(0, 7)} ready; waiting for the founder to restart`);

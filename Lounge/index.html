@@ -335,23 +335,32 @@ const releaseDevices = () => {
   // with a key different from the installed one, and manual_step says in words what a founder has to do
   // about it. A phone sitting at "update available" with no reason is the lie this replaces.
   const blocked = (d) => d.kind !== 'pc' && r && r.manual_step;
+  // The cloud decides UPDATE_REQUIRED and UPDATED and writes them on the device's own row, so they are
+  // read, not worked out here. Only two things are decided on this screen: OFFLINE, which is the
+  // absence of a heartbeat and so cannot be reported by the device that is missing, and NEEDS YOU,
+  // which is UPDATE_REQUIRED plus a platform that will not do it unattended.
   const stateOf = (d) => {
     if (!online(d)) return 'OFFLINE';
-    if (d.update_state) return d.update_state.replace(/_/g, ' ').toUpperCase();
+    const st = String(d.update_state || '').toUpperCase().replace(/_AVAILABLE$/, '_REQUIRED');
+    if (st === 'UPDATE_REQUIRED' && blocked(d)) return 'NEEDS YOU';
+    if (st) return st.replace(/_/g, ' ');
     if (!latest) return 'UNKNOWN';
-    if (devVersion(d) === latest) return 'UPDATED';
-    return blocked(d) ? 'NEEDS YOU' : 'UPDATE AVAILABLE';
+    return devVersion(d) === latest ? 'UPDATED' : blocked(d) ? 'NEEDS YOU' : 'UPDATE REQUIRED';
   };
+  const cell = 'padding:5px 8px 5px 0;white-space:nowrap';
   const row = (d) => {
-    const st = stateOf(d);
-    return `<div style="padding:8px 0;border-top:1px solid rgba(128,128,128,.22)">
-      <div style="display:flex;gap:10px;align-items:center">
-        <span class="grow">${esc(d.name || d.id)}</span>
-        <span class="muted">${esc(d.kind === 'pc' ? 'Windows' : 'Android')}</span>
-        <span><b>${esc(devVersion(d))}</b><span class="muted"> / ${esc(latest || '?')}</span></span>
-        <span${st === 'UPDATED' ? '' : ' class="muted"'}>${esc(st)}</span></div>
-      ${st === 'NEEDS YOU' ? `<div class="muted" style="font-size:12px;margin-top:3px">${esc(r.manual_step)}</div>` : ''}</div>`;
+    const st = stateOf(d), v = devVersion(d), ok = st === 'UPDATED';
+    return `<tr style="border-top:1px solid rgba(128,128,128,.22)">
+      <td style="${cell};white-space:normal">${esc(d.name || d.id)}</td>
+      <td style="${cell}" class="muted">${esc(d.platform || (d.kind === 'pc' ? 'Windows' : 'Android'))}</td>
+      <td style="${cell}"><b>${esc(v)}</b></td>
+      <td style="${cell}" class="muted">${esc(latest || '?')}</td>
+      <td style="${cell}"${ok ? '' : ' class="muted"'}>${esc(st)}</td>
+      <td style="${cell}" class="muted">${d.last_seen ? esc(ago(d.last_seen)) : 'never'}</td></tr>
+      ${st === 'NEEDS YOU' ? `<tr><td colspan="6" class="muted" style="font-size:12px;padding:0 0 6px">${esc(r.manual_step)}</td></tr>` : ''}`;
   };
+  // Counted from what each device reported about itself, never from the release existing. A device that
+  // is not reporting is not updated, whatever version it last claimed.
   const on = latest ? ds.filter((d) => devVersion(d) === latest && online(d)).length : 0;
   // Why a release is where it is, in its own words. A release cannot be approved or published while
   // either platform's artifact is missing - Coco Cloud refuses it - so naming the missing half is the
@@ -364,7 +373,10 @@ const releaseDevices = () => {
     <div style="display:flex;align-items:baseline;gap:10px;margin:4px 0 2px">
       <b style="font-size:19px">${latest ? 'Coco ' + esc(latest) : 'No release'}</b>
       <span class="${on === ds.length && ds.length ? '' : 'muted'}">${latest ? on + '/' + ds.length + ' devices updated' : 'nothing to compare against'}</span></div>
-    ${ds.map(row).join('')}
+    <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr class="muted" style="text-align:left">
+      <th style="${cell}">Device</th><th style="${cell}">Platform</th><th style="${cell}">Installed</th>
+      <th style="${cell}">Latest</th><th style="${cell}">Status</th><th style="${cell}">Last seen</th></tr></thead>
+      <tbody>${ds.map(row).join('')}</tbody></table>
     <div class="muted" style="margin-top:8px">${r ? 'cloud release ' + esc(r.release_id) + ', ' + esc(r.status) + '<br>' + approval + (r.published_at ? ' \u00b7 published ' + ago(r.published_at) : '') : 'no cloud release row yet, showing the file'}</div></div>`;
 };
 
@@ -1299,6 +1311,13 @@ const CHAT_WORDS = {
   pause: ['pause', 'roko', 'rok do', 'band karo', 'band kar', 'stop'],
   resume: ['resume', 'chalu', 'start karo', 'shuru', 'on karo'],
   claude: ['claude', 'token', 'tokens', 'ai usage', 'kharcha'],
+  // The four devices and the one Coco version. Both answered from cloud rows the page already holds -
+  // devices from their own heartbeats, the version from the release registry - so neither question
+  // costs a Claude call and neither can be answered with a guess.
+  devicever: ['devices updated', 'all updated', 'all four', 'device version', 'device versions',
+              'sab update', 'sabhi update', 'phone updated', 'pc updated', 'kaun update'],
+  release: ['latest coco', 'latest version', 'coco version', 'which version', 'what version',
+            'release', 'kaunsa version', 'naya version'],
   approvals: ['approval', 'approvals', 'pending', 'waiting', 'yes chahiye'],
   runs: ['run', 'runs', 'history', 'chala', 'failed', 'fail', 'error'],
   outputs: ['output', 'outputs', 'bane', 'banaye', 'produced'],
@@ -1764,7 +1783,12 @@ function chatIntent(message) {
   }
 
   if (has('claude')) return { intent: 'claude_usage', entities: found };
-  if (has('approvals')) return { intent: 'approvals', entities: found };
+  // "Are all four updated?" and "what version is Coco on?" are different questions about the same
+  // two cloud rows, so they are matched before approvals: "is the update approved" is about a
+  // release, not about the approvals list.
+  if (has('devicever')) return { intent: 'devices_version', entities: found };
+  if (has('release')) return { intent: 'release_state', entities: found };
+  if (has('approvals')) return { intent: 'approvals', text, entities: found };
   if (has('brain')) return { intent: 'brain', query: text, entities: found };
   if (has('connect')) return { intent: 'integrations', target: one('connection') || one('provider'), entities: found };
   if (has('runnow') && wf) return { intent: 'run_workflow', target: wf, entities: found };
@@ -1890,9 +1914,43 @@ function chatRead(it) {
       [{ t: 'Calls', v: String(calls.length), go: '#ai' }, { t: 'Tokens', v: num(tok) }]);
   }
   if (it.intent === 'approvals') {
-    const w = (D.approvals || []).filter((a) => a.state === 'waiting');
+    const all = D.approvals || [], w = all.filter((a) => a.state === 'waiting');
+    // "Did Big Boss approve this?" is a question about the one cloud approval row, so it is answered
+    // by naming who decided it and when - never by saying "yes, done".
+    const named = all.filter((a) => a.decided_by && new RegExp(String(a.code).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(it.text || ''))[0]
+      || (/\b(approve|approved|kiya|diya)\b/.test(it.text || '') ? all.filter((a) => a.decided_by)[0] : null);
+    if (named) return say(named.code + ' was ' + (named.state === 'rejected' ? 'turned down' : 'approved') + ' by ' + named.decided_by
+      + (named.decided_at ? ', ' + ago(named.decided_at) : '') + '. ' + String(named.what || '').slice(0, 90),
+      [{ t: named.code, v: named.state, go: '#approvals' }, { t: 'Decided by', v: named.decided_by }]);
     return say(w.length ? w.length + ' waiting: ' + w.slice(0, 3).map((a) => a.code).join(', ') + '.' : 'Nothing is waiting for a YES.',
       w.slice(0, 4).map((a) => ({ t: a.code, v: String(a.what || '').slice(0, 60), go: '#approvals' })));
+  }
+  // The four devices, measured against the cloud release, from what each one reported itself. A device
+  // that has stopped reporting is offline, never "updated": a version it sent twenty minutes ago is
+  // not evidence of what it is running now.
+  if (it.intent === 'devices_version') {
+    const ds = D.devices || [], latest = (CLOUD_RELEASE && CLOUD_RELEASE.version) || (RELEASE && RELEASE.version) || null;
+    if (!ds.length) return say('No devices are paired yet, so there is nothing to compare.');
+    if (!latest) return say('There is no release row in the cloud and no release.json, so I cannot say what the four should be on.');
+    const live = ds.filter((d) => online(d)), on = live.filter((d) => devVersion(d) === latest);
+    const off = ds.filter((d) => !online(d));
+    return say('Coco ' + latest + '. ' + on.length + ' of ' + ds.length + ' are on it'
+      + (off.length ? ', and ' + off.map((d) => d.name).join(' and ') + ' ' + (off.length === 1 ? 'has' : 'have') + ' not reported recently, so I will not call ' + (off.length === 1 ? 'it' : 'them') + ' updated' : '')
+      + (on.length === ds.length ? ' — all four agree.' : '. Behind: ' + ds.filter((d) => online(d) && devVersion(d) !== latest).map((d) => d.name + ' on ' + devVersion(d)).join(', ') + '.'),
+      ds.map((d) => ({ t: d.name || d.id, v: devVersion(d) + (online(d) ? (devVersion(d) === latest ? ' · updated' : ' · behind') : ' · offline'), go: '#system' })));
+  }
+  if (it.intent === 'release_state') {
+    const r = CLOUD_RELEASE;
+    if (!r) return say(RELEASE ? 'The cloud has no release row yet. release.json says Coco ' + RELEASE.version + ', but that is where a release is written, not what the devices are told.' : 'I cannot find a release anywhere.');
+    const missing = [!r.desktop_artifact || !r.desktop_sha256 ? 'desktop' : null,
+      !r.android_artifact || !r.android_sha256 || !r.android_version_code ? 'Android' : null].filter(Boolean);
+    return say('Coco ' + r.version + ' (' + r.release_id + '), ' + r.status + '. '
+      + (r.approved_by ? 'Approved by ' + r.approved_by + (r.approved_at ? ' ' + ago(r.approved_at) : '') + '.'
+         : missing.length ? 'It cannot be approved yet: there is no ' + missing.join(' or ') + ' build, and Coco Cloud refuses half a release.'
+         : 'Both builds exist; it is waiting for a founder’s YES.')
+      + (r.published_at ? ' Published ' + ago(r.published_at) + '.' : ''),
+      [{ t: 'Version', v: r.version }, { t: 'Status', v: r.status, go: '#system' },
+       { t: 'Approved', v: r.approved_by || 'not yet' }]);
   }
   if (it.intent === 'runs') {
     const failed = runs.filter((r) => r.status === 'failed');
