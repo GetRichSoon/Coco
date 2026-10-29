@@ -11,5 +11,5 @@
   "devDependencies": {
     "electron": "33.2.1"
   },
-  "coco": "2.9.0"
+  "coco": "2.9.1"
 }

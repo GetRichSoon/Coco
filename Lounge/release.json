@@ -3,13 +3,16 @@
   "_why": "The clients had drifted into three unrelated numbers - root package.json said 1.1.0, the desktop app said 1.0.4 and the phone said 2.8.2 - so 'is everyone on the latest Coco?' had no answer. They are one number now, and release.test.js fails the build if they come apart again.",
   "_number": "2.9.0, not 1.2.0. Two schemes existed and the phone's was the furthest along at 2.8.2; starting a unified line below that would have shown the founders a downgrade on the device they look at most. So the unified line continues from the highest user-facing number, and this release is a minor bump on it.",
 
-  "version": "2.9.0",
-  "name": "Coco 2.9.0",
-  "released": "2026-10-28",
-  "release_id": "coco-2.9.0",
-  "commit": "adb50ae",
+  "version": "2.9.1",
+  "name": "Coco 2.9.1",
+  "released": "2026-10-29",
+  "release_id": "coco-2.9.1",
+  "commit": "46ae423",
 
   "notes": [
+    "A pairing code is the only way in. No password, no reset email: one code names the device, signs it in and gives it a fresh key, so first pairing and getting back in after a reinstall are the same screen.",
+    "A pairing code can be cancelled from the Control Center the moment it is read out to the wrong person.",
+    "This build can replace the installed Coco without an uninstall, on every Android version Coco runs on.",
     "The screen is patched instead of rebuilt, so changing a control no longer flickers, jumps the scroll or wipes a half-typed number.",
     "Every part of the company wears the phone's real marks, and three houses that never had one now do.",
     "Team > Sub-team > Category > Channel can be created, renamed and archived from Structure.",
@@ -19,7 +22,7 @@
   "_builds": "Internal build numbers stay per platform, because each store and each installer needs its own monotonic counter. They are not shown to the founders.",
   "builds": {
     "desktop": "1.0.5",
-    "android": { "versionName": "2.9.0", "versionCode": 17 },
+    "android": { "versionName": "2.9.1", "versionCode": 18 },
     "lounge": "served from main"
   },
 
@@ -28,11 +31,11 @@
 
   "_status": "A Coco release is only 'released' when BOTH artifacts exist. 2.9.0 is not: the desktop half reached both PCs through the repo on 2026-10-28, the phone half was never built, because versionCode 16 was already spent on 2.8.2 and the phones' own updater skips anything at or below the code they run. So 2.9.0 is a half release, and saying 'released' would have been a lie on two of the four clients.",
   "_bootstrap": "Set when a release cannot reach the phones unattended, and read by publish-update.mjs: a release carrying this goes to controls/apk_pending instead of apk_latest, so neither phone is told to install something Android will refuse. Remove it once both phones run a build signed with the release key, after which every release goes straight to apk_latest and updates by itself.",
-  "bootstrap": "Both phones must uninstall Coco Lounge once and reinstall 2.9.0 by hand: this is the first build signed with the real release key instead of the laptop debug key, and Android refuses an update whose signature differs from the installed one.",
-  "status": "blocked",
+  "bootstrap": "Install once by hand, no uninstall. 2.9.1 carries a signing certificate lineage with its rotation point at API 28, so the release key is the current signer on every Android version Coco runs on and this installs over 2.8.x and over the release-key 2.9.0 in place, keeping the session and the device key. It stays in apk_pending until one real phone has confirmed that, because a build the phones refuse would be downloaded, refused, deleted and retried every fifteen minutes. Promote to apk_latest after the first confirmed in-place install, and then drop this key.",
+  "status": "ready",
   "platforms": {
     "desktop": { "state": "shipped", "artifact": "the repo, fast-forwarded by each desktop every 30 min", "sha256": null },
-    "android": { "state": "pending", "artifact": null, "sha256": null, "blocked_by": "the cloud can sign and publish from 2026-10-29, but this is the first build on the new key, so both phones need one uninstall and reinstall before it can reach them" }
+    "android": { "state": "pending", "artifact": "controls/apk_pending", "sha256": null, "blocked_by": "built and signed in the cloud with the lineage, waiting for one real phone to confirm it installs over the existing app before it is promoted to apk_latest" }
   },
 
   "_signing": "Android release signing, added 2026-10-29, which is the whole reason a release no longer needs a PC. The keystore and its password are in Coco Vault on the laptop and nowhere in git; GitHub holds the same key as ANDROID_KEYSTORE_BASE64 so a cloud run can sign. Up to and including 2.8.2 the APK was signed with the laptop's debug key, and Android refuses an update signed with a different one - which is why this one costs both phones a single uninstall and reinstall, once, forever.",
@@ -61,13 +64,14 @@
     { "version": "2.8.0", "versionCode": 14, "date": "2026-10-25", "commit": "93fae97" },
     { "version": "2.8.1", "versionCode": 15, "date": "2026-10-25", "commit": "d86df9d" },
     { "version": "2.8.2", "versionCode": 16, "date": "2026-10-26", "commit": "7ee07bc", "published": true },
-    { "version": "2.9.0", "versionCode": 17, "date": "2026-10-28", "commit": "adb50ae" }
+    { "version": "2.9.0", "versionCode": 17, "date": "2026-10-28", "commit": "adb50ae" },
+    { "version": "2.9.1", "versionCode": 18, "date": "2026-10-29", "commit": "46ae423" }
   ],
 
   "_rollback": "A bad release is undone with a normal git revert on main. Every desktop fast-forwards this repo every 30 minutes, so the revert reaches both of them within half an hour with no installer, no store and nothing to uninstall. The phones are the exception: they carry a built APK, so rolling them back needs a rebuilt APK, which is the signing work that is deliberately not done yet.",
   "rollback": {
     "desktop": "git revert <commit> on main; both desktops pick it up within 30 minutes",
     "android": "rebuild the older version in the cloud (Actions > android build > publish latest). Possible from 2026-10-29; before that there was no release key and this said blocked.",
-    "previous": "2.8.2"
+    "previous": "2.9.0"
   }
 }
