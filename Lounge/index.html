@@ -140,6 +140,15 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .chatcard b { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .chatbar { display: flex; gap: 8px; margin-top: 10px; }
 .chatbar input { flex: 1; }
+/* which step Coco is on, and - for anything worth checking - what it is about to touch */
+.chatstate { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.bubble.coco.working .chatstate { margin: 0; animation: chatpulse 1.1s ease-in-out infinite; }
+@keyframes chatpulse { 0%, 100% { opacity: .45 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .bubble.coco.working .chatstate { animation: none; opacity: .7 } }
+.chatact { display: grid; gap: 4px; margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); }
+.chatactrow { display: flex; gap: 12px; justify-content: space-between; font-size: 13px; }
+.chatactrow span:first-child { color: var(--muted); flex: none; }
+.chatactrow span:last-child { text-align: right; }
 /* the company tree: one row per thing, indented by how deep it sits */
 .trow { display: flex; align-items: center; gap: 10px; padding: 9px 0 9px calc(var(--depth, 0) * 26px); border-top: 1px solid var(--outline); }
 .trow:first-of-type { border-top: 0; }
@@ -1036,9 +1045,9 @@ const OAUTH_PLATFORMS = {
 
 async function oauthConnect(provider, connection = null) {
   const p = OAUTH_PLATFORMS[provider];
-  if (!p) { toast('No connection flow is built for that platform'); return; }
+  if (!p) { toast('No connection flow is built for that platform'); return { started: false, why: 'no flow for that platform' }; }
   const id = connection || p.connection;
-  if (!id) { toast('Which account? Open its card and press Connect there.'); return; }
+  if (!id) { toast('Which account? Open its card and press Connect there.'); return { started: false, why: 'no account named' }; }
   const acc = (CONNS || []).find((c) => c.connection_id === id);
   const named = (acc && acc.external_name) || id;
   if (!confirm(`Connect ${named}?\n\nConnect this ${p.name} account once. Coco will securely store `
@@ -1047,7 +1056,7 @@ async function oauthConnect(provider, connection = null) {
     + `browser. Publishing stays in ask-me-first mode afterwards.`
     + (p.choose ? `\n\nIMPORTANT: on Google's chooser, pick ${named} and nothing else. Coco checks `
       + `which ${p.choose} you picked and refuses to store the wrong one, so a mistake costs you `
-      + `another try, never a video on the wrong channel.` : ''))) return;
+      + `another try, never a video on the wrong channel.` : ''))) return { started: false, why: 'you cancelled it' };
 
   // coco_oauth_begin checks is_founder() AND device_ok() inside. A refusal here is the gate doing
   // its job, so it is shown as it came back rather than retried or routed around.
@@ -1063,9 +1072,9 @@ async function oauthConnect(provider, connection = null) {
     toast(/founder on a paired device/i.test(why)
       ? 'Only a founder on a paired device can connect a platform. Check Devices.'
       : why);
-    return;
+    return { started: false, why };
   }
-  if (!data || !data.authorize_url) { toast('Coco did not return an authorization link'); return; }
+  if (!data || !data.authorize_url) { toast('Coco did not return an authorization link'); return { started: false, why: 'no authorization link came back' }; }
 
   // The state is the single-use credential for the callback, so it is never written anywhere this
   // page keeps things. Only the fact that a flow is open is remembered - and it is remembered per
@@ -1075,6 +1084,9 @@ async function oauthConnect(provider, connection = null) {
   render();
   toast(`Sending you to ${p.name}. This link works once, for ten minutes.`);
   window.open(data.authorize_url, '_blank', 'noopener');
+  // Chat needs to know whether a founder really went to the platform, so it never reports a flow
+  // that was cancelled at the dialog as one that was started.
+  return { started: true, connection: id, platform: p.name };
 }
 
 // Every change to the company's shape goes through this one call, the same way every control change
@@ -1222,6 +1234,17 @@ const CHAT_WORDS = {
   schedule: ['schedule', 'kab', 'timing', 'time set', 'roz', 'daily', 'hourly', 'weekly'],
   runnow: ['run now', 'abhi chalao', 'chalao', 'execute'],
   create: ['create', 'add ', 'new ', 'banao', 'bana do', 'naya ', 'nayi '],   // not 'make': "make me a sandwich" is not a command
+  // "connect" is matched before anything that contains it, because "disconnect this" contains
+  // "connect this" and only one of those two opens a consent screen on a real Google account.
+  doconnect: ['connect', 'jodo', 'jod do', 'authorize', 'oauth', 'login karo'],
+  verify: ['verify', 'really connected', 'sach me', 'check karo', 'recheck'],
+  assign: ['assign', 'attach', 'belongs to', 'sop do'],
+  move: ['move', 'shift', 'transfer'],
+  reference: ['reference', 'inspiration', 'is jaise', 'is jaisa', 'aisa banao', 'like this one'],
+  work: ['work on', 'working on', 'start work', 'kaam shuru', 'kaam karo', 'is par kaam', 'use this to'],
+  remember: ['remember', 'yaad rakho', 'note karo', 'save this', 'likh lo'],
+  yes: ['yes', 'haan', 'ok', 'okay', 'theek', 'thik', 'kar do', 'go ahead', 'confirm', 'sahi'],
+  no: ['no', 'nahi', 'mat karo', 'cancel', 'ruko', 'chhodo', 'rehne do'],
 };
 const chatHas = (text, key) => (CHAT_WORDS[key] || []).some((w) => text.includes(w));
 
@@ -1242,18 +1265,235 @@ function chatEntities() {
   return out;
 }
 
-// Which thing is this about? Longest name wins, so "Moonveil Audio" beats "Audio". Nothing is
-// guessed: no match means Coco asks instead of picking.
+// A word that belongs to exactly ONE thing in the whole company.
+//
+// Founders say "Moonveil", not "Moonveil Audio", and nobody types the en-dash in "The Flow – Daily
+// Science". Matching only the full name meant the whole name had to be reproduced exactly. Matching
+// any word would be worse: "the" would match four teams and Coco would pick the longest.
+//
+// So a word counts when the company has exactly one thing containing it. Distinctiveness is computed
+// FROM the company, which is what makes a distinctive word safe - it cannot be ambiguous, because
+// ambiguity is the one thing that disqualifies it. "youtube" belongs to both the YouTube Studio team
+// and the YouTube platform, so it is not distinctive and is ignored; the full name still matches.
+function chatTokens() {
+  const index = new Map();
+  for (const e of chatEntities()) {
+    for (const w of new Set(String(e.name).toLowerCase().match(/[a-z0-9]{4,}/g) || [])) {
+      const at = index.get(w) || [];
+      if (!at.some((x) => x.id === e.id && x.kind === e.kind)) at.push(e);
+      index.set(w, at);
+    }
+  }
+  return index;
+}
+
+// Which thing is this about? The full name first, then the id, then a word that can only mean one
+// thing. Longest name wins among equals, so "Moonveil Audio" beats "Audio". Nothing is ever guessed:
+// no match means Coco asks instead of picking.
 function chatFind(text, kinds) {
   const low = ' ' + String(text).toLowerCase() + ' ';
+  const words = new Set(low.match(/[a-z0-9]{4,}/g) || []);
+  const index = chatTokens();
+  const sure = new Set();
+  for (const w of words) {
+    const at = index.get(w);
+    if (at && at.length === 1) sure.add(at[0].kind + '\u0000' + at[0].id);   // only ever one thing
+  }
   return chatEntities()
     .filter((e) => !kinds || kinds.indexOf(e.kind) >= 0)
-    .filter((e) => {
+    .map((e) => {
       const n = String(e.name).toLowerCase();
-      return (n.length > 2 && low.indexOf(n) >= 0) || low.indexOf(' ' + String(e.id).toLowerCase() + ' ') >= 0;
+      if (n.length > 2 && low.indexOf(n) >= 0) return [e, 3];                // the whole name
+      if (low.indexOf(' ' + String(e.id).toLowerCase() + ' ') >= 0) return [e, 2];
+      if (sure.has(e.kind + '\u0000' + e.id)) return [e, 1];                 // a word only it owns
+      return [e, 0];
     })
-    .sort((a, b) => String(b.name).length - String(a.name).length);
+    .filter(([, score]) => score > 0)
+    .sort((a, b) => b[1] - a[1] || String(b[0].name).length - String(a[0].name).length)
+    .map(([e]) => e);
 }
+
+// ---------------------------------------------------------------- what we are talking about
+// Spoken instructions lean on the last thing said. "Create a category called ASWB" / "under Ebooks
+// › Gumroad?" / "yes" / "add this reference" - by the fourth sentence the founder has named nothing
+// at all, and every word of it is still unambiguous to a person.
+//
+// So the context is kept as a small structured object rather than by re-reading the chat log. Only
+// resolved entities go in: an id that came out of chatFind, never a word out of the message. That is
+// what makes "this" safe to follow - it can only ever point at something the company really has.
+//
+// `pending` is the other half: a risky action that has been understood, costed and shown, and is
+// waiting for a yes. It holds the parsed intent, not a closure, so the yes re-runs the same code
+// path a direct command would have taken.
+let CHAT_CTX = { team: null, subteam: null, category: null, channel: null, connection: null,
+                 workflow: null, reference: null, pending: null };
+const chatCtxReset = () => { CHAT_CTX = { team: null, subteam: null, category: null, channel: null,
+                 connection: null, workflow: null, reference: null, pending: null }; };
+const CHAT_THIS = /\b(this|that|it|them|these|those|isko|iske|ise|usko|uske|wahi|yahi|same|above)\b/;
+
+// Remember what this turn resolved, deepest first, so the next sentence can say "this".
+function chatRemember(found) {
+  for (const e of found || []) {
+    if (CHAT_CTX[e.kind] === undefined) continue;
+    if (!CHAT_CTX[e.kind]) CHAT_CTX[e.kind] = e;
+  }
+  // naming a child names its parents too: "ASWB" implies the sub-team and team above it
+  const deepest = (found || []).filter((e) => ['category', 'subteam', 'channel'].indexOf(e.kind) >= 0)[0];
+  if (deepest) {
+    const s = chatScope(deepest);
+    for (const [slot, kind] of [['p_team', 'team'], ['p_subteam', 'subteam'], ['p_category', 'category']]) {
+      if (s[slot] && !CHAT_CTX[kind]) CHAT_CTX[kind] = chatEntities().filter((e) => e.id === s[slot])[0] || null;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- a reference, read off its URL
+// Only what the URL itself proves is recorded. The provider and the id are in the link; the title,
+// the duration, the publication date and - importantly - which channel PUBLISHED it are not, and
+// reading them needs a call to the platform with a key this browser does not have and must not have.
+//
+// So they are left unknown and the reference is stored `not_started`. A research run, which does
+// hold the credential, fills them in later through coco_brain('status'). Writing a plausible title
+// now would be the same class of mistake as the verify button that only wrote a timestamp: a field
+// that looks checked and never was.
+const REF_SOURCES = [
+  [/(?:youtube\.com\/watch\?(?:[^#\s]*&)?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/, 'youtube', 'video'],
+  [/youtube\.com\/(?:@([A-Za-z0-9_.-]+)|channel\/([A-Za-z0-9_-]{10,})|c\/([A-Za-z0-9_.-]+))/, 'youtube', 'channel'],
+  [/gumroad\.com\/l\/([A-Za-z0-9_-]+)/, 'gumroad', 'product'],
+  [/amazon\.[a-z.]{2,8}\/(?:[^\/\s]+\/)*dp\/([A-Z0-9]{10})/, 'amazon', 'book'],
+  [/instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/, 'instagram', 'post'],
+];
+function chatParseRef(raw) {
+  const url = (String(raw || '').match(/https?:\/\/[^\s<>"'`)]+/) || [])[0];
+  if (!url) return null;
+  for (const [re, provider, type] of REF_SOURCES) {
+    const m = url.match(re);
+    if (m) return { url, provider, ref_type: type, external_id: m.slice(1).filter(Boolean)[0] || null };
+  }
+  const host = (url.match(/^https?:\/\/(?:www\.)?([^\/\s:]+)/) || [])[1] || 'web';
+  return { url, provider: host, ref_type: 'page', external_id: null };
+}
+
+// ---------------------------------------------------------------- the deepest scope that resolved
+// "Use this for all Ebooks" is the team. "Use this for certification books" is one category. "Use
+// this for Moonveil Audio" is one publishing account. The scope the founder's words reached is the
+// scope the reference is stored at, with the levels above it filled in so the team can still find it.
+//
+// Three sources, in order, because the company's shape lives in three places and no one of them has
+// all of it: the live `structure` table (what the founders built since the last cycle), the id
+// itself (the registry writes its ids as a path, ebooks/practical-skills/money-mechanics), and for a
+// connected account its real assignment in integration_links - which is the only honest answer to
+// "which team does this channel belong to", since being connected and being allowed to publish
+// somewhere are two separate decisions.
+const SCOPE_SLOT = { team: 'p_team', subteam: 'p_subteam', category: 'p_category',
+                     channel: 'p_channel', connection: 'p_channel', workflow: 'p_workflow' };
+function chatScope(target) {
+  const s = { p_team: null, p_subteam: null, p_category: null, p_channel: null, p_workflow: null };
+  if (!target) return s;
+  s[SCOPE_SLOT[target.kind] || 'p_team'] = target.id;
+
+  let n = structureTree().nodes.get(target.id), guard = 0;
+  while (n && n.parent && guard++ < 8) {
+    n = structureTree().nodes.get(n.parent);
+    if (!n) break;
+    const slot = SCOPE_SLOT[n.kind];
+    if (slot && !s[slot]) s[slot] = n.id;
+  }
+
+  const parts = String(target.id).split('/');
+  if (parts.length > 1) {
+    if (!s.p_team) s.p_team = parts[0];
+    if (parts.length > 2 && !s.p_subteam) s.p_subteam = parts.slice(0, 2).join('/');
+  }
+  if (target.kind === 'connection') {
+    const l = (CONN_LINKS || []).filter((x) => x.connection_id === target.id)[0];
+    if (l) { s.p_team = s.p_team || l.team_id || null; s.p_subteam = s.p_subteam || l.subteam_id || null;
+             s.p_category = s.p_category || l.category_id || null; }
+  }
+  if (!s.p_team && target.team) s.p_team = target.team;
+  if (target.kind === 'workflow' && !s.p_team) s.p_team = target.team || null;
+  return s;
+}
+const chatScopeName = (s) => [s.p_team, s.p_subteam, s.p_category, s.p_channel, s.p_workflow]
+  .filter(Boolean).slice(-1)[0] || 'the whole company';
+
+// Which workflow would do this work? The company already answers that: a workflow declares the team
+// it belongs to. Coco reads that declaration and does not invent one - no workflow for a team means
+// no workflow for a team, said plainly.
+function chatWorkflowsFor(target) {
+  const flows = (CP && CP.cloud_runtime && CP.cloud_runtime.pipelines) || [];
+  if (!target) return [];
+  if (target.kind === 'workflow') return flows.filter((f) => f.id === target.id);
+  const s = chatScope(target);
+  return flows.filter((f) => f.team && f.team === s.p_team);
+}
+
+// Brain items, whichever shape the Brain arrived in. control-plane.json stores it as
+// { stats, items } and the live read is a plain array. The chat read assumed the array, so asking
+// Coco anything about the Brain threw on `.filter` before it could answer - one accessor here rather
+// than the same mistake in two branches.
+const chatBrain = () => {
+  const b = (CP && CP.brain) || (LIVE && LIVE.brain) || [];
+  return Array.isArray(b) ? b : (b && Array.isArray(b.items) ? b.items : []);
+};
+
+// References already in the Brain, newest first. Read from state the dashboard loaded, so listing
+// them is free. A reference stored against a channel is also a reference for the team above it,
+// which is the whole point of storing it at a scope rather than on a pile.
+function chatRefs(target) {
+  const items = chatBrain().filter((b) => b.kind === 'reference' && !b.retired);
+  if (!target) return items;
+  const s = chatScope(target);
+  const want = [s.p_channel, s.p_category, s.p_subteam, s.p_team, s.p_workflow].filter(Boolean);
+  return items.filter((b) => want.indexOf(b.channel_id) >= 0 || want.indexOf(b.category_id) >= 0
+    || want.indexOf(b.subteam_id) >= 0 || want.indexOf(b.team_id) >= 0 || want.indexOf(b.workflow_id) >= 0);
+}
+
+// ---------------------------------------------------------------- the action registry
+// One declaration per thing Coco can DO, so the rules live in a list a person can read rather than
+// spread through the branches that carry them out. `needs` is what Coco asks for when it is missing;
+// `confirm` is how the action is confirmed; `reach` is how far a mistake would travel, which is what
+// makes an action risky in the first place.
+//
+// Two confirmation mechanisms, deliberately:
+//   'dialog'  the action already has a tested confirmation on the dashboard - archive's, and the
+//             long one oauthConnect shows before sending a founder to Google. Chat reuses it rather
+//             than asking twice.
+//   'chat'    the action has no dashboard button, so chat does the confirming: it shows what will
+//             happen, remembers it as CHAT_CTX.pending, and does nothing until a yes.
+// shortcut: two mechanisms rather than one. Collapse to 'chat' everywhere once the dashboard's own
+// dialogs move into the same summary card, which is a bigger change than this one.
+const CHAT_ACTIONS = {
+  create:           { verb: 'Create',             needs: ['kind', 'name'],      reach: 'company' },
+  rename:           { verb: 'Rename',             needs: ['target', 'name'],    reach: 'company' },
+  move:             { verb: 'Move',               needs: ['target', 'parent'],  reach: 'company',  confirm: 'chat' },
+  archive:          { verb: 'Archive',            needs: ['target'],            reach: 'company',  confirm: 'dialog' },
+  restore:          { verb: 'Restore',            needs: ['target'],            reach: 'company' },
+  pause:            { verb: 'Pause',              needs: ['target'],            reach: 'company' },
+  resume:           { verb: 'Resume',             needs: ['target'],            reach: 'company' },
+  company_stop:     { verb: 'Stop the company',   needs: [],                    reach: 'company',  confirm: 'chat' },
+  company_resume:   { verb: 'Resume the company', needs: [],                    reach: 'company',  confirm: 'chat' },
+  set_schedule:     { verb: 'Set the schedule',   needs: ['target', 'value'],   reach: 'company' },
+  run_workflow:     { verb: 'Queue a run',        needs: ['target'],            reach: 'cloud' },
+  work_on:          { verb: 'Start work',         needs: ['target'],            reach: 'cloud' },
+  reference:        { verb: 'Add a reference',    needs: ['url', 'target'],     reach: 'company' },
+  reference_remove: { verb: 'Remove a reference', needs: ['target'],            reach: 'company',  confirm: 'chat' },
+  note:             { verb: 'Remember',           needs: ['text'],              reach: 'company' },
+  connect:          { verb: 'Connect an account', needs: ['target'],            reach: 'platform', confirm: 'dialog' },
+  // `reads` is the difference between touching a platform and changing something on it. Checking an
+  // account asks the platform who it is and writes nothing anywhere, so making it wait for a yes
+  // would add friction and buy no safety - and a check nobody runs is how fifteen channels stayed
+  // green for weeks while none of them could publish.
+  verify:           { verb: 'Check an account',   needs: ['target'],            reach: 'platform', reads: true },
+  assign:           { verb: 'Assign an account',  needs: ['target', 'parent'],  reach: 'company',  confirm: 'chat' },
+  disconnect:       { verb: 'Disconnect',         needs: ['target'],            reach: 'platform', confirm: 'chat' },
+};
+// What a founder is actually risking, in one line, for the summary card.
+const CHAT_REACH = {
+  company:  'Founder + paired device · inside the company',
+  cloud:    'Founder + paired device · queues cloud work',
+  platform: 'Founder + paired device · reaches a real account on the platform',
+};
 
 // ---------------------------------------------------------------- shaping the company by talking
 // Create, rename, archive and restore a team, sub-team, category or channel - all through
@@ -1348,6 +1588,106 @@ function chatIntent(message) {
   }
   rest = ' ' + rest.replace(/\s+/g, ' ').trim() + ' ';   // removing a name leaves gaps; "run  now" is still "run now"
   const has = (k) => chatHas(rest, k);
+
+  // The things a reference or a piece of work can be FOR. A provider is not one of them: "YouTube"
+  // is a platform, not a part of the company, and a reference belongs to a channel or a team.
+  const REF_TARGETS = ['connection', 'channel', 'category', 'subteam', 'team', 'workflow'];
+  const ctxTarget = () => CHAT_CTX.connection || CHAT_CTX.channel || CHAT_CTX.category
+    || CHAT_CTX.subteam || CHAT_CTX.workflow || CHAT_CTX.team || null;
+  const refTarget = () => found.filter((e) => REF_TARGETS.indexOf(e.kind) >= 0)[0]
+    || (CHAT_THIS.test(text) ? ctxTarget() : null);
+
+  // A bare yes answers the question Coco actually asked. Anchored to the whole message on purpose:
+  // "yes" confirms, "yes and pause ebooks" is a new instruction and is read as one, so a pending
+  // action can never be approved by a word that happened to appear in a longer sentence.
+  if (CHAT_CTX.pending) {
+    if (/^(yes|yeah|yep|haan|haa|ha|ok|okay|theek|theek hai|thik hai|kar do|karo|go ahead|do it|confirm|sahi|proceed)[\s.!]*$/i.test(text))
+      return { intent: 'confirm', entities: found };
+    if (/^(no|nope|nahi|na|mat karo|cancel|ruko|rehne do|chhodo|stop|forget it)[\s.!]*$/i.test(text))
+      return { intent: 'cancel', entities: found };
+  }
+
+  // ---- a link in the message is the strongest signal there is. It is a reference, and the rest of
+  // the sentence says which part of the company it is FOR. The video's own channel is its SOURCE and
+  // is never read as the place Coco should publish to - those are two different channels and
+  // confusing them is the one mistake here that would end up on somebody's real account.
+  const ref = chatParseRef(message);
+  if (ref) {
+    const target = refTarget();
+    return { intent: 'reference', ref, target, entities: found,
+             missing: target ? [] : ['which part of the company this reference is for'] };
+  }
+  if (has('reference')) {
+    if (/\b(remove|delete|hatao|nikalo|forget)\b/.test(rest)) {
+      return { intent: 'reference_remove', target: CHAT_CTX.reference, entities: found,
+               missing: CHAT_CTX.reference ? [] : ['which reference to remove'] };
+    }
+    return { intent: 'reference_list', target: refTarget(), entities: found };
+  }
+
+  // ---- "start working on this". Checked before pause/resume, because "kaam shuru karo" contains
+  // the word that means resume and means nothing of the sort.
+  if (has('work')) {
+    const target = refTarget() || ctxTarget();
+    return { intent: 'work_on', target, entities: found, missing: target ? [] : ['what to work on'] };
+  }
+
+  // ---- the emergency stop. The one switch that reaches every team at once, so it is only ever read
+  // from a sentence that says company: a bare "stop" pauses one thing, never all of them.
+  if (/\bcompany\b|\bpuri company\b|\bsab kuch\b|\beverything\b/.test(rest) && (has('pause') || has('resume'))) {
+    return { intent: has('resume') ? 'company_resume' : 'company_stop', entities: found };
+  }
+
+  // ---- a real account on a real platform. Word boundaries, not substrings: "connections",
+  // "disconnect" and "connect" are three different instructions that share seven letters.
+  if (/\bdisconnect\b/.test(rest)) {
+    const target = one('connection') || CHAT_CTX.connection;
+    return { intent: 'disconnect', target, entities: found, missing: target ? [] : ['which account to disconnect'] };
+  }
+  if (/\bconnect\b|\bauthoriz[e]?\b|\bauthorise\b|\boauth\b|\bjod do\b|\bjodo\b|\blogin karo\b/.test(rest)) {
+    const target = one('connection') || one('provider') || CHAT_CTX.connection;
+    return { intent: 'connect', target, entities: found, missing: target ? [] : ['which account to connect'] };
+  }
+  if (has('verify')) {
+    const target = one('connection') || CHAT_CTX.connection;
+    return { intent: 'verify', target, entities: found, missing: target ? [] : ['which account to check'] };
+  }
+  if (has('assign')) {
+    const conn = one('connection') || CHAT_CTX.connection;
+    const place = found.filter((e) => ['team', 'subteam', 'category', 'channel'].indexOf(e.kind) >= 0)[0];
+    return { intent: 'assign', target: conn, parent: place, entities: found,
+             missing: !conn ? ['which account to assign'] : !place ? ['which part of the company it belongs to'] : [] };
+  }
+
+  // ---- moving a piece of the company. coco_structure already has the op; chat never had the words.
+  if (has('move')) {
+    const m = text.match(/\b(?:under|inside|into|to)\s+(.+)$/) || text.match(/(.+?)\s+(?:ke andar|ke under|mein)\b/);
+    // The thing to move is named BEFORE "under" and its new parent after it, so each half is
+    // resolved against its own half of the sentence. Resolving the target against the whole sentence
+    // let the parent's name win it, and "move X under Y" could come out as a move of Y.
+    const left = m ? text.slice(0, text.indexOf(m[0])) : text;
+    const target = chatFind(left, ['subteam', 'category', 'channel'])[0]
+      || (CHAT_THIS.test(left) ? ctxTarget() : null);
+    const named = m ? chatFind(m[1], ['team', 'subteam', 'category'])
+      .filter((e) => e.id !== (target || {}).id)[0] || null : null;
+    // The company's shape says which parent a thing can have: a category lives under a sub-team, a
+    // sub-team under a team, a channel under a category. A pair that does not fit is ambiguity, not
+    // an instruction - the registry has a sub-team called "Amazon KDP" and a category called "kdp",
+    // and a resolver that picked one of those would be guessing with the company's structure.
+    const parent = named && PARENT_OF[target ? target.kind : ''] === named.kind ? named : null;
+    return { intent: 'move', target, parent, entities: found,
+             missing: !target ? ['what to move'] : !parent ? ['where to move it'] : [] };
+  }
+
+  // ---- "remember that ...". Only as an instruction at the front of the sentence; a question that
+  // happens to contain the word is still a question for the Brain, handled further down.
+  if (/^(remember|note|save this|yaad rakho|note karo|likh lo)\b/i.test(String(message).trim())
+      || /\bremember that\b|\byaad rakho\b/i.test(text)) {
+    const body = String(message).trim()
+      .replace(/^(remember that|remember|note karo|note|save this|yaad rakho|likh lo)\b[:,]?\s*/i, '').trim();
+    return { intent: 'note', text: body, target: refTarget(), entities: found,
+             missing: body ? [] : ['what to remember'] };
+  }
 
   if (has('claude')) return { intent: 'claude_usage', entities: found };
   if (has('approvals')) return { intent: 'approvals', entities: found };
@@ -1493,11 +1833,25 @@ function chatRead(it) {
       Object.keys(byFlow).slice(0, 4).map((k) => ({ t: k, v: String(byFlow[k]), go: '#runs' })));
   }
   if (it.intent === 'brain') {
-    const items = (CP && CP.brain) || (LIVE && LIVE.brain) || [];
+    const items = chatBrain();
     const words = it.query.split(/\s+/).filter((w) => w.length > 3);
     const hit = items.filter((b) => words.some((w) => String(b.title || '').toLowerCase().indexOf(w) >= 0));
     return say(items.length + ' things in the Brain. ' + (hit.length ? hit.length + ' match: ' + hit.slice(0, 2).map((b) => b.title).join('; ') : 'Nothing matches those words.'),
       hit.slice(0, 3).map((b) => ({ t: b.kind || 'note', v: String(b.title || '').slice(0, 60), go: '#brain' })));
+  }
+  // References are memory, so listing them is a Brain read: free, and already loaded.
+  if (it.intent === 'reference_list') {
+    const refs = chatRefs(it.target);
+    const where = it.target ? it.target.name : 'the whole company';
+    if (!refs.length) {
+      return say('No references stored for ' + where + ' yet. Paste a link and say what it is for, '
+        + 'and I will keep it at that level.');
+    }
+    const pending = refs.filter((r) => (r.meta || {}).research_status !== 'done').length;
+    return say(refs.length + ' reference' + (refs.length === 1 ? '' : 's') + ' for ' + where + '. '
+      + (pending ? pending + ' not researched yet.' : 'All researched.'),
+      refs.slice(0, 4).map((r) => ({ t: (r.meta || {}).provider || 'link',
+        v: String(r.title || r.source || '').slice(0, 60), go: '#brain' })));
   }
   return null;
 }
@@ -1563,29 +1917,321 @@ async function chatAct(it) {
       + '. The next cloud cycle picks it up, and the Run ID appears here and on Runs when it finishes.',
       acted: true, cards: [{ t: 'Request', v: String(data.request_id) }, { t: 'Workflow', v: t.id, go: '#workflows' }] };
   }
+
+  // ---------------------------------------------------------------- the emergency stop
+  // Every team at once. It goes through coco_control like any other setting, so the approval rules
+  // decide whether it applies now or waits for a YES - chat does not get to skip that.
+  if (it.intent === 'company_stop' || it.intent === 'company_resume') {
+    const stop = it.intent === 'company_stop';
+    const r = await control('company', '*', 'paused', stop, 'from Coco Chat');
+    if (!r) return { text: 'The control plane refused it, so nothing changed.' };
+    if (r.state === 'needs_approval') {
+      return { text: 'That needs your YES first. Raised as ' + r.approval_code + ' on Approvals.',
+        acted: true, cards: [{ t: 'Approval', v: String(r.approval_code), go: '#approvals' }] };
+    }
+    return { text: stop ? 'The company is stopped. No team will claim new work until you resume it.'
+                        : 'The company is running again.', acted: true,
+      act: { title: stop ? 'Stop the company' : 'Resume the company',
+             rows: [['Scope', 'every team'], ['Permission', CHAT_REACH.company]], status: 'Applied' } };
+  }
+
+  // ---------------------------------------------------------------- references
+  // Stored at the deepest scope the words reached, through coco_brain, which checks the founder and
+  // the paired device and refuses a channel the company does not hold. The SOURCE and the TARGET are
+  // written as separate fields and never collapsed into one.
+  if (it.intent === 'reference') {
+    const s = chatScope(it.target);
+    // Is this one of ours? Only answerable where the link names a CHANNEL and a connected account
+    // carries that identity. A video link does not say who published it, so the answer stays unknown
+    // - and unknown is what makes Coco treat it as somebody else's work to learn from rather than as
+    // an account it may publish to.
+    const owned = it.ref.ref_type === 'channel'
+      ? (CONNS || []).filter((c) => c.external_id === it.ref.external_id
+          || String(c.external_handle || '').replace(/^@/, '').toLowerCase()
+             === String(it.ref.external_id || '').toLowerCase())[0]
+      : null;
+    const role = owned ? 'own_channel' : it.ref.ref_type === 'channel' ? 'external_channel' : 'unknown_source';
+    const { data, error } = await sb.rpc('coco_brain', {
+      p_op: 'add', p_kind: 'reference', p_url: it.ref.url,
+      p_title: [it.ref.provider, it.ref.ref_type, it.ref.external_id].filter(Boolean).join(' '),
+      p_text: '', p_tags: ['reference', it.ref.provider],
+      p_team: s.p_team, p_subteam: s.p_subteam, p_category: s.p_category,
+      p_channel: s.p_channel, p_workflow: s.p_workflow,
+      p_meta: {
+        provider: it.ref.provider, reference_type: it.ref.ref_type, external_id: it.ref.external_id,
+        source_url: it.ref.url, role,
+        source_channel: owned ? owned.external_name : null,      // only when a connected account proves it
+        source_channel_id: owned ? owned.external_id : null,
+        title: null, duration: null, published_at: null, thumbnail: null,  // need the platform, not this browser
+        for_kind: it.target.kind, for_id: it.target.id, for_name: it.target.name,
+        research_status: 'not_started',
+      },
+    });
+    if (error) return { text: error.message.replace(/^.*?:\s*/, '') };
+    if (!data || data.ok === false) return { text: 'Not stored: ' + ((data && data.reason) || 'the control plane refused it') + '.' };
+    await loadAll();
+    CHAT_CTX.reference = { kind: 'reference', id: data.id, name: it.ref.url };
+    const scopeWord = { connection: 'that one channel', channel: 'that one channel', category: 'that category',
+                        subteam: 'that sub-team', team: 'the whole team', workflow: 'that workflow' }[it.target.kind] || 'that scope';
+    return {
+      text: data.duplicate
+        ? 'Already stored for ' + it.target.name + ' — I counted it again rather than making a second copy.'
+        : 'Kept as a reference for ' + it.target.name + ', at ' + scopeWord + '. I have the link and the '
+          + it.ref.provider + ' id; the title, the length and who published it need the platform, so a '
+          + 'research run fills those in. Say "start working on this" when you want it used.',
+      acted: true,
+      act: { title: 'Reference added',
+             rows: [['Source', it.ref.provider + (it.ref.external_id ? ' · ' + it.ref.external_id : '')],
+                    ['Target', it.target.name],
+                    ['Scope', chatScopeName(s)],
+                    ['Role', role === 'own_channel' ? 'one of our own channels' : 'outside work, for inspiration']],
+             status: data.duplicate ? 'Already known' : 'Stored · not researched yet' },
+      cards: [{ t: 'Reference', v: String(data.id), go: '#brain' }] };
+  }
+
+  if (it.intent === 'reference_remove') {
+    const { data, error } = await sb.rpc('coco_brain', { p_op: 'retire', p_id: t.id, p_note: 'removed from Coco Chat' });
+    if (error) return { text: error.message.replace(/^.*?:\s*/, '') };
+    await loadAll();
+    CHAT_CTX.reference = null;
+    return { text: 'Stopped using that reference. It stays in the Brain, retired, so the company keeps the history.',
+      acted: true, cards: [{ t: 'Retired', v: String(t.id), go: '#brain' }] };
+  }
+
+  if (it.intent === 'note') {
+    const s = chatScope(it.target);
+    const { data, error } = await sb.rpc('coco_brain', {
+      p_op: 'add', p_kind: 'knowledge', p_title: it.text.slice(0, 90), p_text: it.text,
+      p_team: s.p_team, p_subteam: s.p_subteam, p_category: s.p_category,
+      p_channel: s.p_channel, p_workflow: s.p_workflow, p_tags: ['from-chat'],
+    });
+    if (error) return { text: error.message.replace(/^.*?:\s*/, '') };
+    await loadAll();
+    return { text: 'Noted for ' + (it.target ? it.target.name : 'the whole company') + '. '
+      + (data && data.duplicate ? 'The company already knew that one.' : 'It is in the Brain as ' + (data && data.id) + '.'),
+      acted: true, cards: [{ t: 'Brain', v: String(data && data.id), go: '#brain' }] };
+  }
+
+  // ---------------------------------------------------------------- real accounts on real platforms
+  // Connecting hands the founder to the platform's own consent screen. Nothing is marked connected
+  // here: the row turns Connected when the cloud holds a credential it can actually use, and only
+  // the callback and the cloud check can establish that.
+  if (it.intent === 'connect') {
+    let conn = t, provider = t.provider;
+    if (t.kind === 'provider') {
+      const mine = (CONNS || []).filter((c) => c.provider === t.id);
+      if (mine.length !== 1) {
+        return { text: 'Which ' + t.name + ' account? ' + (mine.length
+          ? mine.length + ' sit under this platform, and picking the wrong one is the single mistake that '
+            + 'would put a video on the wrong channel, so I will not choose for you.'
+          : 'There is no account for it yet — add one on Integrations first.'),
+          cards: mine.slice(0, 6).map((c) => ({ t: c.external_name || c.connection_id, v: c.state, go: '#connections' })) };
+      }
+      conn = { id: mine[0].connection_id, name: mine[0].external_name || mine[0].connection_id };
+      provider = t.id;
+    }
+    const r = await oauthConnect(provider, conn.id);
+    if (!r || !r.started) return { text: 'Nothing was connected — ' + ((r && r.why) || 'the flow did not start') + '.' };
+    return { text: 'Sent you to ' + r.platform + ' to approve ' + conn.name + '. The authorization goes '
+      + 'straight to Coco Cloud, never through this page. The card turns Connected only once the cloud holds '
+      + 'a credential it can really use — say "verify ' + conn.name + '" afterwards and I will tell you what '
+      + 'the platform itself said.',
+      acted: true,
+      act: { title: 'Connect ' + r.platform,
+             rows: [['Target', conn.name], ['Action', r.platform + ' OAuth, in a new tab'],
+                    ['Permission', CHAT_REACH.platform]],
+             status: 'Waiting for your approval on ' + r.platform } };
+  }
+
+  if (it.intent === 'verify') {
+    const r = await connectionVerify(t.id);
+    if (!r) return { text: 'Coco could not check that one from the cloud, so nothing was changed or dated.' };
+    const ok = r.status === 'CONNECTED_VERIFIED';
+    return { text: (VERIFY_SAID[r.status] || r.status) + (r.detail ? ' — ' + r.detail : ''), acted: true,
+      act: { title: 'Check ' + t.name,
+             rows: [['Platform', t.provider || '-'], ['Asked', 'the platform itself, from the cloud']],
+             status: ok ? 'Verified' : (VERIFY_SAID[r.status] || r.status) },
+      cards: [{ t: t.name, v: ok ? 'verified' : 'needs attention', go: '#connections' }] };
+  }
+
+  if (it.intent === 'assign') {
+    const s = chatScope(it.parent);
+    const made = await connectionOp('assign', t.id,
+      { p_team: s.p_team, p_subteam: s.p_subteam, p_category: s.p_category, p_channel: s.p_channel });
+    return made && { text: t.name + ' now belongs to ' + it.parent.name + '. That is what lets a run publish to '
+      + 'it — being connected on its own never did.', acted: true,
+      act: { title: 'Assign ' + t.name, rows: [['To', chatScopeName(s)], ['Permission', CHAT_REACH.company]],
+             status: 'Assigned' } };
+  }
+
+  if (it.intent === 'disconnect') {
+    const made = await connectionOp('disconnect', t.id);
+    return made && { text: 'Disconnected ' + t.name + '. Nothing can publish to it until you connect it again.', acted: true };
+  }
+
+  if (it.intent === 'move') {
+    const made = await structureOp('move', t.id, null, { p_kind: t.kind, p_parent: it.parent.id });
+    return made && { text: 'Moved ' + t.name + ' under ' + it.parent.name + '.', acted: true,
+      act: { title: 'Move ' + t.name, rows: [['New parent', it.parent.name], ['Permission', CHAT_REACH.company]],
+             status: 'Moved' } };
+  }
+
+  // ---------------------------------------------------------------- "start working on this"
+  // The reference says what to work FROM; the target says who works. Coco resolves the chain the
+  // company already declares - the target, its team, that team's workflows - and then asks the cloud
+  // for a run. It does not invent a workflow, does not run the steps itself, and does not publish:
+  // coco_request_run puts a request in the queue and the existing runtime, with its own approvals and
+  // quotas, decides what happens. That is the whole difference between "work on this" and "put this
+  // on the internet".
+  if (it.intent === 'work_on') {
+    const flows = chatWorkflowsFor(t);
+    if (!flows.length) {
+      return { text: 'Nothing is set up to do that work yet: no workflow belongs to ' + t.name + '. Tell me '
+        + 'which workflow should do it, or create one.',
+        cards: ((CP && CP.cloud_runtime && CP.cloud_runtime.pipelines) || []).slice(0, 5)
+          .map((f) => ({ t: f.id, v: f.team || '-', go: '#workflows' })) };
+    }
+    if (flows.length > 1) {
+      return { text: 'Which workflow? ' + t.name + ' has ' + flows.length + ' of them and they do different things.',
+        cards: flows.slice(0, 6).map((f) => ({ t: f.id, v: f.team || '-', go: '#workflows' })) };
+    }
+    const f = flows[0];
+    const refs = chatRefs(t).slice(0, 3);
+    const note = 'Coco Chat: work on ' + t.name + (refs.length ? ' · references ' + refs.map((r) => r.id).join(', ') : '');
+    const { data, error } = await sb.rpc('coco_request_run', { p_workflow: f.id, p_note: note });
+    if (error) return { text: error.message.replace(/^.*?:\s*/, '') };
+    if (!data || data.ok === false) {
+      return { text: 'Not queued: ' + ((data && data.reason) || 'the control plane refused it') + '. Nothing was started.' };
+    }
+    await loadAll();
+    return { text: 'Queued ' + f.id + ' for ' + t.name + ' as request ' + data.request_id + '. '
+      + (refs.length ? 'It gets ' + refs.length + ' reference' + (refs.length === 1 ? '' : 's') + ' to work from. ' : '')
+      + 'The next cloud cycle picks it up. Nothing goes out anywhere — publishing is still its own YES.',
+      acted: true,
+      act: { title: 'Start work',
+             rows: [['Target', t.name], ['Workflow', f.id],
+                    ['References', refs.length ? refs.map((r) => r.id).join(', ') : 'none stored'],
+                    ['Publishing', 'not included — needs its own approval']],
+             status: 'Queued as request ' + data.request_id },
+      cards: [{ t: 'Request', v: String(data.request_id) }, { t: 'Workflow', v: f.id, go: '#workflows' }] };
+  }
   return null;
 }
 
+// ---------------------------------------------------------------- what is about to happen
+// Shown before a risky action rather than after it, in the shape a founder can check at a glance:
+// what it touches, how far it reaches, and how to undo it. If any of those three is uncomfortable,
+// the answer is to say nothing - a pending action that is never confirmed never happens.
+const CHAT_UNDO = {
+  company_stop:     'say "resume the company"',
+  company_resume:   'say "stop the company"',
+  move:             'move it back',
+  assign:           'assign it somewhere else',
+  disconnect:       'connect it again, which means the platform\'s consent screen once more',
+  reference_remove: 'nothing is deleted — it stays in the Brain, retired',
+};
+const CHAT_WARN = {
+  company_stop:     'Every team stops claiming new work.',
+  company_resume:   'Every team starts claiming work again.',
+  move:             'Its limits and quotas follow its new parent.',
+  assign:           'This is the thing that lets a run publish to it.',
+  disconnect:       'Nothing can publish to it afterwards.',
+  reference_remove: 'Runs stop using it.',
+};
+function chatSummary(it, spec) {
+  const t = it.target, rows = [];
+  if (t) rows.push(['Target', t.name + (t.kind ? ' · ' + t.kind : '')]);
+  if (it.parent) rows.push(['Where', it.parent.name]);
+  if (it.value) rows.push(['Value', String(it.value)]);
+  if (!t && !it.parent) rows.push(['Scope', 'every team']);
+  rows.push(['Permission', CHAT_REACH[spec.reach] || CHAT_REACH.company]);
+  rows.push(['Undo', CHAT_UNDO[it.intent] || 'ask me and I will put it back']);
+  return { title: spec.verb + (t ? ' · ' + t.name : ''), rows, status: 'Waiting for your yes',
+    ask: spec.verb + (t ? ' ' + t.name : '') + '? ' + (CHAT_WARN[it.intent] || '')
+      + ' Say yes and I will do it; say nothing and I will not.' };
+}
+
+// Where to look when Coco has to ask which one. Only things the company really has are offered, so
+// the answer to a clarifying question can never be a thing that does not exist.
+function chatOptions(want) {
+  const E = chatEntities();
+  const w = String(want);
+  if (/sub-?team/.test(w)) return E.filter((e) => e.kind === 'subteam');
+  if (/categor/.test(w)) return E.filter((e) => e.kind === 'category');
+  if (/^team$/.test(w)) return E.filter((e) => e.kind === 'team');
+  if (/account|connect|disconnect|check/.test(w)) return E.filter((e) => e.kind === 'connection');
+  if (/reference/.test(w)) return chatRefs(null).slice(0, 6).map((r) => ({ kind: 'reference', id: r.id, name: r.title || r.source }));
+  if (/work on|part of the company|belongs/.test(w)) {
+    return E.filter((e) => ['team', 'connection', 'category'].indexOf(e.kind) >= 0);
+  }
+  if (/move/.test(w)) return E.filter((e) => ['subteam', 'category', 'channel'].indexOf(e.kind) >= 0);
+  return [];
+}
+
 // One message in, one answer out. Reading never touches the network; acting goes through the gate.
-async function chatSend(message) {
+// `onState` is how the screen says what Coco is doing right now - understanding, resolving, waiting
+// for a yes, executing, verifying. It is reporting, never control: nothing here waits on the UI.
+async function chatSend(message, onState) {
+  const say = (s) => { if (onState) onState(s); };
+  say('Understanding…');
   const it = chatIntent(message);
   if (it.intent === 'none') return null;
-  if (it.intent === 'unknown') {
-    return { text: 'I did not catch a command in that. Try: company status · team status · '
-      + 'workflow status · pause <name> · schedule <workflow> daily 08:00 · outputs · failures · '
-      + 'claude usage · integrations · approvals.' };
+
+  // ---- a yes or a no, answering the action Coco showed a moment ago
+  if (it.intent === 'cancel') {
+    const p = CHAT_CTX.pending; CHAT_CTX.pending = null;
+    return { text: 'Left it alone.' + (p ? ' ' + p.summary.title + ' was not done.' : ''), state: 'Cancelled' };
   }
+  if (it.intent === 'confirm') {
+    const p = CHAT_CTX.pending; CHAT_CTX.pending = null;
+    if (!p) return { text: 'Nothing was waiting for a yes.' };
+    say('Executing…');
+    const done = await chatAct(p.it);
+    say('Verifying…');
+    return done ? { ...done, state: 'Completed' }
+                : { text: 'I could not carry that out after all, so nothing changed.', state: 'Failed' };
+  }
+
+  if (it.intent === 'unknown') {
+    return { text: 'I did not catch a command in that. Try: company status · references for <channel> · '
+      + 'connect <account> · verify <account> · <paste a link> for <channel> · start working on this · '
+      + 'pause <name> · schedule <workflow> daily 08:00 · assign <account> to <team> · stop the company.' };
+  }
+
+  say('Resolving…');
+  chatRemember(it.entities);
+
   if (it.missing && it.missing.length) {
     const want = it.missing[0];
-    const opts = want === 'team' ? chatEntities().filter((e) => e.kind === 'team')
-      : want === 'sub-team' ? chatEntities().filter((e) => e.kind === 'subteam')
-      : want === 'category' ? chatEntities().filter((e) => e.kind === 'category') : [];
-    return { text: 'Which ' + want + '? I will not guess, because the wrong one would be a real change.',
+    const opts = chatOptions(want);
+    // The missing thing is named in the words a founder would use, so the question is built around
+    // it rather than pasted in front of it: "Which team?", "Where to move it?", "I need a name."
+    const ask = /^(which|what|where|who)\b/i.test(String(want)) ? want[0].toUpperCase() + want.slice(1) + '?'
+      : /^(a|an|the)\s/i.test(String(want)) ? 'I need ' + want + '.'
+      : 'Which ' + want + '?';
+    return { text: ask + ' I will not guess, because the wrong one would be a real change.',
+      state: 'Needs clarification',
       cards: opts.slice(0, 6).map((o) => ({ t: o.kind, v: o.name, go: '#teams' })) };
   }
+
   const read = chatRead(it);
   if (read) return read;
-  return (await chatAct(it)) || { text: 'I understood that as "' + it.intent + '" but I have no safe way to do it yet.' };
+
+  // ---- risky, and with no dashboard dialog of its own: show it and wait. CHAT_CTX.pending holds the
+  // parsed intent, so the yes runs exactly the code a direct command would have run.
+  const spec = CHAT_ACTIONS[it.intent] || {};
+  if (spec.confirm === 'chat') {
+    const summary = chatSummary(it, spec);
+    CHAT_CTX.pending = { it, summary };
+    return { text: summary.ask, act: summary, state: 'Ready for confirmation' };
+  }
+
+  say('Executing…');
+  const done = await chatAct(it);
+  if (!done) return { text: 'I understood that as "' + it.intent + '" but I have no safe way to do it yet.',
+    state: 'Blocked' };
+  say('Verifying…');
+  return { ...done, state: done.acted ? 'Completed' : (done.state || undefined) };
 }
 
 // 80% warning · 90% only P0-P1 · 100% everything blocked
@@ -1930,14 +2576,23 @@ const V = {
   // platform is adding a provider, not changing this screen.
   // Coco Chat: ask the company anything, or tell it to change something.
   chat() {
+    // An action summary, for the ones worth reading before or after they happen: what it touches,
+    // how far it reaches, how to undo it. Deliberately plain - this is the thing a founder checks
+    // instead of trusting a sentence.
+    const actBox = (a) => !a ? '' : `<div class="chatact"><b>${esc(a.title)}</b>${(a.rows || []).map(([k, v]) =>
+      `<div class="chatactrow"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}${a.status
+        ? `<div class="chatactrow"><span>Status</span><span>${esc(a.status)}</span></div>` : ''}</div>`;
     const log = (CHAT_LOG || []).map((m) => m.who === 'you'
       ? `<div class="bubble you">${esc(m.text)}</div>`
-      : `<div class="bubble coco">${esc(m.text)}${(m.cards || []).length ? `<div class="chatcards">${m.cards.map((c) =>
-          `<a class="chatcard" href="${esc(c.go || '#chat')}"><b>${esc(c.t)}</b><span>${esc(c.v)}</span></a>`).join('')}</div>` : ''}</div>`).join('');
+      : m.state && !m.text
+        ? `<div class="bubble coco working"><span class="chatstate">${esc(m.state)}</span></div>`
+        : `<div class="bubble coco">${m.state ? `<span class="chatstate">${esc(m.state)}</span>` : ''}${esc(m.text)}${actBox(m.act)}${(m.cards || []).length
+            ? `<div class="chatcards">${m.cards.map((c) =>
+              `<a class="chatcard" href="${esc(c.go || '#chat')}"><b>${esc(c.t)}</b><span>${esc(c.v)}</span></a>`).join('')}</div>` : ''}</div>`).join('');
     return `<div class="card2" style="margin-bottom:12px"><span class="eyebrow">Ask Coco</span>
-        <div class="muted">Questions are answered from company state and cost nothing. Changes go through the same controls the screens use, with the same checks.</div></div>
-      <div class="chatlog">${log || '<div class="muted">Try: company status · workflow status · pause ebook-daily · schedule ebook-daily daily 08:00 · outputs · claude usage</div>'}</div>
-      <form id="chatForm" class="chatbar"><input name="q" placeholder="company status · pause ebook-daily · schedule ebook-daily daily 09:00" autocomplete="off" required>
+        <div class="muted">Questions are answered from company state and cost nothing. Changes go through the same controls the screens use, with the same checks. Anything risky is shown first and waits for your yes.</div></div>
+      <div class="chatlog">${log || '<div class="muted">Try: company status · connect Moonveil Audio · paste a link and say what it is for · references for The Flow · start working on this · stop the company</div>'}</div>
+      <form id="chatForm" class="chatbar"><input name="q" placeholder="company status · connect Moonveil Audio · use this link for The Flow" autocomplete="off" required>
         <button class="btn filled" type="submit"><i class="ms">send</i></button></form>`;
   },
 
@@ -2286,9 +2941,14 @@ function render() {
     if (!q) return;
     e.target.reset();
     CHAT_LOG.push({ who: 'you', text: q });
+    // A working bubble that says which step Coco is on, replaced in place by the answer. Resolving
+    // the company takes no network call, but executing and verifying do, and a founder watching a
+    // still screen cannot tell "thinking" from "stuck".
+    const slot = CHAT_LOG.push({ who: 'coco', state: 'Understanding…' }) - 1;
     render();
-    const a = await chatSend(q);
-    if (a) CHAT_LOG.push({ who: 'coco', text: a.text, cards: a.cards });
+    const a = await chatSend(q, (s) => { CHAT_LOG[slot] = { who: 'coco', state: s }; render(); });
+    CHAT_LOG.splice(slot, 1);
+    if (a) CHAT_LOG.push({ who: 'coco', text: a.text, cards: a.cards, act: a.act, state: a.state });
     render();
     const l = $('.chatlog'); if (l) l.scrollTop = l.scrollHeight;
   });
