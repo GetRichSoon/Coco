@@ -75,15 +75,23 @@ const BRAIN = {
   ],
 };
 
-const make = () => {
+// opts.D adds the rows the four-device questions need (devices, approvals); opts.release is the
+// cloud release row those answers are measured against. Left out, nothing changes for the tests
+// that came before them.
+const make = (opts = {}) => {
   const CP = { ...CPREAL, brain: BRAIN };
   return new Function(
     'CP', 'LIVE', 'D', 'OUTPUTS', 'CONNS', 'CONN_LINKS', 'STRUCT', 'POLICIES', 'IDENT_IN',
+    'CLOUD_RELEASE_IN', 'RELEASE_IN', 'online', 'devVersion',
     'esc', 'ago', 'store', 'sb', 'toast', 'loadAll', 'num', 'policyOf', 'control', 'connectionOp', 'structureOp', 'confirm',
     'oauthConnect', 'connectionVerify', 'VERIFY_SAID',
-    `${marksSrc}\nIDENT = IDENT_IN;\n${structSrc}\n${chatSrc}\nreturn { chatIntent, chatRead, chatSend, chatEntities, chatScope, chatRefs, chatBrain, chatParseRef, chatWorkflowsFor, CHAT_ACTIONS, ctx: () => CHAT_CTX, reset: chatCtxReset };`,
-  )(CP, null, { integrations: [{ id: 'youtube', platform: 'YouTube', state: 'connected' }, { id: 'gumroad', platform: 'Gumroad', state: 'connected' }], approvals: [] },
+    `${marksSrc}\nIDENT = IDENT_IN;\n${structSrc}\nCLOUD_RELEASE = CLOUD_RELEASE_IN; RELEASE = RELEASE_IN;\n${chatSrc}\nreturn { chatIntent, chatRead, chatSend, chatEntities, chatScope, chatRefs, chatBrain, chatParseRef, chatWorkflowsFor, CHAT_ACTIONS, ctx: () => CHAT_CTX, reset: chatCtxReset };`,
+  )(CP, null, { integrations: [{ id: 'youtube', platform: 'YouTube', state: 'connected' }, { id: 'gumroad', platform: 'Gumroad', state: 'connected' }], approvals: [], devices: [], ...(opts.D || {}) },
     OUTPUTS, CONNS, CONN_LINKS, [], POLICIES, IDENT,
+    opts.release === undefined ? null : opts.release, opts.file || null,
+    // the same two helpers index.html defines: a device is online only if it reported recently
+    (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000,
+    (d) => String(d.app_version || '').replace(/^(desktop|web|android|lounge)-/, '') || '?',
     esc, ago, store, sb, toast, loadAll,
     (n) => Number(n || 0).toLocaleString(),
     (scope, id, key) => { const r = POLICIES.find((p) => p.scope === scope && p.scope_id === id && p.key === key); return r ? r.value : undefined; },
@@ -634,6 +642,92 @@ await t('the new chat classes are all defined in the stylesheet', () => {
   for (const cls of ['.chatstate', '.chatact', '.chatactrow', '.bubble.coco.working']) {
     assert.ok(css.includes(cls), cls + ' is emitted but never styled');
   }
+});
+
+// ---------------------------------------------------------------- the four devices and the one version
+// Three questions Boss asks out loud, each answered from a cloud row the page already holds: the
+// devices from their own heartbeats, the version from the release registry, the approval from the one
+// shared approval record. None of them may be answered with a guess, and none costs a Claude call.
+const fresh = () => new Date().toISOString();
+const old = () => new Date(Date.now() - 10 * 60 * 1000).toISOString();
+const FOUR = [
+  { id: 'mangesh-pc', name: 'Boss PC', kind: 'pc', app_version: 'desktop-2.9.0', last_seen: fresh() },
+  { id: 'shreya-pc', name: 'Big Boss PC', kind: 'pc', app_version: 'desktop-2.9.0', last_seen: fresh() },
+  { id: 'mangesh-phone', name: 'Boss phone', kind: 'phone', app_version: 'android-2.8.2', last_seen: fresh() },
+  { id: 'shreya-phone', name: 'Big Boss phone', kind: 'phone', app_version: 'android-2.9.0', last_seen: old() },
+];
+const REL = { release_id: 'coco-2.9.0', version: '2.9.0', status: 'blocked',
+  desktop_artifact: 'git main', desktop_sha256: 'deadbeef', android_version_code: 17 };
+
+await t('"are all devices updated" is answered from what each device reported', async () => {
+  const c = make({ D: { devices: FOUR }, release: REL });
+  const a = c.chatRead(c.chatIntent('are all devices updated?'));
+  assert.match(a.text, /Coco 2\.9\.0/, 'it names the release they are measured against');
+  assert.match(a.text, /2 of 4/, 'two of the four are really on it: ' + a.text);
+  assert.match(a.text, /Boss phone on 2\.8\.2/, 'and names the one that is behind');
+  assert.equal(a.cards.length, 4, 'one card per device');
+});
+
+await t('a device that stopped reporting is offline, never updated', async () => {
+  const c = make({ D: { devices: FOUR }, release: REL });
+  const a = c.chatRead(c.chatIntent('sab update ho gaye?'));
+  assert.match(a.text, /Big Boss phone has not reported recently/, 'the silent one is named: ' + a.text);
+  assert.match(a.text, /will not call it updated/, 'and is explicitly not counted as updated');
+  // it reports 2.9.0, which is the latest - the version alone must not be enough
+  assert.ok(!/3 of 4|4 of 4/.test(a.text), 'a stale matching version does not become an updated device');
+});
+
+await t('with no release anywhere it says so instead of picking a number', async () => {
+  const c = make({ D: { devices: FOUR } });
+  const a = c.chatRead(c.chatIntent('are all four updated?'));
+  assert.match(a.text, /no release row in the cloud and no release\.json/, a.text);
+});
+
+await t('"what is the latest Coco version" reads the cloud release registry', async () => {
+  const c = make({ D: { devices: FOUR }, release: REL });
+  const a = c.chatRead(c.chatIntent('what is the latest coco version?'));
+  assert.match(a.text, /Coco 2\.9\.0 \(coco-2\.9\.0\), blocked/, a.text);
+  assert.match(a.text, /no Android build/, 'and says which half is missing, which is why it is blocked');
+  assert.match(a.text, /refuses half a release/, 'naming the rule rather than implying a choice');
+});
+
+await t('a release with both builds is waiting for a YES, not approved', async () => {
+  const c = make({ release: { ...REL, android_artifact: 'coco-17.apk', android_sha256: 'cafe', status: 'candidate' } });
+  const a = c.chatRead(c.chatIntent('coco version?'));
+  assert.match(a.text, /waiting for a founder/, a.text);
+  assert.ok(!/approved/i.test(a.text), 'built is not approved');
+});
+
+await t('an approved release names who approved it', async () => {
+  const c = make({ release: { ...REL, android_artifact: 'a.apk', android_sha256: 'cafe', status: 'approved', approved_by: 'Shreya', approved_at: fresh() } });
+  const a = c.chatRead(c.chatIntent('latest version?'));
+  assert.match(a.text, /Approved by Shreya/, a.text);
+});
+
+await t('"did Big Boss approve this" reads the one cloud approval record', async () => {
+  const APPROVALS = [{ id: 'u1', code: 'A-031', what: 'Publish the weekly Short', state: 'approved', decided_by: 'Shreya', decided_at: fresh() }];
+  const c = make({ D: { approvals: APPROVALS } });
+  const a = c.chatRead(c.chatIntent('did big boss approve A-031?'));
+  assert.match(a.text, /A-031 was approved by Shreya/, a.text);
+  assert.ok(a.cards.some((x) => x.v === 'Shreya'), 'the approver is on a card');
+});
+
+await t('a rejected request is reported as turned down, not as pending', async () => {
+  const c = make({ D: { approvals: [{ id: 'u2', code: 'A-032', what: 'Spend money', state: 'rejected', decided_by: 'Mangesh', decided_at: fresh() }] } });
+  const a = c.chatRead(c.chatIntent('was A-032 approved?'));
+  assert.match(a.text, /turned down by Mangesh/, a.text);
+});
+
+await t('asking about approvals with nothing decided still lists what is waiting', async () => {
+  const c = make({ D: { approvals: [{ id: 'u3', code: 'A-033', what: 'Something', state: 'waiting' }] } });
+  const a = c.chatRead(c.chatIntent('what approvals are pending?'));
+  assert.match(a.text, /1 waiting: A-033/, a.text);
+});
+
+await t('neither question is routed through Claude', async () => {
+  const src = chatSrc;
+  const block = src.slice(src.indexOf("it.intent === 'devices_version'"), src.indexOf("it.intent === 'release_state'") + 1200);
+  assert.ok(!/claudeCall|gateway|anthropic|fetch\(/i.test(block), 'the device and release answers are pure reads of loaded rows');
 });
 
 console.log(`\nassistant: ${pass}/${pass} passed · 0 Claude calls by construction`);

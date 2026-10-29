@@ -1318,7 +1318,9 @@ const CHAT_WORDS = {
               'sab update', 'sabhi update', 'phone updated', 'pc updated', 'kaun update'],
   release: ['latest coco', 'latest version', 'coco version', 'which version', 'what version',
             'release', 'kaunsa version', 'naya version'],
-  approvals: ['approval', 'approvals', 'pending', 'waiting', 'yes chahiye'],
+  // 'approve' and 'approved' are questions here, not commands: a YES is given by tapping it, so
+  // "did Big Boss approve this" can only ever be a read of the one shared approval record.
+  approvals: ['approval', 'approvals', 'approve', 'approved', 'pending', 'waiting', 'yes chahiye', 'yes diya'],
   runs: ['run', 'runs', 'history', 'chala', 'failed', 'fail', 'error'],
   outputs: ['output', 'outputs', 'bane', 'banaye', 'produced'],
   connect: ['integration', 'integrations', 'connection', 'connections', 'connected', 'disconnected'],
