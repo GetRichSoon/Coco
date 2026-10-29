@@ -594,14 +594,53 @@ async function healQueue() {
 // change itself writes, the heartbeat. Each reads the same forty-odd tables, so overlapping calls are
 // collapsed into one — and if a request arrives while a reload is already in flight, exactly one more
 // runs after it. Nothing is skipped, so a change made on another device is never left unseen.
-let loading = null, loadAgain = false;
+let loading = null, loadAgain = false, lastFull = 0;
 function loadAll() {
   if (loading) { loadAgain = true; return loading; }
+  lastFull = Date.now();
   loading = (async () => {
     try { await loadAllNow(); } finally { loading = null; }
     if (loadAgain) { loadAgain = false; return loadAll(); }
   })();
   return loading;
+}
+// A pulse row's only payload is the name of the table that changed, so most changes do not need the
+// whole company read back. loadAllNow() is thirty-one queries and four fetches; four devices beating
+// every five minutes used to spend about fifteen hundred queries an hour on each client redrawing a
+// screen that had not changed. A hot topic now refreshes its own slice: one query.
+//
+// The safety net matters more than the saving. policies, structure, the two integration tables and
+// releases have no pulse trigger of their own yet (migration 0023), so their changes reach the other
+// devices only by riding on somebody else's pulse and its full read. Take that away and a company
+// stop would stop propagating altogether. So a full read still runs at least once a minute whatever
+// pulses, which bounds how stale those five can be at sixty seconds - better than today, where it
+// depends on whether anything happened to pulse at all. Once 0023 is applied they pulse for
+// themselves and this interval can be made long.
+const SLICE = {
+  devices:   ['devices', ['id', true]],
+  houses:    ['houses', ['sort', true]],
+  tasks:     ['tasks', ['created_at', false]],
+  approvals: ['approvals', ['raised_on', false]],
+  decisions: ['decisions', ['decided_on', false]],
+  rules:     ['rules', ['updated_at', false]],
+  activity:  ['activity', ['at', false], 100],
+  commands:  ['commands', ['created_at', false], 15],
+};
+const FULL_EVERY = 60000;
+async function refreshFor(topics) {
+  if (!topics.length || topics.some((t) => !SLICE[t]) || Date.now() - lastFull > FULL_EVERY) return loadAll();
+  const got = await Promise.all(topics.map((t) => {
+    const [table, order, lim] = SLICE[t];
+    const r = sb.from(table).select('*').order(order[0], { ascending: order[1] });
+    return lim ? r.limit(lim) : r;
+  }));
+  // A refused or failed read is never a reason to keep showing old rows: fall back to the full read,
+  // which already knows how to refresh the login and try again.
+  if (got.some((r) => r.error || !r.data)) return loadAll();
+  topics.forEach((t, i) => { D[t] = got[i].data; });
+  if (!document.hidden) render();
+  diffAndNotify();
+  pushIsland();
 }
 async function loadAllNow() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
@@ -782,7 +821,9 @@ async function pollApprovals() {
 let feedTimer = null;
 const feedSoon = () => { if (!feedTimer) feedTimer = setTimeout(() => { feedTimer = null; pollApprovals(); }, 800); };
 setInterval(() => { if (!document.hidden) renderStrip(); }, 4000);   // rotates the in-app ticker line
-let pulseTimer = null;
+// Pulses arriving in the same breath are coalesced into one refresh, and what they named is kept so
+// the refresh knows which slices to read.
+let pulseTimer = null, pulseHot = new Set();
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
 let channel = null, isLive = false, retryTimer = null, tries = 0;
 function setLive(ok) { isLive = ok; $('#liveDot').classList.toggle('on', ok); $('#liveText').textContent = ok ? 'live' : 'reconnecting'; }
@@ -790,7 +831,17 @@ function connectLive() {
   clearTimeout(retryTimer);
   if (channel) { try { sb.removeChannel(channel); } catch {} channel = null; }
   channel = sb.channel('pulse-' + Date.now())
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, () => { runMyCommands(); if (!pulseTimer) pulseTimer = setTimeout(() => { pulseTimer = null; loadAll(); }, document.hidden ? 10000 : 1500); })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pulse' }, (p) => {
+      runMyCommands();
+      // No topic means an older row or a payload we cannot trust, which is treated as "something
+      // changed" and takes the full read.
+      pulseHot.add((p && p.new && p.new.topic) || '*');
+      if (!pulseTimer) pulseTimer = setTimeout(() => {
+        pulseTimer = null;
+        const hot = [...pulseHot]; pulseHot.clear();
+        refreshFor(hot);
+      }, document.hidden ? 10000 : 1500);
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, feedSoon)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'houses' }, feedSoon)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity' }, feedSoon)
