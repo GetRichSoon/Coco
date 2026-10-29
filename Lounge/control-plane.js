@@ -1,0 +1,5994 @@
+// Generated beside control-plane.json by scripts/coco-control-snapshot.mjs.
+// The desktop app opens index.html over file://, where fetch() cannot read a .json sibling;
+// a <script src> can. Same snapshot, same content, loadable on both surfaces.
+window.COCO_CONTROL_PLANE = {
+  "generated_at": "2026-10-28T07:34:29.856Z",
+  "generated_by": "scripts/coco-control-snapshot.mjs",
+  "company": {
+    "id": "good-space",
+    "name": "Good Space",
+    "repo": "GetRichSoon/CocoMaison",
+    "founders": [
+      {
+        "id": "mangesh",
+        "address": "Boss"
+      },
+      {
+        "id": "shreya",
+        "address": "Big Boss"
+      }
+    ],
+    "control_plane": "Coco",
+    "stopped": {
+      "by": "mangesh",
+      "at": "2026-10-27T12:33:16.385Z",
+      "reason": "Migration: company work stopped while the cloud runtime is deployed and proven (tonight's Short is already uploaded and scheduled on YouTube)"
+    },
+    "counts": {
+      "teams": 28,
+      "live_teams": 13,
+      "agents": 204,
+      "subteams": 37,
+      "categories": 48,
+      "channels": 16
+    }
+  },
+  "system": {
+    "stopped": {
+      "by": "mangesh",
+      "at": "2026-10-27T12:33:16.385Z",
+      "reason": "Migration: company work stopped while the cloud runtime is deployed and proven (tonight's Short is already uploaded and scheduled on YouTube)"
+    },
+    "paused_teams": [
+      {
+        "id": "strategy",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "engineering",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "product",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "design",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "qa",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "marketing",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "content",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "instagram",
+        "by": "mangesh",
+        "at": "2026-10-08T20:20:33.396Z",
+        "reason": "Founder 2026-10-09: no social media team for now, only the YouTube team"
+      },
+      {
+        "id": "facebook",
+        "by": "mangesh",
+        "at": "2026-10-08T20:20:33.709Z",
+        "reason": "Founder 2026-10-09: no social media team for now, only the YouTube team"
+      },
+      {
+        "id": "career",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "email",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "sales",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "finance",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "analytics",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      {
+        "id": "ops",
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      }
+    ],
+    "paused_agents": [],
+    "plan": "max5"
+  },
+  "cloud_runtime": {
+    "pc_required": false,
+    "provider": null,
+    "provider_note": "no model provider in the cloud yet: model steps report \"no_provider\" and are never faked",
+    "workflows": [
+      "android-build.yml",
+      "capability-proof.yml",
+      "claude-proof.yml",
+      "cloud-cycle.yml",
+      "tests.yml",
+      "workflow-proof.yml"
+    ],
+    "pipelines": [
+      {
+        "id": "appcare-pick",
+        "title": "Nono App Care: pick the next piece of work",
+        "team": "appcare",
+        "agent": "appcare.nono",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "comics-pick",
+        "title": "Mochi Comics Manga and Anime: pick the next piece of work",
+        "team": "comics",
+        "agent": "comics.comics-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "commerce-pick",
+        "title": "Tilly Commerce and Dropshipping: pick the next piece of work",
+        "team": "commerce",
+        "agent": "commerce.commerce-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "courses-pick",
+        "title": "Fifi Courses: pick the next piece of work",
+        "team": "courses",
+        "agent": "courses.courses-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "design-guild-pick",
+        "title": "Vivi Design: pick the next piece of work",
+        "team": "design-guild",
+        "agent": "design-guild.vivi",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "ebook-daily",
+        "title": "Poppy Ebooks: build the workbook EPUB",
+        "team": "ebooks",
+        "agent": "ebooks.ebooks-head",
+        "steps": [
+          {
+            "id": "build",
+            "kind": "cloud",
+            "job": "build-artifact",
+            "purpose": null
+          },
+          {
+            "id": "record",
+            "kind": "output",
+            "job": null,
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "ebooks-pick",
+        "title": "Poppy Ebooks and Workbooks: pick the next piece of work",
+        "team": "ebooks",
+        "agent": "ebooks.ebooks-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "games-pick",
+        "title": "Zaza Games: pick the next piece of work",
+        "team": "games",
+        "agent": "games.games-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "keeper-pick",
+        "title": "Pixie Keeper: pick the next piece of work",
+        "team": "keeper",
+        "agent": "keeper.pixie",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "research-pick",
+        "title": "Lili Research Guild: pick the next piece of work",
+        "team": "research",
+        "agent": "research.lili",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "social-pick",
+        "title": "Gigi Social Media: pick the next piece of work",
+        "team": "social",
+        "agent": "social.social-media-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "software-pick",
+        "title": "Lulu Software: pick the next piece of work",
+        "team": "software",
+        "agent": "software.software-head",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "topic-pick",
+        "title": "Pick the next topic from collected candidates",
+        "team": "core",
+        "agent": "core.quill",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      },
+      {
+        "id": "youtube-pick",
+        "title": "YouTube Studio: pick the next piece of work",
+        "team": "youtube",
+        "agent": "youtube.marquee",
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "job": "filter-rank",
+            "purpose": null
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "job": null,
+            "purpose": null
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "job": "build-package",
+            "purpose": null
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "job": null,
+            "purpose": "final_selection"
+          },
+          {
+            "id": "store",
+            "kind": "cloud",
+            "job": "store-result",
+            "purpose": null
+          }
+        ]
+      }
+    ],
+    "recent_runs": [
+      {
+        "run_id": "RUN-2026-10-27-000001",
+        "pipeline": "topic-pick",
+        "ok": false,
+        "at": "2026-10-27T09:48:27.190Z",
+        "provider": null,
+        "steps": [
+          {
+            "id": "rank",
+            "kind": "cloud",
+            "status": "done",
+            "ms": 6,
+            "job": "filter-rank",
+            "keys": [
+              "ranked",
+              "considered",
+              "dropped"
+            ]
+          },
+          {
+            "id": "brain",
+            "kind": "brain",
+            "status": "done",
+            "ms": 3,
+            "items": 0,
+            "chars": 0,
+            "hidden": 0
+          },
+          {
+            "id": "package",
+            "kind": "cloud",
+            "status": "done",
+            "ms": 4,
+            "job": "build-package",
+            "keys": [
+              "context",
+              "context_from",
+              "chars"
+            ]
+          },
+          {
+            "id": "decide",
+            "kind": "model",
+            "status": "blocked",
+            "ms": 28,
+            "reason": "gateway refused: EMERGENCY STOP: Boss: stop company work (token loss)",
+            "ai_call_id": "AI-2026-10-27-0001"
+          }
+        ],
+        "outcome": {
+          "blocked": true,
+          "step": "decide",
+          "reason": "gateway refused: EMERGENCY STOP: Boss: stop company work (token loss)",
+          "ai_call_id": "AI-2026-10-27-0001",
+          "cloud_instead": []
+        }
+      }
+    ],
+    "cloud_store": {
+      "runs": "runs",
+      "events": "run_events",
+      "ai_calls": "ai_calls",
+      "brain": "brain_items",
+      "policies": "policies",
+      "audit": "control_ops",
+      "note": "Coco Cloud (Supabase), migrations 0001-0006 applied"
+    },
+    "github": {
+      "repo": "GetRichSoon/CocoMaison",
+      "connected": false,
+      "note": "no GitHub token in this runtime: showing what the repository says, not live run status",
+      "branch": "cloud-foundation",
+      "head": "e37f412 the company's first workflow that makes something real",
+      "head_at": "2026-10-28T13:01:23+05:30",
+      "workflows": [
+        {
+          "file": "android-build.yml",
+          "name": "android build",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": []
+        },
+        {
+          "file": "capability-proof.yml",
+          "name": "capability proof",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": []
+        },
+        {
+          "file": "claude-proof.yml",
+          "name": "claude proof",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": [
+            "ANTHROPIC_API_KEY",
+            "SUPABASE_ENGINE_KEY"
+          ]
+        },
+        {
+          "file": "cloud-cycle.yml",
+          "name": "cloud cycle",
+          "schedules": [
+            "15 2 * * *",
+            "15 13 * * *"
+          ],
+          "manual": true,
+          "needs_secrets": [
+            "ANTHROPIC_API_KEY",
+            "SUPABASE_ENGINE_KEY",
+            "SUPABASE_SERVICE_KEY"
+          ]
+        },
+        {
+          "file": "tests.yml",
+          "name": "tests",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": []
+        },
+        {
+          "file": "workflow-proof.yml",
+          "name": "workflow proof",
+          "schedules": [],
+          "manual": true,
+          "needs_secrets": [
+            "SUPABASE_ENGINE_KEY"
+          ]
+        }
+      ],
+      "runs": []
+    }
+  },
+  "ai": {
+    "limits": {
+      "plan": "max5",
+      "pct": 0,
+      "level": "ok",
+      "windows": [
+        {
+          "window": "day",
+          "budget": 2000000,
+          "spent": 0,
+          "pct": 0
+        },
+        {
+          "window": "week",
+          "budget": 12000000,
+          "spent": 0,
+          "pct": 0
+        },
+        {
+          "window": "month",
+          "budget": 45000000,
+          "spent": 0,
+          "pct": 0
+        }
+      ],
+      "opus_allowed": true,
+      "thresholds": {
+        "warning": 80,
+        "restricted": 90,
+        "blocked": 100
+      },
+      "company_budget_from": "plan"
+    },
+    "thresholds": {
+      "warning": 80,
+      "restricted": 90,
+      "blocked": 100
+    },
+    "ticket_ttl_minutes": 15,
+    "purposes": [
+      {
+        "id": "final_analysis",
+        "what": "Analyse research the cloud has already collected, filtered and ranked",
+        "max_context": 6000,
+        "max_tokens": 60000
+      },
+      {
+        "id": "final_selection",
+        "what": "Pick the final option from a prepared decision package",
+        "max_context": 4000,
+        "max_tokens": 30000
+      },
+      {
+        "id": "creative_write",
+        "what": "Write the final hook, script, title, description, caption or copy",
+        "max_context": 6000,
+        "max_tokens": 60000
+      },
+      {
+        "id": "complex_reasoning",
+        "what": "Strategy or a decision that genuinely needs reasoning",
+        "max_context": 8000,
+        "max_tokens": 120000
+      },
+      {
+        "id": "complex_code",
+        "what": "Non-trivial code, architecture or a hard debug",
+        "max_context": 12000,
+        "max_tokens": 150000
+      },
+      {
+        "id": "final_quality_verdict",
+        "what": "The quality verdict deterministic checks could not decide",
+        "max_context": 6000,
+        "max_tokens": 40000
+      }
+    ],
+    "usage": {
+      "day": {
+        "window": "day",
+        "since": "2026-10-27T18:30:00.000Z",
+        "calls": 0,
+        "done": 0,
+        "blocked": 0,
+        "tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost": 0,
+        "by_team": {},
+        "by_agent": {},
+        "by_model": {},
+        "by_purpose": {},
+        "by_measured_by": {},
+        "unverified_tokens": 0,
+        "over_budget_calls": 0,
+        "consumed_unrecorded": 0,
+        "blocked_by_reason": {}
+      },
+      "week": {
+        "window": "week",
+        "since": "2026-10-25T18:30:00.000Z",
+        "calls": 1,
+        "done": 0,
+        "blocked": 1,
+        "tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost": 0,
+        "by_team": {},
+        "by_agent": {},
+        "by_model": {},
+        "by_purpose": {},
+        "by_measured_by": {},
+        "unverified_tokens": 0,
+        "over_budget_calls": 0,
+        "consumed_unrecorded": 0,
+        "blocked_by_reason": {
+          "stopped": 1
+        }
+      },
+      "month": {
+        "window": "month",
+        "since": "2026-09-30T18:30:00.000Z",
+        "calls": 1,
+        "done": 0,
+        "blocked": 1,
+        "tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost": 0,
+        "by_team": {},
+        "by_agent": {},
+        "by_model": {},
+        "by_purpose": {},
+        "by_measured_by": {},
+        "unverified_tokens": 0,
+        "over_budget_calls": 0,
+        "consumed_unrecorded": 0,
+        "blocked_by_reason": {
+          "stopped": 1
+        }
+      }
+    },
+    "budgets": {
+      "budget": {
+        "daily_tokens": 2000000,
+        "weekly_tokens": 12000000,
+        "monthly_tokens": 45000000
+      },
+      "team_share_pct": {
+        "_note": "% of the daily budget per department (P0-P1 ignore it). The lean team lives in 'core'; old departments are paused.",
+        "core": 100,
+        "default": 10
+      },
+      "agent_share_pct": {
+        "_note": "% of the daily budget per core agent (P0-P1 ignore it)",
+        "core.nova": 15,
+        "core.scout": 10,
+        "core.builder": 35,
+        "core.gate": 15,
+        "core.quill": 10,
+        "core.reel": 10,
+        "core.spark": 5
+      }
+    },
+    "calls": [
+      {
+        "id": "AI-2026-10-27-0001",
+        "at": "2026-10-27T09:48:27.153Z",
+        "status": "blocked",
+        "run_id": "RUN-2026-10-27-000001",
+        "team_id": "core",
+        "subteam_id": null,
+        "category_id": null,
+        "channel_id": null,
+        "agent_id": "core.quill",
+        "task_id": null,
+        "model": "sonnet",
+        "purpose": "final_selection",
+        "expected_output": "The chosen candidate number, one line of reasoning, and a confidence 0-1",
+        "claude_required": "final judgement between close candidates; the deterministic score cannot separate them",
+        "context_from": "cloud: filter-rank(2) + brain recall",
+        "context_chars": 279,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cache_write_tokens": 0,
+        "total_tokens": 0,
+        "max_tokens": 20000,
+        "over_budget": false,
+        "cost": 0,
+        "duration_ms": null,
+        "measured_by": null,
+        "verified": null,
+        "approved_by": null,
+        "why": [
+          {
+            "code": "stopped",
+            "text": "EMERGENCY STOP: Boss: stop company work (token loss)",
+            "cloud_instead": null,
+            "label": "Blocked: company-wide emergency stop"
+          }
+        ],
+        "overridden": [],
+        "result_summary": null
+      }
+    ],
+    "split": {
+      "cloud_steps": 3,
+      "claude_steps": 1,
+      "claude_calls_done": 0,
+      "claude_calls_refused": 1,
+      "cloud_jobs_available": [
+        "build-artifact",
+        "build-package",
+        "filter-rank",
+        "store-result"
+      ]
+    }
+  },
+  "brain": {
+    "stats": {
+      "items": 97,
+      "retired": 0,
+      "by_kind": {
+        "decision": 95,
+        "knowledge": 2
+      },
+      "by_team": {
+        "none": 95,
+        "youtube": 2
+      },
+      "by_visibility": {
+        "company": 95,
+        "team": 2
+      }
+    },
+    "items": [
+      {
+        "id": "BRN-2026-10-27-0097",
+        "kind": "knowledge",
+        "title": "pycairo select_font_face fails silently: our Inter videos were never Inter",
+        "team_id": "youtube",
+        "category_id": null,
+        "visibility": "team",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T20:44:06.529Z",
+        "created_by": "nova",
+        "source": null,
+        "run_id": null,
+        "chars": 903
+      },
+      {
+        "id": "BRN-2026-10-27-0096",
+        "kind": "knowledge",
+        "title": "Long sleep/ambient videos: render one periodic segment, loop it losslessly",
+        "team_id": "youtube",
+        "category_id": "youtube/lofi-sleep",
+        "visibility": "team",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T20:43:53.388Z",
+        "created_by": "nova",
+        "source": null,
+        "run_id": null,
+        "chars": 1114
+      },
+      {
+        "id": "BRN-2026-10-27-0095",
+        "kind": "decision",
+        "title": "STOP ALL: company work halted by Boss at 18:10. Emergency stop set in os/controls.json; the 30-min checks and evening re",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.103Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 383
+      },
+      {
+        "id": "BRN-2026-10-27-0094",
+        "kind": "decision",
+        "title": "PUBLISHED: Screen Time Tracker 5.5.0 submitted to the Chrome Web Store (upload SUCCESS, publish OK) under Boss's standin",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.094Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 270
+      },
+      {
+        "id": "BRN-2026-10-27-0093",
+        "kind": "decision",
+        "title": "CONFIRMED: every CWS extension except Orbi + Screen Time Tracker goes to DRAFT, including OhMyPDF. Document Toolkit publ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.089Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 291
+      },
+      {
+        "id": "BRN-2026-10-27-0092",
+        "kind": "decision",
+        "title": "Vivi UI/UX support team created: distinct Material You based theme per product (no shared look), best colour combination",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.079Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 282
+      },
+      {
+        "id": "BRN-2026-10-27-0091",
+        "kind": "decision",
+        "title": "Research gains a 4th lens: free execution tools. Every researched idea must include how we build it free (GitHub/open-so",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.071Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 198
+      },
+      {
+        "id": "BRN-2026-10-27-0090",
+        "kind": "decision",
+        "title": "RESEARCH FIRST: research is the main goal; final picks come only from top-grade research. Lili Research Guild created (s",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.062Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 388
+      },
+      {
+        "id": "BRN-2026-10-27-0089",
+        "kind": "decision",
+        "title": "ARCHITECTURE: cloud first. PCs and phones run only the Coco apps (monitor, dashboard, approvals); all working moves to t",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.055Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 244
+      },
+      {
+        "id": "BRN-2026-10-27-0088",
+        "kind": "decision",
+        "title": "RULE: never tell Boss something is missing without checking first (channels case). company/FACTS.md created: one-line ve",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.047Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 325
+      },
+      {
+        "id": "BRN-2026-10-27-0087",
+        "kind": "decision",
+        "title": "STRICT AUTOPILOT RULE: all teams self-run and self-grow (own growth numbers; daily Short per connected channel; winners ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.040Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 360
+      },
+      {
+        "id": "BRN-2026-10-27-0086",
+        "kind": "decision",
+        "title": "Room 4B ep 1: the posting decision belongs to BIG BOSS (A-013 routed to her; she watches and answers). Big Boss PC gets ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.031Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 196
+      },
+      {
+        "id": "BRN-2026-10-27-0085",
+        "kind": "decision",
+        "title": "YES (chat, while sleeping): 'publish which is ready'. Read as: A-013 comics rendering starts now (posting after Boss wat",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.023Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 413
+      },
+      {
+        "id": "BRN-2026-10-27-0084",
+        "kind": "decision",
+        "title": "Jobs and Mail House (Juno) PLANNED (company/jobs/SETUP-PLAN.md): daily worldwide remote-job applications with tailored t",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.012Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 377
+      },
+      {
+        "id": "BRN-2026-10-27-0083",
+        "kind": "decision",
+        "title": "Nono also watches the 4 devices (offline too long = find why + one honest app note per device per day) and grows its own",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:38.006Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 303
+      },
+      {
+        "id": "BRN-2026-10-27-0082",
+        "kind": "decision",
+        "title": "WORK LOOP confirmed (test 2-3 days, then reduce approval asks as the pattern is learned): research > sub-team + team hea",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.997Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 566
+      },
+      {
+        "id": "BRN-2026-10-27-0081",
+        "kind": "decision",
+        "title": "RULE: finish then propose. Every team ends a finished task with one next-task proposal to Boss (found X, money path, don",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.991Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 250
+      },
+      {
+        "id": "BRN-2026-10-27-0080",
+        "kind": "decision",
+        "title": "A-001 Fuselist (subscription tracker Play app): REJECTED - Boss confirmed in chat the island NO was his. Fuselist stays ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.982Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 164
+      },
+      {
+        "id": "BRN-2026-10-27-0079",
+        "kind": "decision",
+        "title": "Island must be LIVE, never static: continuous team logs (who is working, talking, doing what) streaming on the desktop D",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.976Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 219
+      },
+      {
+        "id": "BRN-2026-10-27-0078",
+        "kind": "decision",
+        "title": "YES: Nono App Care team created (Boss gave access to create needed teams). Standing orders: 4 devices always-connected w",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.967Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 536
+      },
+      {
+        "id": "BRN-2026-10-27-0077",
+        "kind": "decision",
+        "title": "RESILIENCE RULE: work never crashes. PC off = pause as waiting_pc; PC on = Coco Pickup (logon script, installed today in",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.960Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 345
+      },
+      {
+        "id": "BRN-2026-10-27-0076",
+        "kind": "decision",
+        "title": "SCHEDULING RULE: a team stops when its day task is done (no 24h running); never all teams at once. Coco tracks the 5-hou",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.953Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 344
+      },
+      {
+        "id": "BRN-2026-10-27-0075",
+        "kind": "decision",
+        "title": "YES: Pixie Keeper team created (one haiku agent): keeps a date-wise, team-wise board of every Boss task (company/tasks/B",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.945Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 341
+      },
+      {
+        "id": "BRN-2026-10-27-0074",
+        "kind": "decision",
+        "title": "QUALITY RULE: standardized paying-grade output over speed (extra time allowed). Token-waste watchdog wanted (repeats, do",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.939Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 425
+      },
+      {
+        "id": "BRN-2026-10-27-0073",
+        "kind": "decision",
+        "title": "OVERNIGHT ORDER (chat ~3 AM): STT publish + Orbi fix/payments/resubmit by morning; all other CWS extensions to draft inc",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.930Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 579
+      },
+      {
+        "id": "BRN-2026-10-27-0072",
+        "kind": "decision",
+        "title": "Boss connected GitHub (GetRichSoon/CocoMaison) to Claude cloud. Cloud routine 'Good Space OS cycle' created and enabled:",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.922Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 298
+      },
+      {
+        "id": "BRN-2026-10-27-0071",
+        "kind": "decision",
+        "title": "YES 1: build the Document Toolkit merge spec (Lulu #1, 42/50; merges OhMyPDF, PDF Smart Converter, Neon Converter, File ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.912Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 441
+      },
+      {
+        "id": "BRN-2026-10-27-0070",
+        "kind": "decision",
+        "title": "PRIVACY: all data stays private. Check done (company/PRIVACY.md): all repos private, no secrets in git, Coco Cloud table",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.903Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 297
+      },
+      {
+        "id": "BRN-2026-10-27-0069",
+        "kind": "decision",
+        "title": "TARGET: profit above Rs 50,000 in one month from the main Houses; stretch = each House can afford its own Claude Max. Cu",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.894Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 501
+      },
+      {
+        "id": "BRN-2026-10-27-0068",
+        "kind": "decision",
+        "title": "RULES: cross-House idea exchange (company/CROSS-HOUSE.md: heads test each other's winning topics with a checklist and lo",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.888Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 469
+      },
+      {
+        "id": "BRN-2026-10-27-0067",
+        "kind": "decision",
+        "title": "Commerce model: our own shop site, SUPPLIER stores/packs/ships, we sell and support. Evergreen catalogue (2-3 years per ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.880Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 290
+      },
+      {
+        "id": "BRN-2026-10-27-0066",
+        "kind": "decision",
+        "title": "Games House and Commerce/Dropshipping House planned and set up with the same template (company/games, company/commerce):",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.874Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 422
+      },
+      {
+        "id": "BRN-2026-10-27-0065",
+        "kind": "decision",
+        "title": "STANDARD: Big Money Standard (company/QUALITY-BAR.md). Only lifetime, daily-need, recurring-payment, low-upkeep products",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.868Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 419
+      },
+      {
+        "id": "BRN-2026-10-27-0064",
+        "kind": "decision",
+        "title": "RULE: all Houses (Software, Social Media, Ebooks, Comics, Courses) use the same template: House Head + platform heads, c",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.861Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 526
+      },
+      {
+        "id": "BRN-2026-10-27-0063",
+        "kind": "decision",
+        "title": "YES: Ebooks and Workbooks, Comics/Manga/Anime, and Courses are THREE separate Houses (each big, each with its own head, ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.849Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 257
+      },
+      {
+        "id": "BRN-2026-10-27-0062",
+        "kind": "decision",
+        "title": "YES (saved): Social Media House plan (company/social/SETUP-PLAN.md): YouTube keeps its own head and rules as a platform ",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.841Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 525
+      },
+      {
+        "id": "BRN-2026-10-27-0061",
+        "kind": "decision",
+        "title": "YES: Software House plan approved (structure, debate flow, learning loop). Setup steps 1-4 done by Nova same day; nightl",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.832Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 138
+      },
+      {
+        "id": "BRN-2026-10-27-0060",
+        "kind": "decision",
+        "title": "Software House created: one Head, platform teams (Extensions, Android, Windows, Samsung, iPhone/Mac, Web), free stores f",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.824Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 262
+      },
+      {
+        "id": "BRN-2026-10-27-0059",
+        "kind": "decision",
+        "title": "Company Tree baseline: 4 Houses = Social Media (13 channels), Products (Chrome team + Android/Play team), Courses & Lear",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.816Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 270
+      },
+      {
+        "id": "BRN-2026-10-27-0058",
+        "kind": "decision",
+        "title": "Kahani Ghar: LONG videos only (20-30 min). No Shorts production. Reason: top kahani channels earn from long videos; Shor",
+        "team_id": null,
+        "category_id": null,
+        "visibility": "company",
+        "approved": true,
+        "seen": 1,
+        "created_at": "2026-10-27T09:48:37.809Z",
+        "created_by": "mangesh",
+        "source": "company/DECISIONS.md",
+        "run_id": null,
+        "chars": 139
+      }
+    ]
+  },
+  "runs": [
+    {
+      "run_id": "RUN-2026-10-27-000002",
+      "parent_run_id": null,
+      "root_run_id": "RUN-2026-10-27-000002",
+      "depth": 0,
+      "kind": "manual",
+      "title": "local gate dry-run",
+      "status": "open",
+      "chain": {
+        "company": "good-space",
+        "team": "core",
+        "subteam": null,
+        "category": null,
+        "channel": null,
+        "agent": "core.quill",
+        "task": null
+      },
+      "opened_at": "2026-10-27T15:56:51.650Z",
+      "closed_at": null,
+      "opened_by": "nova",
+      "result": null,
+      "tokens": 0,
+      "cost": 0,
+      "children": [],
+      "ai_calls": [],
+      "events": []
+    },
+    {
+      "run_id": "RUN-2026-10-27-000001",
+      "parent_run_id": null,
+      "root_run_id": "RUN-2026-10-27-000001",
+      "depth": 0,
+      "kind": "pipeline",
+      "title": "Pick the next topic from collected candidates",
+      "status": "failed",
+      "chain": {
+        "company": "good-space",
+        "team": "core",
+        "subteam": null,
+        "category": null,
+        "channel": null,
+        "agent": "core.quill",
+        "task": null
+      },
+      "opened_at": "2026-10-27T09:48:27.112Z",
+      "closed_at": "2026-10-27T09:48:27.185Z",
+      "opened_by": "nova",
+      "result": "gateway refused: EMERGENCY STOP: Boss: stop company work (token loss)",
+      "tokens": 0,
+      "cost": 0,
+      "children": [],
+      "ai_calls": [
+        "AI-2026-10-27-0001"
+      ],
+      "events": [
+        {
+          "at": "2026-10-27T09:48:27.131Z",
+          "seq": 1,
+          "type": "pipeline.started",
+          "text": "Pick the next topic from collected candidates",
+          "agent": null,
+          "task": null,
+          "tokens": null
+        },
+        {
+          "at": "2026-10-27T09:48:27.139Z",
+          "seq": 2,
+          "type": "step.done",
+          "text": "rank (cloud)",
+          "agent": null,
+          "task": null,
+          "tokens": null
+        },
+        {
+          "at": "2026-10-27T09:48:27.144Z",
+          "seq": 3,
+          "type": "step.done",
+          "text": "brain (brain)",
+          "agent": null,
+          "task": null,
+          "tokens": null
+        },
+        {
+          "at": "2026-10-27T09:48:27.150Z",
+          "seq": 4,
+          "type": "step.done",
+          "text": "package (cloud)",
+          "agent": null,
+          "task": null,
+          "tokens": null
+        },
+        {
+          "at": "2026-10-27T09:48:27.181Z",
+          "seq": 5,
+          "type": "step.blocked",
+          "text": "decide (model): gateway refused: EMERGENCY STOP: Boss: stop company work (token loss)",
+          "agent": null,
+          "task": null,
+          "tokens": null
+        },
+        {
+          "at": "2026-10-27T09:48:27.188Z",
+          "seq": 6,
+          "type": "pipeline.blocked",
+          "text": "gateway refused: EMERGENCY STOP: Boss: stop company work (token loss)",
+          "agent": null,
+          "task": null,
+          "tokens": null
+        }
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "core",
+      "name": "Core Team",
+      "kind": "core",
+      "mission": "Do all of the company's work with the fewest agents: find, build, check, ship-prep, content and growth. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web",
+        "deploy",
+        "gmail_drafts"
+      ],
+      "head_agent_id": "core.nova",
+      "paused": null,
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 7
+      },
+      "budget_share_pct": 100,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "core.nova",
+          "name": "Nova",
+          "role": "Chief of Staff & Orchestrator",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "core.scout",
+          "name": "Scout",
+          "role": "Research Scout",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/scout.md"
+        },
+        {
+          "id": "core.builder",
+          "name": "Builder",
+          "role": "Builder & Architect",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/builder.md"
+        },
+        {
+          "id": "core.gate",
+          "name": "Gate",
+          "role": "QA & Release",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/release-qa.md"
+        },
+        {
+          "id": "core.quill",
+          "name": "Quill",
+          "role": "Content Writer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/content-writer.md"
+        },
+        {
+          "id": "core.reel",
+          "name": "Reel",
+          "role": "Video Producer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/video-producer.md"
+        },
+        {
+          "id": "core.spark",
+          "name": "Spark",
+          "role": "Growth",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/growth.md"
+        }
+      ]
+    },
+    {
+      "id": "software",
+      "name": "Lulu Software",
+      "kind": "house",
+      "mission": "Good Space Software House: find where our apps and extensions can earn big with low upkeep, on every platform. Platform heads research their own platform; the Software Head questions them and sends Coco one ranked list. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "software.software-head",
+      "paused": null,
+      "counts": {
+        "subteams": 6,
+        "categories": 6,
+        "channels": 0,
+        "agents": 7
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "extensions",
+          "name": "Extensions",
+          "team_id": "software",
+          "agent_id": "software.extensions-head",
+          "category": "software/extensions"
+        },
+        {
+          "id": "windows",
+          "name": "Windows",
+          "team_id": "software",
+          "agent_id": "software.windows-head",
+          "category": "software/windows"
+        },
+        {
+          "id": "android",
+          "name": "Android",
+          "team_id": "software",
+          "agent_id": "software.android-head",
+          "category": "software/android"
+        },
+        {
+          "id": "samsung",
+          "name": "Samsung",
+          "team_id": "software",
+          "agent_id": "software.samsung-head",
+          "category": "software/samsung"
+        },
+        {
+          "id": "web",
+          "name": "Web",
+          "team_id": "software",
+          "agent_id": "software.web-head",
+          "category": "software/web"
+        },
+        {
+          "id": "apple",
+          "name": "Apple",
+          "team_id": "software",
+          "agent_id": "software.apple-head",
+          "category": "software/apple"
+        }
+      ],
+      "categories": [
+        {
+          "id": "software/android",
+          "name": "android",
+          "team_id": "software",
+          "file": "company/software/categories/android.md"
+        },
+        {
+          "id": "software/apple",
+          "name": "apple",
+          "team_id": "software",
+          "file": "company/software/categories/apple.md"
+        },
+        {
+          "id": "software/extensions",
+          "name": "extensions",
+          "team_id": "software",
+          "file": "company/software/categories/extensions.md"
+        },
+        {
+          "id": "software/samsung",
+          "name": "samsung",
+          "team_id": "software",
+          "file": "company/software/categories/samsung.md"
+        },
+        {
+          "id": "software/web",
+          "name": "web",
+          "team_id": "software",
+          "file": "company/software/categories/web.md"
+        },
+        {
+          "id": "software/windows",
+          "name": "windows",
+          "team_id": "software",
+          "file": "company/software/categories/windows.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "software.software-head",
+          "name": "Software Head",
+          "role": "Head of Software House",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/software-head.md"
+        },
+        {
+          "id": "software.extensions-head",
+          "name": "Extensions Head",
+          "role": "Browser Extensions Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "extensions",
+          "paused": false,
+          "prompt": ".claude/agents/software-extensions.md"
+        },
+        {
+          "id": "software.windows-head",
+          "name": "Windows Head",
+          "role": "Windows Apps Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "windows",
+          "paused": false,
+          "prompt": ".claude/agents/software-windows.md"
+        },
+        {
+          "id": "software.android-head",
+          "name": "Android Head",
+          "role": "Android Apps Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "android",
+          "paused": false,
+          "prompt": ".claude/agents/software-android.md"
+        },
+        {
+          "id": "software.samsung-head",
+          "name": "Samsung Head",
+          "role": "Samsung Apps Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "samsung",
+          "paused": false,
+          "prompt": ".claude/agents/software-samsung.md"
+        },
+        {
+          "id": "software.web-head",
+          "name": "Web Head",
+          "role": "Web Apps and SaaS Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "web",
+          "paused": false,
+          "prompt": ".claude/agents/software-web.md"
+        },
+        {
+          "id": "software.apple-head",
+          "name": "Apple Head",
+          "role": "iPhone and Mac Apps Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "apple",
+          "paused": false,
+          "prompt": ".claude/agents/software-apple.md"
+        }
+      ]
+    },
+    {
+      "id": "ebooks",
+      "name": "Poppy Ebooks and Workbooks",
+      "kind": "house",
+      "mission": "Ebooks, workbooks, planners and printables in lifelong categories, 15-20 titles per category, sold on many platforms. Original, useful content only. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "ebooks.ebooks-head",
+      "paused": null,
+      "counts": {
+        "subteams": 4,
+        "categories": 4,
+        "channels": 0,
+        "agents": 5
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "kdp",
+          "name": "Amazon KDP",
+          "team_id": "ebooks",
+          "agent_id": "ebooks.amazon-kdp-head",
+          "category": "ebooks/kdp"
+        },
+        {
+          "id": "googlebooks",
+          "name": "Google Play Books",
+          "team_id": "ebooks",
+          "agent_id": "ebooks.google-play-books-head",
+          "category": "ebooks/googlebooks"
+        },
+        {
+          "id": "applebooks",
+          "name": "Apple Books",
+          "team_id": "ebooks",
+          "agent_id": "ebooks.apple-books-head",
+          "category": "ebooks/applebooks"
+        },
+        {
+          "id": "direct",
+          "name": "Direct Sales",
+          "team_id": "ebooks",
+          "agent_id": "ebooks.direct-sales-head",
+          "category": "ebooks/direct"
+        }
+      ],
+      "categories": [
+        {
+          "id": "ebooks/applebooks",
+          "name": "applebooks",
+          "team_id": "ebooks",
+          "file": "company/publishing/ebooks/categories/applebooks.md"
+        },
+        {
+          "id": "ebooks/direct",
+          "name": "direct",
+          "team_id": "ebooks",
+          "file": "company/publishing/ebooks/categories/direct.md"
+        },
+        {
+          "id": "ebooks/googlebooks",
+          "name": "googlebooks",
+          "team_id": "ebooks",
+          "file": "company/publishing/ebooks/categories/googlebooks.md"
+        },
+        {
+          "id": "ebooks/kdp",
+          "name": "kdp",
+          "team_id": "ebooks",
+          "file": "company/publishing/ebooks/categories/kdp.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "ebooks.ebooks-head",
+          "name": "Ebooks Head",
+          "role": "Head of Ebooks and Workbooks House",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/ebooks-head.md"
+        },
+        {
+          "id": "ebooks.amazon-kdp-head",
+          "name": "Amazon KDP Head",
+          "role": "Amazon KDP Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "kdp",
+          "paused": false,
+          "prompt": ".claude/agents/ebooks-kdp.md"
+        },
+        {
+          "id": "ebooks.google-play-books-head",
+          "name": "Google Play Books Head",
+          "role": "Google Play Books Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "googlebooks",
+          "paused": false,
+          "prompt": ".claude/agents/ebooks-googlebooks.md"
+        },
+        {
+          "id": "ebooks.apple-books-head",
+          "name": "Apple Books Head",
+          "role": "Apple Books Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "applebooks",
+          "paused": false,
+          "prompt": ".claude/agents/ebooks-applebooks.md"
+        },
+        {
+          "id": "ebooks.direct-sales-head",
+          "name": "Direct Sales Head",
+          "role": "Direct Sales Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "direct",
+          "paused": false,
+          "prompt": ".claude/agents/ebooks-direct.md"
+        }
+      ]
+    },
+    {
+      "id": "comics",
+      "name": "Mochi Comics Manga and Anime",
+      "kind": "house",
+      "mission": "Original comics, manga and anime-style series by genre, many series per genre, on many platforms. Original characters, plots and art only; AI policies checked first. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "comics.comics-head",
+      "paused": null,
+      "counts": {
+        "subteams": 4,
+        "categories": 4,
+        "channels": 0,
+        "agents": 5
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "webcomics",
+          "name": "Webcomics",
+          "team_id": "comics",
+          "agent_id": "comics.webcomics-head",
+          "category": "comics/webcomics"
+        },
+        {
+          "id": "volumes",
+          "name": "Manga and Volumes",
+          "team_id": "comics",
+          "agent_id": "comics.manga-and-volumes-head",
+          "category": "comics/volumes"
+        },
+        {
+          "id": "animation",
+          "name": "Animated Shorts",
+          "team_id": "comics",
+          "agent_id": "comics.animated-shorts-head",
+          "category": "comics/animation"
+        },
+        {
+          "id": "membership",
+          "name": "Memberships",
+          "team_id": "comics",
+          "agent_id": "comics.memberships-head",
+          "category": "comics/membership"
+        }
+      ],
+      "categories": [
+        {
+          "id": "comics/animation",
+          "name": "animation",
+          "team_id": "comics",
+          "file": "company/publishing/comics/categories/animation.md"
+        },
+        {
+          "id": "comics/membership",
+          "name": "membership",
+          "team_id": "comics",
+          "file": "company/publishing/comics/categories/membership.md"
+        },
+        {
+          "id": "comics/volumes",
+          "name": "volumes",
+          "team_id": "comics",
+          "file": "company/publishing/comics/categories/volumes.md"
+        },
+        {
+          "id": "comics/webcomics",
+          "name": "webcomics",
+          "team_id": "comics",
+          "file": "company/publishing/comics/categories/webcomics.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "comics.comics-head",
+          "name": "Comics Head",
+          "role": "Head of Comics, Manga and Anime House",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/comics-head.md"
+        },
+        {
+          "id": "comics.webcomics-head",
+          "name": "Webcomics Head",
+          "role": "Webcomics Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "webcomics",
+          "paused": false,
+          "prompt": ".claude/agents/comics-webcomics.md"
+        },
+        {
+          "id": "comics.manga-and-volumes-head",
+          "name": "Manga and Volumes Head",
+          "role": "Manga and Volumes Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "volumes",
+          "paused": false,
+          "prompt": ".claude/agents/comics-volumes.md"
+        },
+        {
+          "id": "comics.animated-shorts-head",
+          "name": "Animated Shorts Head",
+          "role": "Animated Shorts Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "animation",
+          "paused": false,
+          "prompt": ".claude/agents/comics-animation.md"
+        },
+        {
+          "id": "comics.memberships-head",
+          "name": "Memberships Head",
+          "role": "Memberships Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "membership",
+          "paused": false,
+          "prompt": ".claude/agents/comics-membership.md"
+        }
+      ]
+    },
+    {
+      "id": "courses",
+      "name": "Fifi Courses",
+      "kind": "house",
+      "mission": "Online courses in lifelong skill and study categories, many courses per category, on many platforms, linked to our YouTube study and skill channels. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "courses.courses-head",
+      "paused": null,
+      "counts": {
+        "subteams": 5,
+        "categories": 5,
+        "channels": 0,
+        "agents": 6
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "udemy",
+          "name": "Udemy",
+          "team_id": "courses",
+          "agent_id": "courses.udemy-head",
+          "category": "courses/udemy"
+        },
+        {
+          "id": "skillshare",
+          "name": "Skillshare",
+          "team_id": "courses",
+          "agent_id": "courses.skillshare-head",
+          "category": "courses/skillshare"
+        },
+        {
+          "id": "coursera",
+          "name": "Coursera",
+          "team_id": "courses",
+          "agent_id": "courses.coursera-head",
+          "category": "courses/coursera"
+        },
+        {
+          "id": "ytcourses",
+          "name": "YouTube Courses",
+          "team_id": "courses",
+          "agent_id": "courses.youtube-courses-head",
+          "category": "courses/ytcourses"
+        },
+        {
+          "id": "ownsite",
+          "name": "Own Site",
+          "team_id": "courses",
+          "agent_id": "courses.own-site-head",
+          "category": "courses/ownsite"
+        }
+      ],
+      "categories": [
+        {
+          "id": "courses/coursera",
+          "name": "coursera",
+          "team_id": "courses",
+          "file": "company/publishing/courses/categories/coursera.md"
+        },
+        {
+          "id": "courses/ownsite",
+          "name": "ownsite",
+          "team_id": "courses",
+          "file": "company/publishing/courses/categories/ownsite.md"
+        },
+        {
+          "id": "courses/skillshare",
+          "name": "skillshare",
+          "team_id": "courses",
+          "file": "company/publishing/courses/categories/skillshare.md"
+        },
+        {
+          "id": "courses/udemy",
+          "name": "udemy",
+          "team_id": "courses",
+          "file": "company/publishing/courses/categories/udemy.md"
+        },
+        {
+          "id": "courses/ytcourses",
+          "name": "ytcourses",
+          "team_id": "courses",
+          "file": "company/publishing/courses/categories/ytcourses.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "courses.courses-head",
+          "name": "Courses Head",
+          "role": "Head of Courses House",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/courses-head.md"
+        },
+        {
+          "id": "courses.udemy-head",
+          "name": "Udemy Head",
+          "role": "Udemy Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "udemy",
+          "paused": false,
+          "prompt": ".claude/agents/courses-udemy.md"
+        },
+        {
+          "id": "courses.skillshare-head",
+          "name": "Skillshare Head",
+          "role": "Skillshare Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "skillshare",
+          "paused": false,
+          "prompt": ".claude/agents/courses-skillshare.md"
+        },
+        {
+          "id": "courses.coursera-head",
+          "name": "Coursera Head",
+          "role": "Coursera Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "coursera",
+          "paused": false,
+          "prompt": ".claude/agents/courses-coursera.md"
+        },
+        {
+          "id": "courses.youtube-courses-head",
+          "name": "YouTube Courses Head",
+          "role": "YouTube Courses Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "ytcourses",
+          "paused": false,
+          "prompt": ".claude/agents/courses-ytcourses.md"
+        },
+        {
+          "id": "courses.own-site-head",
+          "name": "Own Site Head",
+          "role": "Own Site Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "ownsite",
+          "paused": false,
+          "prompt": ".claude/agents/courses-ownsite.md"
+        }
+      ]
+    },
+    {
+      "id": "social",
+      "name": "Gigi Social Media",
+      "kind": "house",
+      "mission": "Grow big audiences on every social platform with lifelong-topic accounts (10-15 per category later) and turn attention into money. YouTube keeps its own head and rules; no posting before Boss says start. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "social.social-media-head",
+      "paused": null,
+      "counts": {
+        "subteams": 4,
+        "categories": 4,
+        "channels": 0,
+        "agents": 5
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "facebook",
+          "name": "Facebook",
+          "team_id": "social",
+          "agent_id": "social.facebook-head",
+          "category": "social/facebook"
+        },
+        {
+          "id": "pinterest",
+          "name": "Pinterest",
+          "team_id": "social",
+          "agent_id": "social.pinterest-head",
+          "category": "social/pinterest"
+        },
+        {
+          "id": "instagram",
+          "name": "Instagram",
+          "team_id": "social",
+          "agent_id": "social.instagram-head",
+          "category": "social/instagram"
+        },
+        {
+          "id": "x",
+          "name": "X",
+          "team_id": "social",
+          "agent_id": "social.x-head",
+          "category": "social/x"
+        }
+      ],
+      "categories": [
+        {
+          "id": "social/facebook",
+          "name": "facebook",
+          "team_id": "social",
+          "file": "company/social/categories/facebook.md"
+        },
+        {
+          "id": "social/instagram",
+          "name": "instagram",
+          "team_id": "social",
+          "file": "company/social/categories/instagram.md"
+        },
+        {
+          "id": "social/pinterest",
+          "name": "pinterest",
+          "team_id": "social",
+          "file": "company/social/categories/pinterest.md"
+        },
+        {
+          "id": "social/x",
+          "name": "x",
+          "team_id": "social",
+          "file": "company/social/categories/x.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "social.social-media-head",
+          "name": "Social Media Head",
+          "role": "Head of Social Media House",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/social-head.md"
+        },
+        {
+          "id": "social.facebook-head",
+          "name": "Facebook Head",
+          "role": "Facebook Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "facebook",
+          "paused": false,
+          "prompt": ".claude/agents/social-facebook.md"
+        },
+        {
+          "id": "social.pinterest-head",
+          "name": "Pinterest Head",
+          "role": "Pinterest Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "pinterest",
+          "paused": false,
+          "prompt": ".claude/agents/social-pinterest.md"
+        },
+        {
+          "id": "social.instagram-head",
+          "name": "Instagram Head",
+          "role": "Instagram Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "instagram",
+          "paused": false,
+          "prompt": ".claude/agents/social-instagram.md"
+        },
+        {
+          "id": "social.x-head",
+          "name": "X Head",
+          "role": "X Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "x",
+          "paused": false,
+          "prompt": ".claude/agents/social-x.md"
+        }
+      ]
+    },
+    {
+      "id": "games",
+      "name": "Zaza Games",
+      "kind": "house",
+      "mission": "Games that keep people playing and paying for years (daily-return loops), on many free and paid platforms, with Roblox first. Game ideas, characters and mechanics are reused in extensions, apps, Shorts and comics. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "games.games-head",
+      "paused": null,
+      "counts": {
+        "subteams": 5,
+        "categories": 5,
+        "channels": 0,
+        "agents": 6
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "roblox",
+          "name": "Roblox",
+          "team_id": "games",
+          "agent_id": "games.roblox-head",
+          "category": "games/roblox"
+        },
+        {
+          "id": "android",
+          "name": "Android Games",
+          "team_id": "games",
+          "agent_id": "games.android-games-head",
+          "category": "games/android"
+        },
+        {
+          "id": "webgames",
+          "name": "Web and Browser Games",
+          "team_id": "games",
+          "agent_id": "games.web-and-browser-games-head",
+          "category": "games/webgames"
+        },
+        {
+          "id": "pc",
+          "name": "PC Games",
+          "team_id": "games",
+          "agent_id": "games.pc-games-head",
+          "category": "games/pc"
+        },
+        {
+          "id": "creator",
+          "name": "Other Creator Platforms",
+          "team_id": "games",
+          "agent_id": "games.other-creator-platforms-head",
+          "category": "games/creator"
+        }
+      ],
+      "categories": [
+        {
+          "id": "games/android",
+          "name": "android",
+          "team_id": "games",
+          "file": "company/games/categories/android.md"
+        },
+        {
+          "id": "games/creator",
+          "name": "creator",
+          "team_id": "games",
+          "file": "company/games/categories/creator.md"
+        },
+        {
+          "id": "games/pc",
+          "name": "pc",
+          "team_id": "games",
+          "file": "company/games/categories/pc.md"
+        },
+        {
+          "id": "games/roblox",
+          "name": "roblox",
+          "team_id": "games",
+          "file": "company/games/categories/roblox.md"
+        },
+        {
+          "id": "games/webgames",
+          "name": "webgames",
+          "team_id": "games",
+          "file": "company/games/categories/webgames.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "games.games-head",
+          "name": "Games Head",
+          "role": "Head of Games House",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/games-head.md"
+        },
+        {
+          "id": "games.roblox-head",
+          "name": "Roblox Head",
+          "role": "Roblox Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "roblox",
+          "paused": false,
+          "prompt": ".claude/agents/games-roblox.md"
+        },
+        {
+          "id": "games.android-games-head",
+          "name": "Android Games Head",
+          "role": "Android Games Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "android",
+          "paused": false,
+          "prompt": ".claude/agents/games-android.md"
+        },
+        {
+          "id": "games.web-and-browser-games-head",
+          "name": "Web and Browser Games Head",
+          "role": "Web and Browser Games Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "webgames",
+          "paused": false,
+          "prompt": ".claude/agents/games-webgames.md"
+        },
+        {
+          "id": "games.pc-games-head",
+          "name": "PC Games Head",
+          "role": "PC Games Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "pc",
+          "paused": false,
+          "prompt": ".claude/agents/games-pc.md"
+        },
+        {
+          "id": "games.other-creator-platforms-head",
+          "name": "Other Creator Platforms Head",
+          "role": "Other Creator Platforms Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "creator",
+          "paused": false,
+          "prompt": ".claude/agents/games-creator.md"
+        }
+      ]
+    },
+    {
+      "id": "commerce",
+      "name": "Tilly Commerce and Dropshipping",
+      "kind": "house",
+      "mission": "Online shops (Shopify first) in lifelong repeat-purchase niches with reliable suppliers, good margins, our own support chatbot and little upkeep. Money for stock, ads or tools needs Boss YES. Founder YES before anything public, paid or destructive.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "commerce.commerce-head",
+      "paused": null,
+      "counts": {
+        "subteams": 6,
+        "categories": 6,
+        "channels": 0,
+        "agents": 7
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "suppliers",
+          "name": "Suppliers",
+          "team_id": "commerce",
+          "agent_id": "commerce.suppliers-head",
+          "category": "commerce/suppliers"
+        },
+        {
+          "id": "shopops",
+          "name": "Shop Operations",
+          "team_id": "commerce",
+          "agent_id": "commerce.shop-operations-head",
+          "category": "commerce/shopops"
+        },
+        {
+          "id": "pod",
+          "name": "Print on Demand",
+          "team_id": "commerce",
+          "agent_id": "commerce.print-on-demand-head",
+          "category": "commerce/pod"
+        },
+        {
+          "id": "traffic",
+          "name": "Traffic and Marketing",
+          "team_id": "commerce",
+          "agent_id": "commerce.traffic-and-marketing-head",
+          "category": "commerce/traffic"
+        },
+        {
+          "id": "support",
+          "name": "Customer Support Bot",
+          "team_id": "commerce",
+          "agent_id": "commerce.customer-support-bot-head",
+          "category": "commerce/support"
+        },
+        {
+          "id": "compliance",
+          "name": "Legal Tax and Payments",
+          "team_id": "commerce",
+          "agent_id": "commerce.legal-tax-and-payments-head",
+          "category": "commerce/compliance"
+        }
+      ],
+      "categories": [
+        {
+          "id": "commerce/compliance",
+          "name": "compliance",
+          "team_id": "commerce",
+          "file": "company/commerce/categories/compliance.md"
+        },
+        {
+          "id": "commerce/pod",
+          "name": "pod",
+          "team_id": "commerce",
+          "file": "company/commerce/categories/pod.md"
+        },
+        {
+          "id": "commerce/shopops",
+          "name": "shopops",
+          "team_id": "commerce",
+          "file": "company/commerce/categories/shopops.md"
+        },
+        {
+          "id": "commerce/suppliers",
+          "name": "suppliers",
+          "team_id": "commerce",
+          "file": "company/commerce/categories/suppliers.md"
+        },
+        {
+          "id": "commerce/support",
+          "name": "support",
+          "team_id": "commerce",
+          "file": "company/commerce/categories/support.md"
+        },
+        {
+          "id": "commerce/traffic",
+          "name": "traffic",
+          "team_id": "commerce",
+          "file": "company/commerce/categories/traffic.md"
+        }
+      ],
+      "channels": [],
+      "agents": [
+        {
+          "id": "commerce.commerce-head",
+          "name": "Commerce Head",
+          "role": "Head of Commerce and Dropshipping House",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/commerce-head.md"
+        },
+        {
+          "id": "commerce.suppliers-head",
+          "name": "Suppliers Head",
+          "role": "Suppliers Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "suppliers",
+          "paused": false,
+          "prompt": ".claude/agents/commerce-suppliers.md"
+        },
+        {
+          "id": "commerce.shop-operations-head",
+          "name": "Shop Operations Head",
+          "role": "Shop Operations Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "shopops",
+          "paused": false,
+          "prompt": ".claude/agents/commerce-shopops.md"
+        },
+        {
+          "id": "commerce.print-on-demand-head",
+          "name": "Print on Demand Head",
+          "role": "Print on Demand Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "pod",
+          "paused": false,
+          "prompt": ".claude/agents/commerce-pod.md"
+        },
+        {
+          "id": "commerce.traffic-and-marketing-head",
+          "name": "Traffic and Marketing Head",
+          "role": "Traffic and Marketing Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "traffic",
+          "paused": false,
+          "prompt": ".claude/agents/commerce-traffic.md"
+        },
+        {
+          "id": "commerce.customer-support-bot-head",
+          "name": "Customer Support Bot Head",
+          "role": "Customer Support Bot Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "support",
+          "paused": false,
+          "prompt": ".claude/agents/commerce-support.md"
+        },
+        {
+          "id": "commerce.legal-tax-and-payments-head",
+          "name": "Legal Tax and Payments Head",
+          "role": "Legal Tax and Payments Platform Head",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": "compliance",
+          "paused": false,
+          "prompt": ".claude/agents/commerce-compliance.md"
+        }
+      ]
+    },
+    {
+      "id": "keeper",
+      "name": "Pixie Keeper",
+      "kind": "support",
+      "mission": "Keep the daily Boss task board true: per-task status, tokens, waste flags (repeats, double work, useless tests, bug loops), late tasks. Cheapest model, no web.",
+      "tools": [],
+      "head_agent_id": "keeper.pixie",
+      "paused": null,
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 1
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "keeper.pixie",
+          "name": "Pixie",
+          "role": "Task Keeper and Token Watchdog",
+          "level": "director",
+          "model": "haiku",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/pixie-keeper.md"
+        }
+      ]
+    },
+    {
+      "id": "appcare",
+      "name": "Nono App Care",
+      "kind": "support",
+      "mission": "Keep the 4 Coco apps healthy, always-synced, real-data-only and improving on autopilot: find bugs, ship fixes and versions, retire unused things. Founder YES for anything public or paid.",
+      "tools": [
+        "github"
+      ],
+      "head_agent_id": "appcare.nono",
+      "paused": null,
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 1
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "appcare.nono",
+          "name": "Nono",
+          "role": "App Care Head",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/nono-appcare.md"
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "name": "Lili Research Guild",
+      "kind": "support",
+      "mission": "Research is the company main engine: decision-ready demand, competition and money research for every House, and keeping the research tools sharp. Only A-grade output leaves the guild.",
+      "tools": [
+        "web",
+        "github"
+      ],
+      "head_agent_id": "research.lili",
+      "paused": null,
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 1
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "research.lili",
+          "name": "Lili",
+          "role": "Research Guild Head",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/lili-research.md"
+        }
+      ]
+    },
+    {
+      "id": "design-guild",
+      "name": "Vivi Design",
+      "kind": "support",
+      "mission": "Distinct Material You based theme per product, high motion, continuous design research, founder-taste memory. Support team serving every House.",
+      "tools": [
+        "web"
+      ],
+      "head_agent_id": "design-guild.vivi",
+      "paused": null,
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 1
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "design-guild.vivi",
+          "name": "Vivi",
+          "role": "UI UX Design Head",
+          "level": "director",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/vivi-design.md"
+        }
+      ]
+    },
+    {
+      "id": "strategy",
+      "name": "CEO & Strategy",
+      "kind": "legacy",
+      "mission": "Company direction, opportunity discovery, prioritisation, competitive intelligence, revenue and growth strategy.",
+      "tools": [
+        "web",
+        "github"
+      ],
+      "head_agent_id": "strategy.atlas",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 12
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "strategy.atlas",
+          "name": "Atlas",
+          "role": "CEO Agent",
+          "level": "ceo",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.nova",
+          "name": "Nova",
+          "role": "Chief of Staff & Orchestrator",
+          "level": "exec",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.vega",
+          "name": "Vega",
+          "role": "Chief Strategy Agent",
+          "level": "exec",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.prism",
+          "name": "Prism",
+          "role": "Business Intelligence Agent",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.radar",
+          "name": "Radar",
+          "role": "Opportunity Hunter",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.shadow",
+          "name": "Shadow",
+          "role": "Competitor Intelligence Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.compass",
+          "name": "Compass",
+          "role": "Market Research Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.verdict",
+          "name": "Verdict",
+          "role": "Decision Agent",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.aegis",
+          "name": "Aegis",
+          "role": "Risk Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.sprout",
+          "name": "Sprout",
+          "role": "Growth Strategist",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.horizon",
+          "name": "Horizon",
+          "role": "Long-Term Planning Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "strategy.octoscope",
+          "name": "Octoscope",
+          "role": "GitHub Intelligence Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "engineering",
+      "name": "Software Engineering",
+      "kind": "legacy",
+      "mission": "Build, review, test and ship websites, Chrome extensions, Android apps, APIs and AI apps. GitHub is the source of truth.",
+      "tools": [
+        "github",
+        "web",
+        "deploy"
+      ],
+      "head_agent_id": "engineering.titan",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 21
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "engineering.titan",
+          "name": "Titan",
+          "role": "Engineering Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.blueprint",
+          "name": "Blueprint",
+          "role": "Software Architect",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.glint",
+          "name": "Glint",
+          "role": "Frontend Lead",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.core",
+          "name": "Core",
+          "role": "Backend Lead",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.byte",
+          "name": "Byte",
+          "role": "Full Stack Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.plug",
+          "name": "Plug",
+          "role": "Chrome Extension Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/ext-builder.md"
+        },
+        {
+          "id": "engineering.droid",
+          "name": "Droid",
+          "role": "Android App Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/app-builder.md"
+        },
+        {
+          "id": "engineering.reactor",
+          "name": "Reactor",
+          "role": "React Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.nexus",
+          "name": "Nexus",
+          "role": "Next.js Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.node",
+          "name": "Node",
+          "role": "Node.js Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.viper",
+          "name": "Viper",
+          "role": "Python Developer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.synapse",
+          "name": "Synapse",
+          "role": "AI Engineer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.lingo",
+          "name": "Lingo",
+          "role": "LLM Engineer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.retriever",
+          "name": "Retriever",
+          "role": "RAG Engineer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.bridge",
+          "name": "Bridge",
+          "role": "API Engineer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.vault",
+          "name": "Vault",
+          "role": "Database Engineer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.forge",
+          "name": "Forge",
+          "role": "DevOps Engineer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.octo",
+          "name": "Octo",
+          "role": "GitHub Automation Agent",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.lens",
+          "name": "Lens",
+          "role": "Code Review Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.scribe",
+          "name": "Scribe",
+          "role": "Documentation Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "engineering.tidy",
+          "name": "Tidy",
+          "role": "Refactoring Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "product",
+      "name": "Product",
+      "kind": "legacy",
+      "mission": "Turn ideas into validated specs: idea → research → validation → spec → build → QA → launch → analytics → iteration.",
+      "tools": [
+        "web",
+        "github"
+      ],
+      "head_agent_id": "product.north",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 11
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "product.north",
+          "name": "North",
+          "role": "Product Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.pilot",
+          "name": "Pilot",
+          "role": "Product Manager",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.quest",
+          "name": "Quest",
+          "role": "Product Researcher (Chrome extensions)",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/ext-scout.md"
+        },
+        {
+          "id": "product.appy",
+          "name": "Appy",
+          "role": "Product Researcher (Play apps)",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/app-scout.md"
+        },
+        {
+          "id": "product.empath",
+          "name": "Empath",
+          "role": "UX Researcher",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.tetra",
+          "name": "Tetra",
+          "role": "Feature Planner",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.milestone",
+          "name": "Milestone",
+          "role": "Roadmap Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.metric",
+          "name": "Metric",
+          "role": "Product Analyst",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.echo",
+          "name": "Echo",
+          "role": "User Feedback Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.flask",
+          "name": "Flask",
+          "role": "Product Experiment Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "product.keystone",
+          "name": "Keystone",
+          "role": "Product Strategy Agent",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "design",
+      "name": "Design",
+      "kind": "legacy",
+      "mission": "Material-inspired, responsive, accessible design with dark/light modes, motion and brand consistency.",
+      "tools": [
+        "web",
+        "github"
+      ],
+      "head_agent_id": "design.muse",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 8
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "design.muse",
+          "name": "Muse",
+          "role": "Design Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "design.pixel",
+          "name": "Pixel",
+          "role": "UI Designer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/ext-designer.md"
+        },
+        {
+          "id": "design.flow",
+          "name": "Flow",
+          "role": "UX Designer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "design.tonal",
+          "name": "Tonal",
+          "role": "Material Design Specialist",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "design.crest",
+          "name": "Crest",
+          "role": "Brand Designer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "design.kinetic",
+          "name": "Kinetic",
+          "role": "Motion Designer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "design.frame",
+          "name": "Frame",
+          "role": "Thumbnail Designer",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "design.kern",
+          "name": "Kern",
+          "role": "Design QA Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "qa",
+      "name": "QA & Security",
+      "kind": "legacy",
+      "mission": "Nothing is production-ready until QA passes. QA files structured bugs, developers fix, QA retests until pass.",
+      "tools": [
+        "github",
+        "web"
+      ],
+      "head_agent_id": "qa.inspector-bug",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 12
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "qa.inspector-bug",
+          "name": "Inspector Bug",
+          "role": "QA Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.probe",
+          "name": "Probe",
+          "role": "Test Engineer (extensions)",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/ext-qa.md"
+        },
+        {
+          "id": "qa.bugdroid",
+          "name": "Bugdroid",
+          "role": "App QA & Play Policy",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/app-qa.md"
+        },
+        {
+          "id": "qa.atom",
+          "name": "Atom",
+          "role": "Unit Test Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.weld",
+          "name": "Weld",
+          "role": "Integration Test Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.voyager",
+          "name": "Voyager",
+          "role": "E2E Test Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.chromie",
+          "name": "Chromie",
+          "role": "Browser Test Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.turbo",
+          "name": "Turbo",
+          "role": "Performance Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.sentinel",
+          "name": "Sentinel",
+          "role": "Security Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.sniff",
+          "name": "Sniff",
+          "role": "Dependency Scanner",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.rewind",
+          "name": "Rewind",
+          "role": "Regression Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "qa.gate",
+          "name": "Gate",
+          "role": "Release Gatekeeper",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing",
+      "kind": "legacy",
+      "mission": "Continuously discover trends, customer problems, keywords, competitors and content/product opportunities; plan launches.",
+      "tools": [
+        "web",
+        "gmail_drafts"
+      ],
+      "head_agent_id": "marketing.spark",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 1,
+        "categories": 0,
+        "channels": 0,
+        "agents": 12
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "lead",
+          "name": "Spark",
+          "team_id": "marketing",
+          "agent_id": "marketing.spark",
+          "category": null
+        }
+      ],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "marketing.spark",
+          "name": "Spark",
+          "role": "Marketing Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": "lead",
+          "paused": true,
+          "prompt": ".claude/agents-paused/marketing-lead.md"
+        },
+        {
+          "id": "marketing.pulse",
+          "name": "Pulse",
+          "role": "Market Researcher",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.rank",
+          "name": "Rank",
+          "role": "SEO Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.story",
+          "name": "Story",
+          "role": "Content Strategist",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.quill",
+          "name": "Quill",
+          "role": "Copywriter",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.rocket",
+          "name": "Rocket",
+          "role": "Growth Hacker",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.banner",
+          "name": "Banner",
+          "role": "Campaign Manager",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.postie",
+          "name": "Postie",
+          "role": "Email Marketing Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.buzz",
+          "name": "Buzz",
+          "role": "Social Media Strategist",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.hearth",
+          "name": "Hearth",
+          "role": "Community Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.starlight",
+          "name": "Starlight",
+          "role": "Influencer Research Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "marketing.dial",
+          "name": "Dial",
+          "role": "Marketing Analytics Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "content",
+      "name": "Content Studio",
+      "kind": "legacy",
+      "mission": "Content recycling engine: one long piece becomes shorts, reels, posts, blog, newsletter and quote cards with real variation.",
+      "tools": [
+        "web"
+      ],
+      "head_agent_id": "content.maestro",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 1,
+        "categories": 0,
+        "channels": 0,
+        "agents": 6
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "strategist",
+          "name": "Maestro",
+          "team_id": "content",
+          "agent_id": "content.maestro",
+          "category": null
+        }
+      ],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "content.maestro",
+          "name": "Maestro",
+          "role": "Content Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": "strategist",
+          "paused": true,
+          "prompt": ".claude/agents-paused/content-strategist.md"
+        },
+        {
+          "id": "content.loop",
+          "name": "Loop",
+          "role": "Recycling Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "content.ink",
+          "name": "Ink",
+          "role": "Blog Writer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "content.dispatch",
+          "name": "Dispatch",
+          "role": "Newsletter Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "content.quote",
+          "name": "Quote",
+          "role": "Quote Card Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "content.thread",
+          "name": "Thread",
+          "role": "X & LinkedIn Writer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "youtube",
+      "name": "YouTube Studio",
+      "kind": "studio",
+      "mission": "Daily pipeline: trend → topic → script → hook → storyboard → voice → visuals → edit → captions → thumbnail → SEO → QA → publish → learn.",
+      "tools": [
+        "web",
+        "youtube_api"
+      ],
+      "head_agent_id": "youtube.marquee",
+      "paused": null,
+      "counts": {
+        "subteams": 0,
+        "categories": 14,
+        "channels": 16,
+        "agents": 16
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [
+        {
+          "id": "youtube/ai-software",
+          "name": "ai-software",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/ai-software"
+        },
+        {
+          "id": "youtube/app-web",
+          "name": "app-web",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/app-web"
+        },
+        {
+          "id": "youtube/biology-health",
+          "name": "biology-health",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/biology-health"
+        },
+        {
+          "id": "youtube/devotional",
+          "name": "devotional",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/devotional"
+        },
+        {
+          "id": "youtube/feminism",
+          "name": "feminism",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/feminism"
+        },
+        {
+          "id": "youtube/food",
+          "name": "food",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/food"
+        },
+        {
+          "id": "youtube/history-geography",
+          "name": "history-geography",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/history-geography"
+        },
+        {
+          "id": "youtube/human-behaviour",
+          "name": "human-behaviour",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/human-behaviour"
+        },
+        {
+          "id": "youtube/human-info",
+          "name": "human-info",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/human-info"
+        },
+        {
+          "id": "youtube/kahani-ghar",
+          "name": "kahani-ghar",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/kahani-ghar"
+        },
+        {
+          "id": "youtube/mixed",
+          "name": "mixed",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/mixed"
+        },
+        {
+          "id": "youtube/money",
+          "name": "money",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/money"
+        },
+        {
+          "id": "youtube/stories",
+          "name": "stories",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/stories"
+        },
+        {
+          "id": "youtube/study",
+          "name": "study",
+          "team_id": "youtube",
+          "file": "company/youtube/categories/study"
+        }
+      ],
+      "channels": [
+        {
+          "id": "the-flow",
+          "title": "The Flow – Daily Science",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": null,
+          "category_label": "Science (existing)",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "biology-health",
+          "title": "BodyDecode",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/biology-health",
+          "category_label": "Biology / Health",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "history-geography",
+          "title": "PastWoven",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/history-geography",
+          "category_label": "History / Geography",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "stories",
+          "title": "DreamFrame",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/stories",
+          "category_label": "Stories",
+          "yt_category_id": "1"
+        },
+        {
+          "id": "human-behaviour",
+          "title": "QuiteMindFiles",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/human-behaviour",
+          "category_label": "Human Behaviour",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "study",
+          "title": "MindSpark",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/study",
+          "category_label": "Study",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "human-info",
+          "title": null,
+          "status": "waiting-founder",
+          "team_id": "youtube",
+          "category": "youtube/human-info",
+          "category_label": "Human Information",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "money",
+          "title": "SuccessHasal",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/money",
+          "category_label": "Money",
+          "yt_category_id": "27"
+        },
+        {
+          "id": "mixed",
+          "title": "UntoldUniverse",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/mixed",
+          "category_label": "Mixed Content",
+          "yt_category_id": "24"
+        },
+        {
+          "id": "ai-software",
+          "title": "UnveilAI",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/ai-software",
+          "category_label": "AI / Software",
+          "yt_category_id": "28"
+        },
+        {
+          "id": "app-web",
+          "title": null,
+          "status": "waiting-founder",
+          "team_id": "youtube",
+          "category": "youtube/app-web",
+          "category_label": "App / Web / Product",
+          "yt_category_id": "28"
+        },
+        {
+          "id": "food",
+          "title": "TasteOdessey",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/food",
+          "category_label": "Food",
+          "yt_category_id": "26"
+        },
+        {
+          "id": "devotional",
+          "title": "SanatanEchoes",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/devotional",
+          "category_label": "God / Devotional",
+          "yt_category_id": "22"
+        },
+        {
+          "id": "feminism",
+          "title": "Streebellion",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/feminism",
+          "category_label": "Feminism",
+          "yt_category_id": "22"
+        },
+        {
+          "id": "kahani-ghar",
+          "title": "Kahani Ghar TV",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": "youtube/kahani-ghar",
+          "category_label": "Hindi Family Stories",
+          "yt_category_id": "1"
+        },
+        {
+          "id": "moonveil-audio",
+          "title": "Moonveil Audio",
+          "status": "connected",
+          "team_id": "youtube",
+          "category": null,
+          "category_label": "Lofi / Sleep",
+          "yt_category_id": "10"
+        }
+      ],
+      "agents": [
+        {
+          "id": "youtube.marquee",
+          "name": "Marquee",
+          "role": "YouTube Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.trendy",
+          "name": "Trendy",
+          "role": "Trend Research Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.topix",
+          "name": "Topix",
+          "role": "Topic Hunter",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.scripty",
+          "name": "Scripty",
+          "role": "Script Writer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents-paused/script-writer.md"
+        },
+        {
+          "id": "youtube.hook",
+          "name": "Hook",
+          "role": "Hook Writer",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.board",
+          "name": "Board",
+          "role": "Storyboard Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.vox",
+          "name": "Vox",
+          "role": "Voice Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.vivid",
+          "name": "Vivid",
+          "role": "Visual Generation Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.cutter",
+          "name": "Cutter",
+          "role": "Video Editor",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents/video-producer.md"
+        },
+        {
+          "id": "youtube.subs",
+          "name": "Subs",
+          "role": "Caption Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.thumbs",
+          "name": "Thumbs",
+          "role": "Thumbnail Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.headline",
+          "name": "Headline",
+          "role": "Title Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.tagger",
+          "name": "Tagger",
+          "role": "YouTube SEO Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.critic",
+          "name": "Critic",
+          "role": "YouTube QA Agent",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        },
+        {
+          "id": "youtube.launchpad",
+          "name": "Launchpad",
+          "role": "Publishing Agent",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": ".claude/agents-paused/social-publisher.md"
+        },
+        {
+          "id": "youtube.views",
+          "name": "Views",
+          "role": "YouTube Analytics Agent",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": false,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram Studio",
+      "kind": "legacy",
+      "mission": "Trend → idea → script → video → caption → QA → schedule → publish → analyse, through official APIs only.",
+      "tools": [
+        "web",
+        "instagram_api"
+      ],
+      "head_agent_id": "instagram.gram",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-08T20:20:33.396Z",
+        "reason": "Founder 2026-10-09: no social media team for now, only the YouTube team"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 10
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "instagram.gram",
+          "name": "Gram",
+          "role": "Instagram Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.scroll",
+          "name": "Scroll",
+          "role": "Reel Researcher",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.snap",
+          "name": "Snap",
+          "role": "Reel Script Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.lyric",
+          "name": "Lyric",
+          "role": "Caption Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.hash",
+          "name": "Hash",
+          "role": "Hashtag Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.lumen",
+          "name": "Lumen",
+          "role": "Visual Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.splice",
+          "name": "Splice",
+          "role": "Reel Editor",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.clock",
+          "name": "Clock",
+          "role": "Scheduling Agent",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.insight",
+          "name": "Insight",
+          "role": "Instagram Analytics Agent",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "instagram.heart",
+          "name": "Heart",
+          "role": "Engagement Intelligence Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "facebook",
+      "name": "Facebook Studio",
+      "kind": "legacy",
+      "mission": "Page posts, reels, videos and captions; recycle YouTube/Instagram content with real variation, never blind duplicates.",
+      "tools": [
+        "web",
+        "facebook_api"
+      ],
+      "head_agent_id": "facebook.agora",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-08T20:20:33.709Z",
+        "reason": "Founder 2026-10-09: no social media team for now, only the YouTube team"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 6
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "facebook.agora",
+          "name": "Agora",
+          "role": "Facebook Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "facebook.wall",
+          "name": "Wall",
+          "role": "Page Content Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "facebook.rerun",
+          "name": "Rerun",
+          "role": "Reels Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "facebook.calendar",
+          "name": "Calendar",
+          "role": "Scheduling Agent",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "facebook.gauge",
+          "name": "Gauge",
+          "role": "Facebook Analytics Agent",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "facebook.remix",
+          "name": "Remix",
+          "role": "Recycling Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "career",
+      "name": "Career",
+      "kind": "legacy",
+      "mission": "Find, score and prepare job applications. Never invent experience; never destroy the master resume; applications need approval by default.",
+      "tools": [
+        "web",
+        "gmail_drafts"
+      ],
+      "head_agent_id": "career.hunter",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 12
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "career.hunter",
+          "name": "Hunter",
+          "role": "Career Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.seeker",
+          "name": "Seeker",
+          "role": "Job Search Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.matchbox",
+          "name": "Matchbox",
+          "role": "Job Matching Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.parser",
+          "name": "Parser",
+          "role": "Resume Analyst",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.tailor",
+          "name": "Tailor",
+          "role": "Resume Tailoring Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.letterly",
+          "name": "Letterly",
+          "role": "Cover Letter Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.dossier",
+          "name": "Dossier",
+          "role": "Company Research Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.rolodex",
+          "name": "Rolodex",
+          "role": "Recruiter Research Agent",
+          "level": "research",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.applier",
+          "name": "Applier",
+          "role": "Application Agent",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.courier",
+          "name": "Courier",
+          "role": "Career Email Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.nudge",
+          "name": "Nudge",
+          "role": "Follow-Up Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "career.tracker",
+          "name": "Tracker",
+          "role": "Application Tracker",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "email",
+      "name": "Email Intelligence",
+      "kind": "legacy",
+      "mission": "Categorise mail, draft replies, detect interviews/rejections/offers. Modes: manual, approval required, auto-send safe, full auto. Default: approval.",
+      "tools": [
+        "gmail_drafts"
+      ],
+      "head_agent_id": "email.mailroom",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 5
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "email.mailroom",
+          "name": "Mailroom",
+          "role": "Email Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "email.sorter",
+          "name": "Sorter",
+          "role": "Email Classifier",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "email.draft",
+          "name": "Draft",
+          "role": "Reply Drafter",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "email.signal",
+          "name": "Signal",
+          "role": "Interview & Offer Detector",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "email.outreach",
+          "name": "Outreach",
+          "role": "Lead Outreach Agent (Business 2)",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "sales",
+      "name": "Sales, Support & Stores",
+      "kind": "legacy",
+      "mission": "Store listings and releases (prepared, approval-gated), customer support and sales.",
+      "tools": [
+        "web",
+        "gmail_drafts",
+        "chrome_store",
+        "play_console"
+      ],
+      "head_agent_id": "sales.harbor",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 5
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "sales.harbor",
+          "name": "Harbor",
+          "role": "Sales & Support Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "sales.kind",
+          "name": "Kind",
+          "role": "Support Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/support-agent.md"
+        },
+        {
+          "id": "sales.closer",
+          "name": "Closer",
+          "role": "Sales Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "sales.shelf",
+          "name": "Shelf",
+          "role": "Chrome Store Publisher",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/ext-publisher.md"
+        },
+        {
+          "id": "sales.playbox",
+          "name": "Playbox",
+          "role": "Play Store Publisher",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/play-publisher.md"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "kind": "legacy",
+      "mission": "Revenue, costs, unit economics and agent/API cost control. Never spends money without a founder YES.",
+      "tools": [
+        "web"
+      ],
+      "head_agent_id": "finance.ledger",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 1,
+        "categories": 0,
+        "channels": 0,
+        "agents": 4
+      },
+      "budget_share_pct": null,
+      "subteams": [
+        {
+          "id": "analyst",
+          "name": "Ledger",
+          "team_id": "finance",
+          "agent_id": "finance.ledger",
+          "category": null
+        }
+      ],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "finance.ledger",
+          "name": "Ledger",
+          "role": "CFO Agent",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": "analyst",
+          "paused": true,
+          "prompt": ".claude/agents-paused/finance-analyst.md"
+        },
+        {
+          "id": "finance.coin",
+          "name": "Coin",
+          "role": "Revenue Analyst",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "finance.thrift",
+          "name": "Thrift",
+          "role": "Cost Control Agent",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "finance.margin",
+          "name": "Margin",
+          "role": "Pricing Analyst",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "analytics",
+      "name": "Analytics",
+      "kind": "legacy",
+      "mission": "Company-wide metrics: revenue, users, content, applications, agent performance, automation success, cost, velocity.",
+      "tools": [
+        "web",
+        "github"
+      ],
+      "head_agent_id": "analytics.oracle",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 4
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "analytics.oracle",
+          "name": "Oracle",
+          "role": "Analytics Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "analytics.abacus",
+          "name": "Abacus",
+          "role": "Data Analyst",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "analytics.chart",
+          "name": "Chart",
+          "role": "Dashboard Agent",
+          "level": "worker",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "analytics.delta",
+          "name": "Delta",
+          "role": "Experiment Analyst",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    },
+    {
+      "id": "ops",
+      "name": "Operations & Automation",
+      "kind": "legacy",
+      "mission": "Run the automation engine, schedules, monitoring, self-healing, audits and the agent factory.",
+      "tools": [
+        "github"
+      ],
+      "head_agent_id": "ops.cog",
+      "paused": {
+        "by": "mangesh",
+        "at": "2026-10-07T05:48:09.933Z",
+        "reason": "Lean core team: work moved to the core department (resume with os.mjs resume --dept <id>)"
+      },
+      "counts": {
+        "subteams": 0,
+        "categories": 0,
+        "channels": 0,
+        "agents": 8
+      },
+      "budget_share_pct": null,
+      "subteams": [],
+      "categories": [],
+      "channels": [],
+      "agents": [
+        {
+          "id": "ops.cog",
+          "name": "Cog",
+          "role": "Operations Director",
+          "level": "director",
+          "model": "opus",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "ops.relay",
+          "name": "Relay",
+          "role": "Automation Engineer",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "ops.tick",
+          "name": "Tick",
+          "role": "Scheduler",
+          "level": "automation",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "ops.watchtower",
+          "name": "Watchtower",
+          "role": "Monitoring Agent",
+          "level": "monitor",
+          "model": "haiku",
+          "claude": "on_demand",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "ops.medic",
+          "name": "Medic",
+          "role": "Self-Healing Agent",
+          "level": "specialist",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "ops.warden",
+          "name": "Warden",
+          "role": "Auditor",
+          "level": "qa",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": ".claude/agents-paused/qa-auditor.md"
+        },
+        {
+          "id": "ops.genesis",
+          "name": "Genesis",
+          "role": "Agent Factory",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        },
+        {
+          "id": "ops.sage",
+          "name": "Sage",
+          "role": "Learning & Memory Agent",
+          "level": "senior",
+          "model": "sonnet",
+          "claude": "allowed",
+          "subteam_id": null,
+          "paused": true,
+          "prompt": null
+        }
+      ]
+    }
+  ],
+  "capabilities": {
+    "capabilities": 14,
+    "cloud_ready": 7,
+    "pc_only": 7,
+    "by_status": {
+      "ready": 7,
+      "blocked": 6,
+      "needs_money": 1
+    },
+    "uses": 0,
+    "by_capability": [],
+    "list": [
+      {
+        "id": "analytics-tokens",
+        "name": "Token and cost analytics",
+        "kind": "analytics",
+        "teams": [
+          "core",
+          "keeper"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "build-android",
+        "name": "Android app build",
+        "kind": "build",
+        "teams": [
+          "software",
+          "core"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "build-ebook-epub",
+        "name": "EPUB build from Markdown",
+        "kind": "build",
+        "teams": [
+          "ebooks",
+          "courses"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "build-ebook-pdf",
+        "name": "Print-fidelity PDF build from Markdown",
+        "kind": "build",
+        "teams": [
+          "ebooks",
+          "courses"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "build-roblox",
+        "name": "Roblox experience build",
+        "kind": "build",
+        "teams": [
+          "games"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "build-web-vercel",
+        "name": "Website and web app build/deploy",
+        "kind": "build",
+        "teams": [
+          "software",
+          "core"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "image-openvino",
+        "name": "Local image generation (FLUX.1-schnell on OpenVINO)",
+        "kind": "image",
+        "teams": [
+          "comics",
+          "youtube",
+          "publishing"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "needs_money",
+        "uses": 0
+      },
+      {
+        "id": "pc-control",
+        "name": "PC control and device automation",
+        "kind": "device",
+        "teams": [
+          "core",
+          "appcare"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "publish-chrome-store",
+        "name": "Chrome Web Store publishing",
+        "kind": "publish",
+        "teams": [
+          "software"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "publish-youtube",
+        "name": "YouTube upload and scheduling",
+        "kind": "publish",
+        "teams": [
+          "youtube"
+        ],
+        "runs_on": [
+          "pc"
+        ],
+        "cloud_status": "blocked",
+        "uses": 0
+      },
+      {
+        "id": "qa-video",
+        "name": "Video quality check",
+        "kind": "qa",
+        "teams": [
+          "youtube",
+          "comics"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "research-trends",
+        "name": "Demand research (trends, suggestions, competition)",
+        "kind": "research",
+        "teams": [
+          "youtube",
+          "software",
+          "commerce",
+          "publishing",
+          "games",
+          "research"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "video-render-cairo",
+        "name": "2D video render (pycairo)",
+        "kind": "render",
+        "teams": [
+          "youtube",
+          "comics"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      },
+      {
+        "id": "voice-kokoro",
+        "name": "Offline voice (Kokoro TTS)",
+        "kind": "audio",
+        "teams": [
+          "youtube",
+          "comics",
+          "publishing"
+        ],
+        "runs_on": [
+          "pc",
+          "cloud"
+        ],
+        "cloud_status": "ready",
+        "uses": 0
+      }
+    ],
+    "gaps": [
+      {
+        "id": "build-android",
+        "name": "Android app build",
+        "cloud_status": "blocked",
+        "why": "Proved in a runner on 2026-10-27 (Actions run 40551081504): all three apps build a debug APK with no laptop - cleanbar 7.7 MB, nova-island 8.0 MB, fast-nova 78.6 MB. The toolchain is NOT the blocker any more; release signing is. Every app still signs with the debug key, which Play rejects, and no release keystore exists for any of them. Stays pc-only so a cloud run cannot pick it and ship a debug-signed APK; flip to [pc, cloud] once ANDROID_KEYSTORE_BASE64 and its three companions exist (docs/CLOUD_SECRETS.md).",
+        "blocking_dependencies": [
+          "Flutter SDK (fast-nova only): cloned in the workflow; needs Gradle >= 8.14 and AGP >= 8.11.1",
+          "release signing keystore: 4 GitHub secrets; founder must create the keystore"
+        ]
+      },
+      {
+        "id": "build-ebook-pdf",
+        "name": "Print-fidelity PDF build from Markdown",
+        "cloud_status": "blocked",
+        "why": "Two laptop-only assumptions, both fixable in code and neither needing money: the browser is a hardcoded Windows path, and the fonts live outside git. Point it at any Chromium on PATH and commit (or licence-check) the fonts, and this becomes cloud-ready like the EPUB build. See also MISTAKES 16-17: a font that is not installed is substituted silently, so the fallback must never be assumed to look right.",
+        "blocking_dependencies": []
+      },
+      {
+        "id": "build-roblox",
+        "name": "Roblox experience build",
+        "cloud_status": "blocked",
+        "why": "Studio is a Windows desktop application; only the Open Cloud publish step could move.",
+        "blocking_dependencies": [
+          "Roblox Studio: no headless equivalent",
+          "Roblox Open Cloud key: would need a secret"
+        ]
+      },
+      {
+        "id": "image-openvino",
+        "name": "Local image generation (FLUX.1-schnell on OpenVINO)",
+        "cloud_status": "needs_money",
+        "why": "The cloud equivalent is a hosted image model, which costs money. Local stays free.",
+        "blocking_dependencies": [
+          "FLUX.1-schnell int4: must be fetched; several GB",
+          "Intel CPU/iGPU: no iGPU in a standard runner"
+        ]
+      },
+      {
+        "id": "pc-control",
+        "name": "PC control and device automation",
+        "cloud_status": "blocked",
+        "why": "A device capability by nature: the cloud can queue a command, only the PC can perform it.",
+        "blocking_dependencies": []
+      },
+      {
+        "id": "publish-chrome-store",
+        "name": "Chrome Web Store publishing",
+        "cloud_status": "blocked",
+        "why": "Code is ready for the cloud: cws_publish.mjs takes CWS_CLIENT_ID / CWS_CLIENT_SECRET / CWS_REFRESH_TOKEN / CWS_PUBLISHER_ID from the environment and falls back to the laptop vault. Still blocked because CWS_REFRESH_TOKEN has never been obtained - one founder Google consent. Proved on 2026-10-27 that it refuses with NOT CONNECTED before uploading anything when the token is absent.",
+        "blocking_dependencies": [
+          "CWS client id/secret/refresh token: needs a one-time founder Google consent"
+        ]
+      },
+      {
+        "id": "publish-youtube",
+        "name": "YouTube upload and scheduling",
+        "cloud_status": "blocked",
+        "why": "Code is stdlib and env-driven, so it would run anywhere: YT_CLIENT_ID / YT_CLIENT_SECRET / YT_REFRESH_TOKEN as GitHub secrets is all it needs. It is policy, not capability, that keeps it on the laptop - the founder's rule that publishing happens there, and 13 channel credentials in one place being a bigger blast radius than one. See docs/CLOUD_SECRETS.md.",
+        "blocking_dependencies": [
+          "YT_CLIENT_ID / YT_CLIENT_SECRET / YT_REFRESH_TOKEN: would need the same values as GitHub secrets; founder rule keeps publishing on the laptop"
+        ]
+      }
+    ],
+    "note": "runs_on says where a capability may actually run. A cloud run can never pick a PC-only one."
+  },
+  "templates": {
+    "templates": 10,
+    "uses": 0,
+    "by_template": [],
+    "tokens_used": {
+      "value": 0,
+      "basis": "measured",
+      "source": "recorded on each use from the gateway"
+    },
+    "tokens_saved_measured": {
+      "value": 0,
+      "basis": "measured",
+      "source": "templates whose baseline was actually measured"
+    },
+    "tokens_saved_estimated": {
+      "value": 0,
+      "basis": "estimated",
+      "source": "templates whose baseline is an estimate of what the work used to cost"
+    },
+    "unknown_baselines": [],
+    "note": "saved = the recorded baseline minus what the reuse actually spent. A saving is only as good as its baseline, so the two are reported apart.",
+    "list": [
+      {
+        "id": "comic-episode",
+        "version": "1.0.0",
+        "name": "Comic or manga episode",
+        "team": "comics",
+        "category": "comics/webcomics",
+        "kind": "comic",
+        "summary": "One episode of an original series: script, panel layout, art and the per-platform export. Characters and plots are the company's own.",
+        "uses": 0
+      },
+      {
+        "id": "course-outline-pack",
+        "version": "1.0.0",
+        "name": "Course outline and lesson pack",
+        "team": "courses",
+        "category": "courses/udemy",
+        "kind": "course",
+        "summary": "A course in the company's shape: promise, module and lesson outline, scripts, exercises and the platform listing pack.",
+        "uses": 0
+      },
+      {
+        "id": "ebook-kdp-workbook",
+        "version": "1.0.0",
+        "name": "Workbook or ebook for KDP and direct sale",
+        "team": "ebooks",
+        "category": "ebooks/kdp",
+        "kind": "document",
+        "summary": "A workbook or short non-fiction ebook in the company's shape: structure, interior layout, cover brief, front and back matter, and the KDP + direct listing pack. Original content only.",
+        "uses": 0
+      },
+      {
+        "id": "extension-mv3-pro",
+        "version": "1.0.0",
+        "name": "Chrome MV3 extension with a Pro tier",
+        "team": "software",
+        "category": "software/extensions",
+        "kind": "software",
+        "summary": "A Manifest V3 extension with the company's standard shape: options page, storage, Material You theme, a Pro tier with checkout and licence activation, and a store listing pack. The billing stack and the theme are written and proven; only the feature and its UI change.",
+        "uses": 0
+      },
+      {
+        "id": "flow-short-habit",
+        "version": "2.1.0",
+        "name": "Kai and Orbi explainer Short",
+        "team": "youtube",
+        "category": "youtube/science",
+        "kind": "video",
+        "summary": "A 28-35 s vertical explainer with Kai and Orbi: illustrated beats, pro captions, animated watermark, lip sync, camera push and synth sound design. The engine is written and proven; only the topic, the scene art and the colours change per episode.",
+        "uses": 0
+      },
+      {
+        "id": "product-landing-site",
+        "version": "1.0.0",
+        "name": "Product landing site",
+        "team": "software",
+        "category": "software/web",
+        "kind": "site",
+        "summary": "The one-page site every product gets: what it does, who it is for, pricing, privacy and the legal pages, in the company design system. Deployed on push.",
+        "uses": 0
+      },
+      {
+        "id": "roblox-experience",
+        "version": "1.0.0",
+        "name": "Roblox experience",
+        "team": "games",
+        "category": "games/roblox",
+        "kind": "game",
+        "summary": "A Roblox experience in the company's shape: place structure, Luau systems, a monetisation surface and the publish pack. The build and publish steps are known; only the game design changes.",
+        "uses": 0
+      },
+      {
+        "id": "shop-product-listing",
+        "version": "1.0.0",
+        "name": "Shop product listing",
+        "team": "commerce",
+        "category": "commerce/shopops",
+        "kind": "listing",
+        "summary": "A product listing in the company's shape: supplier check, pricing with real margins, images, copy and the store upload pack.",
+        "uses": 0
+      },
+      {
+        "id": "sleep-ambient-loop",
+        "version": "1.1.0",
+        "name": "Long-form sleep / ambient loop",
+        "team": "youtube",
+        "category": "youtube/lofi-sleep",
+        "kind": "video",
+        "summary": "A 6-10 hour sleep or ambient video with original synthesised music and a calm night scene. An 8 h video cannot be rendered frame by frame, so one exactly-periodic 128 s segment is rendered and repeated losslessly by ffmpeg. Production calls no model at all: every sample is additive synthesis and every pixel is pycairo. Only the palette and the chord progression change per video.",
+        "uses": 0
+      },
+      {
+        "id": "social-post-pack",
+        "version": "1.0.0",
+        "name": "Social post pack",
+        "team": "social",
+        "category": "social/instagram",
+        "kind": "post",
+        "summary": "A pack of posts for one idea across the platforms a team is connected to: image or clip, caption, hashtags and the posting plan. Nothing is published without a founder YES.",
+        "uses": 0
+      }
+    ]
+  },
+  "controls": {
+    "pulled_at": "2026-10-28T07:31:06.522Z",
+    "count": 6,
+    "by_scope": {
+      "company": 1,
+      "team": 5,
+      "subteam": 0,
+      "agent": 0,
+      "workflow": 0,
+      "channel": 0
+    },
+    "company_stopped": true,
+    "live": {
+      "source": "cache (not read yet)",
+      "fetched_at": null,
+      "age_ms": null,
+      "stale": false,
+      "error": null,
+      "count": 0,
+      "cloud_available": true,
+      "reads": 0,
+      "avg_read_ms": null
+    },
+    "policies": [
+      {
+        "scope": "company",
+        "scope_id": "*",
+        "key": "paused",
+        "value": true,
+        "updated_at": "2026-10-27T12:45:00.894745+00:00",
+        "updated_by": "mangesh"
+      },
+      {
+        "scope": "team",
+        "scope_id": "youtube",
+        "key": "paused",
+        "value": false,
+        "updated_at": "2026-10-27T17:12:30.255949+00:00",
+        "updated_by": "cloud-session"
+      },
+      {
+        "scope": "team",
+        "scope_id": "design",
+        "key": "paused",
+        "value": false,
+        "updated_at": "2026-10-27T18:07:43.866139+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      },
+      {
+        "scope": "team",
+        "scope_id": "design-guild",
+        "key": "paused",
+        "value": true,
+        "updated_at": "2026-10-27T18:11:40.770541+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      },
+      {
+        "scope": "team",
+        "scope_id": "design-guild",
+        "key": "daily_tokens",
+        "value": 0,
+        "updated_at": "2026-10-27T18:11:44.50882+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      },
+      {
+        "scope": "team",
+        "scope_id": "core",
+        "key": "paused",
+        "value": false,
+        "updated_at": "2026-10-27T19:08:47.312716+00:00",
+        "updated_by": "lokademangesh123@gmail.com"
+      }
+    ],
+    "keys": [
+      "paused",
+      "enabled",
+      "archived",
+      "scheduling",
+      "publishing",
+      "external_api",
+      "cloud_execution",
+      "daily_tokens",
+      "monthly_tokens",
+      "calls_per_day",
+      "calls_per_run",
+      "concurrent_runs",
+      "max_agents",
+      "tasks_per_day",
+      "max_retries",
+      "max_tasks",
+      "cost_limit",
+      "outputs_per_day",
+      "outputs_per_week",
+      "outputs_per_month",
+      "claude",
+      "model",
+      "priority",
+      "authority",
+      "permissions",
+      "thresholds",
+      "note",
+      "head",
+      "parent",
+      "output_label"
+    ],
+    "scopes": [
+      "company",
+      "team",
+      "subteam",
+      "agent",
+      "channel",
+      "workflow"
+    ],
+    "needs_approval": [
+      "authority",
+      "permissions",
+      "raising any daily_tokens",
+      "turning Claude to allowed",
+      "moving to opus",
+      "lifting the company stop"
+    ],
+    "api": "coco_control(scope, scope_id, key, value, note) — founder + paired device only"
+  },
+  "policies": {
+    "claude": [
+      "Claude is used only for judgement and creation",
+      "Every call needs a run, a team, an agent, a purpose, an expected output, a reason and a budget",
+      "Deterministic work is refused and named back as a cloud job",
+      "Claude never receives raw data or the whole Brain",
+      "A Boss approval can lift a limit, never turn cloud work into Claude work"
+    ],
+    "approval_gate": [
+      "Publishing, money, deletes and anything L5 wait for a founder YES",
+      "Approvals cost zero Claude tokens",
+      "A new team starts paused until a founder says start"
+    ],
+    "tokens": [
+      "Warning at 80%",
+      "Only P0-P1 at 90%",
+      "Everything blocked at 100%",
+      "A hard block lifts only with a Boss approval"
+    ],
+    "runtime": [
+      "The cloud does collection, filtering, ranking, storage, scheduling and publishing",
+      "The founders' PCs are not needed for production",
+      "No local AI in any production path",
+      "A blocked step reports its reason; nothing is ever faked"
+    ]
+  }
+};
