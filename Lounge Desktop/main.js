@@ -955,7 +955,11 @@ async function selfUpdate() {
   if (/failed/.test(pull)) log('pull did not run: ' + pull.slice(0, 120));
   const after = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
   if (after === startHead || !/^[0-9a-f]{40}$/.test(after)) return;
-  const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', startHead, after]);
+  // Bounded to the folders that matter, and never node_modules. The diff spanning the commit that
+  // untracked 60,972 files is 67 MB of path names, far past execFile's 1 MB buffer, so exec() came
+  // back 'failed', nothing matched, and the app quietly stopped updating itself while looking fine.
+  // Bounded, the same diff is 51 bytes.
+  const changed = await exec('git', ['-C', COCO_DIR, 'diff', '--name-only', startHead, after, '--', 'Lounge', 'Lounge Desktop', ':(exclude)Lounge Desktop/node_modules']);
   if (/package\.json/.test(changed)) await exec('cmd.exe', ['/c', 'npm', 'install', '--no-audit', '--no-fund', '--prefix', __dirname]);
   if (!/^(Lounge|Lounge Desktop)\//m.test(changed)) { startHead = after; return; }   // memory, teams, the phone app: nothing to restart for
   let last = 0; try { last = Number(fs.readFileSync(RESTART_FILE(), 'utf8')) || 0; } catch {}
