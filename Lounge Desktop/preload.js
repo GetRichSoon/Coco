@@ -18,6 +18,6 @@ contextBridge.exposeInMainWorld('cocoDesktop', {
   // a new Coco is already downloaded; the Lounge decides when to restart into it
   onUpdate: (f) => ipcRenderer.on('update-ready', (_e, d) => f(d)),
   restartForUpdate: () => ipcRenderer.send('update-restart'),
-  updateState: () => ipcRenderer.sendSync('update-state'),   // 'downloading' | 'installing' | null
+  updateState: () => ipcRenderer.sendSync('update-state'),   // { state: 'DOWNLOADING' | ... | null, build: '94a0825' }
   platform: 'windows',
 });

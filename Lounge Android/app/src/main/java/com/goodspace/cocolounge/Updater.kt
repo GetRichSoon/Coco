@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
+import java.security.MessageDigest
 
 /**
  * Self update without USB (Boss, 2026-10-21). New builds go to the private Coco Cloud bucket "apk"
@@ -27,6 +28,35 @@ object Updater {
     private val http = OkHttpClient()
     private val lock = Mutex()   // app, worker and service may all check at once
     private fun apk(ctx: Context) = File(ctx.filesDir, "update.apk")
+
+    /**
+     * Tells Coco Cloud which phase this phone is in, so the Release Center shows a phone that is
+     * busy differently from one that is stuck. Never allowed to break an update: a phone with no
+     * signal must still be able to install, so a failure to report is swallowed.
+     *
+     * UPDATE_REQUIRED and UPDATED are deliberately not sent from here. The cloud decides those by
+     * comparing the version this phone reports with the release, and a phone saying "I am updated"
+     * is a claim; the version it reports is the proof.
+     */
+    private suspend fun phase(cloud: Cloud, state: String, why: String? = null) {
+        val id = cloud.deviceId ?: return
+        runCatching {
+            cloud.update("devices", "id=eq.$id", JSONObject().apply {
+                put("update_state", state)
+                put("update_attempt_at", java.time.Instant.now().toString())
+                if (why != null) put("update_result", why)
+            })
+        }
+    }
+
+    private fun sha256(f: File): String {
+        val d = MessageDigest.getInstance("SHA-256")
+        f.inputStream().use { inp ->
+            val buf = ByteArray(1 shl 16)
+            while (true) { val n = inp.read(buf); if (n <= 0) break; d.update(buf, 0, n) }
+        }
+        return d.digest().joinToString("") { "%02x".format(it) }
+    }
     private fun current(ctx: Context) = ctx.packageManager.getPackageInfo(ctx.packageName, 0).longVersionCode
 
     /** Downloads a newer build if there is one. Returns its version name, or null when up to date. */
@@ -44,14 +74,39 @@ object Updater {
         if (code <= current(ctx)) { apk(ctx).delete(); return@withContext null }
         val prefs = ctx.getSharedPreferences("coco_update", Context.MODE_PRIVATE)
         if (prefs.getLong("ready", 0) != code || !apk(ctx).exists()) {
+            phase(cloud, "DOWNLOADING")
             val tmp = File(ctx.filesDir, "update.part")
-            get(meta.optString("url").ifBlank { meta.getString("file") }).use { r -> if (!r.isSuccessful) throw Exception("Download failed (${r.code})"); tmp.outputStream().use { r.body!!.byteStream().copyTo(it) } }
+            try {
+                get(meta.optString("url").ifBlank { meta.getString("file") }).use { r -> if (!r.isSuccessful) throw Exception("Download failed (${r.code})"); tmp.outputStream().use { r.body!!.byteStream().copyTo(it) } }
+            } catch (e: Exception) {
+                tmp.delete(); phase(cloud, "FAILED", "download: ${e.message}"); throw e
+            }
+            // The hash the cloud recorded when it built and signed this APK. A file that does not match
+            // it is not the release, whatever the link said, and is thrown away rather than installed -
+            // the one point where a wrong or tampered artifact can still be stopped for free.
+            val want = meta.optString("sha256").lowercase()
+            if (want.isNotBlank()) {
+                phase(cloud, "VERIFYING")
+                val got = sha256(tmp)
+                if (got != want) {
+                    tmp.delete()
+                    phase(cloud, "FAILED", "checksum did not match: expected ${want.take(12)}, got ${got.take(12)}")
+                    throw Exception("That download is not the release Coco Cloud built")
+                }
+            }
             tmp.renameTo(apk(ctx))
             prefs.edit().putLong("ready", code).apply()
         }
-        // Install by itself when Android allows it; otherwise one tap on the notification.
-        if (ctx.packageManager.canRequestPackageInstalls()) runCatching { install(ctx) }
-        else Alerts.post(ctx, 4242, "Coco update ready: ${meta.optString("versionName")}", "Tap to install the new Coco Lounge.", "update", install = true)
+        // Install by itself when Android allows it; otherwise one tap on the notification. Either way
+        // the cloud is told, because INSTALLING and RESTART_REQUIRED are different situations for a
+        // founder: one is working, the other is waiting for a thumb.
+        if (ctx.packageManager.canRequestPackageInstalls()) {
+            phase(cloud, "INSTALLING")
+            runCatching { install(ctx) }.onFailure { phase(cloud, "FAILED", "install: ${it.message}") }
+        } else {
+            phase(cloud, "RESTART_REQUIRED", "Android needs one tap to install a side-loaded update")
+            Alerts.post(ctx, 4242, "Coco update ready: ${meta.optString("versionName")}", "Tap to install the new Coco Lounge.", "update", install = true)
+        }
         meta.optString("versionName")
     } }
 

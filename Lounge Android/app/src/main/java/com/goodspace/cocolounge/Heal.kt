@@ -17,7 +17,11 @@ object Heal {
     private val lateOk = setOf("status", "notify")                                              // harmless even when late: up to 2 h
     /** Spoken wishes (a song, media keys, volume, a sentence) go stale fast: never run late, never run twice (Boss, 2026-10-26). */
     val voice = setOf("say", "play_youtube", "media", "volume")
-    fun ageLimitSec(action: String) = if (action in lateOk) 7200L else if (action in voice) 120L else 600L
+    // 'update' never expires. Every other command is something a founder asked for a moment ago, and
+    // running it late is worse than dropping it; an update is the opposite - a phone that was off for
+    // two days must still take it the moment it comes back, or the cloud loses the one instruction
+    // that matters. The same rule as Lounge/heal.js on the PC.
+    fun ageLimitSec(action: String) = if (action == "update") Long.MAX_VALUE else if (action in lateOk) 7200L else if (action in voice) 120L else 600L
 
     /** ok | not_understood | app_missing | refused | timeout | transient | failed_other */
     fun classify(r: String): String = when {
@@ -57,7 +61,15 @@ object Heal {
             result = "Too old (over ${ageLimitSec(action) / 60} min), not run: this phone was asleep or offline"; cls = "failed_other"
             note(ctx, cloud, "offline", "A command expired before this phone could run it ($action). Commands are never run late (spoken ones after 2 min, others after 10), for safety.")
         } else {
-            result = runCatching { PhoneRemote.run(ctx, action, args) }.getOrElse { "failed: ${it.message}" }; cls = classify(result)
+            // The cloud sends this to every device it finds below the current release, so an update
+            // starts without anyone opening Coco and looking. Idempotent: the row was already claimed
+            // above, so it runs once, and a check on an up-to-date phone is a no-op that says so.
+            result = if (action == "update")
+                runCatching { Updater.check(ctx) }.fold(
+                    { v -> if (v == null) "already on the current build" else "downloading and installing $v" },
+                    { "failed: ${it.message}" })
+            else runCatching { PhoneRemote.run(ctx, action, args) }.getOrElse { "failed: ${it.message}" }
+            cls = classify(result)
             if (cls != "ok" && canRetry(action, args, cls)) {   // one smart retry after a short pause
                 delay(2_000)
                 val again = runCatching { PhoneRemote.run(ctx, action, JSONObject(args.toString()).put("_retried", 1)) }.getOrElse { "failed: ${it.message}" }

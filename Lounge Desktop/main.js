@@ -1009,7 +1009,9 @@ let pendingUpdate = null;
 // say, and then the cloud judges it on its reported version alone - which is the honest fallback.
 // The cloud sets UPDATE_REQUIRED and UPDATED itself; those are its to decide, not this process's.
 let updateState = null;
-ipcMain.on('update-state', (e) => { e.returnValue = updateState; });
+// The phase, and which commit this desktop is actually running. The commit is the desktop's build
+// identity the way a versionCode is the phone's: one user-facing Coco version, two internal builds.
+ipcMain.on('update-state', (e) => { e.returnValue = { state: updateState, build: startHead ? startHead.slice(0, 7) : null }; });
 // A restart for an update is the one moment the cloud hears nothing at all. Saying RECONNECTING on
 // the way back up means the gap reads as part of the update instead of as a device going dark.
 try { if (Date.now() - Number(fs.readFileSync(RESTART_FILE(), 'utf8') || 0) < 3 * 60 * 1000) updateState = 'RECONNECTING'; } catch {}

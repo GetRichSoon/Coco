@@ -72,7 +72,15 @@ class Connected : Service() {
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
         runCatching {
             val info = JSONObject().put("summary", PhoneRemote.status(applicationContext)).put("at", Instant.now().toString()).put("version", version).put("connected", "service")
-            cloud.update("devices", "id=eq.$id", JSONObject().put("last_seen", Instant.now().toString()).put("app_version", "android-$version").put("info", info))
+            // Platform and internal build are what let the cloud tell four devices apart: one
+            // user-facing Coco version, but a phone's build is its versionCode and a desktop's is a
+            // commit. update_state is deliberately not sent here - the cloud decides UPDATE_REQUIRED
+            // and UPDATED from the version above, and Updater reports the phases in between.
+            val build = runCatching { packageManager.getPackageInfo(packageName, 0).longVersionCode.toString() }.getOrNull()
+            cloud.update("devices", "id=eq.$id", JSONObject().put("last_seen", Instant.now().toString())
+                .put("last_update_check", Instant.now().toString()).put("platform", "android")
+                .apply { if (build != null) put("internal_build", build) }
+                .put("app_version", "android-$version").put("info", info))
         }
     }
 

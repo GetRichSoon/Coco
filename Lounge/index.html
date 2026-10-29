@@ -823,8 +823,16 @@ async function heartbeat() {
   // The desktop also says whether it is mid-update, so a device that is behind because it is busy
   // reads differently from one that is behind because it is stuck. Only sent when it is doing
   // something: a device that reports nothing is judged on its version alone, which is the truth.
-  const doing = () => { try { return window.cocoDesktop ? window.cocoDesktop.updateState() : null; } catch { return null; } };
-  const beat = () => sb.from('devices').update({ last_seen: new Date().toISOString(), ...(reported() ? { app_version: reported() } : {}), ...(info ? { info } : {}), update_state: doing() }).eq('id', deviceId).select('id');
+  const doing = () => { try { return (window.cocoDesktop && window.cocoDesktop.updateState()) || {}; } catch { return {}; } };
+  // Platform and internal build are what let the cloud tell four devices apart: one user-facing
+  // Coco version, but a desktop's build is a commit and a phone's is a versionCode, and a release
+  // is only whole when both exist. last_update_check is this moment - the device did just ask.
+  const beat = () => { const d = doing(); return sb.from('devices').update({
+    last_seen: new Date().toISOString(), last_update_check: new Date().toISOString(),
+    platform: window.cocoDesktop ? 'windows' : 'web',
+    ...(d.build ? { internal_build: d.build } : {}),
+    ...(reported() ? { app_version: reported() } : {}), ...(info ? { info } : {}),
+    update_state: d.state || null }).eq('id', deviceId).select('id'); };
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
