@@ -260,11 +260,9 @@ body.calm *, body.calm *::after { animation: none !important; transition: none !
 <section class="gate" id="signin" hidden>
   <form class="card" id="signinForm">
     <div class="brand"><img src="coco.svg" alt=""><div><small>Good Space</small><h1>Coco Lounge</h1></div></div>
-    <p class="note">Private to the founders of Good Space, on their four devices only.</p>
-    <label for="email">Email<input id="email" type="email" autocomplete="email" required></label>
-    <label for="pass">Password<input id="pass" type="password" autocomplete="current-password" minlength="8" required></label>
-    <button class="btn filled" type="submit">Sign in</button>
-    <button class="btn text" type="button" id="firstTime">First time on Good Space? Create your password</button>
+    <p class="note">Private to the founders of Good Space, on their four devices only. Type the pairing code from Coco on a device that is already open - it works once and lasts ten minutes.</p>
+    <label for="code1">Pairing code<input id="code1" autocomplete="one-time-code" maxlength="12" required style="letter-spacing:.2em;text-transform:uppercase"></label>
+    <button class="btn filled" type="submit">Connect this device</button>
     <p class="err" id="signinErr" role="alert"></p>
   </form>
 </section>
@@ -519,18 +517,32 @@ function show(which, msg) {
   if (which === 'pair' && msg) $('#pairErr').textContent = msg;
 }
 
+// A pairing code is the whole credential now (founder rule, 2026-10-29). Coco Cloud reads which
+// device the code was issued for, mints a real session for that device's owner and hands back a fresh
+// device key, all in one step. There is no email and no password in this path: the account password is
+// lost, this project has no SMTP, and a reset returns 429, so those fields opened onto nothing.
+// If every device is ever signed out at once, a code can still be written straight into Coco Cloud
+// with the service key from the vault - that is the floor, and it needs no mailbox either.
 $('#signinForm').addEventListener('submit', async (e) => {
-  e.preventDefault(); $('#signinErr').textContent = '';
-  const { error } = await sb.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#pass').value });
-  if (error) $('#signinErr').textContent = error.message.includes('confirm') ? 'Open the confirmation email first, then sign in.' : 'Email or password is not right.';
-  else boot();
+  e.preventDefault(); $('#signinErr').textContent = 'Connecting\u2026';
+  let out;
+  try {
+    const r = await fetch(URL_ + '/functions/v1/device-recover', {
+      method: 'POST', headers: { apikey: KEY, 'content-type': 'application/json' },
+      // the device id is sent only when this machine already knows it; the code names the device
+      // anyway, which is what lets a reinstalled device get back in with nothing of its own left
+      body: JSON.stringify({ code: $('#code1').value.trim().toUpperCase(), device_id: store.get('gs-device-id') || undefined }),
+    });
+    out = await r.json();
+    if (!r.ok) { $('#signinErr').textContent = out.error || 'That pairing code did not work.'; return; }
+  } catch { $('#signinErr').textContent = 'Coco Cloud could not be reached. Check the connection, then try again.'; return; }
+  // the device key goes on first, so the client that carries it is the one the session lands in
+  store.set('gs-device-key', out.device_key); store.set('gs-device-id', out.device_id); deviceId = out.device_id;
+  sb = makeClient(out.device_key);
+  const { error } = await sb.auth.setSession({ access_token: out.access_token, refresh_token: out.refresh_token });
+  if (error) { $('#signinErr').textContent = error.message; return; }
+  $('#signinErr').textContent = ''; boot();
 });
-$('#firstTime').onclick = async () => {
-  const email = $('#email').value.trim(), password = $('#pass').value;
-  if (!email || password.length < 8) { $('#signinErr').textContent = 'Type your email and a new password (8+ characters) first.'; return; }
-  const { error } = await sb.auth.signUp({ email, password });
-  $('#signinErr').textContent = error ? error.message : 'Done. Open the email from Supabase and tap the link (the page it opens may look blank, that is fine), then come back and sign in.';
-};
 $('#pairForm').addEventListener('submit', async (e) => {
   e.preventDefault(); $('#pairErr').textContent = '';
   const raw = new Uint8Array(32); crypto.getRandomValues(raw);
@@ -3459,8 +3471,16 @@ document.addEventListener('click', async (e) => {
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code))), b => b.toString(16).padStart(2, '0')).join('');
     const { error } = await sb.from('pairing_codes').insert({ code_hash: hash, device_id: ds.code, created_by: founderName() });
     if (error) return toast(error.message);
-    $('#dupBody').innerHTML = `<p>Pairing code for <b>${esc(deviceName(ds.code))}</b>, valid for 10 minutes:</p><p style="font:800 30px var(--display);letter-spacing:.2em">${code}</p><p class="muted">Type it on that device after signing in. It works once.</p>`;
+    $('#dupBody').innerHTML = `<p>Pairing code for <b>${esc(deviceName(ds.code))}</b>, valid for 10 minutes:</p><p style="font:800 30px var(--display);letter-spacing:.2em">${code}</p><p class="muted">Read it out to whoever is holding that device. Typing it is the whole way in - there is nothing to sign in to first. It works once.</p><button class="btn text" id="killCode" type="button">Cancel this code</button>`;
     const d = $('#dup'); d.querySelectorAll('button').forEach(x => x.hidden = x.value !== 'cancel'); d.showModal();
+    // Said out loud to the wrong person, a code is a way in until it expires. Only its hash is stored,
+    // so cancelling is the only way to take it back - and nothing could set revoked_at until now.
+    $('#killCode').hidden = false;
+    $('#killCode').onclick = async () => {
+      const { error: rErr } = await sb.from('pairing_codes').update({ revoked_at: new Date().toISOString() }).eq('code_hash', hash);
+      toast(rErr ? rErr.message : 'That code is cancelled');
+      if (!rErr) { await log('pairing code cancelled', ds.code); d.close(); }
+    };
     d.addEventListener('close', () => d.querySelectorAll('button').forEach(x => x.hidden = false), { once: true });
     await log('pairing code made', ds.code);
   }

@@ -54,18 +54,6 @@ class Cloud(context: Context) {
         email = o.optJSONObject("user")?.optString("email") ?: email
     }
 
-    suspend fun signIn(mail: String, password: String) = withContext(Dispatchers.IO) {
-        val body = JSONObject().put("email", mail).put("password", password).toString().toRequestBody(JSON)
-        val r = http.newCall(Request.Builder().url("$URL/auth/v1/token?grant_type=password").header("apikey", KEY).post(body).build()).execute()
-        saveSession(JSONObject(r.bodyOrThrow()))
-    }
-
-    suspend fun signUp(mail: String, password: String) = withContext(Dispatchers.IO) {
-        val body = JSONObject().put("email", mail).put("password", password).toString().toRequestBody(JSON)
-        http.newCall(Request.Builder().url("$URL/auth/v1/signup").header("apikey", KEY).post(body).build()).execute().bodyOrThrow()
-        Unit
-    }
-
     fun signOut() { prefs.edit().remove("access").remove("refresh").remove("expires").apply() }
     fun forgetDevice() { prefs.edit().remove("device_key").remove("device_id").apply() }
 

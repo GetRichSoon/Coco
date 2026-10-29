@@ -52,7 +52,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -146,28 +145,11 @@ fun GateCard(title: String, eyebrow: String, content: @Composable ColumnScope.()
 
 @Composable
 fun SignIn(vm: Lounge) {
-    var mail by remember { mutableStateOf(vm.cloud.email.orEmpty()) }
-    var pass by remember { mutableStateOf("") }
-    GateCard("Coco Lounge", "Good Space") {
-        Muted("Private to the founders of Good Space, on their four devices only.")
-        OutlinedTextField(mail, { mail = it }, label = { Text("Email") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(pass, { pass = it }, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
-        MuButton({ vm.signIn(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Sign in") }
-        TextButton({ vm.signUp(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth()) { Text("First time on Good Space? Create your password") }
-        // The way back in when the password is gone and the reset email cannot be used. Normal sign-in
-        // above is untouched: this is an extra door, not a replacement for the front one.
-        TextButton({ vm.gate = Lounge.Gate.Recover }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth()) { Text("Recover this device") }
-    }
-}
-
-@Composable
-fun Recover(vm: Lounge) {
     var code by remember { mutableStateOf("") }
-    GateCard("Recover this device", "Good Space") {
-        Muted("For a device that was already yours. Ask Boss to make a recovery code in his Coco and read it to you. It works once, expires in minutes, and signs this device back in without needing the account password.")
-        OutlinedTextField(code, { code = it.uppercase().take(20) }, label = { Text("Recovery code") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        MuButton({ vm.recover(code) }, enabled = !vm.busy && code.length >= 10, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Recover this device") }
-        TextButton({ vm.gate = Lounge.Gate.SignIn }, modifier = Modifier.fillMaxWidth()) { Text("Back to sign in") }
+    GateCard("Coco Lounge", "Good Space") {
+        Muted("Private to the founders of Good Space, on their four devices only. Ask for the pairing code from Coco on a device that is already open - it works once and lasts ten minutes.")
+        OutlinedTextField(code, { code = it.uppercase().take(20) }, label = { Text("Pairing code") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        MuButton({ vm.connect(code) }, enabled = !vm.busy && code.length >= 8, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Connect this device") }
     }
 }
 

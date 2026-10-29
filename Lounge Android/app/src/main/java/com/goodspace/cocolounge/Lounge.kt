@@ -18,7 +18,7 @@ import java.time.LocalDate
 class Lounge(app: Application) : AndroidViewModel(app) {
     val cloud = Cloud(app)
 
-    enum class Gate { SignIn, Pair, Recover, Open }
+    enum class Gate { SignIn, Pair, Open }
     var gate by mutableStateOf(if (!cloud.signedIn) Gate.SignIn else if (!cloud.paired) Gate.Pair else Gate.Open)
     var live by mutableStateOf(false)
     var busy by mutableStateOf(false)
@@ -76,20 +76,6 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
     private fun fail(e: Throwable) { if (e is kotlinx.coroutines.CancellationException) return; message = e.message ?: "Something went wrong" }
 
-    fun signIn(mail: String, pass: String) = viewModelScope.launch {
-        busy = true
-        try { cloud.signIn(mail.trim(), pass); gate = if (cloud.paired) Gate.Open else Gate.Pair; if (gate == Gate.Open) open() }
-        catch (e: Exception) { message = if (e.message.orEmpty().contains("confirm", true)) "Open the confirmation email first, then sign in." else "Email or password is not right." }
-        busy = false
-    }
-
-    fun signUp(mail: String, pass: String) = viewModelScope.launch {
-        if (pass.length < 8) { message = "Use a password of 8 or more characters."; return@launch }
-        busy = true
-        try { cloud.signUp(mail.trim(), pass); message = "Done. Open the email from Supabase, tap the link, then sign in here." } catch (e: Exception) { fail(e) }
-        busy = false
-    }
-
     fun pair(code: String) = viewModelScope.launch {
         busy = true
         try { cloud.pair(code); gate = Gate.Open; message = "This phone is now one of the four"; open() }
@@ -98,15 +84,19 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * One-time recovery code instead of the password. For the situation that actually happened: the
-     * account password forgotten, and the reset email unusable because this project has no custom SMTP
-     * and a reset request comes back 429. On success this device has a real session again, so nothing
-     * downstream can tell it apart from a normal sign-in.
+     * The only way a device gets in. One pairing code does everything: Coco Cloud reads which device
+     * the code was made for, mints a real session for that device's owner and issues a fresh device
+     * key. There is no email and no password anywhere in this path - the account password is lost, the
+     * project has no SMTP, and a reset returns 429, so the code is the credential.
+     *
+     * This covers first pairing and getting back in after a reinstall with the same screen, because
+     * they are the same act: the device id is not sent when there is none to send, and the code says
+     * which device it belongs to.
      */
-    fun recover(code: String) = viewModelScope.launch {
+    fun connect(code: String) = viewModelScope.launch {
         busy = true
-        try { cloud.recoverDevice(code); gate = Gate.Open; message = "This device is signed in again"; open() }
-        catch (e: Exception) { message = e.message ?: "That recovery code did not work." }
+        try { cloud.recoverDevice(code); gate = Gate.Open; message = "This device is connected"; open() }
+        catch (e: Exception) { message = e.message ?: "That pairing code did not work." }
         busy = false
     }
 
