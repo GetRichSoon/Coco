@@ -74,7 +74,7 @@ jobs:
             | grep -iE 'certificate SHA-256 digest' | head -1 | grep -oE '[0-9a-f]{64}')
           IN_KEY=$(keytool -list -v -keystore "$RUNNER_TEMP/debug.keystore" \
             -storepass android -alias androiddebugkey 2>/dev/null \
-            | grep -iE '^\s*SHA256:' | head -1 | tr -d ' ' | sed 's/^SHA256://' | tr -d ':' | tr 'A-F' 'a-f')
+            | grep -iE 'SHA256:' | head -1 | grep -oE '([0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}' | tr -d ':' | tr 'A-Z' 'a-z')
 
           echo "certificate in $APK : ${IN_APK:-NONE FOUND}"
           echo "certificate in debug keystore : ${IN_KEY:-NONE FOUND}"
@@ -101,7 +101,7 @@ jobs:
           EXPECTED=9401c60e44e2e7845a12082a3789f35fc6eb4cc8bb39d57adb2007253f13a86c
           GOT=$(keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" \
                  -alias "${ALIAS:-coco}" 2>/dev/null \
-                | grep -iE '^\s*SHA256:' | head -1 | tr -d ' ' | sed 's/^SHA256://' | tr -d ':' | tr 'A-F' 'a-f')
+                | grep -iE 'SHA256:' | head -1 | grep -oE '([0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}' | tr -d ':' | tr 'A-Z' 'a-z')
           echo "release key certificate : ${GOT:-NONE FOUND}"
           test "$GOT" = "$EXPECTED" || { echo "that is not the release key Coco Cloud expects ($EXPECTED)"; exit 1; }
           echo "MATCH - rotating towards the key the release gate accepts"
