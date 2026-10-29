@@ -42,6 +42,8 @@ const connectSrc = lift(/async function oauthConnect\(provider, connection = nul
 // mask, so one lift carries all three.
 const helpersSrc = lift(/const cloudHeld = \(c\) =>/, '};', 'cloudHeld / busy / mask');
 const stateSrc = lift(/const connState = \(c\) => \{/, '};', 'connState');
+// The real deadline helper, so these tests exercise what ships rather than a stand-in.
+const timeoutSrc = lift(/const TIMEOUT_MS = /, '\n}', 'withTimeout');
 const chipSrc = lift(/const CONN_CHIP = \{/, '};', 'CONN_CHIP');
 
 // A credential the cloud can really read is a vault NAME. It appears all through this file, because
@@ -198,13 +200,14 @@ function run({ rpc, confirmed = true, conns = CONNS_FIXTURE }) {
     toast: (m) => log.push({ toast: m }),
     render: () => log.push({ render: true }),
     confirm: (m) => { asked.push(m); return confirmed; },
-    window: { open: (u) => opened.push(u) },
+    window: { open: (u) => opened.push(u), COCO_TIMEOUT_MS: 120 },
     CONNS: conns,
   };
   const fn = new Function('OAUTH_PLATFORMS', 'sb', 'toast', 'render', 'confirm', 'window', 'CONNS',
     `let connConnecting = null, connConnectingAt = 0;
+     ${timeoutSrc}
      ${connectSrc}
-     return { oauthConnect, peek: () => ({ connConnecting, connConnectingAt }) };`);
+     return { oauthConnect, withTimeout, peek: () => ({ connConnecting, connConnectingAt }) };`);
   const api = fn(scope.OAUTH_PLATFORMS, scope.sb, scope.toast, scope.render, scope.confirm,
     scope.window, scope.CONNS);
   return { api, log, opened, asked };
@@ -269,6 +272,28 @@ ok('an unknown platform is refused before any cloud call', async () => {
   await api.oauthConnect('amazon_kdp');
   assert.equal(log.filter((l) => l.fn).length, 0);
   assert.match(log.filter((l) => l.toast).map((l) => l.toast).join(' '), /no connection flow/i);
+});
+
+// ---------------------------------------------------------------- nothing waits for ever
+// supabase-js sets no request timeout. A stalled call used to leave the UI with no error and
+// nothing moving, which is what a frozen app looks like from the outside.
+ok('a stalled cloud call gives up and says so, instead of waiting for ever', async () => {
+  const { api, log, opened } = run({ rpc: () => new Promise(() => {}) });   // never settles
+  const started = Date.now();
+  await api.oauthConnect('youtube', 'yt-the-flow');
+  const waited = Date.now() - started;
+  assert.ok(waited < 3000, `it waited ${waited}ms, so it is still unbounded`);
+  const said = log.filter((l) => l.toast).map((l) => l.toast).join(' | ');
+  assert.match(said, /did not answer within/i, said);
+  assert.equal(opened.length, 0, 'it sent the founder to Google after a timeout');
+});
+
+ok('the deadline helper clears its timer when the work wins the race', async () => {
+  const { api } = run({ rpc: async () => ({ data: {}, error: null }) });
+  const r = await api.withTimeout(Promise.resolve('done'), 'a thing', 50);
+  assert.equal(r, 'done');
+  // an uncleared timer would keep the process alive and reject after the fact
+  await new Promise((res) => setTimeout(res, 80));
 });
 
 // ---------------------------------------------------------------- one channel at a time

@@ -320,6 +320,23 @@ const KEY = 'sb_publishable_had-6h5KG1epTVwISeuWbg_IKg7IO1s';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: (k) => { try { localStorage.removeItem(k); } catch {} } };
+// Nothing in this app may wait for ever.
+//
+// supabase-js sets no request timeout, and neither did the snapshot loader's script injection. A
+// stalled network or a script that never fires onload left the UI waiting with no error and nothing
+// moving, which is indistinguishable from a frozen app - and that is exactly how a founder
+// described it. Every outward call now has a deadline and says so when it passes.
+const TIMEOUT_MS = Number(window.COCO_TIMEOUT_MS) || 15000;
+function withTimeout(work, what, ms = TIMEOUT_MS) {
+  let timer = null;
+  const deadline = new Promise((_, rej) => {
+    timer = setTimeout(() => rej(Object.assign(new Error(`${what} did not answer within ${Math.round(ms / 1000)}s`), { timeout: true })), ms);
+  });
+  return Promise.race([Promise.resolve(work).finally(() => clearTimeout(timer)), deadline]);
+}
+// One outward call at a time per action. Tapping Save three times while the first is in flight used
+// to stack three identical writes; now the second tap is told the first is still going.
+const inFlight = new Set();
 const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 2600); };
 const ago = (iso) => { if (!iso) return 'never'; const s = (Date.now() - new Date(iso)) / 1000; return s < 90 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : new Date(iso).toLocaleDateString(); };
 const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000;
@@ -456,13 +473,15 @@ async function loadControlPlane() {
   }
   try {
     if (window.COCO_CONTROL_PLANE) { CP_ERROR = null; return window.COCO_CONTROL_PLANE; }
-    await new Promise((res, rej) => {
+    // Bounded: onload and onerror are not guaranteed to fire for every failure mode, and an
+    // unbounded await here would stop loadAll() completing for the rest of the session.
+    await withTimeout(new Promise((res, rej) => {
       const el = document.createElement('script');
       el.src = 'control-plane.js';
       el.onload = res;
       el.onerror = () => rej(new Error('control-plane.js did not load'));
       document.head.appendChild(el);
-    });
+    }), 'the company snapshot', 8000);
     if (window.COCO_CONTROL_PLANE) { CP_ERROR = null; return window.COCO_CONTROL_PLANE; }
     CP_ERROR = 'control-plane.js loaded but set no snapshot';
   } catch {
@@ -1161,7 +1180,21 @@ async function control(scope, id, key, value, note) {
 // where one lives and the vault keeps the value.
 async function connectionOp(op, connection, extra = {}, confirmWith = null) {
   if (confirmWith && !confirm(confirmWith)) return null;
-  const { data, error } = await sb.rpc('coco_connection', { p_op: op, p_connection: connection, ...extra });
+  const key = `${op}:${connection}`;
+  if (inFlight.has(key)) { toast('Still working on that one'); return null; }
+  inFlight.add(key);
+  let data = null;
+  let error = null;
+  try {
+    // The founder-and-device gate is inside coco_connection and is untouched; this only stops the
+    // UI waiting for ever if the call never comes back.
+    ({ data, error } = await withTimeout(sb.rpc('coco_connection', { p_op: op, p_connection: connection, ...extra }), `the ${op}`));
+  } catch (e) {
+    toast(e && e.timeout ? `${e.message}. Nothing was changed - check Devices and try again.` : `That did not go through: ${e && e.message ? e.message : e}`);
+    return null;
+  } finally {
+    inFlight.delete(key);
+  }
   if (error) { toast(error.message.replace(/^.*?:\s*/, '')); return null; }
   connAssign = null; connAdd = null;
   toast({ add: 'Account added', assign: 'Assigned', verify: 'Checked', disconnect: 'Disconnected', reconnect: 'Reconnected' }[op] || 'Saved');
@@ -1202,7 +1235,14 @@ async function connectionVerify(connection) {
   toast('Asking the platform…');
   // functions.invoke, not fetch: the client already carries the founder's sign-in and this device's
   // key, so the page never handles either. The cloud re-checks both before it looks at anything.
-  const { data: r, error } = await sb.functions.invoke(route, { body: { connection_id: connection } });
+  let r = null;
+  let error = null;
+  try {
+    ({ data: r, error } = await withTimeout(sb.functions.invoke(route, { body: { connection_id: connection } }), 'the check'));
+  } catch (e) {
+    toast(e && e.timeout ? e.message : `The check did not run: ${e && e.message ? e.message : e}`);
+    return null;
+  }
   if (error || !r) {
     toast('Coco Cloud could not be reached, so nothing was checked.');
     return null;
@@ -1249,9 +1289,16 @@ async function oauthConnect(provider, connection = null) {
   // No team is sent for a platform whose accounts choose their own place. The callback assigns only
   // what it was told to assign, so leaving it out is what keeps "connected" and "allowed to publish
   // here" two separate decisions, both of them the founder's.
-  const { data, error } = await sb.rpc('coco_oauth_begin', {
-    p_provider: provider, p_connection_id: id, p_team: p.team, p_subteam: p.subteam,
-  });
+  let data = null;
+  let error = null;
+  try {
+    ({ data, error } = await withTimeout(sb.rpc('coco_oauth_begin', {
+      p_provider: provider, p_connection_id: id, p_team: p.team, p_subteam: p.subteam,
+    }), 'the connection request'));
+  } catch (e) {
+    toast(e && e.timeout ? `${e.message}. Nothing was connected.` : `That did not go through: ${e && e.message ? e.message : e}`);
+    return;
+  }
   if (error) {
     const why = error.message.replace(/^.*?:\s*/, '');
     toast(/founder on a paired device/i.test(why)
