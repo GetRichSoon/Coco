@@ -15,6 +15,11 @@ const KEY = process.env.SUPABASE_SERVICE_KEY
   || (fs.existsSync(vault) ? (fs.readFileSync(vault, 'utf8').match(/(eyJ[\w.-]+|sb_secret_[\w-]+)/) || [])[1] : null);
 if (!KEY) { console.error(`Service key missing: set SUPABASE_SERVICE_KEY, or put it in ${vault}`); process.exit(1); }
 
+// release.json is the single source of the user-facing version; build.gradle.kts carries only the
+// phone's internal counter. release.test.js fails the build if the two disagree, so reading both and
+// trusting each for its own field cannot drift.
+const RELEASE = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'Lounge', 'release.json'), 'utf8'));
+
 // --pending writes controls/apk_pending instead of controls/apk_latest. It exists for exactly one
 // situation: a build signed with a different key from the one the phones already carry. Android refuses
 // such an update, and the installed app, told about it through apk_latest, would download the APK, be
@@ -29,11 +34,6 @@ if (!KEY) { console.error(`Service key missing: set SUPABASE_SERVICE_KEY, or put
 const bootstrap = RELEASE.bootstrap || null;
 const ROW = process.argv.includes('--latest') ? 'apk_latest'
   : (process.argv.includes('--pending') || bootstrap) ? 'apk_pending' : 'apk_latest';
-
-// release.json is the single source of the user-facing version; build.gradle.kts carries only the
-// phone's internal counter. release.test.js fails the build if the two disagree, so reading both and
-// trusting each for its own field cannot drift.
-const RELEASE = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'Lounge', 'release.json'), 'utf8'));
 
 const gradle = fs.readFileSync(path.join(HERE, 'app', 'build.gradle.kts'), 'utf8');
 const versionCode = Number(gradle.match(/versionCode = (\d+)/)[1]);
