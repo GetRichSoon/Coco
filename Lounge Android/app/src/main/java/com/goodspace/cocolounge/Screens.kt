@@ -154,6 +154,20 @@ fun SignIn(vm: Lounge) {
         OutlinedTextField(pass, { pass = it }, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
         MuButton({ vm.signIn(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Sign in") }
         TextButton({ vm.signUp(mail, pass) }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth()) { Text("First time on Good Space? Create your password") }
+        // The way back in when the password is gone and the reset email cannot be used. Normal sign-in
+        // above is untouched: this is an extra door, not a replacement for the front one.
+        TextButton({ vm.gate = Lounge.Gate.Recover }, enabled = !vm.busy, modifier = Modifier.fillMaxWidth()) { Text("Recover this device") }
+    }
+}
+
+@Composable
+fun Recover(vm: Lounge) {
+    var code by remember { mutableStateOf("") }
+    GateCard("Recover this device", "Good Space") {
+        Muted("For a device that was already yours. Ask Boss to make a recovery code in his Coco and read it to you. It works once, expires in minutes, and signs this device back in without needing the account password.")
+        OutlinedTextField(code, { code = it.uppercase().take(20) }, label = { Text("Recovery code") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        MuButton({ vm.recover(code) }, enabled = !vm.busy && code.length >= 10, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Recover this device") }
+        TextButton({ vm.gate = Lounge.Gate.SignIn }, modifier = Modifier.fillMaxWidth()) { Text("Back to sign in") }
     }
 }
 

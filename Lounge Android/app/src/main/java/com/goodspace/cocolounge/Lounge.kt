@@ -18,7 +18,7 @@ import java.time.LocalDate
 class Lounge(app: Application) : AndroidViewModel(app) {
     val cloud = Cloud(app)
 
-    enum class Gate { SignIn, Pair, Open }
+    enum class Gate { SignIn, Pair, Recover, Open }
     var gate by mutableStateOf(if (!cloud.signedIn) Gate.SignIn else if (!cloud.paired) Gate.Pair else Gate.Open)
     var live by mutableStateOf(false)
     var busy by mutableStateOf(false)
@@ -94,6 +94,19 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         busy = true
         try { cloud.pair(code); gate = Gate.Open; message = "This phone is now one of the four"; open() }
         catch (e: Exception) { message = if (e.message.orEmpty().contains("expired")) "That code is wrong or expired." else e.message }
+        busy = false
+    }
+
+    /**
+     * One-time recovery code instead of the password. For the situation that actually happened: the
+     * account password forgotten, and the reset email unusable because this project has no custom SMTP
+     * and a reset request comes back 429. On success this device has a real session again, so nothing
+     * downstream can tell it apart from a normal sign-in.
+     */
+    fun recover(code: String) = viewModelScope.launch {
+        busy = true
+        try { cloud.recoverDevice(code); gate = Gate.Open; message = "This device is signed in again"; open() }
+        catch (e: Exception) { message = e.message ?: "That recovery code did not work." }
         busy = false
     }
 

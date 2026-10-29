@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
                     when (g) {
                         Lounge.Gate.SignIn -> SignIn(vm)
                         Lounge.Gate.Pair -> Pair(vm)
+                        Lounge.Gate.Recover -> Recover(vm)
                         Lounge.Gate.Open -> LoungeApp(vm)
                     }
                 }

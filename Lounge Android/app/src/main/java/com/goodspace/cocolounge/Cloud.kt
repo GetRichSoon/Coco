@@ -41,7 +41,7 @@ class Cloud(context: Context) {
     private fun Response.bodyOrThrow(): String {
         val text = body?.string().orEmpty()
         if (!isSuccessful) {
-            val msg = runCatching { JSONObject(text).let { it.optString("msg", it.optString("message", it.optString("error_description", text))) } }.getOrDefault(text)
+            val msg = runCatching { JSONObject(text).let { it.optString("msg", it.optString("message", it.optString("error_description", it.optString("error", text)))) } }.getOrDefault(text)
             throw CloudError(msg.ifBlank { "Coco Cloud error $code" }, code)
         }
         return text
@@ -96,6 +96,32 @@ class Cloud(context: Context) {
     /** Takes a row only if the filter still matches; true = this device won it (no double runs). */
     suspend fun claim(table: String, filter: String, row: JSONObject): Boolean = JSONArray(request("$table?$filter", "PATCH", row.toString(), "return=representation").ifBlank { "[]" }).length() > 0
     suspend fun rpc(name: String, args: JSONObject): String = request("rpc/$name", "POST", args.toString())
+
+    /**
+     * Gets this device back in with a one-time recovery code, for the case the ordinary reset cannot
+     * cover: the account password is forgotten and the reset email is unusable. Coco Cloud checks the
+     * code server side and hands back a real session plus a fresh device key, so is_founder() and
+     * device_ok() keep working exactly as after a normal sign-in. Nothing secret for this lives in the
+     * app - the code the founder gives is the whole credential, and it is good once.
+     *
+     * The device id is sent only when this install still knows it. After a reinstall it does not, and
+     * that is the main reason recovery exists, so the code itself names the device it belongs to.
+     */
+    suspend fun recoverDevice(code: String): String = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("code", code.trim().uppercase())
+            .also { b -> deviceId?.let { b.put("device_id", it) } }
+            .toString().toRequestBody(JSON)
+        val r = http.newCall(Request.Builder().url("$URL/functions/v1/device-recover")
+            .header("apikey", KEY).post(body).build()).execute()
+        val o = JSONObject(r.bodyOrThrow())
+        accessToken = o.getString("access_token")
+        refreshToken = o.getString("refresh_token")
+        expiresAt = System.currentTimeMillis() + o.optLong("expires_in", 3600) * 1000
+        email = o.optString("email").ifBlank { email }
+        deviceKey = o.getString("device_key")
+        deviceId = o.getString("device_id")
+        deviceId!!
+    }
 
     /** Pairs this phone with a one-time code. The secret key never leaves the phone; only its hash is stored in the cloud. */
     suspend fun pair(code: String): String {
