@@ -14,3 +14,14 @@ Tools/openvino-models/
 *.onnx
 *.safetensors
 *.gguf
+
+# Installed packages. They are a reproducible `npm install`, not company memory.
+#
+# Same story as the weights above, second time. On 28 October the Daily Seal swept in
+# `Lounge Desktop/node_modules` - 60,972 files - because `Lounge Desktop/package.json` listed itself
+# as a dependency ("coco-lounge-desktop": "file:"), so npm copied the package into its own
+# node_modules, and that copy into its own, about sixty levels deep, each level carrying another
+# 180 MB electron.exe. GitHub refuses any file over 100 MB, so every push from this repo failed from
+# that night on and nine commits sat on one laptop. The self-dependency is gone and nothing imports
+# it by name; this line is so that a reinstall can never post it back.
+node_modules/
