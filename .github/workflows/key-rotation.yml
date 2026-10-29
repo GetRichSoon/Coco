@@ -1,0 +1,136 @@
+# Signing key rotation, run by hand, once.
+#
+# Up to 2.8.2 the Coco Lounge APK was signed with the laptop's Android debug key. 2.9.0 is the first
+# build signed with the real release key, and Android refuses an update whose signature differs from
+# the installed one - which is why 2.9.0 would otherwise cost both founders an uninstall, and why Big
+# Boss's phone cannot be updated in place at all while she has no way to sign in again.
+#
+# APK Signature Scheme v3 solves exactly this. A signing certificate lineage is a signed statement
+# that the new key descends from the old one; an APK carrying it installs over an app signed with the
+# old key on Android 9 and above, in place, keeping the app's data - which here means her session and
+# her device key.
+#
+# This job does three things, in this order, and stops at the first that does not hold:
+#   1. Reads the certificate out of a real old APK that is committed in this repo, and the certificate
+#      out of the debug keystore secret, and refuses to go on unless they are the same. The whole plan
+#      rests on the claim that the installed app was signed with THIS key; the claim is checked rather
+#      than assumed, because a lineage built from the wrong old key produces an APK Android still
+#      refuses, and that would only be discovered on a founder's phone.
+#   2. Confirms the new key is the one Coco Cloud expects, so a lineage is never built towards a key
+#      the release gate would reject anyway.
+#   3. Produces the lineage and uploads it.
+#
+# The lineage is NOT a secret - it is public certificate material, and it has to ship inside every
+# APK. It is uploaded as an artifact so it can be committed to the repo, after which release builds
+# sign with it and every future update installs in place.
+name: signing key rotation
+
+on:
+  workflow_dispatch:
+    inputs:
+      old_apk:
+        description: A committed APK signed with the OLD key, to verify against
+        default: 'Lounge Android/Releases/Coco Lounge 2.7.apk'
+
+permissions:
+  contents: read
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: find apksigner and keytool
+        run: |
+          SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
+          echo "APKSIGNER=$SIGNER" >> "$GITHUB_ENV"
+          echo "using $SIGNER"
+
+      - name: take both keys out of their secrets
+        env:
+          DEBUG_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+          RELEASE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$DEBUG_B64"   || { echo "ANDROID_DEBUG_KEYSTORE_BASE64 is not set"; exit 1; }
+          test -n "$RELEASE_B64" || { echo "ANDROID_KEYSTORE_BASE64 is not set"; exit 1; }
+          printf '%s' "$DEBUG_B64"   | base64 -d > "$RUNNER_TEMP/debug.keystore"
+          printf '%s' "$RELEASE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          test -s "$RUNNER_TEMP/debug.keystore" && test -s "$RUNNER_TEMP/release.jks"
+
+      # 1. THE GATE. The certificate in a real old APK must be the certificate in the debug keystore.
+      #    If these differ, the installed app was signed by some other key and no lineage built here
+      #    can make an update install. Fail here, loudly, rather than on a phone.
+      - name: the old APK and the debug key must be the same certificate
+        run: |
+          APK="${{ inputs.old_apk }}"
+          test -f "$APK" || { echo "no such APK in this repo: $APK"; exit 1; }
+
+          IN_APK=$("$APKSIGNER" verify --print-certs "$APK" \
+            | grep -iE 'certificate SHA-256 digest' | head -1 | grep -oE '[0-9a-f]{64}')
+          IN_KEY=$(keytool -list -v -keystore "$RUNNER_TEMP/debug.keystore" \
+            -storepass android -alias androiddebugkey 2>/dev/null \
+            | grep -iE '^\s*SHA256:' | head -1 | tr -d ' ' | sed 's/^SHA256://' | tr -d ':' | tr 'A-F' 'a-f')
+
+          echo "certificate in $APK : ${IN_APK:-NONE FOUND}"
+          echo "certificate in debug keystore : ${IN_KEY:-NONE FOUND}"
+          test -n "$IN_APK" || { echo "could not read the APK's certificate"; exit 1; }
+          test -n "$IN_KEY" || { echo "could not read the debug keystore's certificate (alias androiddebugkey, password android)"; exit 1; }
+
+          if [ "$IN_APK" != "$IN_KEY" ]; then
+            echo
+            echo "STOP. The installed Coco was NOT signed with this debug key."
+            echo "A lineage from this key would produce an APK Android still refuses, so rotation"
+            echo "cannot help. The old signing key has to be found first, or the phones need the"
+            echo "one-time uninstall after all."
+            exit 1
+          fi
+          echo "MATCH - the installed app and this debug key are the same certificate, so rotation is valid"
+
+      # 2. And the key we are rotating TO must be the one Coco Cloud will accept, or the release gate
+      #    would refuse the build even once it installs.
+      - name: the new key must be Coco's release key
+        env:
+          PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          EXPECTED=9401c60e44e2e7845a12082a3789f35fc6eb4cc8bb39d57adb2007253f13a86c
+          GOT=$(keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -storepass "$PW" \
+                 -alias "${ALIAS:-coco}" 2>/dev/null \
+                | grep -iE '^\s*SHA256:' | head -1 | tr -d ' ' | sed 's/^SHA256://' | tr -d ':' | tr 'A-F' 'a-f')
+          echo "release key certificate : ${GOT:-NONE FOUND}"
+          test "$GOT" = "$EXPECTED" || { echo "that is not the release key Coco Cloud expects ($EXPECTED)"; exit 1; }
+          echo "MATCH - rotating towards the key the release gate accepts"
+
+      # 3. The lineage itself: a signed statement that the release key succeeds the debug key.
+      - name: build the lineage
+        env:
+          PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          "$APKSIGNER" rotate \
+            --out "$RUNNER_TEMP/coco-signing-lineage" \
+            --old-signer --ks "$RUNNER_TEMP/debug.keystore" --ks-pass pass:android \
+                         --ks-key-alias androiddebugkey --key-pass pass:android \
+            --new-signer --ks "$RUNNER_TEMP/release.jks" --ks-pass "pass:$PW" \
+                         --ks-key-alias "${ALIAS:-coco}" --key-pass "pass:$PW"
+          ls -l "$RUNNER_TEMP/coco-signing-lineage"
+          echo "lineage sha256: $(sha256sum "$RUNNER_TEMP/coco-signing-lineage" | cut -d' ' -f1)"
+          "$APKSIGNER" lineage --print-certs --in "$RUNNER_TEMP/coco-signing-lineage" || true
+          mkdir -p out && cp "$RUNNER_TEMP/coco-signing-lineage" out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coco-signing-lineage
+          path: out/coco-signing-lineage
+          if-no-files-found: error
+
+      - name: what to do with it
+        run: |
+          echo "Commit out/coco-signing-lineage to the repo as 'Lounge Android/coco-signing-lineage'."
+          echo "It is public certificate material, not a secret, and must ship inside every APK."
+          echo "Release builds then sign with --lineage, and updates install over the old app in place."
