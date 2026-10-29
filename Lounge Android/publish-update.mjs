@@ -21,11 +21,31 @@ if (!KEY) { console.error(`Service key missing: set SUPABASE_SERVICE_KEY, or put
 // refused, delete it and try again every 15 minutes for as long as the row said so. So the first build
 // after a key change is announced as pending, the founders uninstall and reinstall once by hand, and
 // only then is the row promoted to apk_latest - after which every later release updates by itself again.
-const ROW = process.argv.includes('--pending') ? 'apk_pending' : 'apk_latest';
+//
+// Since 2026-10-29 the choice is made from release.json rather than by hand: a release that carries a
+// "bootstrap" note is one the phones cannot take unattended, so it goes to apk_pending; every other
+// release goes straight to apk_latest and rolls out by itself. --pending still forces pending, and
+// --latest forces latest, for the rare case of overriding the file.
+const bootstrap = RELEASE.bootstrap || null;
+const ROW = process.argv.includes('--latest') ? 'apk_latest'
+  : (process.argv.includes('--pending') || bootstrap) ? 'apk_pending' : 'apk_latest';
+
+// release.json is the single source of the user-facing version; build.gradle.kts carries only the
+// phone's internal counter. release.test.js fails the build if the two disagree, so reading both and
+// trusting each for its own field cannot drift.
+const RELEASE = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'Lounge', 'release.json'), 'utf8'));
 
 const gradle = fs.readFileSync(path.join(HERE, 'app', 'build.gradle.kts'), 'utf8');
 const versionCode = Number(gradle.match(/versionCode = (\d+)/)[1]);
 const versionName = gradle.match(/versionName = "([^"]+)"/)[1];
+// The signing certificate apksigner found in the APK we are about to publish. Coco Cloud refuses a
+// release whose certificate is not Coco's own key, so passing it is what lets the release be published
+// without anyone approving it: the check is done by a machine that cannot be in a hurry.
+const certArg = process.argv.indexOf('--cert');
+const cert = certArg > -1 ? String(process.argv[certArg + 1] || '').replace(/:/g, '').toLowerCase() : null;
+const verifiedBy = process.env.GITHUB_RUN_ID ? `github-actions:${process.env.GITHUB_RUN_ID}`
+  : process.env.COCO_VERIFIED_BY || null;
+
 const apk = path.join(HERE, 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
 if (!fs.existsSync(apk)) { console.error('Build first: gradlew assembleRelease'); process.exit(1); }
 const file = `coco-lounge-${versionCode}.apk`;

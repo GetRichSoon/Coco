@@ -27,6 +27,8 @@
   "minimum": "2.8.0",
 
   "_status": "A Coco release is only 'released' when BOTH artifacts exist. 2.9.0 is not: the desktop half reached both PCs through the repo on 2026-10-28, the phone half was never built, because versionCode 16 was already spent on 2.8.2 and the phones' own updater skips anything at or below the code they run. So 2.9.0 is a half release, and saying 'released' would have been a lie on two of the four clients.",
+  "_bootstrap": "Set when a release cannot reach the phones unattended, and read by publish-update.mjs: a release carrying this goes to controls/apk_pending instead of apk_latest, so neither phone is told to install something Android will refuse. Remove it once both phones run a build signed with the release key, after which every release goes straight to apk_latest and updates by itself.",
+  "bootstrap": "Both phones must uninstall Coco Lounge once and reinstall 2.9.0 by hand: this is the first build signed with the real release key instead of the laptop debug key, and Android refuses an update whose signature differs from the installed one.",
   "status": "blocked",
   "platforms": {
     "desktop": { "state": "shipped", "artifact": "the repo, fast-forwarded by each desktop every 30 min", "sha256": null },
