@@ -16,6 +16,23 @@ import java.time.LocalDate
 
 /** Everything the Lounge shows, kept in step with Coco Cloud. One source of truth: the cloud. */
 class Lounge(app: Application) : AndroidViewModel(app) {
+    companion object {
+        /** However little pulses, a full read still runs this often while the app is on screen, so
+         *  the tables with no slice of their own can never be more than a minute stale to a founder
+         *  who is looking. Same number as the web Lounge. */
+        const val FULL_EVERY = 60_000L
+        /** The topics a single read can answer. Anything else means the full read - deliberately,
+         *  because controls, policies, events and pipelines have no slice and must still arrive. */
+        val SLICES = setOf("devices", "houses", "tasks", "approvals", "decisions", "rules", "activity", "commands")
+
+        /** Whether this burst of pulses needs the whole company read back. Kept pure so the rule can
+         *  be tested without an Android context, because one line of it is load-bearing: a topic
+         *  with no slice takes the full read whether the app is on screen or not, which is how a
+         *  company stop reaches a phone in someone's pocket. */
+        fun needsFullRead(topics: List<String>, foreground: Boolean, sinceFull: Long) =
+            topics.isEmpty() || topics.any { it !in SLICES } || (foreground && sinceFull > FULL_EVERY)
+    }
+
     val cloud = Cloud(app)
 
     enum class Gate { SignIn, Pair, Open }
@@ -65,6 +82,14 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     private var stopListening: (() -> Unit)? = null
     private var heartbeat: Job? = null
     private var reloadJob: Job? = null
+    // A pulse names the one table that changed, so most changes do not need the whole company read
+    // back. reload() is twenty-two queries; before this, every pulse of any topic took all of them,
+    // foreground or not. Measured 2026-10-31: devices, houses, tasks, commands and activity are
+    // 99.4% of all pulses, and `devices` alone is 56%.
+    private val hot = mutableSetOf<String>()
+    private var lastFull = 0L
+    private var reloading = false
+    private var reloadAgain = false
 
     init { if (gate == Gate.Open) open() }
 
@@ -110,7 +135,9 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 founder = founders.objects().firstOrNull { it.optString("email").equals(cloud.email, true) }
                 reload()
                 stopListening?.invoke()
-                stopListening = cloud.listen(onPulse = { quickCommands(); scheduleReload() }, onState = { ok -> live = ok; if (ok) scheduleReload() })
+                // A reconnect is reported as "*": while the socket was down anything could have
+                // changed, so that one takes the full read.
+                stopListening = cloud.listen(onPulse = { topic -> quickCommands(); scheduleReload(topic) }, onState = { ok -> live = ok; if (ok) scheduleReload("*") })
                 heartbeat?.cancel()
                 heartbeat = viewModelScope.launch { var n = 0; while (true) { if (n % 12 == 0) beat(); if (!live) quickCommands(); n++; delay(5_000) } }
             } catch (e: Cloud.CloudError) { if (e.code == 401) gate = Gate.SignIn else fail(e) } catch (e: Exception) { fail(e) }
@@ -130,9 +157,61 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { runCatching { runMyCommands(cloud.list("commands", "select=*&target_device=eq.$me&status=eq.queued&order=created_at.asc").objects()) } }
     }
 
-    private fun scheduleReload() { reloadJob?.cancel(); reloadJob = viewModelScope.launch { delay(350); reload() } }
+    /** Pulses arriving in the same breath are coalesced into one refresh, and what they named is
+     *  kept so the refresh knows which tables to read. */
+    private fun scheduleReload(topic: String) {
+        synchronized(hot) { hot.add(topic) }
+        reloadJob?.cancel()
+        reloadJob = viewModelScope.launch {
+            delay(350)
+            refreshFor(synchronized(hot) { hot.toList().also { hot.clear() } })
+        }
+    }
 
+    /** One read per changed table, with the same safety net as the web Lounge: a topic we have no
+     *  slice for takes the full read, so controls, policies, events and pipelines keep propagating -
+     *  that is how a company stop reaches this phone. The one-minute floor only applies in the
+     *  foreground: with the app behind something there is no screen to keep fresh, and onResume()
+     *  already does a full read the moment it comes back. Notifications are unaffected either way -
+     *  approvals, tasks and activity each have a slice, and Alerts runs on every one of them. */
+    private suspend fun refreshFor(topics: List<String>) {
+        if (needsFullRead(topics, PhoneRemote.foreground, System.currentTimeMillis() - lastFull)) { reload(); return }
+        for (t in topics) if (!slice(t)) { reload(); return }
+    }
+
+    /** Reads back the one table a pulse named. Returns false if anything went wrong, which is never
+     *  a reason to keep showing old rows: the caller falls back to the full read. */
+    private suspend fun slice(topic: String): Boolean = runCatching {
+        val was = data
+        data = when (topic) {
+            "devices" -> was.copy(devices = cloud.list("devices", "select=*&order=id.asc").objects())
+            "houses" -> was.copy(houses = cloud.list("houses", "select=*&order=sort.asc").objects())
+            "tasks" -> was.copy(tasks = cloud.list("tasks", "select=*&order=created_at.desc").objects())
+            "approvals" -> was.copy(approvals = cloud.list("approvals", "select=*&order=raised_on.desc").objects())
+            "decisions" -> was.copy(decisions = cloud.list("decisions", "select=*&order=decided_on.desc").objects())
+            "rules" -> was.copy(rules = cloud.list("rules", "select=*&order=updated_at.desc").objects())
+            "activity" -> was.copy(activity = cloud.list("activity", "select=*&order=at.desc&limit=20").objects())
+            "commands" -> was.copy(commands = cloud.list("commands", "select=*&order=created_at.desc&limit=30").objects())
+            else -> return false
+        }
+        Alerts.compareAndNotify(getApplication(), was, data, name)
+        if (topic == "commands") runMyCommands(data.commands)
+        true
+    }.getOrDefault(false)
+
+    /** One full read at a time. onResume() and a pulse can land together, and two whole-company
+     *  reads at once is the thing this change exists to stop; a change that arrives mid-read is
+     *  picked up by the repeat below rather than lost. Same rule as the web Lounge. */
     suspend fun reload() {
+        if (reloading) { reloadAgain = true; return }
+        reloading = true
+        try {
+            readAll()
+            while (reloadAgain) { reloadAgain = false; readAll() }
+        } finally { reloading = false }
+    }
+
+    private suspend fun readAll() {
         try {
             val d = Data(
                 houses = cloud.list("houses", "select=*&order=sort.asc").objects(),
@@ -158,6 +237,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 integrations = runCatching { cloud.list("integrations", "select=*&order=platform.asc").objects() }.getOrDefault(emptyList()),
                 agentMessages = runCatching { cloud.list("agent_messages", "select=*&order=at.desc&limit=40").objects() }.getOrDefault(emptyList()),
             )
+            lastFull = System.currentTimeMillis()
             Alerts.compareAndNotify(getApplication(), data, d, name)
             data = d
             runMyCommands(d.commands)

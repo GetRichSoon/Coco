@@ -121,7 +121,10 @@ class Cloud(context: Context) {
     }
 
     /** Live pulse: any change in Coco Cloud arrives here within a second. Reconnects on its own. */
-    fun listen(onPulse: () -> Unit, onState: (Boolean) -> Unit): () -> Unit {
+    /** onPulse is given the pulse row's `topic` - the name of the table that changed - so a caller
+     *  can read back just that one table instead of the whole company. A payload we cannot read the
+     *  topic out of is reported as "*", which every caller must treat as "something changed". */
+    fun listen(onPulse: (String) -> Unit, onState: (Boolean) -> Unit): () -> Unit {
         var socket: WebSocket? = null
         var closed = false
         var ref = 1
@@ -146,7 +149,9 @@ class Cloud(context: Context) {
                     val m = runCatching { JSONObject(text) }.getOrNull() ?: return
                     when (m.optString("event")) {
                         "phx_reply" -> if (m.optJSONObject("payload")?.optString("status") == "ok" && m.optString("topic") == "realtime:pulse") onState(true)
-                        "postgres_changes" -> onPulse()
+                        "postgres_changes" -> onPulse(
+                            m.optJSONObject("payload")?.optJSONObject("data")?.optJSONObject("record")
+                                ?.optString("topic")?.takeIf { it.isNotBlank() } ?: "*")
                     }
                 }
                 override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) { onState(false); retry() }

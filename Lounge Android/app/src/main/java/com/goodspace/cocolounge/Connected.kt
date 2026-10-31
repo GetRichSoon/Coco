@@ -52,7 +52,9 @@ class Connected : Service() {
 
     private fun loop() {
         val cloud = Cloud(applicationContext)
-        stopListen = runCatching { cloud.listen(onPulse = { scope.launch { runQueued(cloud) } }, onState = {}) }.getOrNull()
+        // The topic is ignored here on purpose: this service only ever runs queued commands, and a
+        // command can ride in on any pulse. It never reads the company, so it has nothing to route.
+        stopListen = runCatching { cloud.listen(onPulse = { _ -> scope.launch { runQueued(cloud) } }, onState = {}) }.getOrNull()
         scope.launch {
             var n = 0
             while (true) {
