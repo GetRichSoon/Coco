@@ -116,6 +116,38 @@ const stale = new Function('sb', 'D', 'document', 'render', 'diffAndNotify', 'pu
     {}, { hidden: false }, () => {}, () => {}, () => {}, async () => { throw new Error('FULL'); });
 await assert.rejects(() => stale.refreshFor(['devices']), /FULL/, 'a hot topic still takes the full read once the minute is up');
 
+// ---------------------------------------------------------------- the clock does not tick unwatched
+// Measured 2026-10-31: four devices beating around the clock turned that one-minute floor into most
+// of 15.2 GB of egress and about five million requests in seventeen days, nearly all of it read into
+// variables behind a hidden window. The floor bounds how stale the SCREEN is, so with no screen it
+// does not apply - visibilitychange runs loadAll() the moment the window comes back.
+// A stale world whose window is hidden, built the same way as the one above.
+const staleHidden = (hidden) => new Function('sb', 'D', 'document', 'render', 'diffAndNotify', 'pushIsland', 'loadAllNow',
+  block.replace('lastFull = 0;', 'lastFull = Date.now() - 120000;') + '; return { refreshFor };')(
+    { from: (t) => { const api = { select: () => api, order: () => api, limit: () => api, then: (f) => Promise.resolve({ data: [t], error: null }).then(f) }; return api; } },
+    {}, { hidden }, () => {}, () => {}, () => {}, async () => { throw new Error('FULL'); });
+
+// hidden, two minutes stale, known topic: the slice is read and the company is NOT
+await assert.doesNotReject(() => staleHidden(true).refreshFor(['devices']),
+  'a hidden window past the minute reads its slice, not the whole company');
+
+// THE SAFETY NET, HIDDEN. This is the one that must not regress: a company stop made on a phone has
+// to reach a PC whose window is behind something, so an unknown topic still takes the full read.
+await assert.rejects(() => staleHidden(true).refreshFor(['policies']), /FULL/,
+  'an unknown topic takes the full read even when hidden - this is how a company stop reaches a sleeping PC');
+await assert.rejects(() => staleHidden(true).refreshFor(['*']), /FULL/,
+  'and so does a pulse whose topic we cannot read');
+await assert.rejects(() => staleHidden(true).refreshFor([]), /FULL/,
+  'and an empty burst, hidden or not');
+assert.ok(/!document\.hidden/.test(block), 'the floor is gated on the window being on screen');
+
+// ---------------------------------------------------------------- history slices stay bounded
+// decisions is append-only and shown newest-first, so the slice carries a limit like activity does.
+// Unbounded, it was the largest single payload in the full read (measured 45,969 bytes at 132 rows).
+w = world();
+assert.equal(w.api.SLICE.decisions[2], 100, 'the decisions slice is capped at 100 rows');
+assert.equal(w.api.SLICE.activity[2], 100, 'as activity already was');
+
 // ---------------------------------------------------------------- a failed read never leaves old rows
 w = world({ fail: 'devices' });
 await w.api.loadAll(); w.reads.length = 0; w.drew.full = 0;

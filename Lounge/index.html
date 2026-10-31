@@ -503,7 +503,10 @@ async function boot() {
   if (!data || !data.length) { store.del('gs-device-key'); store.del('gs-device-id'); sb = makeClient(null); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); }
   founder = data.find(f => f.email.toLowerCase() === me.email.toLowerCase());
   show('app'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(pollApprovals, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
+  // The approvals fallback runs every 15 s while the window is on screen and every 60 s behind it:
+  // realtime already delivers an approval the instant it is raised, and notifications still need to
+  // reach a hidden window, so the fallback slows down rather than stopping.
+  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(() => { if (!document.hidden || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
   if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
@@ -692,14 +695,21 @@ const SLICE = {
   houses:    ['houses', ['sort', true]],
   tasks:     ['tasks', ['created_at', false]],
   approvals: ['approvals', ['raised_on', false]],
-  decisions: ['decisions', ['decided_on', false]],
+  decisions: ['decisions', ['decided_on', false], 100],
   rules:     ['rules', ['updated_at', false]],
   activity:  ['activity', ['at', false], 100],
   commands:  ['commands', ['created_at', false], 15],
 };
 const FULL_EVERY = 60000;
+// The clock bounds how stale the SCREEN is, so it does not tick while there is no screen. Hidden,
+// loadAllNow() downloaded the whole company once a minute to update variables nobody was looking at:
+// measured 2026-10-31, that floor was most of 15.2 GB of egress and ~5M requests in 17 days, four
+// devices beating around the clock. visibilitychange already runs loadAll() the moment the window
+// comes back, so nothing on screen is ever stale. An unknown topic still takes the full read whether
+// hidden or not - that is how a company stop reaches a sleeping PC, and the test below holds it.
+const fullDue = () => Date.now() - lastFull > FULL_EVERY && !document.hidden;
 async function refreshFor(topics) {
-  if (!topics.length || topics.some((t) => !SLICE[t]) || Date.now() - lastFull > FULL_EVERY) return loadAll();
+  if (!topics.length || topics.some((t) => !SLICE[t]) || fullDue()) return loadAll();
   const got = await Promise.all(topics.map((t) => {
     const [table, order, lim] = SLICE[t];
     const r = sb.from(table).select('*').order(order[0], { ascending: order[1] });
@@ -719,7 +729,7 @@ async function loadAllNow() {
     q('houses', '*', ['sort', true]), q('categories', '*', ['code', true]), q('offerings', '*', ['name', true]), q('platforms', '*', ['sort', true]),
     q('members', '*', ['sort', true]), q('member_houses'), q('tools', '*', ['name', true]), q('member_tools'),
     q('tasks', '*', ['created_at', false]), q('task_notes', '*', ['at', true]), q('approvals', '*', ['raised_on', false]),
-    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]), q('activity', '*', ['at', false]).limit(100), q('founders'), q('rules', '*', ['updated_at', false]),
+    q('devices', '*', ['id', true]), q('decisions', '*', ['decided_on', false]).limit(100), q('activity', '*', ['at', false]).limit(100), q('founders'), q('rules', '*', ['updated_at', false]),
     q('commands', '*', ['created_at', false]).limit(15), q('integrations', '*', ['platform', true]),
     q('agent_messages', '*', ['at', false]).limit(40), q('notes', '*', ['created_at', false]),
   ]);
@@ -876,9 +886,10 @@ if (window.cocoDesktop && window.cocoDesktop.onUpdate) window.cocoDesktop.onUpda
 });
 // The island must stay current even when the live channel is down: a light 15 s poll of approvals only,
 // re-pushed only when something actually changed (at the office, approvals live ONLY on the island).
-let approvalsKey = '', feedKey = '', countKey = '';
+let approvalsKey = '', feedKey = '', countKey = '', lastPoll = 0;
 async function pollApprovals() {
   if (!founder) return;
+  lastPoll = Date.now();
   const [ap, ac, am, tk, ho, dv] = await Promise.all([sb.from('approvals').select('*').order('raised_on', { ascending: false }), sb.from('activity').select('*').order('at', { ascending: false }).limit(100), sb.from('agent_messages').select('*').order('at', { ascending: false }).limit(40), sb.from('tasks').select('*').order('created_at', { ascending: false }), sb.from('houses').select('*').order('sort', { ascending: true }), sb.from('devices').select('*').order('id', { ascending: true })]);
   let changed = false;
   if (!ap.error && ap.data) { const k = ap.data.map(a => a.id + ':' + a.state).join(','); if (k !== approvalsKey) { approvalsKey = k; D.approvals = ap.data; changed = true; } }
