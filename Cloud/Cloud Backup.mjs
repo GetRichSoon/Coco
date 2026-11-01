@@ -1,3 +1,6 @@
+// CANONICAL BACKUP (2026-11-01). The one scheduled backup of Coco Cloud. The repo's scripts/cloud-backup.mjs is a
+// manual full export (adds pulse, schema, function sources and a verified manifest) and is not scheduled; its
+// extras are to be folded in here in Step 2. Known gap: this needs Google Drive Desktop running (G: mounted).
 // Nightly Coco Cloud backup (founder YES 2026-10-25: code on GitHub, live data in Supabase, backups on Google Drive).
 // 1. Every Coco Cloud table goes to Google Drive as JSON: one folder per weekday (overwritten each week) plus a monthly copy on the 1st.
 // 2. Release APKs that Drive does not have yet are copied to Drive "APK Archive" (copy only, never deletes).

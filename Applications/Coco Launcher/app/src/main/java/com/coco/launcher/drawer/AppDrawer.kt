@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
@@ -133,8 +134,11 @@ private fun DrawerContent(
         if (startInSearch) runCatching { focus.requestFocus() }
     }
 
+    // Pixel tints the all-apps sheet with the wallpaper palette instead of using flat grey, which
+    // is what makes dynamic colour visible at all on a dark wallpaper.
+    val drawerColor = colors.primary.copy(alpha = 0.10f).compositeOver(colors.surface)
     Surface(
-        color = colors.surface.copy(alpha = 0.94f),
+        color = drawerColor.copy(alpha = 0.95f),
         modifier = Modifier
             .fillMaxSize()
             // A downward fling anywhere on the drawer closes it, as on the stock home screen.

@@ -63,3 +63,6 @@
 - [Token discipline](feedback_token_discipline.md) — fewer tokens: no repeat work, one full brief per agent, pause agents near limits, token tool approved 2026-10-26
 - [Company handoff](project_company_handoff.md) — new sessions read company/HANDOFF.md on main first: full context, live state, 30-min check duty
 - [Chrome Web Store publishing](project_cws_publishing.md) — use extension.mjs + os/extensions.json; ask the store, not the repo; one Google account per extension, 2SV gates uploads; cloud secrets die silently
+- [No Opera browser](feedback_no_opera_browser.md) — use Chromium/Chrome for browser work, never Opera
+- [Supabase backup state](project_supabase_backup_state.md) — nightly Drive job outside repo (fails without G:), Step 1 backups in Safe Keeping, cloud-foundation local/remote divergence 2026-11-01
+- [B2 storage proof](project_b2_storage_proof.md) — 16/16 passed 2026-11-01 on proof/b2-storage; secrets on CocoMaison; lifecycle verify id proof-mvy3p93o due 2026-11-03

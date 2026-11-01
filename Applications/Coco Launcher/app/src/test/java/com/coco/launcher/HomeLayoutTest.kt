@@ -44,7 +44,11 @@ class HomeLayoutTest {
     fun firstFreeScansInReadingOrder() {
         val layout = HomeLayout(listOf(app("a", 0, 0), app("b", 1, 0)))
         assertEquals(2 to 0, layout.firstFree(5, 5))
-        assertEquals(0 to 1, layout.firstFree(5, 5, spanX = 2, spanY = 1))
+        // A two-cell item still fits in the first row here, at the first gap wide enough for it.
+        assertEquals(2 to 0, layout.firstFree(5, 5, spanX = 2, spanY = 1))
+        // With the end of the row blocked there is no two-cell gap left, so it wraps.
+        val blocked = HomeLayout(listOf(app("a", 0, 0), app("b", 1, 0), app("c", 3, 0)))
+        assertEquals(0 to 1, blocked.firstFree(4, 4, spanX = 2, spanY = 1))
         assertNull(HomeLayout(listOf(widget("w", 0, 0, 5, 5))).firstFree(5, 5))
     }
 

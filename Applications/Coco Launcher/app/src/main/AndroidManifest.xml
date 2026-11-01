@@ -32,7 +32,6 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
-            android:screenOrientation="unspecified"
             android:stateNotNeeded="true"
             android:taskAffinity=""
             android:theme="@style/Theme.CocoLauncher"
@@ -43,5 +42,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <!-- The home screen keeps itself out of the drawer, like a stock launcher, so the settings
+             are the app's visible face in the app list. -->
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CocoLauncher.Settings">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 </manifest>
