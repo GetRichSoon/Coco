@@ -263,7 +263,9 @@ export async function handle(db, req, now = Date.now()) {
     stats.errors++;
     const status = e instanceof NovaError ? e.status : /statement timeout/i.test(e.message) ? 504 : /permission denied|row-level security|violates row-level/i.test(e.message) ? 403 : 500;
     log(status, { error: String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) });
-    return json(status, { message: status === 500 ? 'Nova could not complete that' : e.message, hint: status === 500 ? 'check the Nova logs' : undefined });
+    // a 500 stays opaque to an app, but the cloud runtime (it sent an engine key) is told the redacted cause, so a failing sync can be fixed without the platform's logs
+    const detail = status === 500 && req.headers['x-engine-key'] ? String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 300) : undefined;
+    return json(status, { message: status === 500 ? 'Nova could not complete that' : e.message, hint: status === 500 ? 'check the Nova logs' : undefined, detail });
   }
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
