@@ -38,7 +38,8 @@ class Cloud(context: Context) {
     var deviceKey: String? get() = prefs.getString("device_key", null); set(v) = prefs.edit().putString("device_key", v).apply()
     var deviceId: String? get() = prefs.getString("device_id", null); set(v) = prefs.edit().putString("device_id", v).apply()
 
-    val signedIn get() = refreshToken != null || (viaNova && deviceKey != null)
+    // Nova mode: the pairing code is the whole credential, so there is no sign-in step before pairing
+    val signedIn get() = refreshToken != null || viaNova
     val paired get() = deviceKey != null
 
     class CloudError(message: String, val code: Int = 0) : Exception(message)
@@ -84,7 +85,7 @@ class Cloud(context: Context) {
         http.newCall(b.build()).execute().bodyOrThrow()
     }
 
-    suspend fun list(table: String, query: String = "select=*"): JSONArray = JSONArray(request("$table?$query").ifBlank { "[]" })
+    suspend fun list(table: String, query: String = "select=*"): JSONArray { if (viaNova && email == null && deviceKey != null) runCatching { me() }; return JSONArray(request("$table?$query").ifBlank { "[]" }) }
     suspend fun insert(table: String, row: JSONObject) { request(table, "POST", row.toString(), "return=minimal") }
     suspend fun update(table: String, filter: String, row: JSONObject) { request("$table?$filter", "PATCH", row.toString(), "return=minimal") }
     /** Takes a row only if the filter still matches; true = this device won it (no double runs). */

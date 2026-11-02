@@ -205,17 +205,15 @@ const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-
 function json(status, body, extra = {}) { const text = body === null ? '' : JSON.stringify(body); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
 // ---------------------------------------------------------------- Vercel adapter
-let pgModule = null, shared = null;
-// One connection per warm instance (transaction pooler on the other side), re-opened if it broke.
+let pgModule = null, pool = null;
+// A small pool per warm instance: connections stay open between requests, and two requests served by
+// the same instance at once never share a connection (a BEGIN / SET LOCAL ROLE must stay its own).
 export async function connect() {
   if (!process.env.DATABASE_URL) throw new NovaError(503, 'Nova has no DATABASE_URL');
   pgModule ||= await import('pg');
-  if (shared) { try { await shared.query('SELECT 1'); return shared; } catch { try { await shared.end(); } catch {} shared = null; } }
-  const client = new pgModule.default.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 5000 });
-  await client.connect();
-  client.on('error', () => { shared = null; });
-  shared = client;
-  return client;
+  pool ||= new pgModule.default.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 5000, max: 4, idleTimeoutMillis: 60000 });
+  pool.on?.('error', () => {});
+  return pool.connect();
 }
 export async function vercel(req, res) {
   const url = new URL(req.url, 'http://nova');
@@ -231,5 +229,5 @@ export async function vercel(req, res) {
     const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');
-  } finally { /* the connection stays open for the next request on this instance */ }
+  } finally { try { db?.release?.(); } catch {} }
 }
