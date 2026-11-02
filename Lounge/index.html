@@ -2455,7 +2455,7 @@ function chatNatural(message, text, rest, found, has) {
     const teamOf = up ? up.id : (target ? chatScope(target).p_team : null);
     // a destination counts only when its whole name is said, or it is a part of the agent's own team
     const parent = found.filter((e) => ['subteam', 'team'].indexOf(e.kind) >= 0 && e.id !== (target || {}).id
-        && mv[2].indexOf(String(e.name).toLowerCase()) >= 0)[0]
+        && mv[2].indexOf(String(e.name).toLowerCase()) >= 0 && (!teamOf || e.id === teamOf || chatScope(e).p_team === teamOf))[0]
       || chatPartByWord(mv[2], 'subteam', teamOf);
     return { intent: 'move', target, parent, entities: found,
              missing: !target ? ['which agent to move'] : !parent ? ['where to move it'] : [] };
@@ -2925,15 +2925,18 @@ async function chatAct(it) {
     const clash = structureClash(it.kind, it.name, it.parent);
     if (clash) return { text: clash.name + ' already exists' + (clash.parent ? ' under ' + clash.parent : '') + '. I did not create a duplicate.',
       cards: [{ t: clash.kind, v: clash.id, go: '#teams' }] };
-    const id = slugOf(it.name);
-    if (!id) return { text: 'I could not make an id out of that name.' };
+    if (!slugOf(it.name)) return { text: 'I could not make an id out of that name.' };
+    // a sub-team or category lives under its parent's id (ebooks/practical-skills/...), as the rest of
+    // the company does: a bare "research" would collide with the Research Guild team's own id
+    const id = chatFreeId((it.parent && (it.kind === 'subteam' || it.kind === 'category') ? it.parent.id + '/' : '') + slugOf(it.name));
     const made = await structureOp('create', id, null, {
       p_kind: it.kind, p_parent: it.parent ? it.parent.id : null, p_name: it.name,
       p_description: 'created from Coco Chat',
     });
+    if (made) chatRemember1({ kind: it.kind, id, name: it.name, parent: it.parent ? it.parent.id : null });
     return made && { text: 'Created ' + it.kind + ' ' + it.name + ' (' + id + ')'
       + (it.parent ? ' under ' + it.parent.name : '') + '. It starts paused, as every new part of the company does.',
-      acted: true, cards: [{ t: it.kind, v: id, go: '#teams' }] };
+      acted: true, verify: [id], cards: [{ t: it.kind, v: id, go: '#teams' }] };
   }
   if (it.intent === 'rename') {
     const made = await structureOp('edit', it.target.id, null, { p_kind: it.target.kind, p_name: it.name });
