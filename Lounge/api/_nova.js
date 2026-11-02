@@ -17,7 +17,9 @@ export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms',
   'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations', 'agent_messages', 'notes', 'releases', 'runs', 'run_events', 'ai_calls', 'brain_items', 'policies',
   'control_ops', 'structure', 'integration_accounts', 'integration_links', 'outputs', 'pairing_codes', 'chat', 'controls', 'pipelines', 'pulse', 'jobs',
   'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats']);   // every public table except engine_keys and oauth_states
-export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_oauth_begin', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status']);
+export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_oauth_begin', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status',
+  // the cloud runtime's own functions: each one re-checks the engine key itself (private.engine_ok), so a paired device without that header is refused by Postgres, not trusted by Nova
+  'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval']);
 const OPS = { eq: '=', neq: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=', like: 'LIKE', ilike: 'ILIKE' };
 const CACHE_S = Number(process.env.NOVA_CACHE_SECONDS || 15);
 const RATE = Number(process.env.NOVA_RATE_PER_MINUTE || 120);
@@ -124,10 +126,11 @@ export async function authenticate(db, deviceKey, now = Date.now()) {
 
 // Run one statement the way PostgREST would have: as `authenticated`, with the founder's claims
 // and the device header visible to the SQL functions, inside one transaction (pooler-safe).
-export async function runAs(db, who, deviceKey, { sql, params }) {
+export async function runAs(db, who, deviceKey, { sql, params }, engineKey = null) {
   stats.db_calls++;
   const claims = JSON.stringify({ email: who.email, role: 'authenticated', sub: who.email });
-  const headers = JSON.stringify({ 'x-device-key': deviceKey });
+  // the engine key rides along when the caller sent one: the queue and policy RLS read it from request.headers exactly as PostgREST would have set it
+  const headers = JSON.stringify(engineKey ? { 'x-device-key': deviceKey, 'x-engine-key': engineKey } : { 'x-device-key': deviceKey });
   await db.query('BEGIN');
   try {
     await db.query(`SELECT set_config('request.jwt.claims', $1, true), set_config('request.headers', $2, true), set_config('statement_timeout', $3, true)`, [claims, headers, String(TIMEOUT)]);
@@ -199,7 +202,7 @@ export async function handle(db, req, now = Date.now()) {
     const [, isRpc, name] = m;
     if (isRpc) {
       if (req.method !== 'POST') return json(405, { message: 'rpc is POST' });
-      const rows = await runAs(db, who, deviceKey, buildRpc(name, req.body || {}));
+      const rows = await runAs(db, who, deviceKey, buildRpc(name, req.body || {}), req.headers['x-engine-key'] || null);
       invalidate(); log(200, { device: who.device_id, rpc: name });
       const value = rows.length === 1 ? rows[0].value : rows.map((r) => r.value);
       return json(200, value);
@@ -209,12 +212,12 @@ export async function handle(db, req, now = Date.now()) {
       const key = `${who.email}|${name}|${JSON.stringify(req.query)}`;
       const c = cache.get(key);
       if (c && now - c.at < CACHE_S * 1000) { stats.cache_hits++; log(200, { device: who.device_id, table: name, cache: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
-      const rows = await runAs(db, who, deviceKey, buildSelect(name, req.query));
+      const rows = await runAs(db, who, deviceKey, buildSelect(name, req.query), req.headers['x-engine-key'] || null);
       cache.set(key, { at: now, body: rows }); stats.cache_misses++;
       log(200, { device: who.device_id, table: name, cache: 'miss', rows: rows.length });
       return json(200, rows, { 'x-nova-cache': 'miss' });
     }
-    const rows = await runAs(db, who, deviceKey, buildWrite(name, req.method, req.query, req.body, req.headers.prefer || ''));
+    const rows = await runAs(db, who, deviceKey, buildWrite(name, req.method, req.query, req.body, req.headers.prefer || ''), req.headers['x-engine-key'] || null);
     invalidate(name); log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length });
     return json(/return=representation/.test(req.headers.prefer || '') ? 200 : 201, /return=representation/.test(req.headers.prefer || '') ? rows : null);
   } catch (e) {
@@ -225,7 +228,7 @@ export async function handle(db, req, now = Date.now()) {
   }
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
-const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
+const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
 function json(status, body, extra = {}) { const text = body === null ? '' : JSON.stringify(body); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
 // ---------------------------------------------------------------- Vercel adapter
