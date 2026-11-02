@@ -147,7 +147,15 @@ export async function handle(db, req, now = Date.now()) {
     if (req.path.endsWith('/rest/rpc/pair_device') || req.path.endsWith('/rest/v1/rpc/pair_device')) {
       if (req.method !== 'POST') return json(405, { message: 'rpc is POST' });
       if (!rateOk('pair:' + (req.headers['x-forwarded-for'] || 'unknown'), now)) return json(429, { message: 'too many pairing attempts' });
-      const rows = await runAs(db, { email: '' }, '', buildRpc('pair_device', req.body || {}));
+      const code = String(req.body?.p_code || '').trim(), newKey = String(req.body?.p_device_key || '');
+      if (!code || newKey.length < 16) return json(400, { message: 'pairing needs p_code and p_device_key' });
+      // The code is the credential. It names one device, whose owner is the founder pair_device() must
+      // see; the function then checks the hash, the expiry and single use itself, exactly as before.
+      const owner = await db.query(`SELECT d.owner_email FROM public.pairing_codes c JOIN public.devices d ON d.id = c.device_id WHERE c.code_hash = encode(extensions.digest($1, 'sha256'), 'hex') AND c.used_at IS NULL AND c.revoked_at IS NULL AND c.expires_at > now() LIMIT 1`, [code]);
+      if (!owner.rows.length) { log(400, { rpc: 'pair_device', why: 'code wrong or expired' }); return json(400, { message: 'code wrong or expired' }); }
+      let rows;
+      try { rows = await runAs(db, { email: owner.rows[0].owner_email }, newKey, buildRpc('pair_device', { p_code: code, p_device_key: newKey })); }
+      catch (e) { log(400, { rpc: 'pair_device', why: e.message.slice(0, 120) }); return json(400, { message: e.message.replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) }); }
       invalidate('devices'); log(200, { rpc: 'pair_device' });
       return json(200, rows.length === 1 ? rows[0].value : rows.map((r) => r.value));
     }
@@ -197,12 +205,16 @@ const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-
 function json(status, body, extra = {}) { const text = body === null ? '' : JSON.stringify(body); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
 // ---------------------------------------------------------------- Vercel adapter
-let pgModule = null;
+let pgModule = null, shared = null;
+// One connection per warm instance (transaction pooler on the other side), re-opened if it broke.
 export async function connect() {
   if (!process.env.DATABASE_URL) throw new NovaError(503, 'Nova has no DATABASE_URL');
   pgModule ||= await import('pg');
+  if (shared) { try { await shared.query('SELECT 1'); return shared; } catch { try { await shared.end(); } catch {} shared = null; } }
   const client = new pgModule.default.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 5000 });
   await client.connect();
+  client.on('error', () => { shared = null; });
+  shared = client;
   return client;
 }
 export async function vercel(req, res) {
@@ -219,5 +231,5 @@ export async function vercel(req, res) {
     const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');
-  } finally { try { await db?.end?.(); } catch {} }
+  } finally { /* the connection stays open for the next request on this instance */ }
 }

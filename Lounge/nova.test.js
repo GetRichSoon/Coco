@@ -88,10 +88,11 @@ await t('7 errors: RLS refusals are 403, timeouts 504, anything else 500 without
 });
 
 await t('8 pairing is the only call allowed without a device key, and it runs with no claims', async () => {
-  const db = fakeDb([{ value: { device_id: 'phone-1', device_key: 'new-key' } }]); invalidate();
+  const base = fakeDb([{ value: 'phone-1' }]); const db = { sql: base.sql, query: async (t, p) => /FROM public\.pairing_codes c JOIN/.test(t) ? { rows: p[0] === '123456' ? [{ owner_email: 'boss@example.com' }] : [] } : base.query(t, p) }; invalidate();
   const r = await handle(db, req('POST', '/rest/v1/rpc/pair_device', { key: '', body: { p_code: '123456', p_device_key: 'new-key-0123456789abcdef' } }));
-  assert.equal(r.status, 200, r.body); assert.deepEqual(JSON.parse(r.body), { device_id: 'phone-1', device_key: 'new-key' });
-  const cfg = db.sql.find((x) => /set_config/.test(x.text)); assert.match(cfg.params[0], /"email":""/);
+  assert.equal(r.status, 200, r.body); assert.equal(JSON.parse(r.body), 'phone-1');
+  const cfg = db.sql.find((x) => /set_config/.test(x.text)); assert.match(cfg.params[0], /"email":"boss@example.com"/, 'the code names the device, the device names the founder');
+  assert.equal((await handle(db, req('POST', '/rest/v1/rpc/pair_device', { key: '', body: { p_code: '000000', p_device_key: 'new-key-0123456789abcdef' } }))).status, 400, 'a wrong code is a 400, not a founder lookup');
   assert.equal((await handle(db, req('POST', '/rest/v1/rpc/submit_task', { key: '', body: {} }))).status, 401, 'every other rpc still needs the device key');
 });
 

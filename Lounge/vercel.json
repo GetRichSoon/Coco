@@ -39,5 +39,8 @@
       "source": "/api/:path*",
       "destination": "/api/nova?__path=api/:path*"
     }
+  ],
+  "regions": [
+    "bom1"
   ]
 }
