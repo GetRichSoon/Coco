@@ -395,9 +395,15 @@ const releaseDevices = () => {
     <div class="muted" style="margin-top:8px">${r ? 'cloud release ' + esc(r.release_id) + ', ' + esc(r.status) + '<br>' + approval + (r.published_at ? ' \u00b7 published ' + ago(r.published_at) : '') : 'no cloud release row yet, showing the file'}</div></div>`;
 };
 
+// Nova mode (2026-11-02): the apps no longer read the database gateway directly. nova.json next to this
+// page ({ "url": "https://..." }) or localStorage gs-nova-url names Nova; supabase-js then builds the same
+// PostgREST requests against Nova, which authenticates by the device key and serves from its cache.
+// No session, no realtime socket: the live link becomes a 15 s poll of /api/changes (one tiny row).
+let NOVA = store.get('gs-nova-url') || null;
+const novaFetch = (path, init = {}) => fetch(NOVA + path, { ...init, headers: { ...(init.headers || {}), 'x-device-key': store.get('gs-device-key') || '', 'content-type': 'application/json' } });
 let sb = makeClient(store.get('gs-device-key'));
 function makeClient(deviceKey) {
-  return supabase.createClient(URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
+  return supabase.createClient(NOVA || URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
 }
 let rTarget = null, rSong = '', rSay = '';
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'rSay' || e.target.id === 'rSong')) { const b = document.querySelector(e.target.id === 'rSay' ? '[data-rc="say"]' : '[data-rc="play_youtube"]'); if (b) b.click(); } });
@@ -491,9 +497,17 @@ async function loadControlPlane() {
 const PAGES = [['home', 'Home', 'home'], ['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
+  if (!NOVA) { try { const r = await fetch('nova.json', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); if (j && j.url) { NOVA = String(j.url).replace(/\/$/, ''); store.set('gs-nova-url', NOVA); sb = makeClient(store.get('gs-device-key')); } } } catch {} }
+  if (NOVA) {
+    if (!store.get('gs-device-key')) return show('pair');
+    let who; try { const r = await novaFetch('/api/me'); if (r.status === 401) { store.del('gs-device-key'); store.del('gs-device-id'); return show('pair', 'This device is not paired (or was switched off). Pair it again with a new code.'); } if (!r.ok) throw new Error('Nova answered ' + r.status); who = await r.json(); }
+    catch (e) { console.error('Coco boot: Nova not reachable (' + (e.message || e) + '), retrying in 20 s'); setTimeout(boot, 20000); return; }
+    me = { email: who.email }; deviceId = who.device_id; store.set('gs-device-id', deviceId);
+  } else {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return show('signin');
   me = session.user;
+  }
   if (!store.get('gs-device-key')) return show('pair');
   const { data, error } = await sb.from('founders').select('*');
   // A network or server error (no Wi-Fi yet after waking, a timeout) is NOT a rejected device: try again in 20 s and keep
@@ -938,7 +952,16 @@ function connectLive() {
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
     });
 }
+let novaVersion = null;
+async function pollChanges() {
+  try {
+    const r = await novaFetch('/api/changes'); if (!r.ok) { setLive(false); return; }
+    const c = await r.json(); setLive(true);
+    if (c.version !== novaVersion) { const first = novaVersion === null; novaVersion = c.version; if (!first) refreshFor([c.last_topic || '*']); }
+  } catch { setLive(false); }
+}
 function listen() {
+  if (NOVA) { pollChanges(); setInterval(() => { if (!document.hidden || Date.now() - lastPoll > 60000) pollChanges(); }, 15000); setInterval(runMyCommands, 5000); return; }
   connectLive();
   addEventListener('online', () => { connectLive(); heartbeat(); });
   addEventListener('offline', () => setLive(false));
@@ -973,7 +996,7 @@ async function heartbeat() {
     update_state: d.state || null }).eq('id', deviceId).select('id'); };
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
-  if (res.error || !res.data || !res.data.length) { try { await sb.auth.refreshSession(); } catch {} res = await tryBeat(); }
+  if (res.error || !res.data || !res.data.length) { if (!NOVA) { try { await sb.auth.refreshSession(); } catch {} } res = await tryBeat(); }
   if (!res.error && res.data && res.data.length && window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat();
   else console.error('heartbeat failed:', res.error ? (res.error.message || res.error) : 'no row updated (signed out or device key rejected)', 'device', deviceId);
 }

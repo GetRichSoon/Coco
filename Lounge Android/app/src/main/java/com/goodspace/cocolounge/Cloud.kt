@@ -21,6 +21,11 @@ class Cloud(context: Context) {
         const val URL = "https://bfnhnkxvppqmklfpslfm.supabase.co"
         const val KEY = "sb_publishable_had-6h5KG1epTVwISeuWbg_IKg7IO1s"
         private val JSON = "application/json".toMediaType()
+        /** Nova (2026-11-02): the control API the apps talk to instead of the database gateway. It speaks the
+         *  same PostgREST paths, authenticates by this device's key alone (no founder session needed) and serves
+         *  from its cache; the live pulse becomes a 15 s poll of one tiny row. Blank = talk to the gateway directly. */
+        const val NOVA = "https://cocolounge.vercel.app"
+        val viaNova get() = NOVA.isNotBlank()
     }
 
     private val prefs = context.getSharedPreferences("coco_lounge", Context.MODE_PRIVATE)
@@ -33,7 +38,7 @@ class Cloud(context: Context) {
     var deviceKey: String? get() = prefs.getString("device_key", null); set(v) = prefs.edit().putString("device_key", v).apply()
     var deviceId: String? get() = prefs.getString("device_id", null); set(v) = prefs.edit().putString("device_id", v).apply()
 
-    val signedIn get() = refreshToken != null
+    val signedIn get() = refreshToken != null || (viaNova && deviceKey != null)
     val paired get() = deviceKey != null
 
     class CloudError(message: String, val code: Int = 0) : Exception(message)
@@ -68,7 +73,8 @@ class Cloud(context: Context) {
     }
 
     private suspend fun request(path: String, method: String = "GET", body: String? = null, prefer: String? = null): String = withContext(Dispatchers.IO) {
-        val b = Request.Builder().url("$URL/rest/v1/$path").header("apikey", KEY).header("Authorization", "Bearer ${token()}")
+        val b = if (viaNova) Request.Builder().url("$NOVA/rest/v1/$path")
+                else Request.Builder().url("$URL/rest/v1/$path").header("apikey", KEY).header("Authorization", "Bearer ${token()}")
         deviceKey?.let { b.header("x-device-key", it) }
         prefer?.let { b.header("Prefer", it) }
         when (method) {
@@ -124,9 +130,31 @@ class Cloud(context: Context) {
     /** onPulse is given the pulse row's `topic` - the name of the table that changed - so a caller
      *  can read back just that one table instead of the whole company. A payload we cannot read the
      *  topic out of is reported as "*", which every caller must treat as "something changed". */
+    /** Who this device belongs to, from Nova; remembered so the screens have a name without a session. */
+    suspend fun me(): JSONObject = withContext(Dispatchers.IO) {
+        val b = Request.Builder().url("$NOVA/api/me"); deviceKey?.let { b.header("x-device-key", it) }
+        JSONObject(http.newCall(b.get().build()).execute().bodyOrThrow()).also { it.optString("email").takeIf { e -> e.isNotBlank() }?.let { e -> email = e } }
+    }
+
     fun listen(onPulse: (String) -> Unit, onState: (Boolean) -> Unit): () -> Unit {
         var socket: WebSocket? = null
         var closed = false
+        if (viaNova) {
+            // one tiny signal every 15 s; a changed version names the topic to refresh, nothing else is read
+            var version: String? = null
+            Thread {
+                while (!closed) {
+                    try {
+                        val b = Request.Builder().url("$NOVA/api/changes"); deviceKey?.let { b.header("x-device-key", it) }
+                        val o = JSONObject(http.newCall(b.get().build()).execute().bodyOrThrow())
+                        onState(true)
+                        val v = o.optString("version"); if (version != null && v != version) onPulse(o.optString("last_topic").ifBlank { "*" }); version = v
+                    } catch (_: Exception) { onState(false) }
+                    Thread.sleep(15_000)
+                }
+            }.start()
+            return { closed = true }
+        }
         var ref = 1
         fun connect() {
             if (closed) return
