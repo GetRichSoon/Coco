@@ -30,6 +30,7 @@
       ]
     }
   ],
+  "functions": { "api/nova.js": { "maxDuration": 60 } },
   "rewrites": [
     {
       "source": "/rest/v1/:path*",

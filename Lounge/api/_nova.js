@@ -11,6 +11,9 @@
 // Env: DATABASE_URL (pooler connection string, transaction mode), NOVA_CACHE_SECONDS (15),
 //      NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000)
 import { createHash } from 'node:crypto';
+import { handlePublish } from './_publish.js';
+// test seams: a stand-in fetch and provider hosts for the publishing layer
+export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {} };
 
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
@@ -189,6 +192,8 @@ export async function handle(db, req, now = Date.now()) {
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
+    // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
+    if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
       // The newest cloud build is the latest GitHub release of the (public) Coco repository:
       // tag android-<version>-<code>, the APK as its asset, the sha256 in its notes.
@@ -245,7 +250,8 @@ export async function handle(db, req, now = Date.now()) {
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
 const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
-function json(status, body, extra = {}) { const text = body === null ? '' : JSON.stringify(body); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
+// a null result is the JSON text `null`, never an empty body: a caller parsing a 200 must always get JSON. Only a write with return=minimal (201) sends nothing.
+function json(status, body, extra = {}) { const text = body === null && status === 201 ? '' : JSON.stringify(body ?? null); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
 // ---------------------------------------------------------------- Vercel adapter
 let pgModule = null, pool = null;
