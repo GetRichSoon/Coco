@@ -74,14 +74,18 @@ export function buildSelect(table, query) {
 }
 export function buildWrite(table, method, query, body, prefer = '') {
   const params = [], conds = [];
-  for (const [k, v] of Object.entries(query)) { if (['select', 'order', 'limit', 'offset'].includes(k)) continue; if (k === 'or') conds.push(orGroup(params, v)); else conds.push(where(params, k, v)); }
+  for (const [k, v] of Object.entries(query)) { if (['select', 'order', 'limit', 'offset', 'on_conflict'].includes(k)) continue; if (k === 'or') conds.push(orGroup(params, v)); else conds.push(where(params, k, v)); }
   const returning = /return=representation/.test(prefer) ? ' RETURNING *' : '';
   if (method === 'POST') {
     const rows = Array.isArray(body) ? body : [body];
     if (!rows.length || typeof rows[0] !== 'object') throw new NovaError(400, 'insert needs an object or an array of objects');
     const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))];
     const values = rows.map((r) => '(' + keys.map((k) => { params.push(r[k] === undefined ? null : typeof r[k] === 'object' && r[k] !== null ? JSON.stringify(r[k]) : r[k]); return `$${params.length}`; }).join(', ') + ')').join(', ');
-    return { sql: `INSERT INTO public.${q(table)} (${keys.map(q).join(', ')}) VALUES ${values}${returning}`, params };
+    // PostgREST's upsert: ?on_conflict=a,b with Prefer: resolution=merge-duplicates (the ledger sync uses it)
+    let upsert = '';
+    if (query.on_conflict && /resolution=merge-duplicates/.test(prefer)) { const cols = String(query.on_conflict).split(',').map((c) => c.trim()); upsert = ` ON CONFLICT (${cols.map(q).join(', ')}) DO UPDATE SET ${keys.filter((k) => !cols.includes(k)).map((k) => `${q(k)} = EXCLUDED.${q(k)}`).join(', ') || `${q(cols[0])} = EXCLUDED.${q(cols[0])}`}`; }
+    else if (query.on_conflict && /resolution=ignore-duplicates/.test(prefer)) upsert = ' ON CONFLICT DO NOTHING';
+    return { sql: `INSERT INTO public.${q(table)} (${keys.map(q).join(', ')}) VALUES ${values}${upsert}${returning}`, params };
   }
   if (method === 'PATCH') {
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new NovaError(400, 'update needs an object');
@@ -203,6 +207,9 @@ export async function handle(db, req, now = Date.now()) {
       invalidate('chat'); log(out.status, { device: who.device_id, chat: out.body.scope || 'refused' });
       return json(out.status, out.body);
     }
+    // one complete AI total for a task: every call and every job under the run tree (coco_run_usage)
+    const um = req.path.match(/^\/api\/usage\/run\/([A-Za-z0-9_.:-]{3,80})$/);
+    if (um) { const rows = await runAs(db, who, deviceKey, { sql: 'SELECT public.coco_run_usage($1) AS v', params: [um[1]] }, req.headers['x-engine-key'] || null); log(200, { device: who.device_id, usage: um[1] }); return json(200, rows[0]?.v ?? null); }
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
