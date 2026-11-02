@@ -15,7 +15,7 @@ const KEY = 'device-key-0123456789abcdef';
 const fakeDb = (rows = []) => { const sql = []; return { sql, async query(text, params = []) { sql.push({ text, params });
   if (/FROM public\.devices d JOIN/.test(text)) return { rows: params[0] === sha256(KEY) ? [{ id: 'boss-pc', owner_email: 'boss@example.com', name: 'Boss PC' }] : [] };
   if (/^SELECT 1 AS ok/.test(text)) return { rows: [{ ok: 1 }] };
-  if (/greatest\(/.test(text)) return { rows: [{ version: '2026-11-02T08:00:00Z', last_topic: 'tasks' }] };
+  if (/FROM public\.pulse ORDER BY id DESC/.test(text)) return { rows: [{ version: '2026-11-02T08:00:00Z', last_topic: 'tasks' }] };
   return { rows: Array.isArray(rows) ? rows : [] }; } }; };
 const req = (method, path, { query = {}, body = null, key = KEY, prefer = '' } = {}) => ({ method, path, query, headers: { 'x-device-key': key, prefer }, body });
 
