@@ -506,7 +506,7 @@ async function boot() {
   // The approvals fallback runs every 15 s while the window is on screen and every 60 s behind it:
   // realtime already delivers an approval the instant it is raised, and notifications still need to
   // reach a hidden window, so the fallback slows down rather than stopping.
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(() => { if (!document.hidden || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
+  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(() => { if ((!isLive && !document.hidden) || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
   if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
@@ -907,7 +907,7 @@ setInterval(() => { if (!document.hidden) renderStrip(); }, 4000);   // rotates 
 // the refresh knows which slices to read.
 let pulseTimer = null, pulseHot = new Set();
 // Live link that never stays down: rebuilds itself with growing pauses (2s, 4s, 8s ... 30s) and on network return.
-let channel = null, isLive = false, retryTimer = null, tries = 0;
+let channel = null, isLive = false, retryTimer = null, tries = 0, stableTimer = null;
 function setLive(ok) { isLive = ok; $('#liveDot').classList.toggle('on', ok); $('#liveText').textContent = ok ? 'live' : 'reconnecting'; }
 function connectLive() {
   clearTimeout(retryTimer);
@@ -924,12 +924,17 @@ function connectLive() {
         refreshFor(hot);
       }, document.hidden ? 10000 : 1500);
     })
+    // Only tables in the realtime publication (approvals, devices, pulse, task_notes, tasks). Subscribing to
+    // houses / activity / agent_messages, which are not published, made the server acknowledge the join and
+    // then fail it, and every acknowledgement below ran a full company read: measured 2026-11-01, one desktop
+    // read all 31 tables every 2 seconds, 59,000 requests an hour, which is what exhausted the cloud's egress.
+    // houses and activity changes arrive as pulse topics; agent_messages ride on the approvals poll.
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, feedSoon)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'houses' }, feedSoon)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity' }, feedSoon)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_messages' }, feedSoon)
     .subscribe((s) => {
-      if (s === 'SUBSCRIBED') { tries = 0; setLive(true); loadAll(); }
+      // A subscribe is not a reason to read the whole company: the first load already did, and a link that
+      // comes back reads the four hot slices. The backoff resets only once the link has stayed up a minute,
+      // so a channel that joins and fails cannot loop at the shortest pause.
+      if (s === 'SUBSCRIBED') { setLive(true); clearTimeout(stableTimer); stableTimer = setTimeout(() => { if (isLive) tries = 0; }, 60000); if (Date.now() - lastFull > FULL_EVERY) loadAll(); else refreshFor(['approvals', 'devices', 'tasks', 'commands']); }
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
     });
 }
