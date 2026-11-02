@@ -19,7 +19,9 @@ export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms',
   'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats']);   // every public table except engine_keys and oauth_states
 export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_oauth_begin', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status',
   // the cloud runtime's own functions: each one re-checks the engine key itself (private.engine_ok), so a paired device without that header is refused by Postgres, not trusted by Nova
-  'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval', 'pair_cloud_worker']);
+  'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval', 'pair_cloud_worker',
+  // the publisher asks the company which channel a video belongs to; it never asks Nova for a credential (coco_publish_secret stays off this list)
+  'coco_publish_target']);
 const OPS = { eq: '=', neq: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=', like: 'LIKE', ilike: 'ILIKE' };
 const CACHE_S = Number(process.env.NOVA_CACHE_SECONDS || 15);
 const RATE = Number(process.env.NOVA_RATE_PER_MINUTE || 120);
