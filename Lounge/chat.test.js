@@ -120,10 +120,11 @@ await t('disconnecting an account goes through coco_connection', async () => {
 });
 
 // ---------------------------------------------------------------- the things it must not do
-await t('it asks instead of guessing which thing to pause', async () => {
+await t('"pause it" never pauses on its own: it asks, or names what "it" is and waits for a yes', async () => {
   const a = await C.chatSend('pause it');
-  assert.strictEqual(CALLS.length, 0, 'nothing may be changed when the target is unknown');
-  assert.ok(/which target/i.test(a.text) || /will not guess/i.test(a.text), a.text);
+  assert.strictEqual(CALLS.length, 0, 'nothing may be changed before the founder confirms what "it" is');
+  assert.ok(/which/i.test(a.text) || /will not guess/i.test(a.text) || a.state === 'Ready for confirmation', a.text);
+  await C.chatSend('no');
 });
 
 await t('run now asks the cloud through the gated RPC', async () => {
@@ -146,7 +147,7 @@ await t('a refusal from the control plane is reported, never dressed up', async 
 await t('an unknown message offers what it can do, and changes nothing', async () => {
   const a = await C.chatSend('sandwich please');
   assert.strictEqual(CALLS.length, 0);
-  assert.ok(/did not catch a command/.test(a.text), a.text);
+  assert.ok(/not sure what you would like/.test(a.text), a.text);
 });
 
 await t('a sentence with no rule is offered as cloud work and waits for a yes', async () => {
@@ -163,9 +164,10 @@ await t('nothing in the chat path can reach a model', () => {
 
 
 // ---------------------------------------------------------------- Batch 1: shaping the company
-await t('create a team goes through coco_structure', async () => {
+await t('create a team goes through coco_structure, with its Team Head', async () => {
   const a = await C.chatSend('create a Telegram team');
-  assert.strictEqual(CALLS.length, 1);
+  assert.strictEqual(CALLS.length, 2, JSON.stringify(CALLS));
+  assert.deepStrictEqual([CALLS[1].args.p_kind, CALLS[1].args.p_id, CALLS[1].args.p_parent], ['agent', 'telegram.head', 'telegram']);
   assert.strictEqual(CALLS[0].fn, 'coco_structure');
   assert.strictEqual(CALLS[0].args.p_op, 'create');
   assert.strictEqual(CALLS[0].args.p_kind, 'team');
@@ -229,10 +231,12 @@ await t('archive and restore use the real ops', async () => {
   assert.strictEqual(CALLS[0].args.p_op, 'restore');
 });
 
-await t('archiving something unnamed asks instead of picking', async () => {
+await t('"archive it" never archives on its own: it asks, or names what "it" is and waits for a yes', async () => {
   const a = await C.chatSend('archive it');
   assert.strictEqual(CALLS.length, 0);
-  assert.ok(/Which/i.test(a.text), a.text);
+  assert.ok(/Which/i.test(a.text) || a.state === 'Ready for confirmation', a.text);
+  await C.chatSend('no');
+  assert.strictEqual(CALLS.length, 0);
 });
 
 await t('chat never writes a table directly', () => {

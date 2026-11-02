@@ -427,13 +427,15 @@ await t('work never publishes, and says so', async () => {
   assert.ok(!CALLS.some((c) => /publish/i.test(c.fn)), 'no publish RPC may be called');
 });
 
-await t('a team with no workflow is told, not given an invented one', async () => {
+await t('a team with no workflow gets the work as a cloud task, never an invented workflow run', async () => {
   const flowTeams = new Set((CPREAL.cloud_runtime.pipelines || []).map((f) => f.team));
   const bare = CPREAL.teams.filter((x) => !flowTeams.has(x.id) && String(x.name || '').length > 3)[0];
   assert.ok(bare, 'expected at least one team with no workflow in the snapshot');
   const a = await C.chatSend('start working on ' + bare.name);
-  assert.strictEqual(CALLS.length, 0, 'nothing is queued against a workflow that does not exist');
-  assert.ok(/no workflow belongs to/i.test(a.text), a.text);
+  assert.ok(!CALLS.some((c) => c.fn === 'coco_request_run'), 'nothing is queued against a workflow that does not exist');
+  const task = CALLS.find((c) => c.fn === 'submit_task');
+  assert.ok(task && task.args.p_needs === 'cloud', JSON.stringify(CALLS));
+  assert.ok(/as cloud work/.test(a.text), a.text);
 });
 
 await t('a team with several workflows is a question', async () => {
@@ -561,7 +563,8 @@ await t('every mutation goes through a gated coco_ RPC', () => {
   assert.ok(fns.length, 'expected some RPCs');
   // submit_task is the company's task intake: SECURITY INVOKER, so tasks' founder+device RLS decides
   for (const f of fns) assert.ok(/^coco_/.test(f) || f === 'submit_task', f + ' is not a control-plane RPC');
-  assert.deepStrictEqual([...new Set(fns)].sort(), ['coco_brain', 'coco_request_run', 'submit_task']);
+  // coco_approval only RAISES a YES (publish it); deciding stays a tap on the approval itself
+  assert.deepStrictEqual([...new Set(fns)].sort(), ['coco_approval', 'coco_brain', 'coco_request_run', 'submit_task']);
 });
 
 await t('chat never calls Claude', () => {

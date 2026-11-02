@@ -32,7 +32,8 @@ export function engineFactory() {
     'esc', 'ago', 'num', 'online', 'devVersion', 'store', 'sb', 'toast', 'loadAll', 'policyOf', 'effective',
     'control', 'connectionOp', 'structureOp', 'confirm', 'oauthConnect', 'connectionVerify', 'VERIFY_SAID',
     `${marks}\nIDENT = IDENT_IN; RELEASE = RELEASE_IN; CLOUD_RELEASE = CLOUD_RELEASE_IN;\n${struct}\n${chat}\n`
-    + 'return { chatSend, chatSetScope, chatScopeKey, chatScopeLabel, chatTree, chatPending, chatResume, setWho: (w) => { CHAT_WHO = w; } };');
+    + 'return { chatSend, chatSetScope, chatScopeKey, chatScopeLabel, chatTree, chatPending, chatResume, chatSetLive, chatCtxSave, chatCtxLoad,'
+    + ' chatIntentOf: (t) => chatIntent(t), chatKnows: (id) => structureTree().nodes.has(id), setWho: (w) => { CHAT_WHO = w; } };');
   return factory;
 }
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8')); } catch { return null; } };
@@ -47,11 +48,15 @@ const WORLD_SQL = `SELECT
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, kind, parent_id, name, state, description FROM public.structure ORDER BY created_at) x) AS structure,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT connection_id, provider, external_name, external_id, external_handle, state, last_verified_at FROM public.integration_accounts) x) AS conns,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT connection_id, team_id, subteam_id, category_id, channel_id, enabled FROM public.integration_links) x) AS links,
-  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, workflow_id, team_id, status FROM public.outputs ORDER BY at DESC LIMIT 300) x) AS outputs,
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, workflow_id, team_id, channel_id, kind, title, status, url, at FROM public.outputs ORDER BY at DESC LIMIT 300) x) AS outputs,
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, title, details, status, house_id, created_at, updated_at FROM public.tasks ORDER BY created_at DESC LIMIT 80) x) AS tasks,
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, type, team_id, agent_id, workflow_id, status, error, attempt, created_at, completed_at, failed_at, updated_at FROM public.jobs ORDER BY updated_at DESC LIMIT 80) x) AS jobs,
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, workflow_id, state, reason, created_at, finished_at FROM public.run_requests ORDER BY created_at DESC LIMIT 20) x) AS run_requests,
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, actor, action, detail, at FROM public.activity ORDER BY at DESC LIMIT 80) x) AS activity,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT * FROM public.brain_items WHERE NOT retired ORDER BY created_at DESC LIMIT 200) x) AS brain,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT * FROM public.runs ORDER BY opened_at DESC LIMIT 60) x) AS runs,
   (SELECT row_to_json(x) FROM (SELECT * FROM public.releases ORDER BY created_at DESC LIMIT 1) x) AS release,
-  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT email, name FROM public.founders) x) AS founders`;
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT email, name, call_me FROM public.founders) x) AS founders`;
 const worlds = new Map();                     // founder email -> { at, w }
 async function world(run, email, now) {
   const hit = worlds.get(email); if (hit && now - hit.at < WORLD_MS) return hit.w;
@@ -95,34 +100,107 @@ export async function engineFor({ run, rpc, email, device, now = Date.now() }) {
     async () => { notes.push('the account check runs from Integrations on the Lounge'); return null; },
     {});
   const me = (w.founders || []).find((f) => String(f.email).toLowerCase() === String(email).toLowerCase());
-  E.setWho({ device, by: (me && me.name) || email });
-  return { E, notes };
+  E.setWho({ device, by: (me && me.name) || email, call: (me && me.call_me) || null });
+  return { E, notes, w };
 }
 
 // One turn: the founder's words in, Coco's answer out, both stored in the scope's thread.
-export async function chatTurn({ run, rpc, who, body, now = Date.now() }) {
+export async function chatTurn({ run, rpc, who, body, now = Date.now(), fetchImpl = globalThis.fetch }) {
   const text = String((body && body.body) || '').trim();
   const asked = String((body && body.scope) || 'coco');
   if (!text) return { status: 400, body: { message: 'say something' } };
   if (text.length > 4000) return { status: 400, body: { message: 'that is too long for one message (4000 characters)' } };
   if (asked.length > 300 || !SCOPE.test(asked)) return { status: 400, body: { message: 'bad scope' } };
 
-  const { E, notes } = await engineFor({ run, rpc, email: who.email, device: who.device_id, now });
+  const { E, notes, w } = await engineFor({ run, rpc, email: who.email, device: who.device_id, now, fetchImpl });
   const scope = E.chatSetScope(asked);             // a part that no longer exists lands one level up
-  const [last] = await run({ sql: `SELECT meta, created_at FROM public.chat WHERE scope = $1 AND role = 'coco' ORDER BY id DESC LIMIT 1`, params: [scope] });
-  if (last && last.meta && last.meta.pending && now - new Date(last.created_at).getTime() < PENDING_MS) E.chatResume(last.meta.pending);
+  // the thread's last turns: what "it" meant, a yes still waiting, and what was just said
+  const recent = await run({ sql: `SELECT role, body, meta, created_at FROM public.chat WHERE scope = $1 ORDER BY id DESC LIMIT 8`, params: [scope] });
+  const last = recent.find((r) => r.role === 'coco');
+  if (last && last.meta) {
+    E.chatCtxLoad(last.meta.ctx);
+    if (last.meta.pending && now - new Date(last.created_at).getTime() < PENDING_MS) E.chatResume(last.meta.pending);
+  }
+  E.chatSetLive({ tasks: w.tasks || [], jobs: w.jobs || [], runRequests: w.run_requests || [], activity: w.activity || [], apk: await apkLatest(fetchImpl, now),
+                  history: recent.slice().reverse().map((r) => ({ role: r.role, body: r.body })), now, live: true });
 
-  const by = (await world(run, who.email, now)).founders?.find((f) => String(f.email).toLowerCase() === String(who.email).toLowerCase())?.name || who.email;
+  const by = (w.founders || []).find((f) => String(f.email).toLowerCase() === String(who.email).toLowerCase())?.name || who.email;
   const [mine] = await run({ sql: `INSERT INTO public.chat (role, author, device_id, body, status, scope) VALUES ('founder', $1, $2, $3, 'answered', $4) RETURNING *`, params: [by, who.device_id, text, scope] });
-  let a, status = 'answered';
-  try { a = (await E.chatSend(text)) || { text: 'Say a little more and I will take it from there.' }; }
-  catch (e) { a = { text: 'I could not finish that, so nothing changed: ' + clean(e.message) }; status = 'failed'; }
+  let a, status = 'answered', understood = null;
+  try {
+    // A sentence no rule understands may be rewritten by a model into one the rules do - only when a
+    // key is configured, once, with the scope's name and the last turns, never the company itself.
+    let said = text;
+    const first = E.chatIntentOf(text);
+    if (['unknown', 'request_free'].includes(first.intent) && llmReady()) {
+      const r = await llmRewrite({ text, scope: E.chatScopeLabel(), history: recent.slice(0, 4).reverse(), fetchImpl });
+      if (r && r.reply) a = { text: r.reply, state: 'Answered' };
+      else if (r && r.command && r.command !== text) { said = r.command; understood = r.command; }
+    }
+    a ||= (await E.chatSend(said)) || { text: 'Say a little more and I will take it from there.' };
+  } catch (e) { a = { text: 'I could not finish that, so nothing changed: ' + clean(e.message) }; status = 'failed'; }
   const extra = notes.filter((n) => !String(a.text).includes(n));
-  const reply = String(a.text) + (extra.length && !a.acted ? ' (' + extra.join('; ') + ')' : '');
-  const meta = { cards: a.cards || [], act: a.act || null, state: a.state || null, approvals: a.approvals || [], pending: E.chatPending() || null, label: E.chatScopeLabel() };
+  let reply = (understood ? 'Understood as "' + understood + '". ' : '') + String(a.text) + (extra.length && !a.acted ? ' (' + extra.join('; ') + ')' : '');
+  // Created is not done until the database says so: every id is read back with its parent.
+  let verified = null;
+  if (a.verify && a.verify.length) {
+    const rows = await run({ sql: `SELECT id, kind, parent_id, state FROM public.structure WHERE id = ANY($1::text[])`, params: [a.verify] });
+    const have = new Set(rows.map((r) => r.id));
+    const orphans = rows.filter((r) => r.parent_id && !have.has(r.parent_id) && !E.chatKnows(r.parent_id));
+    verified = { asked: a.verify.length, found: rows.length, linked: rows.length - orphans.length };
+    reply += verified.found === verified.asked && !orphans.length
+      ? ' Verified in Coco Cloud: ' + verified.found + ' of ' + verified.asked + ' saved, every parent linked.'
+      : ' Check: only ' + verified.found + ' of ' + verified.asked + ' are in Coco Cloud' + (orphans.length ? ', ' + orphans.length + ' without a parent' : '') + '.';
+  }
+  const meta = { cards: a.cards || [], act: a.act || null, state: a.state || null, approvals: a.approvals || [], pending: E.chatPending() || null,
+                 label: E.chatScopeLabel(), ctx: E.chatCtxSave(), verified, goto: a.goto || null, tree_changed: !!(a.verify && a.verify.length) };
   const [coco] = await run({ sql: `INSERT INTO public.chat (role, author, body, reply_to, status, scope, meta) VALUES ('coco', 'Coco', $1, $2, $3, $4, $5::jsonb) RETURNING *`, params: [reply, mine.id, status, scope, JSON.stringify(meta)] });
   if (a.acted) worlds.delete(who.email);            // a change was made: the next turn reads it fresh
-  return { status: 200, body: { scope, label: meta.label, founder: mine, reply: coco } };
+  return { status: 200, body: { scope, label: meta.label, founder: mine, reply: coco, goto: meta.goto, tree_changed: meta.tree_changed } };
+}
+
+// The newest phone build, from the public GitHub releases of the Coco repo (the same source Nova's
+// /api/apk/latest uses), cached for ten minutes so asking about it costs nothing.
+let apkCache = { at: 0, value: null };
+async function apkLatest(fetchImpl, now) {
+  if (now - apkCache.at < 600000) return apkCache.value;
+  try {
+    const r = await fetchImpl('https://api.github.com/repos/GetRichSoon/Coco/releases?per_page=10', { headers: { accept: 'application/vnd.github+json', 'user-agent': 'coco-nova' } });
+    const rel = r.ok ? (await r.json()).find((x) => /^android-\d+\.\d+\.\d+-\d+$/.test(x.tag_name) && !x.draft) : null;
+    const [, versionName, code] = rel ? rel.tag_name.match(/^android-(\d+\.\d+\.\d+)-(\d+)$/) : [];
+    apkCache = { at: now, value: rel ? { versionName, versionCode: Number(code), at: rel.published_at, url: rel.html_url, sha256: /sha256\s+[0-9a-f]{64}/.test(rel.body || '') } : null };
+  } catch { apkCache = { at: now, value: null }; }
+  return apkCache.value;
+}
+
+// ---------------------------------------------------------------- the optional model
+// Off unless GEMINI_API_KEY is set on Nova (Gemini, per the founders' rule that Claude never sits on
+// a runtime path). It gets the sentence, the scope's name and four recent lines - not the company -
+// and may only answer in words or rewrite the sentence into a plain instruction the rules then
+// carry out through the same controls. It cannot act by itself.
+const llmReady = () => Boolean(process.env.GEMINI_API_KEY);
+export async function llmRewrite({ text, scope, history = [], fetchImpl = globalThis.fetch }) {
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const prompt = 'You are Coco, the operator of a small company run from a chat. The founder is talking to: ' + scope + '.\n'
+    + 'Recent lines:\n' + history.map((h) => h.role + ': ' + String(h.body).slice(0, 200)).join('\n') + '\n'
+    + 'New message: ' + text + '\n'
+    + 'If it asks the company to do something, rewrite it as ONE short plain instruction such as "create a team called X that researches Y", '
+    + '"give it two researchers", "make that agent run every morning", "start it", "what is running", "why did it fail", "publish it". '
+    + 'If it is only conversation, answer in one or two short sentences without inventing any company facts. '
+    + 'Reply with JSON only: {"command": "..."} or {"reply": "..."}.';
+  try {
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 6000);
+    const r = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST', signal: ctl.signal, headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 200 } }) });
+    clearTimeout(timer);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const out = JSON.parse(j.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+    const command = typeof out.command === 'string' ? out.command.slice(0, 300) : null;
+    const reply = typeof out.reply === 'string' ? out.reply.slice(0, 500) : null;
+    return command || reply ? { command, reply } : null;
+  } catch { return null; }
 }
 
 // The company as a selector walks it: each part with its parent, and the live agents.

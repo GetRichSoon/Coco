@@ -1,6 +1,6 @@
 {
   "name": "coco",
-  "version": "2.9.3",
+  "version": "2.10.0",
   "description": "Coco: the company's AI chief of staff (rebuilt from Nova). One core on the PC, one app for PC and phone.",
   "private": true,
   "type": "module",

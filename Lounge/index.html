@@ -1637,9 +1637,9 @@ function chatFind(text, kinds) {
 // waiting for a yes. It holds the parsed intent, not a closure, so the yes re-runs the same code
 // path a direct command would have taken.
 let CHAT_CTX = { team: null, subteam: null, category: null, channel: null, connection: null,
-                 workflow: null, reference: null, pending: null };
+                 workflow: null, reference: null, pending: null, agent: null, last: null };
 const chatCtxReset = () => { CHAT_CTX = { team: null, subteam: null, category: null, channel: null,
-                 connection: null, workflow: null, reference: null, pending: null }; };
+                 connection: null, workflow: null, reference: null, pending: null, agent: null, last: null }; };
 const CHAT_THIS = /\b(this|that|it|them|these|those|isko|iske|ise|usko|uske|wahi|yahi|same|above)\b/;
 
 // Remember what this turn resolved, deepest first, so the next sentence can say "this".
@@ -1897,7 +1897,8 @@ const slugOf = (name) => String(name || '').toLowerCase().trim()
 function parseCreate(text, found, raw) {
   const kindWord = KIND_WORDS.filter((k) => k[0].test(text))[0];
   const parentPhrase = text.match(/\b(?:under|inside|within|in)\s+(.+)$/) || text.match(/(.+?)\s+(?:ke andar|ke under|mein|me)\b/);
-  const named = text.match(/\b(?:called|named|naam)\s+(.+)$/);
+  // the name stops where the parent starts: "called Research under Lab Two" is Research
+  const named = text.match(/\b(?:called|named|naam)\s+(.+?)(?=\s+(?:under|inside|within|in)\s+|$)/);
   let name = null;
   if (named) name = named[1];
   else {
@@ -1951,6 +1952,543 @@ function parseRename(text, found, raw) {
   return { target, name };
 }
 
+// ---------------------------------------------------------------- talking like a person
+// Boss talks normally; Coco answers like a colleague who can see the whole company and act on it.
+// Everything in this section is rules over LIVE cloud rows (tasks, jobs, runs, outputs, activity,
+// devices, approvals, the structure): greetings, "what's running", "why did it fail", "build me a
+// team that...", "give it a research agent", "make that agent run every morning", "start it".
+// No model is called here. Nova may ask one only when a sentence defeats every rule, and then the
+// model only rewrites the sentence into one of these - it never touches the company itself.
+let CHAT_LIVE = { tasks: null, jobs: [], runRequests: [], activity: null, apk: null, history: [], now: null, live: false };
+function chatSetLive(l) { CHAT_LIVE = { ...CHAT_LIVE, ...(l || {}) }; }
+const HOUR_MS = 3600e3;
+const chatNowMs = () => CHAT_LIVE.now || Date.now();
+const chatAgo = (iso) => (iso ? chatNowMs() - new Date(iso).getTime() : Infinity);
+const liveTasks = () => CHAT_LIVE.tasks || (D && D.tasks) || [];
+const liveActivity = () => CHAT_LIVE.activity || (D && D.activity) || [];
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const chatCall = () => (CHAT_WHO.call || (/shreya/i.test(CHAT_WHO.by || '') ? 'Big Boss' : 'Boss'));
+// midnight in India, where the founders are: "today" is their day, not the server's
+const chatTodayStart = () => { const n = chatNowMs() + 5.5 * HOUR_MS; return n - (n % (24 * HOUR_MS)) - 5.5 * HOUR_MS; };
+
+// Which team a row belongs to. Jobs and outputs carry team_id; a chat task names its team in its
+// details; an older task names its House (Gigi, Lulu...), whose team name starts with it.
+function chatRowTeam(r) {
+  if (!r) return null;
+  if (r.team_id) return r.team_id;
+  const m = String(r.details || '').match(/^Team: ([a-z0-9._/-]+)/m);
+  if (m) return m[1];
+  if (r.house_id) {
+    const t = ((CP && CP.teams) || []).filter((x) => String(x.name || '').toLowerCase().indexOf(String(r.house_id).toLowerCase() + ' ') === 0)[0];
+    return t ? t.id : null;
+  }
+  return null;
+}
+const chatTeamName = (id) => (structureTree().nodes.get(id) || {}).name || id;
+
+// the company's heartbeat for one team (or all): what runs, waits, failed, and needs a YES
+function chatPulse(team) {
+  const t = liveTasks().filter((r) => !team || chatRowTeam(r) === team);
+  const j = (CHAT_LIVE.jobs || []).filter((r) => !team || r.team_id === team);
+  const rr = team ? [] : (CHAT_LIVE.runRequests || []);
+  return {
+    running: t.filter((r) => ['running', 'working', 'verifying'].indexOf(r.status) >= 0),
+    jobsRunning: j.filter((r) => r.status === 'running'),
+    queued: t.filter((r) => ['queued', 'planned', 'waiting_pc'].indexOf(r.status) >= 0),
+    jobsQueued: j.filter((r) => r.status === 'queued' || r.status === 'retry'),
+    failed: t.filter((r) => ['failed', 'blocked'].indexOf(r.status) >= 0 && chatAgo(r.updated_at || r.created_at) < 7 * 24 * HOUR_MS),
+    jobsFailed: j.filter((r) => ['failed', 'dead', 'blocked'].indexOf(r.status) >= 0),
+    runsFailed: rr.filter((r) => r.state === 'failed' && chatAgo(r.created_at) < 7 * 24 * HOUR_MS),
+    claimed: rr.filter((r) => r.state === 'claimed'),
+    waiting: (D.approvals || []).filter((a) => a.state === 'waiting' && (!team || a.team === team)),
+  };
+}
+const pulseLine = (p) => [
+  plural(p.running.length + p.jobsRunning.length + p.claimed.length, 'thing') + ' running',
+  (p.queued.length + p.jobsQueued.length) + ' queued',
+  (p.failed.length + p.jobsFailed.length + p.runsFailed.length) + ' need a look',
+  p.waiting.length + ' waiting for your YES'].join(', ');
+
+// ---- small talk. Anchored to the whole message, so "hi, pause ebooks" is still an instruction.
+const TALK = [
+  [/^(hi+|hello+|hey+|heya|hii+|yo|sup|namaste|namaskar|hola|good (morning|afternoon|evening|night)|what'?s up|whats up|wassup|kya haal( hai)?|kaise ho|how are you( doing)?|how'?s it going|hello coco|hi coco|hey coco)[\s!?.,]*(coco|boss)?[\s!?.]*$/i, 'greet'],
+  [/^(thanks|thank you|thx|ty|shukriya|dhanyavaad|great|nice|cool|awesome|perfect|ok cool|good job|well done|super|badhiya)[\s!.]*$/i, 'thanks'],
+  [/\b(what can you do|how do i use you|kya kar sakti|kya kar sakte|what do you do|what all can you)\b|^help[\s?!.]*$/i, 'help'],
+  [/\bwhat did i (just )?(say|ask|tell you|type)\b|\bmy last message\b|\bmaine kya (bola|kaha)\b/i, 'recall'],
+  [/^(who|what) are you[\s?!.]*$/i, 'whoami'],
+];
+function chatTalkIntent(message) {
+  const m = String(message || '').trim();
+  for (const [re, kind] of TALK) if (re.test(m)) return kind;
+  return null;
+}
+
+// ---- questions about the live company. Each answers from cloud rows; none is ever estimated.
+const LIVE_Q = [
+  [/\bwhy (did|does|is|was|has|are)\b.{0,50}\b(fail|failed|failing|stuck|slow|broken|not working|down)\b|\bwhat went wrong\b|\b(what'?s|what is|anything|kya) (stuck|failing|failed|broken)\b|\bany (errors?|failures?)\b/, 'live_failed'],
+  [/\b(what'?s|what is|what are|show( me)?|anything) (running|in progress)\b|\bwhat are (we|you|they) (working on|doing)\b|\bwhat'?s happening( right now| now)?\b|\bwhat is the company doing\b/, 'live_running'],
+  [/\b(what'?s|what is|what has|what got|anything) (been )?(finished|done|completed|shipped)\b|\bwhat did .{1,40}\b(finish|complete|ship|make|produce)\b|\bkya (khatam|pura) hua\b/, 'live_done'],
+  [/\b(what'?s|what is|anything) (pending|queued|left|remaining|next)\b|\bwhat'?s next\b|\bkya baaki\b/, 'live_pending'],
+  [/\bwhat (happened|changed)\b|\b(today|last hour|this morning)'?s? (activity|updates|news)\b|\baaj kya hua\b|\bany updates?\b/, 'live_activity'],
+  [/\bapk\b|\bandroid (build|app|release|update)\b|\bphone (build|app|update)\b/, 'live_apk'],
+  [/\b(did|has|have|was|were)\b.{0,40}\b(publish|published|post|posted|upload|uploaded|go live|gone live|went live)\b|\bis (it|the short|the video) (published|live|up)\b/, 'live_publish'],
+  [/\b(how many|which|what) devices\b|\bdevices? (are )?(connected|online|on)\b/, 'live_devices'],
+  [/\bwhich agents\b|\b(agents?|who) (are |is )?(working|busy|active)\b/, 'live_agents'],
+  [/\bwhat should (i|we) (work on|do|focus on|look at)\b|\bplan my day\b|\bpriorit(y|ies)\b|\baaj kya kar(u|na)\b|\bwhat needs me\b/, 'live_today'],
+  [/\bwhat(?:'s| is| are)? .{2,40} (doing|up to|working on)\b|\bhow is .{2,40} doing\b|\b.{2,30} kya kar (raha|rahi|rahe)\b/, 'live_team'],
+];
+function chatLiveIntent(text) {
+  if (/\bapprov|\bmy yes\b|\byes chahiye\b/.test(text)) return null;      // approvals have their own read
+  for (const [re, kind] of LIVE_Q) if (re.test(text)) return kind;
+  return null;
+}
+
+function chatLiveRead(it) {
+  const say = (text, extra) => ({ text, cards: [], ...(extra || {}) });
+  const team = it.team || null, where = team ? chatTeamName(team) : 'the company';
+  const p = chatPulse(team);
+  const title = (r) => String(r.title || r.type || r.workflow_id || r.id || '').slice(0, 70);
+  if (it.intent === 'live_running') {
+    const now = [...p.running.map(title), ...p.jobsRunning.map((j) => j.type + (j.team_id ? ' for ' + chatTeamName(j.team_id) : '')),
+                 ...p.claimed.map((r) => 'workflow ' + r.workflow_id)];
+    if (!now.length) {
+      const q = [...p.queued, ...p.jobsQueued];
+      return say('Nothing is running in ' + where + ' right now. ' + (q.length ? plural(q.length, 'thing') + ' queued, next up: ' + q.slice(0, 2).map(title).join('; ') + '.' : 'Nothing is queued either.')
+        + (p.waiting.length ? ' ' + plural(p.waiting.length, 'approval') + ' waiting for you.' : ''),
+        { approvals: p.waiting.slice(0, 3).map((a) => ({ id: a.id, code: a.code, what: String(a.what || '').slice(0, 120) })) });
+    }
+    return say(plural(now.length, 'thing') + ' running in ' + where + ': ' + now.slice(0, 4).join('; ') + '. ' + pulseLine(p) + '.');
+  }
+  if (it.intent === 'live_done') {
+    const since = chatTodayStart();
+    const fresh = (iso) => iso && new Date(iso).getTime() >= since;
+    const tasks = liveTasks().filter((r) => r.status === 'done' && fresh(r.updated_at || r.created_at) && (!team || chatRowTeam(r) === team));
+    const jobs = (CHAT_LIVE.jobs || []).filter((r) => r.status === 'done' && fresh(r.completed_at || r.updated_at) && (!team || r.team_id === team));
+    const outs = (OUTPUTS || []).filter((o) => fresh(o.at) && (!team || o.team_id === team));
+    if (!tasks.length && !jobs.length && !outs.length) return say('Nothing finished in ' + where + ' today yet.');
+    return say('Today in ' + where + ': ' + [tasks.length && plural(tasks.length, 'task') + ' done', jobs.length && plural(jobs.length, 'cloud job') + ' done',
+      outs.length && plural(outs.length, 'output') + ' made (' + outs.slice(0, 3).map((o) => (o.title || o.kind) + ' · ' + o.status).join('; ') + ')'].filter(Boolean).join(', ') + '.');
+  }
+  if (it.intent === 'live_pending') {
+    const q = [...p.queued, ...p.jobsQueued];
+    return say((q.length ? plural(q.length, 'thing') + ' queued in ' + where + ': ' + q.slice(0, 4).map(title).join('; ') + '.' : 'Nothing is queued in ' + where + '.')
+      + (p.waiting.length ? ' ' + plural(p.waiting.length, 'approval') + ' waiting for your YES.' : ''),
+      { approvals: p.waiting.slice(0, 3).map((a) => ({ id: a.id, code: a.code, what: String(a.what || '').slice(0, 120) })) });
+  }
+  if (it.intent === 'live_failed') {
+    const why = [
+      ...p.jobsFailed.map((j) => ({ what: j.type + (j.team_id ? ' (' + chatTeamName(j.team_id) + ')' : ''), why: (j.error && (j.error.message || j.error)) || j.status, at: j.failed_at || j.updated_at })),
+      ...p.runsFailed.map((r) => ({ what: 'workflow ' + r.workflow_id, why: r.reason || 'failed', at: r.finished_at || r.created_at })),
+      ...p.failed.map((r) => ({ what: title(r), why: r.status === 'blocked' ? 'blocked' + (r.details ? '' : '') : 'failed', at: r.updated_at || r.created_at })),
+    ].sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+    const slow = /\bslow\b/.test(it.text || '');
+    const paused = team && (policyOf('team', team, 'paused') === true);
+    const stopped = policyOf('company', '*', 'paused') === true;
+    if (!why.length) {
+      return say((stopped ? 'The company emergency stop is ON, so nothing new starts. ' : '') + (paused ? where + ' is paused, so it takes no new work. ' : '')
+        + (slow ? 'Nothing has failed in ' + where + '. ' + plural(p.queued.length + p.jobsQueued.length, 'thing') + ' are queued and ' + (p.running.length + p.jobsRunning.length) + ' running; queued work waits for the next cloud cycle.'
+                : 'Nothing has failed in ' + where + ' recently.'));
+    }
+    const top = why[0];
+    return say((stopped ? 'The emergency stop is ON. ' : '') + (paused ? where + ' is paused. ' : '')
+      + 'Latest failure: ' + top.what + ' — ' + String(top.why).slice(0, 160) + (top.at ? ' (' + ago(top.at) + ')' : '') + '.'
+      + (why.length > 1 ? ' ' + (why.length - 1) + ' more: ' + why.slice(1, 3).map((w) => w.what).join('; ') + '.' : '')
+      + ' Say "fix it" and I will retry what policy allows and send the rest to the team as a repair task.');
+  }
+  if (it.intent === 'live_activity') {
+    const hour = /\b(last|past) hour\b|\babhi\b/.test(it.text || '');
+    const since = hour ? chatNowMs() - HOUR_MS : chatTodayStart();
+    const name = team ? String(chatTeamName(team)).toLowerCase() : null;
+    const rows = liveActivity().filter((a) => new Date(a.at).getTime() >= since
+      && (!team || String(a.detail || '').toLowerCase().indexOf(team) >= 0 || (name && String(a.detail || '').toLowerCase().indexOf(name) >= 0)));
+    if (!rows.length) return say('Nothing was recorded in ' + where + (hour ? ' in the last hour.' : ' today.'));
+    return say(plural(rows.length, 'thing') + ' happened in ' + where + (hour ? ' in the last hour' : ' today') + '. Latest: '
+      + rows.slice(0, 4).map((a) => a.action + (a.detail ? ' — ' + String(a.detail).slice(0, 70) : '')).join('; ') + '.');
+  }
+  if (it.intent === 'live_apk') {
+    const a = CHAT_LIVE.apk;
+    if (!a) return say('I cannot see the phone builds from here right now, so I will not guess.');
+    const phones = (D.devices || []).filter((d) => /android|phone/i.test((d.name || '') + ' ' + (d.app_version || '')));
+    const on = phones.filter((d) => devVersion(d) === a.versionName);
+    return say('Yes — Coco ' + a.versionName + ' (' + a.versionCode + ') was built in the cloud ' + ago(a.at) + ' and is the latest phone update'
+      + (a.sha256 ? ', checksum published' : '') + '. ' + (phones.length ? on.length + ' of ' + phones.length + ' phones report it.' : ''),
+      { cards: [{ t: 'APK', v: a.versionName + ' (' + a.versionCode + ')', go: a.url || '#system' }] });
+  }
+  if (it.intent === 'live_publish') {
+    const outs = (OUTPUTS || []).filter((o) => (!team || o.team_id === team) && (!/short|video/.test(it.text || '') || /video|short/.test(o.kind || '')))
+      .sort((x, y) => new Date(y.at || 0) - new Date(x.at || 0));
+    const o = outs[0];
+    if (!o) return say('There is no ' + (/short|video/.test(it.text || '') ? 'video' : 'output') + ' recorded' + (team ? ' for ' + where : '') + ', so nothing was published.');
+    const pub = o.status === 'published';
+    return say((pub ? 'Yes — ' : 'Not yet — ') + '"' + (o.title || o.id) + '" is ' + o.status + (o.at ? ', ' + ago(o.at) : '') + '.' + (pub && o.url ? ' ' + o.url : '')
+      + (pub ? '' : ' Say "publish it" and I will raise it for your YES.'),
+      { cards: [{ t: o.kind || 'output', v: o.status, go: o.url || '#runs' }] });
+  }
+  if (it.intent === 'live_devices') {
+    const ds = (D.devices || []).filter((d) => d.active !== false);
+    const on = ds.filter((d) => online(d));
+    return say(plural(on.length, 'device') + ' online of ' + ds.length + ' paired: ' + (on.map((d) => d.name || d.id).join(', ') || 'none') + '.');
+  }
+  if (it.intent === 'live_agents') {
+    const busy = [...new Set((CHAT_LIVE.jobs || []).filter((j) => j.status === 'running' && j.agent_id && (!team || j.team_id === team)).map((j) => j.agent_id))];
+    if (!busy.length) return say('No agent is running a job in ' + where + ' right now. ' + pulseLine(p) + '.');
+    return say(plural(busy.length, 'agent') + ' working in ' + where + ': ' + busy.join(', ') + '.');
+  }
+  if (it.intent === 'live_today') {
+    const items = [
+      ...p.waiting.slice(0, 2).map((a) => 'say yes or no to ' + a.code + ' (' + String(a.what || '').slice(0, 50) + ')'),
+      ...[...p.jobsFailed, ...p.failed].slice(0, 2).map((r) => 'look at the failed ' + title(r)),
+      ...p.queued.slice(0, 2).map((r) => 'unblock "' + title(r) + '"'),
+    ];
+    const paused = (STRUCT || []).filter((s) => s.kind === 'team' && s.state === 'paused' && chatAgo(s.created_at) < 3 * 24 * HOUR_MS);
+    if (paused.length) items.push('start the new team ' + paused[0].name + ' (it is paused)');
+    return say(items.length ? 'Today I would: ' + items.slice(0, 4).map((x, i) => (i + 1) + '. ' + x).join(' ') : 'Nothing needs you right now. ' + pulseLine(p) + '.',
+      { approvals: p.waiting.slice(0, 2).map((a) => ({ id: a.id, code: a.code, what: String(a.what || '').slice(0, 120) })) });
+  }
+  if (it.intent === 'live_team') {
+    if (!team) return say('Which team? ' + pulseLine(p) + ' across the company.');
+    const t = ((CP && CP.teams) || []).filter((x) => x.id === team)[0] || {};
+    const paused = t.paused || policyOf('team', team, 'paused') === true;
+    const last = liveActivity().filter((a) => String(a.detail || '').toLowerCase().indexOf(team) >= 0)[0];
+    return say(where + ' is ' + (paused ? 'paused' : 'live') + ': ' + pulseLine(p) + '.' + (last ? ' Last: ' + last.action + ' — ' + String(last.detail || '').slice(0, 70) + ' (' + ago(last.at) + ').' : ''));
+  }
+  return null;
+}
+
+function chatTalkRead(kind) {
+  const p = chatPulse(CHAT_SCOPE.team ? CHAT_SCOPE.team.id : null);
+  if (kind === 'greet') return { text: 'Hi ' + chatCall() + '. ' + (CHAT_LIVE.live ? pulseLine(p) + (chatScopeTarget() ? ' in ' + chatScopeLabel() : '') + '. ' : '') + 'What do you want to do?' };
+  if (kind === 'thanks') return { text: 'Anytime, ' + chatCall() + '.' };
+  if (kind === 'whoami') return { text: 'I am Coco, the company\'s operator. I run in Coco Cloud, read the live company and change it through the same controls the screens use. Anything risky waits for your yes.' };
+  if (kind === 'help') return { text: 'Talk to me normally. Ask what is running, finished, stuck or waiting, or why something failed. Tell me to build a team, sub-team, category, channel, agent or workflow; to rename, move, schedule, pause, start or archive something; to start work, fix a failure, or publish (that one waits for your YES). Pick a place in the bar above to talk to just that team or agent.' };
+  if (kind === 'recall') {
+    const mine = (CHAT_LIVE.history || []).filter((h) => h.role === 'founder');
+    return { text: mine.length ? 'You said: "' + String(mine[mine.length - 1].body).slice(0, 200) + '"' : 'This is the first thing you have said here.' };
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------- building the company by talking
+// "Create a team that researches AI tools, turns the best into daily Shorts, checks the scripts,
+// makes the videos, publishes to The Flow and tracks performance" is a company-building request.
+// The stages are read off the sentence; the team, its head, one sub-team and one agent per stage,
+// its daily workflow and its first task are then created through coco_structure / coco_control /
+// submit_task, verified in the cloud, and shown. Everything new starts paused (the database's own
+// rule) until Boss says start. The cloud cycle's provisioner turns the rows into a working team.
+const STAGES = [
+  ['research', /\bresearch|\bfind|\bscout|\bdiscover|\btrend/, 'Research', 'Researcher'],
+  ['script', /\bscript|\bwrit|\bcopy\b|\bhooks?\b/, 'Script', 'Scriptwriter'],
+  ['video', /\bvideos?\b|\brender|\bedit|\banimat|\bshorts? production|\breels?\b/, 'Video', 'Video Maker'],
+  ['design', /\bdesign|\bthumbnail|\bcovers?\b|\bartwork/, 'Design', 'Designer'],
+  ['product', /\bproducts?\b|\bebooks?\b|\bcourses?\b|\btemplates?\b|\bworkbooks?\b/, 'Product', 'Product Maker'],
+  ['qa', /\bqa\b|\bchecks?\b|\bchecking\b|\breview|\bquality|\bproofread/, 'QA', 'Reviewer'],
+  ['publish', /\bpublish|\bpost|\bupload|\blist(ing)?s?\b|\bsell/, 'Publishing', 'Publisher'],
+  ['marketing', /\bmarket|\bpromot|\bads?\b|\bsocial\b/, 'Marketing', 'Marketer'],
+  ['analytics', /\btrack|\banalytic|\bperformance|\bmetrics?\b|\breports?\b|\bstats\b/, 'Analytics', 'Analyst'],
+];
+const ROLE_WORDS = [
+  [/research/, 'research'], [/script|writ/, 'script'], [/video|editor|edit/, 'video'], [/design/, 'design'],
+  [/review|qa\b|check/, 'qa'], [/publish|post/, 'publish'], [/market/, 'marketing'], [/analy|track/, 'analytics'], [/product/, 'product'],
+];
+const NUMBERS = { a: 1, an: 1, one: 1, ek: 1, two: 2, do: 2, three: 3, teen: 3, four: 4, char: 4, five: 5, paanch: 5 };
+const UPPER = new Set(['ai', 'qa', 'yt', 'seo', 'ui', 'ux', 'api', 'kdp', 'pdf', 'b2b', 'diy']);
+// The founder's words, tidied into a name: their capitalisation where they gave one, Title Case otherwise.
+function chatTitle(words, raw) {
+  const w = String(words || '').replace(/["']/g, '').replace(/\s+/g, ' ').trim();
+  if (!w) return '';
+  const at = String(raw || '').toLowerCase().indexOf(w.toLowerCase());
+  const src = at >= 0 ? String(raw).slice(at, at + w.length) : w;
+  return src.split(' ').map((x) => UPPER.has(x.toLowerCase()) ? x.toUpperCase() : x === x.toLowerCase() ? x.charAt(0).toUpperCase() + x.slice(1) : x).join(' ');
+}
+// The subject of a request: "researches AI tools" -> AI tools, "makes daily AI news Shorts" -> AI news Shorts
+function chatTopic(text) {
+  const m = String(text).match(/\b(?:about|on|covering|researches|research|researching|makes|making|produces|producing|creates|sells|selling|for)\s+(?:daily |weekly |the best |new |some |our )?([a-z0-9][a-z0-9 &'+-]{1,40}?)(?=,|\.|;| and | that | which | then | to | every | daily|$)/);
+  return m ? m[1].replace(/\b(team|house|agent|agents|it|this|that)\b/g, '').trim() : '';
+}
+function chatStagesIn(text) { return STAGES.filter(([, re]) => re.test(text)); }
+const chatOutputWord = (text) => (String(text).match(/\b(shorts|videos|reels|ebooks|products|courses|posts|episodes)\b/) || [])[1] || '';
+
+// A new team's name: said outright, an adjective before "team", or its subject and output.
+function chatTeamName2(text, raw) {
+  const called = text.match(/\b(?:called|named|naam)\s+([a-z0-9][a-z0-9 &'-]{1,40}?)(?=,|\.| that | which | and |$)/);
+  if (called) return chatTitle(called[1], raw);
+  const adj = text.match(/\b(?:a|an|the|new|ek|naya|nayi)\s+(?:new\s+)?([a-z0-9][a-z0-9 &'-]{1,30}?)\s+(?:team|house)\b/);
+  if (adj && !/^(new|the|a|an)$/.test(adj[1])) return chatTitle(adj[1], raw);
+  const topic = chatTopic(text), out = chatOutputWord(text);
+  const name = (topic + (out && topic.toLowerCase().indexOf(out.replace(/s$/, '')) < 0 ? ' ' + out : '')).trim();
+  return name ? chatTitle(name, raw) : '';
+}
+
+// A structure id that is not taken yet: the founders' word, then -2, -3...
+function chatFreeId(base) {
+  const taken = new Set([...structureTree().nodes.keys(), ...chatAgents().map((a) => a.id)]);
+  let id = base, n = 2;
+  while (taken.has(id)) id = base + '-' + n++;
+  return id;
+}
+
+// A team with the same name or id already? Then Coco offers it instead of making a twin.
+function chatTeamTwin(name) {
+  const slug = slugOf(name), low = String(name).toLowerCase();
+  return [...structureTree().nodes.values()].filter((n) => n.kind === 'team' && n.state !== 'archived'
+    && (n.id === slug || String(n.name).toLowerCase() === low
+      || (String(n.name).toLowerCase().indexOf(low) >= 0 && low.length > 4)))[0] || null;
+}
+
+// The default shape for a kind of work, used when the sentence names fewer than two stages.
+function chatDefaultStages(text) {
+  if (/\bshorts?\b|\bvideos?\b|\byoutube\b|\breels?\b/.test(text)) return ['research', 'script', 'video', 'qa', 'publish'];
+  if (/\bsell|\bproducts?\b|\bshop|\bstore\b|\bgumroad|\bdigital\b/.test(text)) return ['research', 'product', 'publish', 'marketing', 'analytics'];
+  if (/\bebooks?\b|\bbooks?\b/.test(text)) return ['research', 'script', 'design', 'qa', 'publish'];
+  if (/\bresearch/.test(text)) return ['research', 'analytics'];
+  return [];
+}
+
+// "Every morning" is a schedule the runtime can read: daily 08:00 (IST).
+function chatSchedule(text) {
+  const t = String(text).toLowerCase();
+  const exact = t.match(/\b(daily [0-2]\d:[0-5]\d|weekly (?:mon|tue|wed|thu|fri|sat|sun) [0-2]\d:[0-5]\d)\b/);   // the grammar itself, as typed
+  if (exact) return exact[1];
+  if (/\b(hourly|every hour|har ghante)\b/.test(t)) return 'hourly';
+  const at = t.match(/\b(?:at|@)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/);
+  let hh = null, mm = '00';
+  if (at) { hh = Number(at[1]); mm = at[2] || '00'; if (at[3] === 'pm' && hh < 12) hh += 12; if (at[3] === 'am' && hh === 12) hh = 0; }
+  else if (/\bmorning|subah\b/.test(t)) hh = 8; else if (/\bafternoon|dopahar\b/.test(t)) hh = 14;
+  else if (/\bevening|shaam\b/.test(t)) hh = 18; else if (/\bnight|raat\b/.test(t)) hh = 22;
+  // a day must stand alone: "every tuesday-ish" is a hedge, and a hedge is never turned into a setting
+  if (/\b[a-z]+-ish\b|\bsomething like\b|\broughly\b/.test(t)) return null;
+  const day = (t.match(/\bevery (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?![\w-])|\bweekly on (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?![\w-])/) || []).slice(1).filter(Boolean)[0];
+  const pad = (n) => String(n).padStart(2, '0');
+  if (day) return 'weekly ' + day + ' ' + pad(hh == null ? 9 : hh) + ':' + mm;
+  if (/\b(daily|every day|everyday|roz|har din|every morning|every evening|every night)\b/.test(t) || hh != null) return 'daily ' + pad(hh == null ? 8 : hh) + ':' + mm;
+  if (/\bweekly|every week\b/.test(t)) return 'weekly mon 09:00';
+  return null;
+}
+
+// The plan for a whole team, built only from the sentence and the company - nothing is invented.
+function chatPlanTeam(text, raw) {
+  const name = chatTeamName2(text, raw);
+  if (!name) return { missing: ['a name for the team'] };
+  const twin = chatTeamTwin(name);
+  if (twin) return { twin };
+  const desc = text.replace(/^.*?\b(team|house)\b/, '');
+  let stages = chatStagesIn(desc).map((s) => s[0]);
+  if (stages.length < 2) stages = [...new Set([...stages, ...chatDefaultStages(text)])];
+  const id = chatFreeId(slugOf(name));
+  const sched = chatSchedule(text) || (stages.length ? 'daily 08:00' : null);
+  const conn = (CONNS || []).filter((c) => String(c.external_name || '').toLowerCase()
+    && text.indexOf(String(c.external_name).toLowerCase().split(/[–-]/)[0].trim()) >= 0)[0] || null;
+  const topic = chatTitle(chatTopic(text), raw);
+  return { plan: {
+    team: { id, name, description: String(raw).replace(/\s+/g, ' ').trim().slice(0, 300) },
+    head: { id: id + '.head', name: name + ' Head' },
+    stages: stages.map((k) => { const s = STAGES.filter((x) => x[0] === k)[0];
+      return { key: k, sub: { id: id + '/' + k, name: s[2] }, agent: { id: id + '.' + k, name: (topic ? topic + ' ' : '') + s[3], role: s[3] } }; }),
+    workflow: stages.length ? { id: id.replace(/[^a-z0-9._-]/g, '-') + '-daily', name: name + ' daily', steps: stages, schedule: sched } : null,
+    publish: conn ? { connection_id: conn.connection_id, name: conn.external_name } : null,
+    starter: 'First run for ' + name + ': ' + (stages[0] === 'research' ? 'research today\'s best ' + (topic || 'topics') + ' and shortlist three' : 'start the ' + (stages[0] || 'first') + ' step'),
+  } };
+}
+
+// Where a new agent / part goes when the sentence does not say: what was just made or named, then
+// the place the chat is standing in. A channel or category is not a home for an agent; its team is.
+function chatHome(found, kinds, text) {
+  // a parent counts as named only by its whole name: one shared word ("team") is not a choice
+  const low = String(text || '').toLowerCase();
+  const named = found.filter((e) => kinds.indexOf(e.kind) >= 0 && low.indexOf(String(e.name).toLowerCase()) >= 0)[0];
+  if (named) return named;
+  // memory is used only when the sentence points at it ("give IT a researcher"); otherwise the scope
+  const pointed = CHAT_THIS.test(String(text || ''));
+  const last = pointed ? CHAT_CTX.last : null;
+  if (last && kinds.indexOf(last.kind) >= 0) return last;
+  if (last && last.kind === 'agent' && last.parent) { const n = structureTree().nodes.get(last.parent); if (n && kinds.indexOf(n.kind) >= 0) return { kind: n.kind, id: n.id, name: n.name }; }
+  if (pointed) for (const k of ['subteam', 'team', 'category']) if (kinds.indexOf(k) >= 0 && CHAT_CTX[k]) return CHAT_CTX[k];
+  const here = chatScopeTarget();
+  if (here && kinds.indexOf(here.kind) >= 0) return here;
+  if (here) { const s = chatScope(here); if (kinds.indexOf('team') >= 0 && s.p_team) return { kind: 'team', id: s.p_team, name: chatTeamName(s.p_team) }; }
+  return null;
+}
+
+// "give it three researchers", "create an agent that researches AI tools", "add 2 writers to AI Video"
+function chatAgentIntent(text, raw, found) {
+  // "make that agent run every morning" points at an agent; it does not ask for a new one
+  if (/\b(that|this|the|those|these|its|my) (agents?|researchers?|writers?|editors?|designers?|reviewers?|publishers?|analysts?)\b/.test(text)
+      && !/\b(a|an|one|two|three|four|five|\d+|new|another)\s+(new\s+)?(agents?|[a-z]+(er|or|ist)s?)\b/.test(text)) return null;
+  const m = text.match(/\b(?:create|make|add|give|hire|banao|bana do)\b(?:\s+(?:it|this|that|them|the team|[a-z0-9 ]{2,30}?))?\s+(a|an|one|two|three|four|five|ek|do|teen|char|paanch|\d+)?\s*(?:new\s+)?([a-z]+?(?:er|or|ist|ant|maker|writer|lead|head)s?|agents?)\b/);
+  if (!m) return null;
+  const roleWord = m[2];
+  if (!/agent|research|writer|editor|designer|reviewer|publisher|marketer|analyst|scriptwriter|maker/.test(roleWord)) return null;
+  const count = Math.min(5, Math.max(1, Number(m[1]) || NUMBERS[m[1]] || 1));
+  const roleText = /agents?$/.test(roleWord) ? text.slice(text.indexOf(roleWord)) : roleWord;
+  const stage = (ROLE_WORDS.filter(([re]) => re.test(roleText))[0] || [])[1] || null;
+  const st = stage ? STAGES.filter((s) => s[0] === stage)[0] : null;
+  const topic = chatTitle(chatTopic(text.slice(text.indexOf(roleWord))), raw);
+  const home = chatHome(found, ['subteam', 'team'], text);
+  const base = (topic ? topic + ' ' : '') + (st ? st[3] : 'Agent');
+  return { intent: 'create_agents', count, stage, name: base, role: st ? st[3] : 'Agent', home, entities: found,
+           missing: home ? [] : ['which team the agent works for'] };
+}
+
+// "make a channel for this", "create a new category for AI video", "make me a new YouTube team"
+function chatPartName(text, raw, kindWord) {
+  const called = text.match(/\b(?:called|named|naam)\s+(.+?)(?=$| under | in | for )/);
+  if (called) return chatTitle(called[1], raw);
+  const forX = text.match(new RegExp('\\b' + kindWord + 's?\\s+(?:for|about|on)\\s+(.+?)(?=$|\\.| under | inside )'));
+  if (forX && !CHAT_THIS.test(forX[1])) return chatTitle(forX[1].replace(/\b(the|a|an)\b/g, '').trim(), raw);
+  const adj = text.match(new RegExp('\\b(?:a|an|the|new|ek|naya|nayi)\\s+(?:new\\s+)?([a-z0-9][a-z0-9 &\'-]{1,30}?)\\s+' + kindWord + '\\b'));
+  if (adj && !/^(new|the|a|an)$/.test(adj[1])) return chatTitle(adj[1], raw);
+  return '';
+}
+
+// ---- remembering what "it" means across messages, devices and requests
+function chatCtxSave() {
+  const keep = (e) => e ? { kind: e.kind, id: e.id, name: e.name, ...(e.parent ? { parent: e.parent } : {}) } : null;
+  return { last: keep(CHAT_CTX.last), agent: keep(CHAT_CTX.agent), workflow: keep(CHAT_CTX.workflow), team: keep(CHAT_CTX.team),
+           subteam: keep(CHAT_CTX.subteam), category: keep(CHAT_CTX.category), channel: keep(CHAT_CTX.channel) };
+}
+function chatCtxLoad(c) {
+  if (!c) return;
+  for (const k of ['last', 'agent', 'workflow']) if (c[k]) CHAT_CTX[k] = c[k];
+  // the scope bar wins over memory for the levels it names
+  for (const k of ['team', 'subteam', 'category', 'channel']) if (c[k] && !CHAT_SCOPE[k]) CHAT_CTX[k] = c[k];
+}
+const chatRemember1 = (e) => { if (!e) return; CHAT_CTX.last = e; if (CHAT_CTX[e.kind] !== undefined) CHAT_CTX[e.kind] = e; };
+// "it", "this", "that agent": the last thing made or named, else the scope
+function chatIt(kinds) {
+  const l = CHAT_CTX.last;
+  if (l && (!kinds || kinds.indexOf(l.kind) >= 0)) return l;
+  for (const k of (kinds || ['agent', 'channel', 'category', 'subteam', 'team', 'workflow'])) if (CHAT_CTX[k]) return CHAT_CTX[k];
+  const here = CHAT_SCOPE.agent || chatScopeTarget();
+  return here && (!kinds || kinds.indexOf(here.kind) >= 0) ? here : null;
+}
+// a part named by a loose word inside a team: "the research sub-team" -> ai-video/research
+function chatPartByWord(word, kind, team) {
+  const w = String(word || '').toLowerCase().replace(/\b(the|a|an|sub-?team|team|category|channel)\b/g, '').trim();
+  if (!w) return null;
+  const n = [...structureTree().nodes.values()].filter((x) => x.kind === kind && x.state !== 'archived'
+    && (!team || x.id.indexOf(team + '/') === 0 || x.parent === team) && (String(x.name).toLowerCase().indexOf(w) >= 0 || x.id.split('/').pop() === w))[0];
+  return n ? { kind: n.kind, id: n.id, name: n.name } : null;
+}
+
+// ---- understanding a sentence as conversation, a question, or a way of building the company.
+// Returns an intent, or null to let the older command rules have a go.
+function chatNatural(message, text, rest, found, has) {
+  const talk = chatTalkIntent(message);
+  if (talk) return { intent: 'talk', kind: talk, entities: found };
+
+  const team = (found.filter((e) => e.kind === 'team')[0] || {}).id || (CHAT_SCOPE.team && CHAT_SCOPE.team.id) || null;
+  const live = chatLiveIntent(text);
+  if (live) return { intent: live, team, text, entities: found };
+
+  // "go to YouTube Studio", "I'm looking at AI News": the chat moves there (the client follows)
+  const go = String(message).trim().match(/^(?:go to|open|switch to|take me to|i'?m looking at|look at|let'?s talk about|talk to)\s+(.+?)[\s.!?]*$/i);
+  if (go) {
+    const e = chatFind(go[1], ['channel', 'category', 'subteam', 'team'])[0]
+      || chatAgents().filter((a) => go[1].toLowerCase().indexOf(a.name.toLowerCase()) >= 0)[0];
+    if (e) return { intent: 'goto', target: e, entities: found };
+  }
+  // a sentence with a link belongs to the reference rules; one with "under"/"called" to the precise ones
+  const link = /https?:\/\//.test(message);
+  const make = !link && /\b(create|make|build|set up|setup|add|give|hire|start a new|launch|banao|bana do|naya|nayi)\b/.test(text);
+  // ---- a whole team. Inside a team, "team" could mean a sub-team, so ask once.
+  if (make && /\b(team|house)\b/.test(text) && !/\bsub-?team\b/.test(text) && !/\b(agent|researcher|writer)s?\b.*\b(to|for)\b.*\bteam\b/.test(text)) {
+    // a short "create a research team" inside a team is the one genuinely two-way sentence: ask once
+    if (CHAT_SCOPE.team && !/\b(company|new team|separate|company-level|top level)\b/.test(text) && !/\b(called|named|that|which|who)\b/.test(text)) {
+      const twin = chatTeamTwin(chatTeamName2(text, message) || '-');
+      return { intent: 'ask', text: 'Do you want this under ' + CHAT_SCOPE.team.name + ' as a sub-team, or as a new company-level team? Say "sub-team" or "new team".'
+        + (twin ? ' (' + twin.name + ' already exists at company level.)' : ''), entities: found };
+    }
+    const p = chatPlanTeam(text, message);
+    if (p.missing) return { intent: 'ask', text: 'What should the team be called?', entities: found };
+    if (p.twin) return { intent: 'ask', text: p.twin.name + ' already exists, so I did not create a duplicate. Want me to use it (say "go to ' + p.twin.name + '") or make a separate one with a different name?', entities: found,
+                         cards: [{ t: 'team', v: p.twin.name }] };
+    const big = p.plan.stages.length > 0;
+    return { intent: big ? 'build_team' : 'create_team', plan: p.plan, confirm: big, entities: found };
+  }
+  // ---- agents
+  const ag = make ? chatAgentIntent(text, message, found) : null;
+  if (ag) return ag;
+  // ---- a workflow for a team: "build a workflow for this process", "give this team a daily workflow"
+  if (make && /\bworkflow|pipeline|process\b/.test(text) && !/\brun\b.*\bnow\b/.test(text)) {
+    const home = chatHome(found, ['team', 'subteam'], text);
+    const stages = chatStagesIn(text).map((s) => s[0]);
+    return { intent: 'create_workflow', home, stages, schedule: chatSchedule(text), entities: found, missing: home ? [] : ['which team the workflow is for'] };
+  }
+  // ---- "make that agent run every morning", "run it daily at 9", "schedule it hourly"
+  // read on what is left once names are taken out: "ebook-daily" is a workflow, not a schedule
+  const sch = chatSchedule(rest);
+  if (sch && /\b(run|runs|schedule|every|daily|hourly|weekly|roz|chala)\b/.test(rest) && (!make || /\b(make|have|set)\b.{0,30}\brun\b/.test(text))) {
+    const target = found.filter((e) => e.kind === 'workflow')[0] || chatIt(['agent', 'workflow', 'team', 'subteam']);
+    return { intent: 'schedule_target', target, value: sch, entities: found, missing: target ? [] : ['what to schedule'] };
+  }
+  // ---- "start it", "start working", "continue", "go"
+  if (/^(start|start it|start working|start work|continue|go|go ahead and start|chalu karo|shuru karo|start this|start that|kaam shuru karo|begin)[\s.!]*$/.test(text)
+      || /\bstart (it|this|that|the team|the work)\b/.test(text)) {   // "start working on X" is the older work rule
+    const target = found.filter((e) => ['team', 'subteam', 'workflow'].indexOf(e.kind) >= 0)[0] || chatIt(['team', 'subteam', 'agent', 'workflow', 'category', 'channel']);
+    return { intent: 'start', target, text: message, entities: found, missing: target ? [] : ['what to start'] };
+  }
+  // ---- "start researching today's AI video tools" is work, not a switch
+  if (/^(start|begin|go) (?!working\b)[a-z]+ing\b/.test(text)) return { intent: 'request', target: chatScopeTarget(), text: message, entities: found };
+  // ---- "publish it"
+  if (/\b(publish|post|upload|go live|live kar)\b/.test(text) && !/\?$/.test(String(message).trim()) && !/\b(did|was|has|is)\b/.test(text)) {
+    return { intent: 'publish', team, text: message, entities: found };
+  }
+  // ---- "fix it", "retry", "try again"
+  if (/^(fix it|fix this|fix that|fix|retry|retry it|try again|re-?run it|theek karo|thik karo)[\s.!]*$/.test(text) || /\b(fix|retry)\b.*\b(fail|failed|failure|publish|it|this|that)\b/.test(text)) {
+    return { intent: 'fix', team, text: message, entities: found };
+  }
+  // ---- "change this team's name to X", "rename it to X", "call it X"
+  const ren = text.match(/\b(?:change|set)\s+(?:the\s+|its\s+|this\s+|that\s+)?(?:[a-z-]+'?s?\s+)?name\s+(?:to|as)\s+(.+)$|\b(?:rename|naam badlo)\s+(?:it|this|that|the [a-z-]+)\s+(?:to|as)\s+(.+)$|^call it\s+(.+)$/);
+  if (ren) {
+    const newName = chatTitle((ren[1] || ren[2] || ren[3]).replace(/[."]+$/, ''), message);
+    const target = found.filter((e) => ['team', 'subteam', 'category', 'channel', 'agent'].indexOf(e.kind) >= 0)[0] || chatIt(['agent', 'channel', 'category', 'subteam', 'team']);
+    return { intent: 'rename', target, name: newName, entities: found, missing: target ? [] : ['which thing to rename'] };
+  }
+  // ---- "move this agent to the research sub-team"
+  const mv = text.match(/\bmove\s+(.+?)\s+(?:to|into|under)\s+(.+)$/);
+  if (mv && /\bagent|it|this|that\b/.test(mv[1])) {
+    const target = found.filter((e) => e.kind === 'agent')[0] || chatIt(['agent']);
+    // the agent's own team, walked up the tree: "the research sub-team" means that team's one
+    const tree = structureTree();
+    let up = target ? tree.nodes.get(target.parent || target.id) : null, g = 0;
+    while (up && up.kind !== 'team' && g++ < 8) up = tree.nodes.get(up.parent);
+    const teamOf = up ? up.id : (target ? chatScope(target).p_team : null);
+    // a destination counts only when its whole name is said, or it is a part of the agent's own team
+    const parent = found.filter((e) => ['subteam', 'team'].indexOf(e.kind) >= 0 && e.id !== (target || {}).id
+        && mv[2].indexOf(String(e.name).toLowerCase()) >= 0)[0]
+      || chatPartByWord(mv[2], 'subteam', teamOf);
+    return { intent: 'move', target, parent, entities: found,
+             missing: !target ? ['which agent to move'] : !parent ? ['where to move it'] : [] };
+  }
+  // ---- "delete this": nothing is ever destroyed; it is archived, after a yes
+  if (/^(delete|remove|hata do|hatao|archive)\s+(it|this|that|the [a-z-]+)[\s.!]*$/.test(text)) {
+    const target = chatIt(['agent', 'channel', 'category', 'subteam', 'team']);
+    return { intent: 'archive', target, entities: found, missing: target ? [] : ['which thing to archive'] };
+  }
+  // ---- "pause this", "stop that", "resume it" - the thing just named, after a yes
+  if (/^(pause|stop|resume|unpause|roko|rok do)\s+(it|this|that|the [a-z-]+)[\s.!]*$/.test(text) && !/\bcompany\b/.test(text)) {   // the company has its own stop
+    const target = chatIt(['workflow', 'team', 'agent', 'subteam']);
+    const op = /^(resume|unpause)/.test(text) ? 'resume' : 'pause';
+    return { intent: op, target, confirm: true, entities: found, missing: target ? [] : ['what to ' + op] };
+  }
+  // ---- a category / channel / sub-team said naturally ("create a new category for AI video")
+  // "create 5 Shorts for this category" asks for output, which the older produce rule sends to the cloud
+  // ...but only when the output comes first: in "a category for AI video" the video is the name
+  const outAt = text.search(/\b(shorts?|videos?|posts?|reels?|ebooks?|books?|episodes?|scripts?|thumbnails?|titles?|ideas?|products?|listings?|chapters?|articles?|workbooks?)\b/);
+  const kindAt = text.search(/\b(sub-?team|category|channel)\b/);
+  const output = outAt >= 0 && (kindAt < 0 || outAt < kindAt);
+  const kindWord = make && !output &&!/\b(under|inside|within|called|named)\b/.test(text) && ((text.match(/\b(sub-?team|category|channel)\b/) || [])[1] || '');
+  if (kindWord) {
+    const kind = /sub/.test(kindWord) ? 'subteam' : kindWord;
+    let name = chatPartName(text, message, kindWord.replace('-', '-?'));
+    const parent = chatHome(found, kind === 'subteam' ? ['team'] : kind === 'category' ? ['subteam', 'team'] : ['category', 'subteam', 'team'], text);
+    if (!name && /\b(for|about) (this|that|it)\b/.test(text) && chatIt()) name = chatIt().name;
+    if (!name) return { intent: 'create', kind, parent, missing: ['a name'], entities: found };
+    return { intent: 'create', kind, name, parent, entities: found, missing: parent ? [] : [kind === 'subteam' ? 'team' : 'which team or sub-team it goes under'] };
+  }
+  return null;
+}
+
 // What does this message want? Words first, entities second. `missing` is the only thing Coco asks
 // about - it never asks for something it can already see.
 function chatIntent(message) {
@@ -1985,6 +2523,12 @@ function chatIntent(message) {
       return { intent: 'confirm', entities: found };
     if (/^(no|nope|nahi|na|mat karo|cancel|ruko|rehne do|chhodo|stop|forget it)[\s.!]*$/i.test(text))
       return { intent: 'cancel', entities: found };
+  }
+
+  // ---- conversation, live questions and building the company in plain words ("talking like a person")
+  if (!/(?:^|\s)@[A-Za-z0-9]/.test(String(message))) {
+    const nat = chatNatural(message, text, rest, found, has);
+    if (nat) return nat;
   }
 
   // ---- one agent: "@Scripty rewrite this hook", or the agent picked in the scope bar. A question
@@ -2174,6 +2718,11 @@ function chatRead(it) {
   const teams = (CP && CP.teams) || [];
   const flows = (CP && CP.cloud_runtime && CP.cloud_runtime.pipelines) || [];
   const runs = (CP && CP.runs) || [];
+
+  if (it.intent === 'talk') return chatTalkRead(it.kind);
+  if (it.intent === 'ask') return say(it.text, it.cards);
+  if (it.intent === 'goto') return { text: 'Now talking to ' + it.target.name + '.', cards: [], goto: chatScopeWith(it.target) };
+  if (/^live_/.test(it.intent)) return chatLiveRead(it);
 
   if (it.intent === 'company_status') {
     const live = teams.filter((t) => !t.paused);
@@ -2366,7 +2915,11 @@ async function chatAct(it) {
       const r = await connectionOp(on ? 'reconnect' : 'disconnect', t.id);
       return r && { text: (on ? 'Reconnected ' : 'Disconnected ') + t.name + '.', acted: true };
     }
-    return { text: 'I can pause a team, a workflow or a connected account. That is not one of them.' };
+    if (['agent', 'subteam', 'category', 'channel'].indexOf(t.kind) >= 0) {
+      const r = await control(pauseScope(t.kind), t.id, 'paused', !on, 'from Coco Chat');
+      return r && { text: (on ? 'Resumed ' : 'Paused ') + t.name + '.', acted: true };
+    }
+    return { text: 'I can pause a team, a sub-team, an agent, a workflow or a connected account. That is not one of them.' };
   }
   if (it.intent === 'create') {
     const clash = structureClash(it.kind, it.name, it.parent);
@@ -2574,12 +3127,7 @@ async function chatAct(it) {
   // on the internet".
   if (it.intent === 'work_on') {
     const flows = chatWorkflowsFor(t);
-    if (!flows.length) {
-      return { text: 'Nothing is set up to do that work yet: no workflow belongs to ' + t.name + '. Tell me '
-        + 'which workflow should do it, or create one.',
-        cards: ((CP && CP.cloud_runtime && CP.cloud_runtime.pipelines) || []).slice(0, 5)
-          .map((f) => ({ t: f.id, v: f.team || '-', go: '#workflows' })) };
-    }
+    if (!flows.length) return chatTask({ text: 'Start work on ' + t.name, target: t });
     if (flows.length > 1) {
       return { text: 'Which workflow? ' + t.name + ' has ' + flows.length + ' of them and they do different things.',
         cards: flows.slice(0, 6).map((f) => ({ t: f.id, v: f.team || '-', go: '#workflows' })) };
@@ -2605,6 +3153,70 @@ async function chatAct(it) {
       cards: [{ t: 'Request', v: String(data.request_id) }, { t: 'Workflow', v: f.id, go: '#workflows' }] };
   }
 
+  // ---------------------------------------------------------------- building and running, by talking
+  if (it.intent === 'create_team' || it.intent === 'build_team') return chatBuild(it.plan);
+  if (it.intent === 'create_agents') {
+    const home = it.home, made = [];
+    const team = chatScope(home).p_team || home.id;
+    // a researcher goes to the team's research sub-team when it has one
+    const sub = home.kind === 'team' && it.stage
+      ? [...structureTree().nodes.values()].filter((n) => n.kind === 'subteam' && n.parent === home.id && n.id.split('/').pop() === it.stage)[0] : null;
+    const parent = sub ? { kind: 'subteam', id: sub.id, name: sub.name } : home;
+    for (let i = 1; i <= it.count; i++) {
+      const name = it.name + (it.count > 1 ? ' ' + i : '');
+      const id = chatFreeId(String(team).replace(/\//g, '-') + '.' + slugOf(name));
+      const r = await structureOp('create', id, null, { p_kind: 'agent', p_parent: parent.id, p_name: name,
+        p_description: it.role + ' for ' + parent.name + ', created from Coco Chat',
+        p_config: { role: it.role, stage: it.stage, made_by: 'coco-chat' }, p_limits: { claude: 'on_demand', model: 'haiku', daily_tokens: 50000 } });
+      if (!r) break;
+      made.push({ kind: 'agent', id, name, parent: parent.id });
+    }
+    if (!made.length) return { text: 'No agent was created: the control plane refused it.' };
+    chatRemember1(made[made.length - 1]);
+    return { text: (made.length === 1 ? 'Created ' + made[0].name : 'Created ' + made.length + ' agents (' + made.map((m) => m.name).join(', ') + ')')
+        + ' in ' + parent.name + '. New agents start paused; say "start it" when you want them working.',
+      acted: true, verify: made.map((m) => m.id),
+      act: { title: made.length === 1 ? 'New agent' : 'New agents', rows: made.map((m) => [m.name, parent.name]), status: 'Created · paused' } };
+  }
+  if (it.intent === 'create_workflow') {
+    const h = it.home, row = (STRUCT || []).filter((r) => r.id === h.id)[0];
+    const text = String((row && row.description) || h.name).toLowerCase();
+    const steps = it.stages.length ? it.stages : (chatDefaultStages(text).length ? chatDefaultStages(text) : ['research', 'make', 'check', 'publish']);
+    const schedule = it.schedule || 'daily 08:00';
+    const id = String(h.id).replace(/[^a-z0-9._-]/g, '-') + '-' + (/^daily/.test(schedule) ? 'daily' : /^weekly/.test(schedule) ? 'weekly' : 'flow');
+    const flow = { id, name: h.name + ' ' + schedule.split(' ')[0], steps, schedule };
+    let where;
+    if (row) {   // a part the founders made: the workflow lives in its config, which the provisioner reads
+      const cfg = { ...(row.config || {}) };
+      cfg.workflows = [...(cfg.workflows || []).filter((w) => w.id !== id), flow];
+      const r = await structureOp('edit', h.id, null, { p_kind: h.kind, p_config: cfg });
+      if (!r) return { text: 'The workflow was not saved: the control plane refused it.' };
+      where = 'saved on ' + h.name;
+    } else {     // a registry team: its workflows are code, so the team gets the spec as a cloud task
+      const t = await chatTask({ text: 'Set up workflow ' + id + ' for ' + h.name + ': ' + steps.join(' -> ') + ', ' + schedule, target: h });
+      if (!t || !t.acted) return t || { text: 'The workflow was not sent.' };
+      where = 'sent to ' + h.name + ' to build (its workflows are code)';
+    }
+    const sch = await control('workflow', id, 'schedule', schedule, 'from Coco Chat');
+    chatRemember1({ kind: 'workflow', id, name: flow.name });
+    return { text: 'Workflow ' + flow.name + ' (' + steps.join(' → ') + ') ' + where + ', scheduled ' + schedule + ' India time'
+        + (sch && sch.state === 'needs_approval' ? ' once you approve ' + sch.approval_code : '') + '.',
+      acted: true, verify: row ? [h.id] : [],
+      act: { title: 'Workflow', rows: [['For', h.name], ['Steps', steps.join(' → ')], ['Schedule', schedule]], status: sch && sch.state === 'needs_approval' ? 'Waiting for your YES' : 'Saved' } };
+  }
+  if (it.intent === 'schedule_target') {
+    const scope = { workflow: 'workflow', agent: 'agent', team: 'team', subteam: 'subteam' }[t.kind] || 'workflow';
+    const r = await control(scope, t.id, 'schedule', it.value, 'from Coco Chat');
+    if (!r) return { text: 'The schedule was not set: the control plane refused it.' };
+    chatRemember1(t);
+    if (r.state === 'needs_approval') return { text: 'Scheduling ' + t.name + ' needs your YES first: ' + r.approval_code + '.', acted: true };
+    return { text: t.name + ' is set to run ' + it.value + ' (India time).'
+        + (t.kind === 'workflow' ? ' The scheduler reads this value, not the one in the file.' : ''), acted: true,
+      act: { title: 'Schedule', rows: [['For', t.name + ' · ' + t.kind], ['When', it.value]], status: 'Saved' } };
+  }
+  if (it.intent === 'start') return chatStart(it);
+  if (it.intent === 'publish') return chatPublish(it);
+  if (it.intent === 'fix') return chatFix(it);
   // "Make 5 Shorts here" goes to the team as a task carrying the exact words and the scope. A queued
   // workflow run would drop them: the run executor does not read a request's note.
   if (it.intent === 'produce' || it.intent === 'request' || it.intent === 'request_free') return chatTask(it);
@@ -2639,6 +3251,121 @@ async function chatTask(it) {
     cards: [{ t: 'Task', v: String(d.task_id || '').slice(0, 8), go: '#board' }] };
 }
 
+
+// A whole team from a plan, one coco_structure call per part, in the order parts depend on each
+// other. It stops at the first refusal and says exactly what exists, so a half-built team is never
+// reported as built. Nova then re-reads every id from the database before the answer is shown.
+async function chatBuild(p) {
+  const made = [];
+  const mk = async (kind, id, parent, name, desc, extra) => {
+    const r = await structureOp('create', id, null, { p_kind: kind, p_parent: parent, p_name: name, p_description: desc, ...(extra || {}) });
+    if (r) made.push({ kind, id, name, parent });
+    return r;
+  };
+  const stop = (why) => ({ text: (made.length ? 'Stopped after ' + plural(made.length, 'part') + ' (' + made.map((m) => m.name).join(', ') + '): ' : 'Nothing was created: ') + why + '.',
+    acted: made.length > 0, verify: made.map((m) => m.id) });
+  if (!await mk('team', p.team.id, null, p.team.name, p.team.description, { p_head: p.head.id,
+    p_config: { mission: p.team.description, workflows: p.workflow ? [p.workflow] : [], publish_to: p.publish, starter: p.starter, made_by: 'coco-chat' },
+    p_limits: { claude: 'on_demand', daily_tokens: 200000, max_agents: 12 } })) return stop('the team itself was refused');
+  if (!await mk('agent', p.head.id, p.team.id, p.head.name, 'Head of ' + p.team.name, { p_config: { role: 'Team Head', made_by: 'coco-chat' },
+    p_limits: { claude: 'on_demand', model: 'sonnet', daily_tokens: 80000 } })) return stop('the team head was refused');
+  for (const s of p.stages) {
+    if (!await mk('subteam', s.sub.id, p.team.id, s.sub.name, s.sub.name + ' for ' + p.team.name, { p_head: s.agent.id, p_config: { stage: s.key } })) return stop(s.sub.name + ' was refused');
+    if (!await mk('agent', s.agent.id, s.sub.id, s.agent.name, s.agent.role + ' for ' + p.team.name, { p_config: { role: s.agent.role, stage: s.key, made_by: 'coco-chat' },
+      p_limits: { claude: 'on_demand', model: 'haiku', daily_tokens: 50000 } })) return stop(s.agent.name + ' was refused');
+  }
+  const sch = p.workflow && p.workflow.schedule ? await control('workflow', p.workflow.id, 'schedule', p.workflow.schedule, 'from Coco Chat: ' + p.team.name) : null;
+  chatRemember1({ kind: 'team', id: p.team.id, name: p.team.name });
+  return {
+    text: 'Done. ' + p.team.name + ' exists with its head' + (p.stages.length ? ', ' + plural(p.stages.length, 'sub-team') + ' and ' + plural(p.stages.length, 'agent') : '')
+      + (p.workflow ? ', and a ' + p.workflow.schedule + ' workflow (' + p.workflow.steps.join(' → ') + ')' + (sch && sch.state === 'needs_approval' ? ' waiting for ' + sch.approval_code : '') : '')
+      + (p.publish ? '; it publishes to ' + p.publish.name + ' only with your YES' : '') + '. It starts paused, as every new part of the company does: say "start it" and I will switch it on and queue its first task.',
+    acted: true, verify: made.map((m) => m.id),
+    act: { title: p.team.name, rows: [['Head', p.head.name], ...p.stages.map((s) => [s.sub.name, s.agent.name]),
+      ...(p.workflow ? [['Workflow', p.workflow.steps.join(' → ') + ' · ' + p.workflow.schedule]] : [])], status: 'Created · paused' },
+    cards: [{ t: 'team', v: p.team.name }] };
+}
+
+// What a plan will make, shown before it is made.
+function chatPlanSummary(it) {
+  const p = it.plan;
+  const rows = [['Team', p.team.name], ['Head', p.head.name]];
+  if (p.stages.length) rows.push(['Sub-teams', p.stages.map((s) => s.sub.name).join(', ')], ['Agents', p.stages.map((s) => s.agent.name).join(', ')]);
+  if (p.workflow) rows.push(['Workflow', p.workflow.steps.join(' → ') + ' · ' + p.workflow.schedule]);
+  rows.push(['Publishing', p.publish ? p.publish.name + ', each time after your YES' : 'not set'], ['Starts', 'paused, until you say start']);
+  return { title: 'Plan · ' + p.team.name, rows, status: 'Waiting for your yes',
+    ask: 'I\'ll set up ' + p.team.name + (p.stages.length ? ' with ' + p.stages.map((s) => s.sub.name).join(', ') : '') + (p.workflow ? ', a ' + p.workflow.schedule + ' workflow' : '')
+      + ' and its first task. Nothing like it exists yet. Say yes to build it.' };
+}
+
+// "Start it": switch the thing (and the new parts under it) on through coco_control, then give it
+// its first piece of real work as a cloud task. A switch that needs a YES is raised, not skipped.
+const pauseScope = (k) => (['team', 'subteam', 'agent', 'workflow'].indexOf(k) >= 0 ? k : 'team');
+async function chatStart(it) {
+  const t = it.target;
+  if (t.kind === 'workflow') {
+    const { data, error } = await sb.rpc('coco_request_run', { p_workflow: t.id, p_note: 'started from Coco Chat' });
+    if (error || !data || data.ok === false) return { text: 'Not started: ' + ((error && error.message) || (data && data.reason) || 'the control plane refused it') + '.' };
+    return { text: 'Queued a run of ' + t.name + ' (request ' + data.request_id + '). The cloud runs it.', acted: true };
+  }
+  const tree = structureTree();
+  const below = (n) => { let p = n.parent, g = 0; while (p && g++ < 8) { if (p === t.id) return true; p = (tree.nodes.get(p) || {}).parent; } return false; };
+  const parts = [t, ...[...tree.nodes.values()].filter((n) => n.state !== 'archived' && below(n)).map((n) => ({ kind: n.kind, id: n.id, name: n.name }))];
+  const on = [], waiting = [];
+  for (const x of parts) {
+    if (policyOf(pauseScope(x.kind), x.id, 'paused') !== true) continue;
+    const r = await control(pauseScope(x.kind), x.id, 'paused', false, 'started from Coco Chat');
+    if (r && r.state === 'needs_approval') waiting.push(r.approval_code); else if (r) on.push(x.name);
+  }
+  const row = (STRUCT || []).filter((r) => r.id === (chatScope(t).p_team || t.id))[0];
+  const first = (row && row.config && row.config.starter) || ('Start work for ' + t.name + ': pick the most useful first output and make it');
+  const task = await chatTask({ text: first, target: t });
+  chatRemember1(t);
+  return { text: (on.length ? 'Switched on ' + (on.length > 3 ? on.length + ' parts of ' + t.name : on.join(', ')) + '. ' : t.name + ' was already on. ')
+      + (waiting.length ? 'Waiting for your YES: ' + waiting.join(', ') + '. ' : '') + (task && task.acted ? 'Queued its first task in the cloud: "' + first.slice(0, 90) + '".' : (task ? task.text : '')),
+    acted: true, act: { title: 'Start ' + t.name, rows: [['Switched on', String(on.length)], ['First task', first.slice(0, 80)], ['Runs', 'in the cloud']], status: waiting.length ? 'Partly waiting for YES' : 'Started' } };
+}
+
+// "Publish it": the newest unpublished output in this scope, raised as an approval. The publisher
+// refuses anything public without a named approver, and the run that publishes must claim this
+// approval - so chat can ask, but only a YES can make it happen.
+async function chatPublish(it) {
+  const outs = (OUTPUTS || []).filter((o) => (!it.team || o.team_id === it.team) && o.status !== 'published' && o.status !== 'rejected')
+    .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+  const o = outs[0];
+  if (!o) return { text: 'There is nothing waiting to be published' + (it.team ? ' in ' + chatTeamName(it.team) : '') + '. Everything recorded is already out or not made yet.' };
+  const code = 'A-PUB-' + String(o.id).replace(/[^A-Za-z0-9]/g, '').slice(-20).toUpperCase();
+  const { data, error } = await sb.rpc('coco_approval', { p_op: 'request', p_code: code, p_payload: {
+    team: o.team_id, what: 'Publish "' + (o.title || o.id) + '" (' + (o.kind || 'output') + ')', requested_by: CHAT_WHO.by,
+    action: { type: 'publish', output_id: o.id, channel_id: o.channel_id || null, workflow_id: o.workflow_id || null } } });
+  if (error || !data) return { text: 'Not raised: ' + ((error && error.message) || 'the control plane refused it') + '.' };
+  return { text: (data.raised_now ? 'Raised ' : 'Already waiting: ') + data.code + ' to publish "' + (o.title || o.id) + '". Nothing goes out before your YES; the cloud publisher then sends it through Nova.',
+    acted: true, approvals: [{ id: data.approval_id, code: data.code, what: 'Publish "' + (o.title || o.id) + '"' }] };
+}
+
+// "Fix it": look at what actually failed. A failed workflow request is re-asked through the same
+// gated RPC (the policy decides if it may run again). A failed job or task becomes one repair task
+// carrying the real error, because no founder device may re-run a worker job by hand.
+async function chatFix(it) {
+  const p = chatPulse(it.team);
+  const rr = p.runsFailed[0], job = p.jobsFailed[0], task = p.failed[0];
+  if (!rr && !job && !task) return { text: 'Nothing has failed' + (it.team ? ' in ' + chatTeamName(it.team) : '') + ' recently, so there is nothing to fix.' };
+  const done = [];
+  if (rr) {
+    const { data, error } = await sb.rpc('coco_request_run', { p_workflow: rr.workflow_id, p_note: 'retry from Coco Chat after: ' + String(rr.reason || 'failure').slice(0, 200) });
+    done.push(error || !data || data.ok === false ? 'could not retry ' + rr.workflow_id + ' (' + ((error && error.message) || (data && data.reason) || 'refused') + ')' : 'retried ' + rr.workflow_id + ' as request ' + data.request_id);
+  }
+  if (job || task) {
+    const what = job ? job.type + ' job ' + job.id : 'task "' + String(task.title).slice(0, 60) + '"';
+    const err = job ? String((job.error && (job.error.message || job.error)) || job.status) : task.status;
+    const teamId = (job && job.team_id) || chatRowTeam(task) || it.team;
+    const r = await chatTask({ text: 'Repair: ' + what + ' failed with "' + err.slice(0, 200) + '". Find the cause, fix it, and re-run it.',
+      target: teamId ? { kind: 'team', id: teamId, name: chatTeamName(teamId) } : chatScopeTarget() });
+    done.push(r && r.acted ? 'sent a repair task for the ' + what : 'could not send the repair task');
+  }
+  return { text: 'Fix: ' + done.join('; ') + '. I will show it here as it moves.', acted: true };
+}
+
 // ---------------------------------------------------------------- what is about to happen
 // Shown before a risky action rather than after it, in the shape a founder can check at a glance:
 // what it touches, how far it reaches, and how to undo it. If any of those three is uncomfortable,
@@ -2664,6 +3391,7 @@ const CHAT_WARN = {
   archive:          'It stops taking work and stays restorable.',
 };
 function chatSummary(it, spec) {
+  if (it.plan) return chatPlanSummary(it);
   const t = it.target, rows = [];
   if (t) rows.push(['Target', t.name + (t.kind ? ' · ' + t.kind : '')]);
   if (it.parent) rows.push(['Where', it.parent.name]);
@@ -2719,9 +3447,8 @@ async function chatSend(message, onState) {
   }
 
   if (it.intent === 'unknown') {
-    return { text: 'I did not catch a command in that. Try: company status · references for <channel> · '
-      + 'connect <account> · verify <account> · <paste a link> for <channel> · start working on this · '
-      + 'pause <name> · schedule <workflow> daily 08:00 · assign <account> to <team> · stop the company.' };
+    return { text: 'I am not sure what you would like me to do with that. Ask me what is running, what failed or what is waiting, '
+      + 'or tell me what to build, start, pause or publish - in your own words.' };
   }
 
   say('Resolving…');
@@ -3518,7 +4245,9 @@ async function chatSubmit(q) {
       if (r.ok && j.reply) {
         drop(); CHAT_ROWS = CHAT_ROWS.concat([j.founder, j.reply]); chatSig = '';
         render(); chatScroll();
-        if (j.reply.meta && j.reply.meta.state === 'Completed') loadAll();   // the company changed: show it
+        // the company changed (or grew new parts the picker must offer): read it back
+        if ((j.reply.meta && j.reply.meta.state === 'Completed') || j.tree_changed) loadAll();
+        if (j.goto && j.goto !== chatScopeKey()) chatGo(j.goto);              // "go to YouTube Studio"
         return;
       }
       if (r.status !== 404 && r.status < 500) {                // refused on purpose: say why, run nothing

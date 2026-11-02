@@ -353,6 +353,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
             r.optString("scope").takeIf { it.isNotBlank() && it != chatScope }?.let { chatScope = it; sp.edit().putString("chat_scope", it).apply() }
             chatLoad()
             if (r.optJSONObject("reply")?.optJSONObject("meta")?.optString("state") == "Completed") reload()
+            if (r.optBoolean("tree_changed")) loadChatTree()                       // new parts show in the picker at once
+            r.optString("goto").takeIf { it.isNotBlank() && it != "null" && it != chatScope }?.let { chatGo(it) }   // "go to YouTube Studio"
         } catch (e: Exception) {
             // a Nova without the chat route yet: the old way, into the company thread
             if (e is Cloud.CloudError && e.code == 404) runCatching {

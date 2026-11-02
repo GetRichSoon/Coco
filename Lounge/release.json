@@ -2,23 +2,23 @@
   "_": "The one Coco version. Every client shows this number; nothing else is user-facing.",
   "_why": "The clients had drifted into three unrelated numbers - root package.json said 1.1.0, the desktop app said 1.0.4 and the phone said 2.8.2 - so 'is everyone on the latest Coco?' had no answer. They are one number now, and release.test.js fails the build if they come apart again.",
   "_number": "2.9.0, not 1.2.0. Two schemes existed and the phone's was the furthest along at 2.8.2; starting a unified line below that would have shown the founders a downgrade on the device they look at most. So the unified line continues from the highest user-facing number, and this release is a minor bump on it.",
-  "version": "2.9.3",
-  "name": "Coco 2.9.3",
+  "version": "2.10.0",
+  "name": "Coco 2.10.0",
   "released": "2026-11-02",
-  "release_id": "coco-2.9.3",
+  "release_id": "coco-2.10.0",
   "commit": "cloud-foundation",
   "notes": [
-    "Coco Chat talks to any level of the company: COCO, a team, a sub-team, a category, a channel or one agent. Pick it from the path at the top; every level is a way back up.",
-    "The cloud answers chat for every device with one engine, and each place keeps its own thread on all four devices. A yes asked on one device can be given on another.",
-    "Work asked for in chat goes to the cloud as a task with its scope and links. Waiting approvals can be approved or rejected inside the chat.",
-    "The company activity stream opens from chat; a line that names a part of the company opens that part's chat."
+    "Coco Chat is conversational: say hi, ask what is running, finished, stuck or waiting, why something failed, whether the APK is ready or a Short published - answered from live cloud data, never guessed.",
+    "Build the company by talking: \"create a team that researches AI tools, makes daily Shorts and publishes to The Flow\" is planned, confirmed, created with its head, sub-teams, agents and daily workflow, and verified in Coco Cloud.",
+    "Follow-ups work: \"give it a research agent\", \"make that agent run every morning\", \"start it\", \"rename it\", \"move this agent to the research sub-team\", \"delete it\" (archived after a yes).",
+    "\"Publish it\" raises a YES; \"fix it\" retries what policy allows and sends the rest as a repair task. Nothing runs on a PC."
   ],
   "_builds": "Internal build numbers stay per platform, because each store and each installer needs its own monotonic counter. They are not shown to the founders.",
   "builds": {
     "desktop": "1.0.5",
     "android": {
-      "versionName": "2.9.3",
-      "versionCode": 20
+      "versionName": "2.10.0",
+      "versionCode": 21
     },
     "lounge": "served from main"
   },
@@ -158,6 +158,12 @@
     {
       "version": "2.9.3",
       "versionCode": 20,
+      "date": "2026-11-02",
+      "commit": "cloud-foundation"
+    },
+    {
+      "version": "2.10.0",
+      "versionCode": 21,
       "date": "2026-11-02",
       "commit": "cloud-foundation"
     }

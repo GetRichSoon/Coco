@@ -57,8 +57,8 @@ import java.time.format.DateTimeFormatter
 private fun JSONObject.str(k: String) = optString(k).let { if (it == "null") "" else it }
 
 /** Questions Boss asks most, one tap each, for where he is standing. Plain words; Coco Cloud answers them like typed ones. */
-private fun quick(inScope: Boolean) = if (inScope) listOf("Status", "Anything waiting for approval?", "Create 3 ideas here", "References here")
-    else listOf("Company status", "Anything waiting for approval?", "Which teams are live?", "Runs today")
+private fun quick(inScope: Boolean) = if (inScope) listOf("What's running here?", "Why did it fail?", "Anything waiting for approval?", "Give it a researcher", "Start it")
+    else listOf("What should I work on today?", "What's running?", "What happened today?", "Is the APK ready?", "Anything waiting for approval?")
 
 private fun at(m: JSONObject): Instant? = runCatching { java.time.OffsetDateTime.parse(m.str("created_at").replace(" ", "T")).toInstant() }.getOrNull()
 
