@@ -171,16 +171,18 @@ export async function handle(db, req, now = Date.now()) {
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
     if (req.path === '/api/apk/latest') {
-      // The cloud build's pointer (version, B2 key, sha256) is served by this same deployment; the
-      // download link is minted here, for this paired device, and dies in an hour.
-      const r = await fetch(`https://${req.headers.host || 'cocolounge.vercel.app'}/ota/latest.json`, { cache: 'no-store' });
-      if (!r.ok) return json(404, { message: 'no build announced yet' });
-      const meta = await r.json();
-      if (!meta.key) return json(404, { message: 'no build announced yet' });
-      let url = null;
-      try { const { createStorage, configFromEnv } = await import('./_storage.mjs'); url = createStorage(configFromEnv()).presign(meta.key, { expires: 3600 }); }
-      catch (e) { log(503, { device: who.device_id, why: 'storage not configured on Nova' }); return json(503, { message: 'Nova has no storage credentials to mint a download link' }); }
-      log(200, { device: who.device_id, apk: meta.versionCode }); return json(200, { ...meta, url });
+      // The newest cloud build is the latest GitHub release of the (public) Coco repository:
+      // tag android-<version>-<code>, the APK as its asset, the sha256 in its notes.
+      const c = cache.get('apk'); if (c && now - c.at < 60000) { log(200, { device: who.device_id, cache: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
+      const r = await fetch('https://api.github.com/repos/GetRichSoon/Coco/releases?per_page=10', { headers: { accept: 'application/vnd.github+json', 'user-agent': 'coco-nova' } });
+      if (!r.ok) return json(503, { message: `releases unavailable (${r.status})` });
+      const rel = (await r.json()).find((x) => /^android-\d+\.\d+\.\d+-\d+$/.test(x.tag_name) && !x.draft);
+      const asset = rel?.assets?.find((a) => a.name.endsWith('.apk'));
+      if (!rel || !asset) return json(404, { message: 'no build announced yet' });
+      const [, versionName, code] = rel.tag_name.match(/^android-(\d+\.\d+\.\d+)-(\d+)$/);
+      const sha256 = (rel.body || '').match(/sha256\s+([0-9a-f]{64})/)?.[1] || null;
+      const body = { versionCode: Number(code), versionName, file: asset.name, sha256, bytes: asset.size, url: asset.browser_download_url, at: rel.published_at };
+      cache.set('apk', { at: now, body }); log(200, { device: who.device_id, apk: code, cache: 'miss' }); return json(200, body);
     }
     if (req.path === '/api/changes') {
       // one tiny signal: the newest moment anything the screens show changed. Apps poll this, not tables.

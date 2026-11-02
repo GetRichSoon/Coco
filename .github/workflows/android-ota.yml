@@ -1,9 +1,9 @@
 # Over-the-air updates for the Coco Lounge phone app: no store, no cable, no Supabase storage.
 # A push that touches the Android app builds it with the same debug key the phones already run
-# (ANDROID_DEBUG_KEYSTORE_BASE64, the pattern android.yml already uses), uploads the APK to B2 and
-# commits Lounge/ota/latest.json holding only the version, the storage key and the sha256. Nova serves
-# that at /api/apk/latest with a short-lived download link for a paired device; the phone checks the
-# sha256 before Android installs. Nothing downloadable is ever written into this public repository.
+# (ANDROID_DEBUG_KEYSTORE_BASE64, the pattern android.yml already uses) and publishes the APK as a
+# GitHub release of this public repository, sha256 in the notes. Nova serves the latest release at
+# /api/apk/latest to a paired device; the phone checks the sha256 before Android installs. No bucket,
+# no storage secret, no link committed into the tree.
 name: android ota
 
 on:
@@ -40,19 +40,16 @@ jobs:
       - name: build
         working-directory: 'Lounge Android'
         run: ./gradlew assembleDebug --no-daemon -q
-      - name: publish the APK to B2 and write the release pointer (version, key, sha256; no link)
+      - name: publish the APK as a GitHub release (tag android-<version>-<code>, sha256 in the notes)
         env:
-          STORAGE_PROVIDER: b2
-          STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
-          STORAGE_REGION: ${{ secrets.STORAGE_REGION }}
-          STORAGE_BUCKET: ${{ secrets.STORAGE_BUCKET }}
-          STORAGE_ACCESS_KEY_ID: ${{ secrets.STORAGE_ACCESS_KEY_ID }}
-          STORAGE_SECRET_ACCESS_KEY: ${{ secrets.STORAGE_SECRET_ACCESS_KEY }}
-          STORAGE_VERSIONED: '1'
-        run: node "Lounge Android/scripts/ota-publish.mjs" "Lounge Android/app/build/outputs/apk/debug/app-debug.apk"
-      - name: commit the release pointer
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "coco-cloud" && git config user.email "coco-cloud@users.noreply.github.com"
-          git add Lounge/ota/latest.json
-          git diff --cached --quiet || git commit -m "android ota: $(node -e "const m=require('./Lounge/ota/latest.json');console.log(m.versionName+' ('+m.versionCode+')')") [skip ci]"
-          git push
+          meta=$(node "Lounge Android/scripts/ota-publish.mjs" "Lounge Android/app/build/outputs/apk/debug/app-debug.apk")
+          echo "$meta"
+          code=$(echo "$meta" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).versionCode))")
+          name=$(echo "$meta" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).versionName))")
+          sha=$(echo "$meta" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).sha256))")
+          cp "Lounge Android/app/build/outputs/apk/debug/app-debug.apk" "coco-lounge-$code.apk"
+          gh release delete "android-$name-$code" -y --cleanup-tag 2>/dev/null || true
+          printf 'versionCode %s\nsha256 %s\nBuilt by android-ota from %s with the phones debug key. Installed by the app itself after a checksum.\n' "$code" "$sha" "$GITHUB_SHA" > notes.txt
+          gh release create "android-$name-$code" "coco-lounge-$code.apk" --target "$GITHUB_SHA" --title "Coco Lounge $name ($code)" --notes-file notes.txt
