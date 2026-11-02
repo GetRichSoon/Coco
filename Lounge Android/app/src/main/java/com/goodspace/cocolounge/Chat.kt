@@ -13,7 +13,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -25,12 +28,14 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -51,8 +56,9 @@ import java.time.format.DateTimeFormatter
 
 private fun JSONObject.str(k: String) = optString(k).let { if (it == "null") "" else it }
 
-/** Questions Boss asks most, one tap each. Plain words; Coco Cloud answers them like typed ones. */
-private val QUICK = listOf("What is the team doing?", "Anything for my YES?", "How is my PC?", "Plan my day", "Play kesariya on my PC")
+/** Questions Boss asks most, one tap each, for where he is standing. Plain words; Coco Cloud answers them like typed ones. */
+private fun quick(inScope: Boolean) = if (inScope) listOf("Status", "Anything waiting for approval?", "Create 3 ideas here", "References here")
+    else listOf("Company status", "Anything waiting for approval?", "Which teams are live?", "Runs today")
 
 private fun at(m: JSONObject): Instant? = runCatching { java.time.OffsetDateTime.parse(m.str("created_at").replace(" ", "T")).toInstant() }.getOrNull()
 
@@ -76,7 +82,10 @@ fun ChatScreen(vm: Lounge) {
     val msgs = vm.data.chat
     val list = rememberLazyListState()
     var text by rememberSaveable { mutableStateOf("") }
-    val thinking = msgs.lastOrNull()?.let { it.str("role") == "founder" && it.str("status") in setOf("new", "thinking") } == true
+    val thinking = vm.chatSending || msgs.lastOrNull()?.let { it.str("role") == "founder" && it.str("status") in setOf("new", "thinking") } == true
+    var feed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) { if (vm.chatTree.isEmpty()) vm.loadChatTree() }
+    val here = vm.chatPath.lastOrNull()?.str("name")
     LaunchedEffect(msgs.size, thinking) { val n = list.layoutInfo.totalItemsCount; if (n > 0) list.animateScrollToItem(n - 1) }
     val send = { t: String -> if (t.isNotBlank()) { vm.sendChat(t.trim()); text = "" } }
     val mic = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
@@ -87,6 +96,8 @@ fun ChatScreen(vm: Lounge) {
 
     Column(Modifier.fillMaxSize().imePadding()) {
         CocoPresence(thinking, vm.live)
+        ScopeBar(vm, feed) { feed = !feed }
+        if (feed) ActivityFeed(vm) { feed = false }
         LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(14.dp, 6.dp, 14.dp, 10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             if (msgs.isEmpty()) item(key = "empty") { EmptyChat() }
             var lastDay: LocalDate? = null
@@ -109,9 +120,9 @@ fun ChatScreen(vm: Lounge) {
             if (thinking) item(key = "typing") { TypingBubble(Modifier.animateItem()) }
         }
         LazyRow(contentPadding = PaddingValues(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-            items(QUICK) { q -> SuggestionChip({ send(q) }, { Text(q) }, shape = RoundedCornerShape(50)) }
+            items(quick(here != null)) { q -> SuggestionChip({ send(q) }, { Text(q) }, shape = RoundedCornerShape(50)) }
         }
-        Composer(text, { text = it }, { send(text) }) {
+        Composer(text, { text = it }, { send(text) }, if (here != null) "Message $here · @agent" else "Message Coco…") {
             mic.launch(Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
@@ -193,6 +204,7 @@ private fun Bubble(vm: Lounge, m: JSONObject, first: Boolean, last: Boolean, mod
                 Text(linkify(m.str("body"), if (mine) cs.onPrimary else cs.primary), Modifier.padding(horizontal = 14.dp, vertical = 9.dp), style = MaterialTheme.typography.bodyLarge)
             }
         }
+        if (coco) Answer(vm, m)
         if (last) Text(
             when { mine && m.str("status") == "new" -> "Sent · Coco will answer"; mine && m.str("status") == "thinking" -> "Coco is working on it"; else -> ago(m.str("created_at")) },
             style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant,
@@ -214,12 +226,12 @@ private fun TypingBubble(modifier: Modifier) {
 
 /** Pill composer: the mic turns into Send as soon as there is text (shape and icon morph with a spring). */
 @Composable
-private fun Composer(text: String, onText: (String) -> Unit, onSend: () -> Unit, onMic: () -> Unit) {
+private fun Composer(text: String, onText: (String) -> Unit, onSend: () -> Unit, hint: String, onMic: () -> Unit) {
     val cs = MaterialTheme.colorScheme
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.Bottom) {
         Surface(shape = RoundedCornerShape(28.dp), color = cs.surfaceContainerHigh, modifier = Modifier.weight(1f)) {
             Box(Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
-                if (text.isEmpty()) Text("Message Coco…", style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
+                if (text.isEmpty()) Text(hint, style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
                 BasicTextField(text, onText, textStyle = MaterialTheme.typography.bodyLarge.copy(color = cs.onSurface), cursorBrush = SolidColor(cs.primary),
                     maxLines = 5, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { onSend() }),
                     modifier = Modifier.fillMaxWidth())
@@ -231,6 +243,102 @@ private fun Composer(text: String, onText: (String) -> Unit, onSend: () -> Unit,
         }) { empty ->
             if (empty) FilledTonalIconButton(onMic, Modifier.size(54.dp)) { Icon(Icons.Rounded.Mic, "Speak to Coco") }
             else FilledIconButton(onSend, Modifier.size(54.dp)) { Icon(Icons.AutoMirrored.Rounded.Send, "Send") }
+        }
+    }
+}
+
+/** Who Coco is talking to: every level is a way back up; one picker goes down (parts, then agents). */
+@Composable
+private fun ScopeBar(vm: Lounge, feed: Boolean, onFeed: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    val path = vm.chatPath
+    val next = ChatScope.next(path, vm.chatTree)
+    var open by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 10.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Crumb("COCO", "Company", path.isEmpty()) { vm.chatGo("coco") }
+        path.forEachIndexed { i, n ->
+            Text("›", color = cs.onSurfaceVariant, modifier = Modifier.padding(horizontal = 2.dp))
+            Crumb(n.str("name"), ChatScope.LABEL[n.str("kind")].orEmpty(), i == path.lastIndex) { vm.chatGo(ChatScope.upTo(path, i)) }
+        }
+        if (next.isNotEmpty()) Box(Modifier.padding(start = 6.dp)) {
+            AssistChip({ open = true }, { Text(if (path.isEmpty()) "Choose a team" else "Go deeper") },
+                trailingIcon = { Icon(Icons.Rounded.KeyboardArrowDown, null, Modifier.size(18.dp)) }, shape = RoundedCornerShape(50))
+            DropdownMenu(open, { open = false }) {
+                next.forEach { n ->
+                    DropdownMenuItem({ Column {
+                        Text(n.str("name"))
+                        Text(ChatScope.LABEL[n.str("kind")].orEmpty() + (if (n.str("role").isNotBlank()) " · " + n.str("role") else ""),
+                            style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant)
+                    } }, { open = false; vm.chatGo(ChatScope.pick(path, n, vm.chatTree)) })
+                }
+            }
+        }
+        Spacer(Modifier.width(6.dp))
+        FilterChip(feed, onFeed, { Text("Activity") }, shape = RoundedCornerShape(50))
+    }
+}
+
+@Composable
+private fun Crumb(name: String, level: String, on: Boolean, onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    Column(Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 4.dp)) {
+        Text(level.uppercase(), style = MaterialTheme.typography.labelSmall, color = cs.onSurfaceVariant)
+        Text(name, style = MaterialTheme.typography.titleSmall, color = if (on) cs.onSurface else cs.onSurfaceVariant, maxLines = 1)
+    }
+}
+
+/** The company's latest activity; a line that names a part of the company opens that part's chat. */
+@Composable
+private fun ActivityFeed(vm: Lounge, onDone: () -> Unit) {
+    Surface(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp), shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
+        LazyColumn(Modifier.heightIn(max = 260.dp), contentPadding = PaddingValues(vertical = 6.dp)) {
+            if (vm.data.activity.isEmpty()) item { Box(Modifier.padding(16.dp)) { Muted("Nothing yet.") } }
+            items(vm.data.activity.take(25)) { a ->
+                Column(Modifier.fillMaxWidth().clickable {
+                    val n = ChatScope.named(a.str("action") + " " + a.str("detail"), vm.chatTree)
+                    if (n != null) { vm.chatGo(ChatScope.pick(emptyList(), n, vm.chatTree)); onDone() }
+                    else vm.message = "That line does not name a part of the company"
+                }.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Text(a.str("action") + " · " + a.str("detail"), style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+                    Text(a.str("actor") + " · " + ago(a.str("at")), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+/** Under Coco's answer: what was done (the action summary) and any YES waiting, decided right here. */
+@Composable
+private fun Answer(vm: Lounge, m: JSONObject) {
+    val meta = m.optJSONObject("meta") ?: return
+    val cs = MaterialTheme.colorScheme
+    Column(Modifier.padding(start = 46.dp, top = 4.dp).widthIn(max = 290.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        meta.optJSONObject("act")?.let { act ->
+            Surface(shape = RoundedCornerShape(14.dp), color = cs.surfaceContainer) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Text(act.str("title"), style = MaterialTheme.typography.labelLarge)
+                    val rows = act.optJSONArray("rows")
+                    for (i in 0 until (rows?.length() ?: 0)) rows?.optJSONArray(i)?.let { r ->
+                        Text(r.optString(0) + ": " + r.optString(1), style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
+                    }
+                    if (act.str("status").isNotBlank()) Text(act.str("status"), style = MaterialTheme.typography.labelMedium, color = cs.primary)
+                }
+            }
+        }
+        val asks = meta.optJSONArray("approvals")
+        for (i in 0 until (asks?.length() ?: 0)) {
+            val a = asks?.optJSONObject(i) ?: continue
+            val now = vm.data.approvals.firstOrNull { it.optString("id") == a.optString("id") }
+            Surface(shape = RoundedCornerShape(14.dp), color = cs.surfaceContainer) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Text(a.str("code") + " · " + a.str("what"), style = MaterialTheme.typography.bodyMedium, maxLines = 3)
+                    if (now == null || now.str("state") in setOf("waiting", "on-hold")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilledTonalButton({ vm.decide(now ?: a, true) }) { Text("Approve") }
+                        TextButton({ vm.decide(now ?: a, false) }) { Text("Reject") }
+                    } else Text(now.str("state") + (now.str("decided_by").takeIf { it.isNotBlank() }?.let { " by $it" } ?: ""),
+                        style = MaterialTheme.typography.labelMedium, color = cs.onSurfaceVariant)
+                }
+            }
         }
     }
 }

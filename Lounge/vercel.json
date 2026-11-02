@@ -30,7 +30,12 @@
       ]
     }
   ],
-  "functions": { "api/nova.js": { "maxDuration": 60 } },
+  "functions": {
+    "api/nova.js": {
+      "maxDuration": 60,
+      "includeFiles": "{index.html,control-plane.json,identity.json,release.json}"
+    }
+  },
   "rewrites": [
     {
       "source": "/rest/v1/:path*",

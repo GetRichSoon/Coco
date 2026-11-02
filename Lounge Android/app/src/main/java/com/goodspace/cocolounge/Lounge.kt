@@ -229,7 +229,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 decisions = cloud.list("decisions", "select=*&order=decided_on.desc").objects(),
                 activity = cloud.list("activity", "select=*&order=at.desc&limit=20").objects(),
                 rules = cloud.list("rules", "select=*&order=updated_at.desc").objects(),
-                chat = cloud.list("chat", "select=*&order=id.desc&limit=80").objects().reversed(),
+                chat = chatRows(),
                 commands = cloud.list("commands", "select=*&order=created_at.desc&limit=30").objects(),
                 controls = cloud.list("controls").objects(),
                 events = cloud.list("events", "select=*&order=due_at.asc.nullsfirst").objects(),
@@ -327,9 +327,38 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         try { cloud.update("devices", "id=eq.$deviceId", JSONObject().put("active", false)); log("device switched off", deviceId); reload() } catch (e: Exception) { fail(e) }
     }
 
-    /** Chat with Coco: the same conversation on all four devices. */
+    // ---------------------------------------------------------------- Coco Chat
+    // Which part of the company this phone is talking to (COCO, a team, ... an agent), and the company as
+    // a tree to pick from. The thread for a scope is the same rows on all four devices; Nova answers it.
+    var chatScope by mutableStateOf(sp.getString("chat_scope", "coco")!!)
+    var chatTree by mutableStateOf<List<JSONObject>>(emptyList())
+    var chatSending by mutableStateOf(false)
+    val chatPath get() = ChatScope.path(chatScope, chatTree)
+    private suspend fun chatRows() = cloud.list("chat", "select=*&scope=eq.${java.net.URLEncoder.encode(chatScope, "UTF-8")}&order=id.desc&limit=80").objects().reversed()
+    private suspend fun chatLoad() { runCatching { chatRows() }.onSuccess { data = data.copy(chat = it) } }
+    fun loadChatTree() = viewModelScope.launch {
+        runCatching { JSONObject(cloud.api("/api/chat/tree")).getJSONArray("tree").objects() }.onSuccess { chatTree = it }
+    }
+    fun chatGo(key: String) = viewModelScope.launch {
+        chatScope = key; sp.edit().putString("chat_scope", key).apply()
+        data = data.copy(chat = emptyList()); chatLoad()
+    }
+
+    /** Chat with Coco: Nova runs the one engine for every device and writes both sides into the scope's thread. */
     fun sendChat(text: String) = viewModelScope.launch {
-        try { cloud.insert("chat", JSONObject().put("role", "founder").put("author", name).put("device_id", cloud.deviceId).put("body", text)); reload() } catch (e: Exception) { fail(e) }
+        chatSending = true
+        try {
+            val r = JSONObject(cloud.api("/api/chat", JSONObject().put("scope", chatScope).put("body", text)))
+            // a part that no longer exists lands one level up: follow the cloud, never keep a dead key
+            r.optString("scope").takeIf { it.isNotBlank() && it != chatScope }?.let { chatScope = it; sp.edit().putString("chat_scope", it).apply() }
+            chatLoad()
+            if (r.optJSONObject("reply")?.optJSONObject("meta")?.optString("state") == "Completed") reload()
+        } catch (e: Exception) {
+            // a Nova without the chat route yet: the old way, into the company thread
+            if (e is Cloud.CloudError && e.code == 404) runCatching {
+                cloud.insert("chat", JSONObject().put("role", "founder").put("author", name).put("device_id", cloud.deviceId).put("body", text)); reload()
+            }.onFailure { fail(it) } else fail(e)
+        } finally { chatSending = false }
     }
 
     /** PC Control mode: send a fixed command to one PC; its Coco Lounge app runs it and reports back. */

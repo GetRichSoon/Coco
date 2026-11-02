@@ -149,6 +149,21 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .chatactrow { display: flex; gap: 12px; justify-content: space-between; font-size: 13px; }
 .chatactrow span:first-child { color: var(--muted); flex: none; }
 .chatactrow span:last-child { text-align: right; }
+/* who Coco is talking to: the path, each level a way back up, and the one way down */
+.scopebar { display: flex; flex-wrap: wrap; gap: 4px 2px; align-items: center; padding: 10px 12px; border-radius: 18px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--outline); margin-bottom: 10px; }
+.scopebar .crumb { font: 600 14px var(--body); color: var(--muted); background: none; border: 0; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
+.scopebar .crumb:hover { color: var(--primary); background: var(--surface-2); }
+.scopebar .crumb.on { color: var(--on-surface); }
+.scopebar .crumb small { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.scopebar .sep { color: var(--muted); }
+.scopebar select { width: auto; max-width: 220px; padding: 7px 10px; font-size: 13px; border-radius: 12px; margin-left: 4px; }
+.scopebar .grow { flex: 1; }
+.chatyes { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-top: 8px; padding: 8px 10px; border-radius: 14px; background: var(--surface-2); font-size: 13px; }
+.chatyes .actions { margin: 0; flex: none; }
+.bubble .who { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; margin-bottom: 4px; }
+.chatfeed { display: grid; gap: 2px; max-height: 40vh; overflow: auto; margin-bottom: 10px; }
+.chatfeed button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 12px; color: inherit; font: 14px var(--body); cursor: pointer; }
+.chatfeed button:hover { background: var(--surface-2); }
 /* the company tree: one row per thing, indented by how deep it sits */
 .trow { display: flex; align-items: center; gap: 10px; padding: 9px 0 9px calc(var(--depth, 0) * 26px); border-top: 1px solid var(--outline); }
 .trow:first-of-type { border-top: 0; }
@@ -445,7 +460,10 @@ let newKind = 'subteam', newParent = {}, renaming = null, connAssign = null, con
 // a flow is pending. "Connecting" is therefore what this page remembers about the last 10 minutes,
 // and it clears itself the moment a real connected account appears.
 let connConnecting = null, connConnectingAt = 0;
-let CHAT_LOG = [];
+// Coco Chat's thread: the scope's rows from Coco Cloud, shared by every device, plus the local bubbles
+// of a message still on its way. CHAT_KEY is the scope this device last talked to.
+let CHAT_ROWS = [], CHAT_LOCAL = [], chatFeedOpen = false, chatScopeApplied = '', chatSig = '';
+let CHAT_KEY = store.get('gs-chat-scope') || 'coco';
 // Four, not five: the fifth slot in the bottom bar opens the sheet that reaches every other page.
 const BOTTOM = ['home', 'control', 'board', 'approvals'];
 // CP = the control plane snapshot (nova-hq/scripts/coco-control-snapshot.mjs -> control-plane.json).
@@ -795,6 +813,7 @@ async function loadAllNow() {
     if (LIVE) CP = cpMerge(CP, LIVE);
   } catch { LIVE = null; }
   if (!document.hidden) render(); diffAndNotify(); runMyCommands();   // hidden in the tray: no drawing, only data
+  if (page === 'chat') chatLoad();                                    // another device may have spoken here
   pushIsland();
 }
 // The team as a tidy name, the live conversation, and who is working now - the same logic the phone uses.
@@ -1639,6 +1658,71 @@ function chatRemember(found) {
   }
 }
 
+// ---------------------------------------------------------------- who Coco is talking to
+// COCO › Team › Sub-team › Category › Channel › Agent. The founder picks the level once and every
+// sentence after it is read there: "create 5 Shorts" inside AI News means AI News without saying so.
+// The scope holds only ids the company really has (the tree and the registry's live agents), never a
+// typed word, and its key is the thread's name in Coco Cloud, which is how every device shows the
+// same conversation. Agents are not added to chatEntities on purpose: 150 agent names would make
+// ordinary words like "release" or "scout" read as names and strip them out of the sentence.
+const SCOPE_LEVELS = ['team', 'subteam', 'category', 'channel', 'agent'];
+let CHAT_SCOPE = {};
+let CHAT_WHO = { device: null, by: 'founder' };     // who is asking, for the task and the audit row
+function chatAgents() {
+  return ((CP && CP.teams) || []).filter((t) => t.kind !== 'legacy').flatMap((t) => (t.agents || [])
+    .map((a) => ({ kind: 'agent', id: a.id, name: a.name || a.id, role: a.role || '', team: t.id, subteam: a.subteam_id || null })));
+}
+// The whole company as one flat list a selector can walk: each part with its parent, and the agents.
+function chatTree() {
+  const legacy = new Set(((CP && CP.teams) || []).filter((t) => t.kind === 'legacy').map((t) => t.id));
+  const parts = [...structureTree().nodes.values()]
+    .filter((n) => n.state !== 'archived' && !legacy.has(n.id) && !legacy.has(n.parent))
+    .map((n) => ({ kind: n.kind, id: n.id, name: n.name, parent: n.parent || null }));
+  return [...parts, ...chatAgents().map((a) => ({ kind: 'agent', id: a.id, name: a.name, role: a.role, parent: a.subteam || a.team, team: a.team }))];
+}
+const chatScopeKey = (s = CHAT_SCOPE) => SCOPE_LEVELS.map((k) => (s[k] && s[k].id) || '').join('|').replace(/\|+$/, '') || 'coco';
+const chatScopeTarget = (s = CHAT_SCOPE) => ['channel', 'category', 'subteam', 'team'].map((k) => s[k]).filter(Boolean)[0] || null;
+const chatScopePath = (s = CHAT_SCOPE) => SCOPE_LEVELS.map((k) => s[k]).filter(Boolean);
+const chatScopeLabel = (s = CHAT_SCOPE) => chatScopePath(s).map((e) => e.name).join(' › ') || 'Good Space';
+// What can be picked one level down: the parts under this one, and the agents who work here.
+function chatScopeNext(s = CHAT_SCOPE) {
+  if (s.agent) return [];
+  const tree = chatTree(), at = chatScopeTarget(s);
+  const parts = tree.filter((n) => n.kind !== 'agent' && (at ? n.parent === at.id : n.kind === 'team'));
+  if (!at) return parts;
+  const team = s.team && s.team.id, sub = s.subteam && s.subteam.id;
+  return [...parts, ...chatAgents().filter((a) => a.team === team && (!sub || !a.subteam || a.subteam === sub))
+    .map((a) => ({ kind: 'agent', id: a.id, name: a.name, role: a.role }))];
+}
+// Point the conversation at a place. An id the company does not have stops the walk there, so a
+// stale key from another device lands on the nearest level that still exists, never on a guess.
+function chatSetScope(key) {
+  const ids = !key || key === 'coco' ? [] : String(key).split('|');
+  const tree = chatTree(), next = {};
+  for (let i = 0; i < SCOPE_LEVELS.length; i++) {
+    if (!ids[i]) continue;
+    const n = tree.find((x) => x.kind === SCOPE_LEVELS[i] && x.id === ids[i]);
+    if (!n) break;
+    next[n.kind] = { kind: n.kind, id: n.id, name: n.name, ...(n.kind === 'agent' ? { role: n.role } : {}) };
+  }
+  CHAT_SCOPE = next;
+  chatCtxReset();
+  for (const k of ['team', 'subteam', 'category', 'channel']) if (next[k]) CHAT_CTX[k] = next[k];
+  return chatScopeKey();
+}
+// The key for a place picked from a list or an activity line: its parents are filled in from the
+// tree, so jumping straight to a category still shows the team and sub-team above it.
+function chatScopeWith(e) {
+  if (e.kind === 'agent') return chatScopeKey({ ...CHAT_SCOPE, agent: e });
+  const p = chatScope(e), s = {};
+  for (const [k, slot] of [['team', 'p_team'], ['subteam', 'p_subteam'], ['category', 'p_category'], ['channel', 'p_channel']]) if (p[slot]) s[k] = { id: p[slot] };
+  return chatScopeKey(s);
+}
+const chatScopeUpTo = (kind) => { const s = {}; if (kind !== 'coco') for (const k of SCOPE_LEVELS) { if (CHAT_SCOPE[k]) s[k] = CHAT_SCOPE[k]; if (k === kind) break; } return chatScopeKey(s); };
+// A pending yes lives in the thread, so the phone can confirm what the desktop asked.
+const chatPending = () => CHAT_CTX.pending;
+function chatResume(p) { if (p && p.it && p.summary) CHAT_CTX.pending = p; }
+
 // ---------------------------------------------------------------- a reference, read off its URL
 // Only what the URL itself proves is recorded. The provider and the id are in the link; the title,
 // the duration, the publication date and - importantly - which channel PUBLISHED it are not, and
@@ -1759,7 +1843,11 @@ const CHAT_ACTIONS = {
   create:           { verb: 'Create',             needs: ['kind', 'name'],      reach: 'company' },
   rename:           { verb: 'Rename',             needs: ['target', 'name'],    reach: 'company' },
   move:             { verb: 'Move',               needs: ['target', 'parent'],  reach: 'company',  confirm: 'chat' },
-  archive:          { verb: 'Archive',            needs: ['target'],            reach: 'company',  confirm: 'dialog' },
+  // chat-confirmed, not a dialog: the cloud answers chat for every device and a phone has no dialog
+  archive:          { verb: 'Archive',            needs: ['target'],            reach: 'company',  confirm: 'chat' },
+  produce:          { verb: 'Make it',            needs: [],                    reach: 'cloud' },
+  request:          { verb: 'Send as work',       needs: [],                    reach: 'cloud' },
+  request_free:     { verb: 'Send this as cloud work', needs: [],               reach: 'cloud',    confirm: 'chat' },
   restore:          { verb: 'Restore',            needs: ['target'],            reach: 'company' },
   pause:            { verb: 'Pause',              needs: ['target'],            reach: 'company' },
   resume:           { verb: 'Resume',             needs: ['target'],            reach: 'company' },
@@ -1887,7 +1975,7 @@ function chatIntent(message) {
   const ctxTarget = () => CHAT_CTX.connection || CHAT_CTX.channel || CHAT_CTX.category
     || CHAT_CTX.subteam || CHAT_CTX.workflow || CHAT_CTX.team || null;
   const refTarget = () => found.filter((e) => REF_TARGETS.indexOf(e.kind) >= 0)[0]
-    || (CHAT_THIS.test(text) ? ctxTarget() : null);
+    || (CHAT_THIS.test(text) ? ctxTarget() : null) || chatScopeTarget();
 
   // A bare yes answers the question Coco actually asked. Anchored to the whole message on purpose:
   // "yes" confirms, "yes and pause ebooks" is a new instruction and is read as one, so a pending
@@ -1897,6 +1985,26 @@ function chatIntent(message) {
       return { intent: 'confirm', entities: found };
     if (/^(no|nope|nahi|na|mat karo|cancel|ruko|rehne do|chhodo|stop|forget it)[\s.!]*$/i.test(text))
       return { intent: 'cancel', entities: found };
+  }
+
+  // ---- one agent: "@Scripty rewrite this hook", or the agent picked in the scope bar. A question
+  // about the agent is still a question; anything else is work for it, which only the cloud does.
+  const mention = (String(message).match(/(?:^|\s)@([A-Za-z0-9][\w.-]*)/) || [])[1];
+  const agent = mention
+    ? chatAgents().filter((a) => a.id.toLowerCase() === mention.toLowerCase()
+        || a.name.toLowerCase().replace(/\s+/g, '') === mention.toLowerCase())[0] || null
+    : CHAT_SCOPE.agent || null;
+  if (mention && !agent) return { intent: 'unknown_agent', name: mention, entities: found };
+  if (agent && (mention || !(has('status') || has('list') || has('approvals')))) {
+    return { intent: 'request', agent, target: chatScopeTarget(), text: message, entities: found };
+  }
+
+  // ---- a link plus a request to MAKE something from it ("create a channel like this <link>") is
+  // work for the company, not a bookmark: it goes to the cloud with the link attached.
+  const WORK_VERBS = /\b(create|make|build|banao|bana do|produce|launch|design|write|similar|like this|jaisa|jaise|based on)\b/;
+  const words = rest.replace(/https?:\/\/\S+/g, ' ').trim();   // a verb inside a URL is not a request
+  if (chatParseRef(message) && WORK_VERBS.test(words) && words.split(/\s+/).length >= 3) {
+    return { intent: 'request', target: refTarget(), text: message, entities: found };
   }
 
   // ---- a link in the message is the strongest signal there is. It is a reference, and the rest of
@@ -2000,7 +2108,8 @@ function chatIntent(message) {
              : { intent: 'show_schedule', target: wf, entities: found };
   }
   if (has('pause') || has('resume')) {
-    const target = wf || one('team') || one('connection');
+    const here = chatScopeTarget();
+    const target = wf || one('team') || one('connection') || (here && here.kind === 'team' ? here : null);
     const op = has('pause') ? 'pause' : 'resume';
     return { intent: op, target, missing: target ? [] : ['target'], entities: found };
   }
@@ -2016,7 +2125,23 @@ function chatIntent(message) {
     return { intent: 'rename', target: r.target, name: r.name, entities: found };
   }
   if (has('create')) {
+    // "Create 5 Shorts for this category" asks for OUTPUT, not a new category: the kind word is who
+    // the work is for. Output goes to the cloud; only a part of the company is created here.
+    if (/\b(shorts?|videos?|posts?|reels?|ebooks?|books?|episodes?|scripts?|thumbnails?|titles?|ideas?|products?|listings?|chapters?|articles?|workbooks?)\b/.test(rest)
+        && !/\b(called|named|naam)\b/.test(rest)) {
+      // inside a scope, only a name from the same team can redirect the work: "Shorts" alone must not
+      // carry a YouTube request off to another team's "Animated Shorts"
+      const here = chatScopeTarget(), team = here ? chatScope(here).p_team : null;
+      const named = found.filter((e) => REF_TARGETS.indexOf(e.kind) >= 0 && (!team || chatScope(e).p_team === team))[0];
+      return { intent: 'produce', target: named || (CHAT_THIS.test(text) ? ctxTarget() : null) || here,
+               text: message, entities: found };
+    }
+    if (/\b(similar|like this|jaisa|jaise|based on)\b/.test(rest)) {
+      return { intent: 'request', target: chatScopeTarget(), text: message, entities: found };
+    }
     const c = parseCreate(text, found, message);
+    // inside a scope, a new part goes under the scope's level that can hold it
+    if (c.kind && !c.parent && PARENT_OF[c.kind] && CHAT_SCOPE[PARENT_OF[c.kind]]) c.parent = CHAT_SCOPE[PARENT_OF[c.kind]];
     if (!c.kind) return { intent: 'create', missing: ['kind'], entities: found };
     if (!c.name) return { intent: 'create', kind: c.kind, parent: c.parent, missing: ['a name'], entities: found };
     if (c.kind !== 'team' && !c.parent) {
@@ -2027,10 +2152,15 @@ function chatIntent(message) {
   if (has('workflow')) return { intent: wf ? 'workflow_status' : 'workflows', target: wf, entities: found };
   if (has('status') || has('list')) {
     const target = one('connection') || one('workflow') || one('team') || one('provider');
+    if (!target && (chatScopeTarget() || CHAT_SCOPE.agent)) return { intent: 'scope_status', entities: found };
     if (!target) return { intent: 'company_status', entities: found };
     const map = { connection: 'channel_status', workflow: 'workflow_status', team: 'team_status', provider: 'integrations' };
     return { intent: map[target.kind] || 'company_status', target, entities: found };
   }
+  // A sentence Coco has no rule for may still be an instruction to the company. Three words or more
+  // is offered as cloud work for this scope (Coco decides the team at COCO), and waits for a yes:
+  // a rule that missed is not proof the founder meant work, and a stray sentence must cost nothing.
+  if (text.split(/\s+/).length >= 3) return { intent: 'request_free', target: chatScopeTarget(), text: message, entities: found };
   return { intent: 'unknown', entities: found };
 }
 
@@ -2112,8 +2242,32 @@ function chatRead(it) {
     return say(calls.length ? calls.length + ' Claude calls recorded, ' + num(tok) + ' tokens.' : 'No Claude calls recorded yet.',
       [{ t: 'Calls', v: String(calls.length), go: '#ai' }, { t: 'Tokens', v: num(tok) }]);
   }
+  if (it.intent === 'unknown_agent') {
+    return say('There is no agent called @' + it.name + ' in the company. Pick one in the scope bar, or say "@" with its id.',
+      chatAgents().filter((a) => !CHAT_SCOPE.team || a.team === CHAT_SCOPE.team.id).slice(0, 6).map((a) => ({ t: 'agent', v: a.name })));
+  }
+  // The place the founder is standing in, from the smallest context that answers it: its own parts,
+  // agents, workflows, references and the approvals raised for its team - nothing from elsewhere.
+  if (it.intent === 'scope_status') {
+    const at = chatScopeTarget(), s = chatScope(at), next = chatScopeNext();
+    const team = teams.filter((x) => x.id === s.p_team)[0] || {};
+    const mine = flows.filter((f) => f.team && f.team === s.p_team);
+    const refs = at ? chatRefs(at) : [];
+    const wait = (D.approvals || []).filter((a) => a.state === 'waiting' && (!s.p_team || a.team === s.p_team));
+    const paused = team.paused || policyOf('team', s.p_team, 'paused') === true;
+    const ag = CHAT_SCOPE.agent;
+    const r = say((ag ? ag.name + (ag.role ? ' (' + ag.role + ')' : '') + ' works in ' + chatScopeLabel() + '. Tell it what you want; it becomes cloud work for it. '
+                     : chatScopeLabel() + ' is ' + (paused ? 'paused' : 'live') + '. ')
+      + next.filter((n) => n.kind !== 'agent').length + ' parts below, ' + next.filter((n) => n.kind === 'agent').length + ' agents, '
+      + mine.length + ' workflow' + (mine.length === 1 ? '' : 's') + ', ' + refs.length + ' reference' + (refs.length === 1 ? '' : 's') + ', '
+      + wait.length + ' waiting for your YES.',
+      mine.slice(0, 3).map((f) => ({ t: 'workflow', v: f.id, go: '#workflows' })));
+    r.approvals = wait.slice(0, 4).map((a) => ({ id: a.id, code: a.code, what: String(a.what || '').slice(0, 120) }));
+    return r;
+  }
   if (it.intent === 'approvals') {
-    const all = D.approvals || [], w = all.filter((a) => a.state === 'waiting');
+    const here = CHAT_SCOPE.team ? CHAT_SCOPE.team.id : null;
+    const all = (D.approvals || []).filter((a) => !here || a.team === here), w = all.filter((a) => a.state === 'waiting');
     // "Did Big Boss approve this?" is a question about the one cloud approval row, so it is answered
     // by naming who decided it and when - never by saying "yes, done".
     const named = all.filter((a) => a.decided_by && new RegExp(String(a.code).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(it.text || ''))[0]
@@ -2121,8 +2275,11 @@ function chatRead(it) {
     if (named) return say(named.code + ' was ' + (named.state === 'rejected' ? 'turned down' : 'approved') + ' by ' + named.decided_by
       + (named.decided_at ? ', ' + ago(named.decided_at) : '') + '. ' + String(named.what || '').slice(0, 90),
       [{ t: named.code, v: named.state, go: '#approvals' }, { t: 'Decided by', v: named.decided_by }]);
-    return say(w.length ? w.length + ' waiting: ' + w.slice(0, 3).map((a) => a.code).join(', ') + '.' : 'Nothing is waiting for a YES.',
-      w.slice(0, 4).map((a) => ({ t: a.code, v: String(a.what || '').slice(0, 60), go: '#approvals' })));
+    const r = say(w.length ? w.length + ' waiting' + (here ? ' for ' + CHAT_SCOPE.team.name : '') + ': ' + w.slice(0, 3).map((a) => a.code).join(', ') + '.'
+      : 'Nothing is waiting for a YES' + (here ? ' in ' + CHAT_SCOPE.team.name : '') + '.');
+    // the decision itself is a tap on the card, through the same cloud write the Approvals page uses
+    r.approvals = w.slice(0, 4).map((a) => ({ id: a.id, code: a.code, what: String(a.what || '').slice(0, 120) }));
+    return r;
   }
   // The four devices, measured against the cloud release, from what each one reported itself. A device
   // that has stopped reporting is offline, never "updated": a version it sent twenty minutes ago is
@@ -2227,9 +2384,7 @@ async function chatAct(it) {
     return made && { text: 'Renamed ' + it.target.name + ' to ' + it.name + '.', acted: true };
   }
   if (it.intent === 'archive' || it.intent === 'restore') {
-    const made = await structureOp(it.intent, it.target.id,
-      it.intent === 'archive' ? 'Archive ' + it.target.name + '? It stays in the company and can be restored.' : null,
-      { p_kind: it.target.kind });
+    const made = await structureOp(it.intent, it.target.id, null, { p_kind: it.target.kind });
     return made && { text: (it.intent === 'archive' ? 'Archived ' : 'Restored ') + it.target.name + '.', acted: true };
   }
   if (it.intent === 'set_schedule') {
@@ -2446,7 +2601,39 @@ async function chatAct(it) {
              status: 'Queued as request ' + data.request_id },
       cards: [{ t: 'Request', v: String(data.request_id) }, { t: 'Workflow', v: f.id, go: '#workflows' }] };
   }
+
+  // "Make 5 Shorts here" goes to the team as a task carrying the exact words and the scope. A queued
+  // workflow run would drop them: the run executor does not read a request's note.
+  if (it.intent === 'produce' || it.intent === 'request' || it.intent === 'request_free') return chatTask(it);
   return null;
+}
+
+// Work the rules cannot finish become one task for the company, carrying only what the team needs:
+// where it was asked, who it is for, the founder's words and the links. Not the registry, not the
+// thread. The cloud cycle routes it; Claude is used there only if the work itself needs reasoning.
+async function chatTask(it) {
+  const agent = it.agent || CHAT_SCOPE.agent || null;
+  const s = chatScope(it.target || chatScopeTarget());
+  const where = chatScopeLabel();
+  const urls = String(it.text).match(/https?:\/\/[^\s<>"'`)]+/g) || [];
+  const words = String(it.text).replace(/https?:\/\/\S+/g, ' ').replace(/\s+/g, ' ').trim();
+  const title = ((agent ? '@' + agent.name + ' · ' : '') + (words || 'Work from a reference')).slice(0, 140);
+  const details = ['Asked in Coco Chat by ' + CHAT_WHO.by + ' at ' + where + '.', 'Request: ' + it.text,
+    'Team: ' + (s.p_team || 'Coco decides (company-wide request)'),
+    s.p_subteam && 'Sub-team: ' + s.p_subteam, s.p_category && 'Category: ' + s.p_category, s.p_channel && 'Channel: ' + s.p_channel,
+    agent && 'Agent: ' + agent.id, urls.length && 'References: ' + urls.join(' '),
+    'Cloud only: queue, cloud workers, B2, Nova. Publishing waits for a founder YES.'].filter(Boolean).join('\n');
+  const { data, error } = await sb.rpc('submit_task', { p_title: title, p_details: details, p_house: null, p_needs: 'cloud', p_device: CHAT_WHO.device, p_by: CHAT_WHO.by });
+  if (error) return { text: 'Not sent: ' + error.message.replace(/^.*?:\s*/, '') + '. Nothing was started.' };
+  const d = data || {};
+  if (d.merged) return { text: 'That is already being worked on as "' + d.title + '" (' + d.status + '). I added your words to it rather than starting it twice.',
+    acted: true, cards: [{ t: 'Task', v: String(d.title || '').slice(0, 40), go: '#board' }] };
+  return { text: 'Sent to ' + (agent ? agent.name + ' in ' + where : where) + ' as cloud work'
+      + (urls.length ? ', with ' + urls.length + ' reference' + (urls.length === 1 ? '' : 's') : '') + '. You will see it move on the Board and here.',
+    acted: true,
+    act: { title: 'Cloud task', rows: [['For', agent ? agent.name + ' · ' + where : where], ['References', urls.length ? String(urls.length) : 'none'],
+                                       ['Runs', 'in the cloud, not on a PC'], ['Publishing', 'needs its own YES']], status: 'Queued' },
+    cards: [{ t: 'Task', v: String(d.task_id || '').slice(0, 8), go: '#board' }] };
 }
 
 // ---------------------------------------------------------------- what is about to happen
@@ -2460,6 +2647,8 @@ const CHAT_UNDO = {
   assign:           'assign it somewhere else',
   disconnect:       'connect it again, which means the platform\'s consent screen once more',
   reference_remove: 'nothing is deleted — it stays in the Brain, retired',
+  request_free:     'stop the task on the Board',
+  archive:          'say "restore" and its name',
 };
 const CHAT_WARN = {
   company_stop:     'Every team stops claiming new work.',
@@ -2468,13 +2657,16 @@ const CHAT_WARN = {
   assign:           'This is the thing that lets a run publish to it.',
   disconnect:       'Nothing can publish to it afterwards.',
   reference_remove: 'Runs stop using it.',
+  request_free:     'It becomes one task, worked in the cloud.',
+  archive:          'It stops taking work and stays restorable.',
 };
 function chatSummary(it, spec) {
   const t = it.target, rows = [];
   if (t) rows.push(['Target', t.name + (t.kind ? ' · ' + t.kind : '')]);
   if (it.parent) rows.push(['Where', it.parent.name]);
   if (it.value) rows.push(['Value', String(it.value)]);
-  if (!t && !it.parent) rows.push(['Scope', 'every team']);
+  if (it.intent === 'request_free') rows.unshift(['Request', String(it.text).slice(0, 90)]);
+  if (!t && !it.parent) rows.push(['Scope', it.intent === 'request_free' ? 'Good Space · Coco picks the team' : 'every team']);
   rows.push(['Permission', CHAT_REACH[spec.reach] || CHAT_REACH.company]);
   rows.push(['Undo', CHAT_UNDO[it.intent] || 'ask me and I will put it back']);
   return { title: spec.verb + (t ? ' · ' + t.name : ''), rows, status: 'Waiting for your yes',
@@ -2919,18 +3111,38 @@ const V = {
     const actBox = (a) => !a ? '' : `<div class="chatact"><b>${esc(a.title)}</b>${(a.rows || []).map(([k, v]) =>
       `<div class="chatactrow"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}${a.status
         ? `<div class="chatactrow"><span>Status</span><span>${esc(a.status)}</span></div>` : ''}</div>`;
-    const log = (CHAT_LOG || []).map((m) => m.who === 'you'
-      ? `<div class="bubble you">${esc(m.text)}</div>`
-      : m.state && !m.text
+    // A waiting approval is decided right here, through the same cloud write the Approvals page uses.
+    const yesBox = (list) => (list || []).map((a) => {
+      const now = (D.approvals || []).find((x) => String(x.id) === String(a.id));
+      const open = !now || ['waiting', 'on-hold'].includes(now.state);
+      return `<div class="chatyes"><span><b>${esc(a.code)}</b> ${esc(a.what || '')}</span>${open
+        ? `<span class="actions"><button class="btn filled" data-chatyes="${esc(a.id)}">Approve</button><button class="btn text" data-chatno="${esc(a.id)}">Reject</button></span>`
+        : `${chip(now.state)}`}</div>`; }).join('');
+    const log = chatThread().map((m) => m.mine
+      ? `<div class="bubble you">${m.author && m.author !== founderName() ? `<span class="who">${esc(m.author)}</span>` : ''}${esc(m.text)}</div>`
+      : m.working
         ? `<div class="bubble coco working"><span class="chatstate">${esc(m.state)}</span></div>`
-        : `<div class="bubble coco">${m.state ? `<span class="chatstate">${esc(m.state)}</span>` : ''}${esc(m.text)}${actBox(m.act)}${(m.cards || []).length
+        : `<div class="bubble coco">${m.state ? `<span class="chatstate">${esc(m.state)}</span>` : ''}${esc(m.text)}${actBox(m.act)}${yesBox(m.approvals)}${(m.cards || []).length
             ? `<div class="chatcards">${m.cards.map((c) =>
               `<a class="chatcard" href="${esc(c.go || '#chat')}"><b>${esc(c.t)}</b><span>${esc(c.v)}</span></a>`).join('')}</div>` : ''}</div>`).join('');
-    return `<div class="card2" style="margin-bottom:12px"><span class="eyebrow">Ask Coco</span>
-        <div class="muted">Questions are answered from company state and cost nothing. Changes go through the same controls the screens use, with the same checks. Anything risky is shown first and waits for your yes.</div></div>
-      <div class="chatlog">${log || '<div class="muted">Try: company status · connect Moonveil Audio · paste a link and say what it is for · references for The Flow · start working on this · stop the company</div>'}</div>
-      <form id="chatForm" class="chatbar"><input name="q" placeholder="company status · connect Moonveil Audio · use this link for The Flow" autocomplete="off" required>
-        <button class="btn filled" type="submit"><i class="ms">send</i></button></form>`;
+    // The path is the scope: every level is a way back up; the picker is the one way down.
+    const path = chatScopePath(), next = chatScopeNext();
+    const KIND = { team: 'Team', subteam: 'Sub-team', category: 'Category', channel: 'Channel', agent: 'Agent' };
+    const crumbs = [`<button class="crumb${path.length ? '' : ' on'}" data-chatup="coco"><small>Company</small>COCO</button>`]
+      .concat(path.map((e, i) => `<span class="sep">›</span><button class="crumb${i === path.length - 1 ? ' on' : ''}" data-chatup="${esc(e.kind)}"><small>${KIND[e.kind]}</small>${esc(e.name)}</button>`)).join('');
+    const opt = (n) => `<option value="${esc(n.kind + '\u0000' + n.id)}">${esc(n.name)}${n.role ? ' · ' + esc(n.role) : ''}</option>`;
+    const parts = next.filter((n) => n.kind !== 'agent'), agents = next.filter((n) => n.kind === 'agent');
+    const picker = next.length ? `<select data-chatnext aria-label="Talk to a part of the company"><option value="">${path.length ? 'Go deeper…' : 'Choose a team…'}</option>${
+      parts.length ? `<optgroup label="${esc(KIND[parts[0].kind] || 'Parts')}s">${parts.map(opt).join('')}</optgroup>` : ''}${
+      agents.length ? `<optgroup label="Agents">${agents.map(opt).join('')}</optgroup>` : ''}</select>` : '';
+    const feed = chatFeedOpen ? `<div class="card2 chatfeed">${(D.activity || []).slice(0, 25).map((a, i) =>
+      `<button data-chatfeed="${i}"><b>${esc(a.action)}</b> · ${esc(String(a.detail || '').slice(0, 120))}<div class="muted">${esc(a.actor || '')} · ${ago(a.at)}</div></button>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>` : '';
+    const here = chatScopeLabel();
+    return `<div class="scopebar">${crumbs}${picker}<span class="grow"></span><button class="btn ${chatFeedOpen ? 'tonal' : 'text'}" data-chatfeedtoggle="1"><i class="ms">bolt</i>Activity</button></div>
+      ${feed}
+      <div class="chatlog">${log || `<div class="muted">${path.length ? 'Talking to ' + esc(here) + '. Ask how it is doing, tell it what to make, paste a reference, or pick an agent.' : 'Talking to the whole company. Ask anything, or tell Coco what you want made - it picks the team.'}</div>`}</div>
+      <form id="chatForm" class="chatbar"><input name="q" placeholder="${esc(CHAT_SCOPE.agent ? 'Tell ' + CHAT_SCOPE.agent.name + ' what to do' : path.length ? 'Message ' + here + ' · @agent · paste a link' : 'Message Coco · status · create… · @agent')}" autocomplete="off" required>
+        <button class="btn filled" type="submit" aria-label="Send"><i class="ms">send</i></button></form>`;
   },
 
   connections() {
@@ -3263,8 +3475,90 @@ function once(el, event, fn) {
   el.addEventListener(event, fn);
 }
 
+// ---------------------------------------------------------------- Coco Chat on this screen
+// The answer comes from Nova's /api/chat: the same engine, run in the cloud for every device, writing
+// both sides of the turn into the scope's thread. This page only shows the thread and sends words.
+const chatThread = () => CHAT_ROWS.map((r) => r.role === 'founder'
+  ? { mine: true, author: r.author, text: r.body }
+  : { text: r.body, ...(r.meta || {}) }).concat(CHAT_LOCAL);
+const chatScroll = () => { const l = $('.chatlog'); if (l) l.scrollTop = l.scrollHeight; };
+// The scope this device last talked to, applied once the company has loaded (an id the company no
+// longer has lands one level up).
+function chatSync(entering) {
+  const want = CHAT_KEY + '@' + ((CP && CP.generated_at) || '') + ':' + (STRUCT || []).length;
+  if (CP && chatScopeApplied !== want) { chatScopeApplied = want; chatSetScope(CHAT_KEY); }
+  if (entering) chatLoad();
+}
+async function chatLoad() {
+  const key = chatScopeKey();
+  const { data, error } = await sb.from('chat').select('*').eq('scope', key).order('id', { ascending: false }).limit(60);
+  if (error || !data || chatScopeKey() !== key) return;
+  const sig = key + ':' + data.length + ':' + ((data[0] || {}).id || 0);
+  if (sig === chatSig) return;
+  chatSig = sig; CHAT_ROWS = data.slice().reverse();
+  if (page === 'chat' && !document.hidden) { render(); chatScroll(); }
+}
+function chatGo(key) {
+  CHAT_KEY = key; store.set('gs-chat-scope', key);
+  chatScopeApplied = ''; chatSync(false);
+  CHAT_ROWS = []; CHAT_LOCAL = []; chatSig = '';
+  render(); chatLoad();
+}
+async function chatSubmit(q) {
+  const mine = { mine: true, text: q }, working = { working: true, state: 'Understanding…' };
+  CHAT_LOCAL.push(mine, working); render(); chatScroll();
+  const drop = () => { CHAT_LOCAL = CHAT_LOCAL.filter((m) => m !== mine && m !== working); };
+  if (NOVA) {
+    try {
+      const r = await novaFetch('/api/chat', { method: 'POST', body: JSON.stringify({ scope: chatScopeKey(), body: q }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.reply) {
+        drop(); CHAT_ROWS = CHAT_ROWS.concat([j.founder, j.reply]); chatSig = '';
+        render(); chatScroll();
+        if (j.reply.meta && j.reply.meta.state === 'Completed') loadAll();   // the company changed: show it
+        return;
+      }
+      if (r.status !== 404 && r.status < 500) {                // refused on purpose: say why, run nothing
+        Object.assign(working, { working: false, text: j.message || 'Coco Cloud refused that.', state: 'Failed' }); render(); return;
+      }
+    } catch {}
+  }
+  // A Nova without /api/chat yet, or no Nova at all: the same engine on this device. It acts through
+  // the same RPCs, but the turn is not in the shared thread, and it says so.
+  CHAT_WHO = { device: deviceId, by: founderName() };
+  const a = await chatSend(q, (s) => { working.state = s; render(); });
+  Object.assign(working, { working: false, ...(a || {}), text: (a ? a.text : 'Nothing to do.') + ' (answered on this device; not in the shared thread)' });
+  render(); chatScroll();
+}
+// An activity line opens the place it is about: an approval, a run, or the part of the company it names.
+function chatJump(a) {
+  const text = (a.action || '') + ' ' + (a.detail || '');
+  if (/approv|declin/.test(a.action || '')) { location.hash = '#approvals'; return; }
+  const e = chatFind(text, ['channel', 'category', 'subteam', 'team'])[0];
+  if (e) { chatFeedOpen = false; chatGo(chatScopeWith(e)); return; }
+  if (/\brun\b|RUN-/i.test(text)) { location.hash = '#runs'; return; }
+  toast('That line does not name a part of the company');
+}
+document.addEventListener('click', async (e) => {
+  const up = e.target.closest('[data-chatup]');
+  if (up) { chatGo(chatScopeUpTo(up.dataset.chatup)); return; }
+  const yn = e.target.closest('[data-chatyes],[data-chatno]');
+  if (yn) { await decideApproval(yn.dataset.chatyes || yn.dataset.chatno, !!yn.dataset.chatyes); render(); return; }
+  if (e.target.closest('[data-chatfeedtoggle]')) { chatFeedOpen = !chatFeedOpen; render(); return; }
+  const f = e.target.closest('[data-chatfeed]');
+  if (f) { const a = (D.activity || [])[Number(f.dataset.chatfeed)]; if (a) chatJump(a); }
+});
+document.addEventListener('change', (e) => {
+  const s = e.target.closest('select[data-chatnext]');
+  if (!s || !s.value) return;
+  const [kind, id] = s.value.split('\u0000');
+  const n = chatTree().find((x) => x.kind === kind && x.id === id);
+  if (n) chatGo(chatScopeWith(n));
+});
+
 function render() {
   if (!V[page]) page = 'home';
+  if (page === 'chat') chatSync($('#view').dataset.page !== 'chat');
   ensureShapeDefs();
   nav();
   $('#title').textContent = PAGES.find(p => p[0] === page)[1];
@@ -3292,17 +3586,7 @@ function render() {
     const q = String(new FormData(e.target).get('q') || '').trim();
     if (!q) return;
     e.target.reset();
-    CHAT_LOG.push({ who: 'you', text: q });
-    // A working bubble that says which step Coco is on, replaced in place by the answer. Resolving
-    // the company takes no network call, but executing and verifying do, and a founder watching a
-    // still screen cannot tell "thinking" from "stuck".
-    const slot = CHAT_LOG.push({ who: 'coco', state: 'Understanding…' }) - 1;
-    render();
-    const a = await chatSend(q, (s) => { CHAT_LOG[slot] = { who: 'coco', state: s }; render(); });
-    CHAT_LOG.splice(slot, 1);
-    if (a) CHAT_LOG.push({ who: 'coco', text: a.text, cards: a.cards, act: a.act, state: a.state });
-    render();
-    const l = $('.chatlog'); if (l) l.scrollTop = l.scrollHeight;
+    await chatSubmit(q);
   });
   once($('#newStruct'), 'submit', addStructure);
   once($('#addConn'), 'submit', async (e) => {

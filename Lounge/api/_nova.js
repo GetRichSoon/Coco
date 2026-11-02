@@ -11,6 +11,7 @@
 // Env: DATABASE_URL (pooler connection string, transaction mode), NOVA_CACHE_SECONDS (15),
 //      NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000)
 import { createHash } from 'node:crypto';
+import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {} };
@@ -192,6 +193,16 @@ export async function handle(db, req, now = Date.now()) {
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
+    // Coco Chat: one engine and one thread per scope for every device (api/_chat.js)
+    if (req.path === '/api/chat' || req.path === '/api/chat/tree') {
+      const run = (stmt) => runAs(db, who, deviceKey, stmt);
+      const rpc = async (fn, args) => { const rows = await runAs(db, who, deviceKey, buildRpc(fn, args)); invalidate(); return rows.length === 1 ? rows[0].value : rows.map((r) => r.value); };
+      if (req.path === '/api/chat/tree') { const out = await chatTree({ run, rpc, who, now }); log(out.status, { device: who.device_id, chat: 'tree' }); return json(out.status, out.body); }
+      if (req.method !== 'POST') return json(405, { message: 'chat is POST' });
+      const out = await chatTurn({ run, rpc, who, body: req.body, now });
+      invalidate('chat'); log(out.status, { device: who.device_id, chat: out.body.scope || 'refused' });
+      return json(out.status, out.body);
+    }
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {

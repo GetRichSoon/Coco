@@ -144,9 +144,17 @@ await t('a refusal from the control plane is reported, never dressed up', async 
 });
 
 await t('an unknown message offers what it can do, and changes nothing', async () => {
-  const a = await C.chatSend('make me a sandwich');
+  const a = await C.chatSend('sandwich please');
   assert.strictEqual(CALLS.length, 0);
   assert.ok(/did not catch a command/.test(a.text), a.text);
+});
+
+await t('a sentence with no rule is offered as cloud work and waits for a yes', async () => {
+  const a = await C.chatSend('make me a sandwich');
+  assert.strictEqual(CALLS.length, 0, 'nothing may happen before the yes');
+  assert.strictEqual(a.state, 'Ready for confirmation', a.text);
+  await C.chatSend('no');
+  assert.strictEqual(CALLS.length, 0);
 });
 
 await t('nothing in the chat path can reach a model', () => {
@@ -209,7 +217,11 @@ await t('rename sends an edit with the new name', async () => {
 
 await t('archive and restore use the real ops', async () => {
   const team = CPREAL.teams[1];
-  await C.chatSend('archive ' + team.name);
+  // archive waits for a yes in the chat itself: the cloud answers every device and a phone has no dialog
+  const asked = await C.chatSend('archive ' + team.name);
+  assert.strictEqual(CALLS.length, 0, 'nothing before the yes');
+  assert.strictEqual(asked.state, 'Ready for confirmation', asked.text);
+  await C.chatSend('yes');
   assert.strictEqual(CALLS[0].args.p_op, 'archive');
   assert.strictEqual(CALLS[0].args.p_id, team.id);
   CALLS = [];

@@ -137,6 +137,12 @@ class Cloud(context: Context) {
         JSONObject(http.newCall(b.get().build()).execute().bodyOrThrow()).also { it.optString("email").takeIf { e -> e.isNotBlank() }?.let { e -> email = e } }
     }
 
+    /** Nova's own routes (/api/chat, /api/chat/tree): GET without a body, POST with one; this device's key either way. */
+    suspend fun api(path: String, body: JSONObject? = null): String = withContext(Dispatchers.IO) {
+        val b = Request.Builder().url("$NOVA$path"); deviceKey?.let { b.header("x-device-key", it) }
+        http.newCall(if (body == null) b.get().build() else b.post(body.toString().toRequestBody(JSON)).build()).execute().bodyOrThrow()
+    }
+
     fun listen(onPulse: (String) -> Unit, onState: (Boolean) -> Unit): () -> Unit {
         var socket: WebSocket? = null
         var closed = false

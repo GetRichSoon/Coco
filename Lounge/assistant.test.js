@@ -559,8 +559,9 @@ await t('chat never reads a secret or a token value', () => {
 await t('every mutation goes through a gated coco_ RPC', () => {
   const fns = [...chatSrc.matchAll(/sb\.rpc\(\s*'([a-z_]+)'/g)].map((m) => m[1]);
   assert.ok(fns.length, 'expected some RPCs');
-  for (const f of fns) assert.ok(/^coco_/.test(f), f + ' is not a control-plane RPC');
-  assert.deepStrictEqual([...new Set(fns)].sort(), ['coco_brain', 'coco_request_run']);
+  // submit_task is the company's task intake: SECURITY INVOKER, so tasks' founder+device RLS decides
+  for (const f of fns) assert.ok(/^coco_/.test(f) || f === 'submit_task', f + ' is not a control-plane RPC');
+  assert.deepStrictEqual([...new Set(fns)].sort(), ['coco_brain', 'coco_request_run', 'submit_task']);
 });
 
 await t('chat never calls Claude', () => {
@@ -598,27 +599,52 @@ const chatViewSrc = (() => {
   throw new Error('the chat view is not closed');
 })();
 
+// the view's world: the thread, the scope path and the one level below it
+const viewOf = (LOG, o = {}) => new Function('chatThread', 'esc', 'chatScopePath', 'chatScopeNext', 'chatScopeLabel', 'CHAT_SCOPE', 'D', 'chip', 'founderName', 'ago', 'chatFeedOpen',
+  `${chatViewSrc}
+return chatView();`)(() => LOG, esc, () => o.path || [], () => o.next || [], () => (o.path || []).map((e) => e.name).join(' › ') || 'Good Space',
+  o.scope || {}, { approvals: o.approvals || [], activity: o.activity || [] }, (st) => `<span class="chip">${esc(st)}</span>`, () => 'Mangesh', () => 'just now', !!o.feed);
+
 await t('the chat view renders a working bubble, an answer and an action summary', () => {
   const LOG = [
-    { who: 'you', text: 'connect Moonveil Audio' },
-    { who: 'coco', state: 'Executing…' },
-    { who: 'coco', text: 'Sent you to YouTube.', state: 'Ready for confirmation',
+    { mine: true, text: 'connect Moonveil Audio' },
+    { working: true, state: 'Executing…' },
+    { text: 'Sent you to YouTube.', state: 'Ready for confirmation',
       act: { title: 'Connect YouTube', rows: [['Target', 'Moonveil Audio'], ['Permission', 'Founder + paired device']], status: 'Waiting' },
       cards: [{ t: 'Reference', v: 'BRN-1', go: '#brain' }] },
   ];
-  const html = new Function('CHAT_LOG', 'esc', `${chatViewSrc}\nreturn chatView();`)(LOG, esc);
+  const html = viewOf(LOG);
   for (const want of ['bubble you', 'bubble coco working', 'chatstate', 'chatact', 'chatactrow',
-                      'Connect YouTube', 'Moonveil Audio', 'Waiting', 'chatcard', 'chatForm']) {
+                      'Connect YouTube', 'Moonveil Audio', 'Waiting', 'chatcard', 'chatForm', 'scopebar', 'data-chatup="coco"']) {
     assert.ok(html.includes(want), 'the view is missing ' + want);
   }
   assert.ok(!html.includes('undefined') && !html.includes('NaN'), 'something leaked into the view');
 });
 
+await t('the scope is a path you can click back up, with one picker to go down', () => {
+  const path = [{ kind: 'team', id: 'youtube', name: 'YouTube Studio' }, { kind: 'category', id: 'youtube/ai-news', name: 'AI News' }];
+  const next = [{ kind: 'channel', id: 'c1', name: 'Channel A' }, { kind: 'agent', id: 'youtube.scripty', name: 'Scripty', role: 'writer' }];
+  const html = viewOf([], { path, next });
+  for (const want of ['data-chatup="team"', 'data-chatup="category"', 'YouTube Studio', 'AI News', 'data-chatnext', 'Channel A', 'Scripty', 'optgroup label="Agents"', 'Message YouTube Studio › AI News']) {
+    assert.ok(html.includes(want), 'the view is missing ' + want);
+  }
+  const agentHtml = viewOf([], { path: [...path, { kind: 'agent', id: 'youtube.scripty', name: 'Scripty' }], scope: { agent: { name: 'Scripty' } } });
+  assert.ok(agentHtml.includes('Tell Scripty what to do'));
+});
+
+await t('a waiting approval in an answer has Approve and Reject; a decided one shows its state', () => {
+  const LOG = [{ text: '1 waiting.', approvals: [{ id: 7, code: 'A-7', what: 'Publish' }, { id: 8, code: 'A-8', what: 'Old' }] }];
+  const html = viewOf(LOG, { approvals: [{ id: 7, state: 'waiting' }, { id: 8, state: 'approved' }] });
+  assert.ok(html.includes('data-chatyes="7"') && html.includes('data-chatno="7"'));
+  assert.ok(!html.includes('data-chatyes="8"') && html.includes('approved'));
+});
+
 await t('the chat view escapes everything that came from the company', () => {
   const nasty = '<img src=x onerror=alert(1)>';
-  const LOG = [{ who: 'coco', text: nasty, state: nasty,
+  const LOG = [{ text: nasty, state: nasty, approvals: [{ id: nasty, code: nasty, what: nasty }],
     act: { title: nasty, rows: [[nasty, nasty]], status: nasty }, cards: [{ t: nasty, v: nasty, go: nasty }] }];
-  const html = new Function('CHAT_LOG', 'esc', `${chatViewSrc}\nreturn chatView();`)(LOG, esc);
+  const html = viewOf(LOG, { path: [{ kind: 'team', id: nasty, name: nasty }], next: [{ kind: 'agent', id: nasty, name: nasty, role: nasty }],
+    feed: true, activity: [{ action: nasty, detail: nasty, actor: nasty }] });
   // "onerror=" still appears, as the four characters of escaped TEXT - that is not a handler. What
   // must never happen is the payload surviving as markup, so the test is that no < or " from the
   // input reached the page intact and the raw string is nowhere in it.
@@ -630,9 +656,9 @@ await t('the chat view escapes everything that came from the company', () => {
   assert.strictEqual(safe, drawn, 'every place the view draws company text must be escaped');
 });
 
-await t('an empty log still offers something to try', () => {
-  const html = new Function('CHAT_LOG', 'esc', `${chatViewSrc}\nreturn chatView();`)([], esc);
-  assert.ok(/Try:/.test(html), 'an empty chat must suggest what to say');
+await t('an empty thread still says who you are talking to and what to try', () => {
+  const html = viewOf([]);
+  assert.ok(/Talking to the whole company/.test(html), 'an empty chat must say where it is and what to say');
   assert.ok(/chatForm/.test(html));
 });
 
