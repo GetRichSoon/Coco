@@ -9,7 +9,15 @@ import assert from 'node:assert/strict';
 import { handle, buildSelect, buildWrite, buildRpc, sha256, invalidate, rateOk, NovaError } from './api/_nova.js';
 
 let pass = 0, fail = 0;
-const t = async (name, fn) => { try { await fn(); pass++; console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} — ${e.message}`); } };
+const t = async (name, fn) => { try { await fn(); pass++; await t('8 pairing is the only call allowed without a device key, and it runs with no claims', async () => {
+  const db = fakeDb([{ value: { device_id: 'phone-1', device_key: 'new-key' } }]); invalidate();
+  const r = await handle(db, req('POST', '/rest/v1/rpc/pair_device', { key: '', body: { p_code: '123456', p_device_key: 'new-key-0123456789abcdef' } }));
+  assert.equal(r.status, 200); assert.deepEqual(JSON.parse(r.body), { device_id: 'phone-1', device_key: 'new-key' });
+  const cfg = db.sql.find((x) => /set_config/.test(x.text)); assert.match(cfg.params[0], /"email":""/);
+  assert.equal((await handle(db, req('POST', '/rest/v1/rpc/submit_task', { key: '', body: {} }))).status, 401, 'every other rpc still needs the device key');
+});
+
+console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} — ${e.message}`); } };
 
 const KEY = 'device-key-0123456789abcdef';
 const fakeDb = (rows = []) => { const sql = []; return { sql, async query(text, params = []) { sql.push({ text, params });
