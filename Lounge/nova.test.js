@@ -81,8 +81,8 @@ await t('6 rate limit per device: the 121st request in a minute is refused, and 
 await t('7 errors: RLS refusals are 403, timeouts 504, anything else 500 without the connection string; health reports the database state', async () => {
   const rls = { query: async (text, params) => { if (/devices d JOIN/.test(text)) return { rows: [{ id: 'd', owner_email: 'boss@example.com', name: 'x' }] }; if (/SELECT \* FROM/.test(text)) throw new Error('new row violates row-level security policy'); return { rows: [] }; } };
   invalidate(); assert.equal((await handle(rls, req('GET', '/rest/v1/founders', { query: { select: '*' } }))).status, 403);
-  const boom = { query: async (text) => { if (/devices d JOIN/.test(text)) return { rows: [{ id: 'd', owner_email: 'boss@example.com', name: 'x' }] }; if (/SELECT \* FROM/.test(text)) throw new Error('connect ECONNREFUSED postgresql://u:SECRET@h/db'); return { rows: [] }; } };
-  invalidate(); const r = await handle(boom, req('GET', '/rest/v1/tasks', { query: { select: '*' } })); assert.equal(r.status, 500); assert.ok(!/SECRET/.test(r.body));
+  const boom = { query: async (text) => { if (/devices d JOIN/.test(text)) return { rows: [{ id: 'd', owner_email: 'boss@example.com', name: 'x' }] }; if (/SELECT \* FROM/.test(text)) throw new Error('connect ECONNREFUSED postgresql://example:not-a-password@h/db'); return { rows: [] }; } };
+  invalidate(); const r = await handle(boom, req('GET', '/rest/v1/tasks', { query: { select: '*' } })); assert.equal(r.status, 500); assert.ok(!/not-a-password/.test(r.body));
   const h = await handle(fakeDb(), req('GET', '/api/health', { key: '' })); assert.equal(h.status, 200); assert.equal(JSON.parse(h.body).db, 'ok');
   const down = { query: async () => { throw new Error('nope'); } }; assert.equal(JSON.parse((await handle(down, req('GET', '/api/health', { key: '' }))).body).db, 'unavailable');
 });
