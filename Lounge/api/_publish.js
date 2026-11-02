@@ -263,14 +263,15 @@ export async function handlePublish(db, req, who, deviceKey, { runAs, fetch: f =
   if (req.method !== 'POST') return json(405, { message: 'publishing is POST' });
   if (!engineKey || !(await co.engineOk().catch(() => false))) { log(403, { device: who.device_id, publish: 'refused', why: 'no live engine key' }); return json(403, { ok: false, state: 'AUTH_REQUIRED', reason: 'publishing needs the cloud runtime (a live engine key) on a paired device' }); }
   const body = req.body && typeof req.body === 'object' ? req.body : {};
-  const platform = String(body.platform || '').toLowerCase();
-  const adapter = ADAPTERS[platform];
-  if (!adapter) return json(400, { ok: false, state: 'ERROR', reason: `no publisher for "${platform}" (${Object.keys(ADAPTERS).join(', ')})` });
+  let platform = String(body.platform || '').toLowerCase();
   try {
-    // which account: the one named, or the one the company's resolver assigns to this team/channel
+    // which account: the one named (its provider then names the platform, as the existing publishers only
+    // send a connection id to the token route), or the one the company's resolver assigns to this team/channel
     let account = null;
-    if (body.connection_id) account = await co.account(String(body.connection_id));
-    else if (body.team) { const t = await co.target({ provider: platform, team: body.team, subteam: body.subteam || null, category: body.category || null, channel: body.channel || null }); account = t ? await co.account(t.connection_id) : null; }
+    if (body.connection_id) { account = await co.account(String(body.connection_id)); if (account && !platform) platform = String(account.provider || '').toLowerCase(); }
+    const adapter = ADAPTERS[platform];
+    if (!adapter) return json(400, { ok: false, state: 'ERROR', reason: `no publisher for "${platform}" (${Object.keys(ADAPTERS).join(', ')})` });
+    if (!account && body.team) { const t = await co.target({ provider: platform, team: body.team, subteam: body.subteam || null, category: body.category || null, channel: body.channel || null }); account = t ? await co.account(t.connection_id) : null; }
     if (!account) return json(404, { ok: false, state: 'NOT_ASSIGNED', reason: body.connection_id ? `no connection ${body.connection_id}` : `no ${platform} account is assigned to ${[body.team, body.subteam, body.category, body.channel].filter(Boolean).join(' > ') || 'anything'}. Assign one in Coco under Integrations; nothing is guessed.` });
     if (req.path === '/api/publish/token') {
       if (!adapter.token) return json(400, { ok: false, state: 'ERROR', reason: `${platform} publishes through Nova itself; it issues no worker token` });
