@@ -95,6 +95,13 @@ const cache = new Map();                      // key -> { at, status, body }
 const buckets = new Map();                    // device id -> { tokens, at }
 const authCache = new Map();                  // key hash -> { at, who }
 export const stats = { requests: 0, cache_hits: 0, cache_misses: 0, db_calls: 0, bytes_out: 0, errors: 0, started: Date.now() };
+// what the last 200 requests cost, so the slow ones can be named without the platform's logs
+const recent = [];
+export function observe(path, ms, extra = {}) { recent.push({ path, ms, ...extra }); if (recent.length > 200) recent.shift(); }
+export function timings() {
+  const ms = recent.map((r) => r.ms).sort((a, b) => a - b); const q = (p) => ms.length ? ms[Math.min(ms.length - 1, Math.floor(p * ms.length))] : null;
+  return { sample: ms.length, p50_ms: q(0.5), p95_ms: q(0.95), max_ms: ms.at(-1) ?? null, slow: recent.filter((r) => r.ms >= 2000).slice(-10), by_path: Object.entries(recent.reduce((m, r) => { (m[r.path] ||= []).push(r.ms); return m; }, {})).map(([p, l]) => ({ path: p, n: l.length, avg_ms: Math.round(l.reduce((a, b) => a + b, 0) / l.length) })).sort((a, b) => b.n - a.n).slice(0, 12) };
+}
 
 export function rateOk(id, now = Date.now()) {
   const b = buckets.get(id) || { tokens: RATE, at: now };
@@ -134,12 +141,12 @@ export async function runAs(db, who, deviceKey, { sql, params }) {
 export async function handle(db, req, now = Date.now()) {
   stats.requests++;
   const t0 = now;
-  const log = (status, extra = {}) => console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms: Date.now() - t0, ...extra }));
+  const log = (status, extra = {}) => { const ms = Date.now() - t0; observe(req.path, ms, { status, cache: extra.cache || null, device: extra.device || null }); console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms, ...extra })); };
   try {
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
-      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', path: req.path, query_keys: Object.keys(req.query), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats });
+      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself
@@ -161,14 +168,14 @@ export async function handle(db, req, now = Date.now()) {
     }
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
-    if (req.path === '/api/me') return json(200, { email: who.email, device_id: who.device_id, name: who.name });
+    if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
     if (req.path === '/api/changes') {
       // one tiny signal: the newest moment anything the screens show changed. Apps poll this, not tables.
       const key = 'changes';
-      const c = cache.get(key); if (c && now - c.at < 5000) { stats.cache_hits++; return json(200, c.body, { 'x-nova-cache': 'hit' }); }
+      const c = cache.get(key); if (c && now - c.at < 5000) { stats.cache_hits++; log(200, { device: who.device_id, cache: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
       const rows = await runAs(db, who, deviceKey, { sql: `SELECT greatest((SELECT max(at) FROM public.pulse), (SELECT max(updated_at) FROM public.tasks), (SELECT max(at) FROM public.activity)) AS version, (SELECT topic FROM public.pulse ORDER BY at DESC LIMIT 1) AS last_topic`, params: [] });
       const body = { version: rows[0]?.version || null, last_topic: rows[0]?.last_topic || null };
-      cache.set(key, { at: now, body }); stats.cache_misses++; return json(200, body, { 'x-nova-cache': 'miss' });
+      cache.set(key, { at: now, body }); stats.cache_misses++; log(200, { device: who.device_id, cache: 'miss' }); return json(200, body, { 'x-nova-cache': 'miss' });
     }
     const m = req.path.match(/^\/(?:api\/rest|rest\/v1)\/(rpc\/)?([a-z_]+)$/);
     if (!m) return json(404, { message: 'not found' });
