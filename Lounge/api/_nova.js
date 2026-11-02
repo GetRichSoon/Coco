@@ -19,7 +19,7 @@ export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms',
   'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats']);   // every public table except engine_keys and oauth_states
 export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_oauth_begin', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status',
   // the cloud runtime's own functions: each one re-checks the engine key itself (private.engine_ok), so a paired device without that header is refused by Postgres, not trusted by Nova
-  'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval']);
+  'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval', 'pair_cloud_worker']);
 const OPS = { eq: '=', neq: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=', like: 'LIKE', ilike: 'ILIKE' };
 const CACHE_S = Number(process.env.NOVA_CACHE_SECONDS || 15);
 const RATE = Number(process.env.NOVA_RATE_PER_MINUTE || 120);
@@ -168,6 +168,19 @@ export async function handle(db, req, now = Date.now()) {
       try { rows = await runAs(db, { email: owner.rows[0].owner_email }, newKey, buildRpc('pair_device', { p_code: code, p_device_key: newKey })); }
       catch (e) { log(400, { rpc: 'pair_device', why: e.message.slice(0, 120) }); return json(400, { message: e.message.replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) }); }
       invalidate('devices'); log(200, { rpc: 'pair_device' });
+      return json(200, rows.length === 1 ? rows[0].value : rows.map((r) => r.value));
+    }
+    // The cloud worker pairs itself: no code, because a founder switching it on in Coco Lounge is the
+    // authorisation and the engine key is the proof it is the runtime. pair_cloud_worker checks both.
+    if (req.path.endsWith('/rest/v1/rpc/pair_cloud_worker')) {
+      if (req.method !== 'POST') return json(405, { message: 'rpc is POST' });
+      if (!rateOk('pair:' + (req.headers['x-forwarded-for'] || 'unknown'), now)) return json(429, { message: 'too many pairing attempts' });
+      const engineKey = String(req.headers['x-engine-key'] || ''), id = String(req.body?.p_device_id || ''), newKey = String(req.body?.p_device_key || '');
+      if (!engineKey || !id || newKey.length < 16) return json(400, { message: 'pairing a cloud worker needs x-engine-key, p_device_id and p_device_key' });
+      let rows;
+      try { rows = await runAs(db, { email: '' }, newKey, buildRpc('pair_cloud_worker', { p_device_id: id, p_device_key: newKey }), engineKey); }
+      catch (e) { log(400, { rpc: 'pair_cloud_worker', why: e.message.slice(0, 120) }); return json(400, { message: e.message.replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) }); }
+      invalidate('devices'); authCache.clear(); log(200, { rpc: 'pair_cloud_worker', device: id });
       return json(200, rows.length === 1 ? rows[0].value : rows.map((r) => r.value));
     }
     const who = await authenticate(db, deviceKey, now);

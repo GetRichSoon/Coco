@@ -3453,7 +3453,7 @@ document.addEventListener('click', async (e) => {
   if (ds.scancel) { renaming = null; render(); }
   if (ds.cprun !== undefined) { cpRun = ds.cprun || null; page = 'runs'; location.hash = '#runs'; render(); scrollTo(0, 0); }
   if (ds.ctl) { const [scope, id, key, value] = ds.ctl.split('|'); control(scope, id, key, JSON.parse(value)); }
-  if (ds.on) { await sb.from('devices').update({ active: true }).eq('id', ds.on); await log('device switched on', ds.on); toast('Switched on'); loadAll(); }
+  if (ds.on) { const { error } = await sb.from('devices').update({ active: true }).eq('id', ds.on); if (error) return toast(error.message || 'Could not switch on'); await log('device switched on', ds.on); toast('Switched on'); loadAll(); }
   if (ds.rt) { rTarget = ds.rt; render(); }
   if (ds.rc) {
     const a = ds.rc, args = {};
@@ -3523,7 +3523,7 @@ document.addEventListener('click', async (e) => {
     d.addEventListener('close', () => d.querySelectorAll('button').forEach(x => x.hidden = false), { once: true });
     await log('pairing code made', ds.code);
   }
-  if (ds.off) { if (ds.off === deviceId || !confirm('Switch off ' + deviceName(ds.off) + '? It stops opening Good Space and taking commands until switched on again.')) return; await sb.from('devices').update({ active: false }).eq('id', ds.off); await log('device switched off', ds.off); toast('Switched off'); loadAll(); }
+  if (ds.off) { if (ds.off === deviceId || !confirm('Switch off ' + deviceName(ds.off) + '? It stops opening Good Space and taking commands until switched on again.')) return; const { error } = await sb.from('devices').update({ active: false }).eq('id', ds.off); if (error) return toast(error.message || 'Could not switch off'); await log('device switched off', ds.off); toast('Switched off'); loadAll(); }
 });
 boot();
 </script>
