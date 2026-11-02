@@ -89,7 +89,8 @@ export function buildWrite(table, method, query, body, prefer = '') {
 export function buildRpc(name, args = {}) {
   if (!RPCS.has(name)) throw new NovaError(404, `no such function ${name}`);
   const params = [];
-  const named = Object.entries(args || {}).map(([k, v]) => { params.push(v !== null && typeof v === 'object' ? JSON.stringify(v) : v); return `${q(k)} => $${params.length}${v !== null && typeof v === 'object' ? '::jsonb' : ''}`; });
+  // an array of scalars is a Postgres array (text[] for the queue's type lists); any other object is jsonb
+  const named = Object.entries(args || {}).map(([k, v]) => { const arr = Array.isArray(v) && v.every((x) => x === null || typeof x !== 'object'); params.push(v !== null && typeof v === 'object' && !arr ? JSON.stringify(v) : v); return `${q(k)} => $${params.length}${v !== null && typeof v === 'object' && !arr ? '::jsonb' : ''}`; });
   return { sql: `SELECT to_jsonb(r) AS value FROM public.${q(name)}(${named.join(', ')}) AS r`, params };
 }
 
