@@ -2,42 +2,46 @@
   "_": "The one Coco version. Every client shows this number; nothing else is user-facing.",
   "_why": "The clients had drifted into three unrelated numbers - root package.json said 1.1.0, the desktop app said 1.0.4 and the phone said 2.8.2 - so 'is everyone on the latest Coco?' had no answer. They are one number now, and release.test.js fails the build if they come apart again.",
   "_number": "2.9.0, not 1.2.0. Two schemes existed and the phone's was the furthest along at 2.8.2; starting a unified line below that would have shown the founders a downgrade on the device they look at most. So the unified line continues from the highest user-facing number, and this release is a minor bump on it.",
-
-  "version": "2.9.1",
-  "name": "Coco 2.9.1",
-  "released": "2026-10-29",
-  "release_id": "coco-2.9.1",
-  "commit": "46ae423",
-
+  "version": "2.9.2",
+  "name": "Coco 2.9.2",
+  "released": "2026-11-02",
+  "release_id": "coco-2.9.2",
+  "commit": "cloud-foundation",
   "notes": [
+    "Every screen talks to Nova, the company's own control API, with this device's key: no sign-in, no database gateway, no realtime socket.",
+    "The phone updates itself over the air: each cloud build is announced through Nova and installed after a checksum, with no cable.",
     "A pairing code is the only way in. No password, no reset email: one code names the device, signs it in and gives it a fresh key, so first pairing and getting back in after a reinstall are the same screen.",
     "A pairing code can be cancelled from the Control Center the moment it is read out to the wrong person.",
-    "This build can replace the installed Coco without an uninstall, on every Android version Coco runs on.",
-    "The screen is patched instead of rebuilt, so changing a control no longer flickers, jumps the scroll or wipes a half-typed number.",
-    "Every part of the company wears the phone's real marks, and three houses that never had one now do.",
-    "Team > Sub-team > Category > Channel can be created, renamed and archived from Structure.",
-    "An update waits for you instead of closing the app mid-sentence."
+    "This build can replace the installed Coco without an uninstall, on every Android version Coco runs on."
   ],
-
   "_builds": "Internal build numbers stay per platform, because each store and each installer needs its own monotonic counter. They are not shown to the founders.",
   "builds": {
     "desktop": "1.0.5",
-    "android": { "versionName": "2.9.1", "versionCode": 18 },
+    "android": {
+      "versionName": "2.9.2",
+      "versionCode": 19
+    },
     "lounge": "served from main"
   },
-
   "_minimum": "Below this a client is too old to be trusted with today's Coco Cloud rows and must update before it is used. 2.8.0 is the first build that polls controls/apk_latest with a ready download link, so it is the oldest one that can still update itself.",
   "minimum": "2.8.0",
-
   "_status": "A Coco release is only 'released' when BOTH artifacts exist. 2.9.0 is not: the desktop half reached both PCs through the repo on 2026-10-28, the phone half was never built, because versionCode 16 was already spent on 2.8.2 and the phones' own updater skips anything at or below the code they run. So 2.9.0 is a half release, and saying 'released' would have been a lie on two of the four clients.",
   "_bootstrap": "Set when a release cannot reach the phones unattended, and read by publish-update.mjs: a release carrying this goes to controls/apk_pending instead of apk_latest, so neither phone is told to install something Android will refuse. Remove it once both phones run a build signed with the release key, after which every release goes straight to apk_latest and updates by itself.",
   "bootstrap": "Install once by hand, no uninstall. 2.9.1 carries a signing certificate lineage with its rotation point at API 28, so the release key is the current signer on every Android version Coco runs on and this installs over 2.8.x and over the release-key 2.9.0 in place, keeping the session and the device key. It stays in apk_pending until one real phone has confirmed that, because a build the phones refuse would be downloaded, refused, deleted and retried every fifteen minutes. Promote to apk_latest after the first confirmed in-place install, and then drop this key.",
   "status": "ready",
   "platforms": {
-    "desktop": { "state": "shipped", "artifact": "the repo, fast-forwarded by each desktop every 30 min", "sha256": null },
-    "android": { "state": "pending", "artifact": "controls/apk_pending", "sha256": null, "blocked_by": "built and signed in the cloud with the lineage, waiting for one real phone to confirm it installs over the existing app before it is promoted to apk_latest" }
+    "desktop": {
+      "state": "shipped",
+      "artifact": "the repo, fast-forwarded by each desktop every 30 min",
+      "sha256": null
+    },
+    "android": {
+      "state": "pending",
+      "artifact": "B2 dist/android/19, announced by Lounge/ota/latest.json through Nova /api/apk/latest",
+      "sha256": null,
+      "blocked_by": "one cable install of this build; the installed app asks the dead auth endpoint before it updates. Every build after this one arrives over the air."
+    }
   },
-
   "_signing": "Android release signing, added 2026-10-29, which is the whole reason a release no longer needs a PC. The keystore and its password are in Coco Vault on the laptop and nowhere in git; GitHub holds the same key as ANDROID_KEYSTORE_BASE64 so a cloud run can sign. Up to and including 2.8.2 the APK was signed with the laptop's debug key, and Android refuses an update signed with a different one - which is why this one costs both phones a single uninstall and reinstall, once, forever.",
   "signing": {
     "since": "2.9.0",
@@ -47,27 +51,112 @@
     "previous_key": "the laptop debug key, up to 2.8.2",
     "held": "the Coco Keys folder in Coco Vault (laptop) and GitHub Actions secrets (cloud)"
   },
-
   "_history": "Every user-facing Coco version, oldest first, as the Android line recorded them - this is the whole release history and it is append-only. It lived only in git commits until 2026-10-29, which is how versionCode 16 came to be handed out twice. A code that appears here is spent forever; release.test.js refuses to reuse one. Codes 2 and 5 never reached a commit of build.gradle.kts, so they are absent rather than invented.",
   "history": [
-    { "version": "1.0.0", "versionCode": 1,  "date": "2026-10-15", "commit": "b31500e" },
-    { "version": "2.1.0", "versionCode": 3,  "date": "2026-10-16", "commit": "48b21a9" },
-    { "version": "2.2.0", "versionCode": 4,  "date": "2026-10-21", "commit": "94c8a82" },
-    { "version": "2.4.0", "versionCode": 6,  "date": "2026-10-21", "commit": "a3edb97" },
-    { "version": "2.4.1", "versionCode": 7,  "date": "2026-10-21", "commit": "e774cb9" },
-    { "version": "2.5.0", "versionCode": 8,  "date": "2026-10-21", "commit": "99c0b2f" },
-    { "version": "2.5.1", "versionCode": 9,  "date": "2026-10-21", "commit": "98684d5" },
-    { "version": "2.5.2", "versionCode": 10, "date": "2026-10-21", "commit": "3574dda" },
-    { "version": "2.5.3", "versionCode": 11, "date": "2026-10-21", "commit": "687d6ba" },
-    { "version": "2.6.0", "versionCode": 12, "date": "2026-10-22", "commit": "89e9626" },
-    { "version": "2.7.0", "versionCode": 13, "date": "2026-10-22", "commit": "998cd91" },
-    { "version": "2.8.0", "versionCode": 14, "date": "2026-10-25", "commit": "93fae97" },
-    { "version": "2.8.1", "versionCode": 15, "date": "2026-10-25", "commit": "d86df9d" },
-    { "version": "2.8.2", "versionCode": 16, "date": "2026-10-26", "commit": "7ee07bc", "published": true },
-    { "version": "2.9.0", "versionCode": 17, "date": "2026-10-28", "commit": "adb50ae" },
-    { "version": "2.9.1", "versionCode": 18, "date": "2026-10-29", "commit": "46ae423" }
+    {
+      "version": "1.0.0",
+      "versionCode": 1,
+      "date": "2026-10-15",
+      "commit": "b31500e"
+    },
+    {
+      "version": "2.1.0",
+      "versionCode": 3,
+      "date": "2026-10-16",
+      "commit": "48b21a9"
+    },
+    {
+      "version": "2.2.0",
+      "versionCode": 4,
+      "date": "2026-10-21",
+      "commit": "94c8a82"
+    },
+    {
+      "version": "2.4.0",
+      "versionCode": 6,
+      "date": "2026-10-21",
+      "commit": "a3edb97"
+    },
+    {
+      "version": "2.4.1",
+      "versionCode": 7,
+      "date": "2026-10-21",
+      "commit": "e774cb9"
+    },
+    {
+      "version": "2.5.0",
+      "versionCode": 8,
+      "date": "2026-10-21",
+      "commit": "99c0b2f"
+    },
+    {
+      "version": "2.5.1",
+      "versionCode": 9,
+      "date": "2026-10-21",
+      "commit": "98684d5"
+    },
+    {
+      "version": "2.5.2",
+      "versionCode": 10,
+      "date": "2026-10-21",
+      "commit": "3574dda"
+    },
+    {
+      "version": "2.5.3",
+      "versionCode": 11,
+      "date": "2026-10-21",
+      "commit": "687d6ba"
+    },
+    {
+      "version": "2.6.0",
+      "versionCode": 12,
+      "date": "2026-10-22",
+      "commit": "89e9626"
+    },
+    {
+      "version": "2.7.0",
+      "versionCode": 13,
+      "date": "2026-10-22",
+      "commit": "998cd91"
+    },
+    {
+      "version": "2.8.0",
+      "versionCode": 14,
+      "date": "2026-10-25",
+      "commit": "93fae97"
+    },
+    {
+      "version": "2.8.1",
+      "versionCode": 15,
+      "date": "2026-10-25",
+      "commit": "d86df9d"
+    },
+    {
+      "version": "2.8.2",
+      "versionCode": 16,
+      "date": "2026-10-26",
+      "commit": "7ee07bc",
+      "published": true
+    },
+    {
+      "version": "2.9.0",
+      "versionCode": 17,
+      "date": "2026-10-28",
+      "commit": "adb50ae"
+    },
+    {
+      "version": "2.9.1",
+      "versionCode": 18,
+      "date": "2026-10-29",
+      "commit": "46ae423"
+    },
+    {
+      "version": "2.9.2",
+      "versionCode": 19,
+      "date": "2026-11-02",
+      "commit": "cloud-foundation"
+    }
   ],
-
   "_rollback": "A bad release is undone with a normal git revert on main. Every desktop fast-forwards this repo every 30 minutes, so the revert reaches both of them within half an hour with no installer, no store and nothing to uninstall. The phones are the exception: they carry a built APK, so rolling them back needs a rebuilt APK, which is the signing work that is deliberately not done yet.",
   "rollback": {
     "desktop": "git revert <commit> on main; both desktops pick it up within 30 minutes",

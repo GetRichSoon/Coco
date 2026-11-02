@@ -170,6 +170,18 @@ export async function handle(db, req, now = Date.now()) {
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
+    if (req.path === '/api/apk/latest') {
+      // The cloud build's pointer (version, B2 key, sha256) is served by this same deployment; the
+      // download link is minted here, for this paired device, and dies in an hour.
+      const r = await fetch(`https://${req.headers.host || 'cocolounge.vercel.app'}/ota/latest.json`, { cache: 'no-store' });
+      if (!r.ok) return json(404, { message: 'no build announced yet' });
+      const meta = await r.json();
+      if (!meta.key) return json(404, { message: 'no build announced yet' });
+      let url = null;
+      try { const { createStorage, configFromEnv } = await import('./_storage.mjs'); url = createStorage(configFromEnv()).presign(meta.key, { expires: 3600 }); }
+      catch (e) { log(503, { device: who.device_id, why: 'storage not configured on Nova' }); return json(503, { message: 'Nova has no storage credentials to mint a download link' }); }
+      log(200, { device: who.device_id, apk: meta.versionCode }); return json(200, { ...meta, url });
+    }
     if (req.path === '/api/changes') {
       // one tiny signal: the newest moment anything the screens show changed. Apps poll this, not tables.
       const key = 'changes';

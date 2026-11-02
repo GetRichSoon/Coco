@@ -1,0 +1,5 @@
+{
+  "versionCode": 0,
+  "versionName": "none yet",
+  "note": "written by .github/workflows/android-ota.yml after each cloud build: version, B2 key, sha256. No link lives here; Nova mints one at /api/apk/latest."
+}

@@ -63,12 +63,18 @@ object Updater {
     suspend fun check(ctx: Context, manual: Boolean = false): String? = lock.withLock { withContext(Dispatchers.IO) {
         val cloud = Cloud(ctx)
         if (!cloud.signedIn) return@withContext null
-        val token = cloud.token()
+        val token = if (Cloud.viaNova) "" else cloud.token()
         fun get(path: String) = http.newCall(Request.Builder().url(if (path.startsWith("https://")) path else "${Cloud.URL}/storage/v1/object/authenticated/apk/$path")
             .apply { if (!path.startsWith("https://")) header("apikey", Cloud.KEY).header("Authorization", "Bearer $token") }.build()).execute()
+        // Nova mode: the newest build is announced by Nova (version, sha256 and a short-lived B2 link for this device)
+        fun fromNova(): JSONObject? = runCatching {
+            val b = Request.Builder().url("${Cloud.NOVA}/api/apk/latest"); cloud.deviceKey?.let { b.header("x-device-key", it) }
+            http.newCall(b.get().build()).execute().use { r -> if (!r.isSuccessful) throw Exception("Nova said ${r.code}"); JSONObject(r.body!!.string()) }
+        }.getOrNull()
         // The newest build is announced in controls/apk_latest with a ready download link (works without storage rules);
         // the bucket file is the fallback. A failure is an error, never "up to date".
-        val meta = runCatching { cloud.list("controls", "select=value&id=eq.apk_latest").optJSONObject(0)?.optJSONObject("value") }.getOrNull()
+        val meta = (if (Cloud.viaNova) fromNova() else null)
+            ?: runCatching { cloud.list("controls", "select=value&id=eq.apk_latest").optJSONObject(0)?.optJSONObject("value") }.getOrNull()
             ?: get("latest.json").use { r -> if (!r.isSuccessful) throw Exception("Coco Cloud said ${r.code}"); JSONObject(r.body!!.string()) }
         val code = meta.optLong("versionCode")
         if (code <= current(ctx)) { apk(ctx).delete(); return@withContext null }
