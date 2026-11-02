@@ -2109,9 +2109,12 @@ function chatIntent(message) {
   }
   if (has('pause') || has('resume')) {
     const here = chatScopeTarget();
-    const target = wf || one('team') || one('connection') || (here && here.kind === 'team' ? here : null);
+    const named = wf || one('team') || one('connection');
+    const target = named || (here && here.kind === 'team' ? here : null);
     const op = has('pause') ? 'pause' : 'resume';
-    return { intent: op, target, missing: target ? [] : ['target'], entities: found };
+    // A team taken from the scope rather than named waits for a yes: "stop" inside an ordinary
+    // sentence once paused a whole team on its own (live test, 2026-11-02, undone 20 s later).
+    return { intent: op, target, confirm: !named && !!target, missing: target ? [] : ['target'], entities: found };
   }
   if (/\b(archive|restore|band kar do|hatao)\b/.test(rest)) {
     const target = found.filter((e) => ['team', 'subteam', 'category', 'channel'].indexOf(e.kind) >= 0)[0];
@@ -2743,7 +2746,7 @@ async function chatSend(message, onState) {
   // ---- risky, and with no dashboard dialog of its own: show it and wait. CHAT_CTX.pending holds the
   // parsed intent, so the yes runs exactly the code a direct command would have run.
   const spec = CHAT_ACTIONS[it.intent] || {};
-  if (spec.confirm === 'chat') {
+  if (spec.confirm === 'chat' || it.confirm) {
     const summary = chatSummary(it, spec);
     CHAT_CTX.pending = { it, summary };
     return { text: summary.ask, act: summary, state: 'Ready for confirmation' };

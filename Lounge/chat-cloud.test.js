@@ -82,6 +82,17 @@ await t('a pending yes is stored with the thread and confirmed by a later reques
   assert.strictEqual(yes.body.reply.meta.pending, null, 'a used yes is gone');
 });
 
+await t('"stop" in a sentence never pauses the scope team on its own; it waits for a yes', async () => {
+  const r = await say('youtube', 'create 1 idea here (automatic test, stop it)');
+  assert.strictEqual(RPCS.length, 0, JSON.stringify(RPCS));
+  assert.strictEqual(r.body.reply.meta.state, 'Ready for confirmation', r.body.reply.body);
+  await say('youtube', 'no');
+  assert.strictEqual(RPCS.length, 0);
+  // naming the team is still a direct instruction
+  await say('youtube', 'pause YouTube Studio');
+  assert.strictEqual(RPCS[0].fn, 'coco_control');
+});
+
 await t('@agent sends the work to that agent', async () => {
   const r = await say('youtube', '@trendy find three rising science topics for this week');
   assert.strictEqual(RPCS[0].fn, 'submit_task', r.body.reply.body);
