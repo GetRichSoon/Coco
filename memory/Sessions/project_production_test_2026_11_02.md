@@ -1,0 +1,17 @@
+---
+name: project_production_test_2026_11_02
+description: First real cloud production test (Short + ebook) PASSED 2026-11-02 via Nova route; cloud worker is a paired device; gaps and how Claude steps run
+metadata:
+  node_type: memory
+  type: project
+  originSessionId: 255d7cfb-a13c-48ce-9485-897af2a8adb6
+  modified: 2026-11-02T13:49:38.097Z
+---
+
+2026-11-02: the first real cloud production test passed on CocoMaison branch cloud/durable-queue (`scripts/production-test.mjs`, workflow "production test", stages research/produce/report, record in `company/production-test/2026-11-02/`, report `reports/2026-11-02-production-test.md`). Outputs: Short `content/2026-11-02-eye-floaters` (34.8 s, QA PASS, in B2 hold tier) and ebook `company/publishing/ebooks/titles/retake-exam-technique` (TVF-EXAM-0002, 17,748 words, all gates pass, EPUB in B2). 17 queue jobs, 0 retries, 0 Claude inside jobs; 5 Claude calls in the session = 711,516 tokens (session-measured).
+
+**Why:** Supabase's hosted REST gateway is restricted (402 egress) so the cloud runtime now reaches Coco Cloud through Nova: `cloud-worker-1` is a paired device (info.cloud=true, outside the four-device cap and the one-active-per-kind index, migration 0027), its key is derived (HMAC of the engine key over the device id, `novaDeviceKey` in cloud-creds.mjs), and `scripts/nova-worker.mjs ensure` pairs it after a founder "Switch on". Nova forwards `x-engine-key` and passes scalar arrays as Postgres arrays. Claude steps run in the session as the executor via `ai-gateway.mjs request/record` with `NOVA_DEVICE_ID=cloud-worker-1` set; context must be text (JSON over 1500 chars is refused as a dump) and expected_output must avoid words like "status".
+
+**How to apply:** other cloud workflows (cloud worker, company run, cloud cycle) still use REST and fail until they get `NOVA_DEVICE_ID` + the ensure step. Gaps closed the same evening: 10 objects in B2 (video, QA, sheets, EPUB, 3 covers), covers pass with the blueprint art direction (book.json cover.art), Gumroad prepare READY. Same evening: Nova became the universal publishing gateway (`Lounge/api/_publish.js`: /api/publish/token for worker-transport platforms like YouTube, /api/publish for nova-transport like Gumroad; docs/CLOUD_PUBLISHING.md). REAL publishes through it: YouTube l4_6UoyyhR4 public on The Flow; Gumroad product w839C4SJX_JHmKzy4A7ifg== at thevelvetfoundry.gumroad.com/l/retake-exam-technique, PUBLISHED $29. Workflows: youtube-publish.yml (b2:<key> links) and gumroad-publish.yml (registered on main). Gotchas: Nova null results used to be empty bodies (fixed); outputs.id has no default (publishers must mint ids); Gumroad thumbnail direct upload 403s; new workflows must exist on main to be dispatched. Gumroad draft creation and the YouTube upload need a founder YES / the Laptop Terminal. See [[project_nova_control_api]], [[project_durable_queue]], [[project_supabase_egress_restriction]].
+
+**AI usage per task (built 2026-11-02 night):** root run per chat request (run kind `chat`, run-requests.mjs), `root_run_id` + `reasoning_tokens` on ledger rows (migration 0028_run_usage), `coco_run_usage(run)` in Coco Cloud, Nova `GET /api/usage/run/<id>`, `ai-gateway.mjs usage --run`, cloud-sync through Nova (upsert). Proof: RUN-2026-11-02-000001 = 711,516 tokens / 5 calls / 23 jobs. Session Claude steps are still booked by hand with the harness total (`--measured-by session_log`); provider-key calls book themselves. See docs/AI_USAGE.md.

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.goodspace.cocolounge.HealTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-26T08:34:40" hostname="LAPTOP-LSVOC2SK" time="1.69">
+<testsuite name="com.goodspace.cocolounge.HealTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-02T16:01:38" hostname="LAPTOP-LSVOC2SK" time="0.051">
   <properties/>
-  <testcase name="sweep" classname="com.goodspace.cocolounge.HealTest" time="1.089"/>
-  <testcase name="neverReplaysVoice" classname="com.goodspace.cocolounge.HealTest" time="0.303"/>
-  <testcase name="classes" classname="com.goodspace.cocolounge.HealTest" time="0.207"/>
-  <testcase name="oneRetryOnlyWhenSafe" classname="com.goodspace.cocolounge.HealTest" time="0.011"/>
-  <testcase name="ageLimits" classname="com.goodspace.cocolounge.HealTest" time="0.001"/>
+  <testcase name="sweep" classname="com.goodspace.cocolounge.HealTest" time="0.04"/>
+  <testcase name="neverReplaysVoice" classname="com.goodspace.cocolounge.HealTest" time="0.001"/>
+  <testcase name="classes" classname="com.goodspace.cocolounge.HealTest" time="0.008"/>
+  <testcase name="oneRetryOnlyWhenSafe" classname="com.goodspace.cocolounge.HealTest" time="0.0"/>
+  <testcase name="ageLimits" classname="com.goodspace.cocolounge.HealTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

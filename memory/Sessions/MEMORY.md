@@ -66,3 +66,14 @@
 - [No Opera browser](feedback_no_opera_browser.md) — use Chromium/Chrome for browser work, never Opera
 - [Supabase backup state](project_supabase_backup_state.md) — nightly Drive job outside repo (fails without G:), Step 1 backups in Safe Keeping, cloud-foundation local/remote divergence 2026-11-01
 - [B2 storage proof](project_b2_storage_proof.md) — 16/16 passed 2026-11-01 on proof/b2-storage; secrets on CocoMaison; lifecycle verify id proof-mvy3p93o due 2026-11-03
+- [Durable queue](project_durable_queue.md) — Step 4 on cloud/durable-queue at 239a5cc, 0025 not applied, 83 tests green, worker workflow gated by QUEUE_ENABLED; next: 3C verify 3 Nov, founder YES to apply 0025
+- [Company cloud run](project_company_cloud_run.md) — 0025 applied 2026-11-01, QUEUE_ENABLED on, 32/35 done, 0 Claude calls; B2 key prefix proof/ confirmed (needs new key); bucket has no lifecycle rule; schedule needs main trampoline
+- [Supabase egress restriction](project_supabase_egress_restriction.md) — 2026-11-02 Coco Cloud 402 exceed_egress_quota; apps polling ~150k req/day + APK downloads; founder must upgrade or wait for cycle reset
+- [Supabase/Neon routing](project_supabase_neon_routing.md) — per-resource router + Neon replica sync built 2026-11-02, 0026 not applied; egress cause = Lounge app polling (fix in Lounge repos); Neon needs 2 secrets
+- [Lounge egress fix](project_lounge_egress_fix.md) — realtime subscribe/fail loop read 31 tables every 2 s; fixed 2026-11-02 in Coco Lounge/index.html (cloud-foundation); after-test pending 402 lift
+- [Nova control API](project_nova_control_api.md) — LIVE 2026-11-02 at cocolounge.vercel.app (bom1, Git-linked public Coco, root Lounge); desktop 0 direct Supabase; prod deploys via MCP until Vercel production branch = cloud-foundation
+- [Coco repo public gate](project_coco_repo_public_gate.md) — Coco stays private until QuickCast service_role key rotated (in history since 2026-10-25); pre-commit guard added 2026-11-02
+- [Android OTA](project_android_ota.md) — phone self-updates via GitHub releases + Nova /api/apk/latest since 2026-11-02; 2.9.2 (19) needs one manual install first; bump versionCode + release.json per build
+- [Production test 2026-11-02](project_production_test_2026_11_02.md) — Short + ebook PASSED via Nova route; cloud worker paired device; gaps + how Claude steps run
+- [Coco Chat](project_coco_chat_scopes.md) — LIVE 2.10.0: conversational scoped chat via Nova /api/chat builds teams/agents/workflows from words; test with cloud-worker-1, archive E2E items; gaps: B2 uploads, cycle schedule, Gemini key
+- [COCO task intake](project_coco_task_intake.md) — cycle via Nova + deterministic intake; schedule takes ONLY b50ad5b5; waits on Boss's 2026-10-26 emergency stop (os/controls.json)
