@@ -279,4 +279,33 @@ await t('the optional model only rewrites a sentence the rules missed, and is of
   delete process.env.GEMINI_API_KEY;
 });
 
+// ---------------------------------------------------------------- what the first production run found
+await t('Nova sends a text control value as JSON, and serves the build with the highest versionCode', async () => {
+  const { buildRpc, newestAndroid } = await import('./api/_nova.js');
+  const q = buildRpc('coco_control', { p_scope: 'workflow', p_scope_id: 'x', p_key: 'schedule', p_value: 'daily 08:00' });
+  assert.ok(q.params.includes('"daily 08:00"'), 'a schedule must reach the jsonb parameter as a JSON string: ' + JSON.stringify(q.params));
+  assert.ok(buildRpc('coco_control', { p_scope: 'team', p_scope_id: 'x', p_key: 'paused', p_value: false }).params.includes(false));
+  const list = [{ tag_name: 'android-2.9.3-20' }, { tag_name: 'android-2.9.2-19' }, { tag_name: 'android-2.10.0-21' }, { tag_name: 'android-2.11.0-22', draft: true }];
+  assert.strictEqual(newestAndroid(list).tag_name, 'android-2.10.0-21');
+});
+
+await t('"give it a research agent" makes a Researcher; "give X a workflow for research" belongs to X', async () => {
+  await say('coco', 'create a team called Lab Three');
+  await say('coco', 'create a sub-team called Research under Lab Three');
+  RPCS = [];
+  await say('coco', 'give Lab Three a research agent');
+  const a = calls('coco_structure')[0].args;
+  assert.deepStrictEqual([a.p_name, a.p_parent], ['Researcher', 'lab-three/research'], JSON.stringify(a));
+  RPCS = [];
+  await say('coco', 'give Lab Three a daily workflow for research and review');
+  assert.strictEqual(calls('coco_structure')[0].args.p_id, 'lab-three');
+});
+
+await t('a schedule the control plane refuses is reported as not saved, never as scheduled', async () => {
+  const strict = async (fn, args) => { if (fn === 'coco_control' && args.p_key === 'schedule') throw new Error('invalid input syntax for type json'); return rpc(fn, args); };
+  await chatTurn({ run, rpc: strict, who, body: { scope: 'coco', body: 'create a team called Lab Four' }, fetchImpl });
+  const r = await chatTurn({ run, rpc: strict, who, body: { scope: 'coco', body: 'give Lab Four a daily workflow for research' }, fetchImpl });
+  assert.ok(/schedule was NOT saved/.test(r.body.reply.body) && !/scheduled daily/.test(r.body.reply.body), r.body.reply.body);
+});
+
 console.log(`\nchat cloud: ${pass}/${pass} passed · 0 Claude calls by construction`);

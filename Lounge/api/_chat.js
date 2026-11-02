@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { newestAndroid } from './_nova.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCOPE = /^[A-Za-z0-9][A-Za-z0-9_.:/|-]*$/;
@@ -166,7 +167,7 @@ async function apkLatest(fetchImpl, now) {
   if (now - apkCache.at < 600000) return apkCache.value;
   try {
     const r = await fetchImpl('https://api.github.com/repos/GetRichSoon/Coco/releases?per_page=10', { headers: { accept: 'application/vnd.github+json', 'user-agent': 'coco-nova' } });
-    const rel = r.ok ? (await r.json()).find((x) => /^android-\d+\.\d+\.\d+-\d+$/.test(x.tag_name) && !x.draft) : null;
+    const rel = r.ok ? newestAndroid(await r.json()) : null;
     const [, versionName, code] = rel ? rel.tag_name.match(/^android-(\d+\.\d+\.\d+)-(\d+)$/) : [];
     apkCache = { at: now, value: rel ? { versionName, versionCode: Number(code), at: rel.published_at, url: rel.html_url, sha256: /sha256\s+[0-9a-f]{64}/.test(rel.body || '') } : null };
   } catch { apkCache = { at: now, value: null }; }

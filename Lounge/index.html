@@ -2295,8 +2295,11 @@ function chatPlanTeam(text, raw) {
 function chatHome(found, kinds, text) {
   // a parent counts as named only by its whole name: one shared word ("team") is not a choice
   const low = String(text || '').toLowerCase();
-  const named = found.filter((e) => kinds.indexOf(e.kind) >= 0 && low.indexOf(String(e.name).toLowerCase()) >= 0)[0];
-  if (named) return named;
+  // in the order the caller prefers: "give E2E Lab a workflow for research" is E2E Lab's, not Research's
+  for (const k of kinds) {
+    const named = found.filter((e) => e.kind === k && low.indexOf(String(e.name).toLowerCase()) >= 0)[0];
+    if (named) return named;
+  }
   // memory is used only when the sentence points at it ("give IT a researcher"); otherwise the scope
   const pointed = CHAT_THIS.test(String(text || ''));
   const last = pointed ? CHAT_CTX.last : null;
@@ -2319,7 +2322,8 @@ function chatAgentIntent(text, raw, found) {
   const roleWord = m[2];
   if (!/agent|research|writer|editor|designer|reviewer|publisher|marketer|analyst|scriptwriter|maker/.test(roleWord)) return null;
   const count = Math.min(5, Math.max(1, Number(m[1]) || NUMBERS[m[1]] || 1));
-  const roleText = /agents?$/.test(roleWord) ? text.slice(text.indexOf(roleWord)) : roleWord;
+  // "a research agent" names the role before the word agent, "an agent that researches" after it
+  const roleText = /agents?$/.test(roleWord) ? text.slice(m.index) : roleWord;
   const stage = (ROLE_WORDS.filter(([re]) => re.test(roleText))[0] || [])[1] || null;
   const st = stage ? STAGES.filter((s) => s[0] === stage)[0] : null;
   const topic = chatTitle(chatTopic(text.slice(text.indexOf(roleWord))), raw);
@@ -2447,7 +2451,8 @@ function chatNatural(message, text, rest, found, has) {
   // ---- "move this agent to the research sub-team"
   const mv = text.match(/\bmove\s+(.+?)\s+(?:to|into|under)\s+(.+)$/);
   if (mv && /\bagent|it|this|that\b/.test(mv[1])) {
-    const target = found.filter((e) => e.kind === 'agent')[0] || chatIt(['agent']);
+    // "this agent" is the one just talked about, even if some agent happens to be called "Agent"
+    const target = (CHAT_THIS.test(mv[1]) ? chatIt(['agent']) : null) || found.filter((e) => e.kind === 'agent')[0] || chatIt(['agent']);
     // the agent's own team, walked up the tree: "the research sub-team" means that team's one
     const tree = structureTree();
     let up = target ? tree.nodes.get(target.parent || target.id) : null, g = 0;
@@ -3202,8 +3207,9 @@ async function chatAct(it) {
     }
     const sch = await control('workflow', id, 'schedule', schedule, 'from Coco Chat');
     chatRemember1({ kind: 'workflow', id, name: flow.name });
-    return { text: 'Workflow ' + flow.name + ' (' + steps.join(' → ') + ') ' + where + ', scheduled ' + schedule + ' India time'
-        + (sch && sch.state === 'needs_approval' ? ' once you approve ' + sch.approval_code : '') + '.',
+    return { text: 'Workflow ' + flow.name + ' (' + steps.join(' → ') + ') ' + where
+        + (!sch ? ', but its schedule was NOT saved (the control plane refused it); say "schedule it ' + schedule + '" to try again'
+           : ', scheduled ' + schedule + ' India time' + (sch.state === 'needs_approval' ? ' once you approve ' + sch.approval_code : '')) + '.',
       acted: true, verify: row ? [h.id] : [],
       act: { title: 'Workflow', rows: [['For', h.name], ['Steps', steps.join(' → ')], ['Schedule', schedule]], status: sch && sch.state === 'needs_approval' ? 'Waiting for your YES' : 'Saved' } };
   }
@@ -3281,7 +3287,8 @@ async function chatBuild(p) {
   chatRemember1({ kind: 'team', id: p.team.id, name: p.team.name });
   return {
     text: 'Done. ' + p.team.name + ' exists with its head' + (p.stages.length ? ', ' + plural(p.stages.length, 'sub-team') + ' and ' + plural(p.stages.length, 'agent') : '')
-      + (p.workflow ? ', and a ' + p.workflow.schedule + ' workflow (' + p.workflow.steps.join(' → ') + ')' + (sch && sch.state === 'needs_approval' ? ' waiting for ' + sch.approval_code : '') : '')
+      + (p.workflow ? ', and a workflow (' + p.workflow.steps.join(' → ') + ')' + (!sch ? ' whose ' + p.workflow.schedule + ' schedule was NOT saved (the control plane refused it)'
+          : ' running ' + p.workflow.schedule + (sch.state === 'needs_approval' ? ' once you approve ' + sch.approval_code : '')) : '')
       + (p.publish ? '; it publishes to ' + p.publish.name + ' only with your YES' : '') + '. It starts paused, as every new part of the company does: say "start it" and I will switch it on and queue its first task.',
     acted: true, verify: made.map((m) => m.id),
     act: { title: p.team.name, rows: [['Head', p.head.name], ...p.stages.map((s) => [s.sub.name, s.agent.name]),

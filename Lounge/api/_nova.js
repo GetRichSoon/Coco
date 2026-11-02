@@ -96,8 +96,16 @@ export function buildWrite(table, method, query, body, prefer = '') {
   if (method === 'DELETE') { if (!conds.length) throw new NovaError(400, 'a delete needs a filter'); return { sql: `DELETE FROM public.${q(table)} WHERE ${conds.join(' AND ')}${returning}`, params }; }
   throw new NovaError(405, `${method} is not supported`);
 }
+// The newest phone build is the one with the highest versionCode. GitHub's release list is not in
+// that order (2.10.0 came third, after 2.9.3 and 2.9.2), so taking the first one served an old build.
+export const newestAndroid = (list) => (list || []).filter((x) => /^android-\d+\.\d+\.\d+-\d+$/.test(x.tag_name) && !x.draft)
+  .sort((a, b) => Number(b.tag_name.split('-').pop()) - Number(a.tag_name.split('-').pop()))[0] || null;
+
 export function buildRpc(name, args = {}) {
   if (!RPCS.has(name)) throw new NovaError(404, `no such function ${name}`);
+  // coco_control's value is jsonb, so a text value must travel as JSON ("daily 08:00" in quotes);
+  // sent bare, Postgres read daily 08:00 as broken JSON and refused every schedule set through Nova
+  if (name === 'coco_control' && typeof (args || {}).p_value === 'string') args = { ...args, p_value: JSON.stringify(args.p_value) };
   const params = [];
   // an array of scalars is a Postgres array (text[] for the queue's type lists); any other object is jsonb
   const named = Object.entries(args || {}).map(([k, v]) => { const arr = Array.isArray(v) && v.every((x) => x === null || typeof x !== 'object'); params.push(v !== null && typeof v === 'object' && !arr ? JSON.stringify(v) : v); return `${q(k)} => $${params.length}${v !== null && typeof v === 'object' && !arr ? '::jsonb' : ''}`; });
@@ -218,7 +226,7 @@ export async function handle(db, req, now = Date.now()) {
       const c = cache.get('apk'); if (c && now - c.at < 60000) { log(200, { device: who.device_id, cache: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
       const r = await fetch('https://api.github.com/repos/GetRichSoon/Coco/releases?per_page=10', { headers: { accept: 'application/vnd.github+json', 'user-agent': 'coco-nova' } });
       if (!r.ok) return json(503, { message: `releases unavailable (${r.status})` });
-      const rel = (await r.json()).find((x) => /^android-\d+\.\d+\.\d+-\d+$/.test(x.tag_name) && !x.draft);
+      const rel = newestAndroid(await r.json());
       const asset = rel?.assets?.find((a) => a.name.endsWith('.apk'));
       if (!rel || !asset) return json(404, { message: 'no build announced yet' });
       const [, versionName, code] = rel.tag_name.match(/^android-(\d+\.\d+\.\d+)-(\d+)$/);
