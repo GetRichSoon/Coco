@@ -139,7 +139,7 @@ export async function handle(db, req, now = Date.now()) {
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
-      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats });
+      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', path: req.path, query_keys: Object.keys(req.query), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats });
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself
@@ -210,7 +210,8 @@ export async function vercel(req, res) {
   const query = Object.fromEntries(url.searchParams.entries());
   // the rewrite in vercel.json carries the caller's path here; without it, the path is the URL's own
   const path = query.__path ? '/' + String(query.__path).replace(/^\/+/, '') : url.pathname;
-  delete query.__path;
+  // Vercel also injects the rewrite's named segment (`path=...`) into the query; neither is a filter
+  delete query.__path; delete query.path;
   let body = req.body; if (typeof body === 'string' && body) { try { body = JSON.parse(body); } catch { body = null; } }
   let db = null;
   try {
