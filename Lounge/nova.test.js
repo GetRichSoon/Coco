@@ -48,7 +48,13 @@ await t('3 the PostgREST subset the apps use becomes parameterised SQL; bad iden
   assert.throws(() => buildWrite('commands', 'PATCH', {}, { status: 'x' }), /needs a filter/);
   assert.throws(() => buildWrite('commands', 'DELETE', {}, null), /needs a filter/);
   const i = buildWrite('activity', 'POST', {}, { actor: 'Boss', action: 'x', detail: { a: 1 } });
-  assert.equal(i.sql, 'INSERT INTO public."activity" ("actor", "action", "detail") VALUES ($1, $2, $3)'); assert.equal(i.params[2], '{"a":1}');
+  // rows are typed by the table's own row type (PostgREST's way), still as ONE bound parameter
+  assert.equal(i.sql, 'INSERT INTO public."activity" ("actor", "action", "detail") SELECT "actor", "action", "detail" FROM jsonb_populate_recordset(NULL::public."activity", $1::jsonb)');
+  assert.deepEqual(JSON.parse(i.params[0]), [{ actor: 'Boss', action: 'x', detail: { a: 1 } }]);
+  // a JSON list stays a list, so a text[] column receives an array (the cloud cycle's registries do this)
+  const up = buildWrite('capabilities', 'POST', { on_conflict: 'id' }, [{ id: 'x', teams: ['core', 'keeper'] }], 'resolution=merge-duplicates');
+  assert.ok(/ON CONFLICT \("id"\) DO UPDATE SET "teams" = EXCLUDED\."teams"/.test(up.sql) && JSON.parse(up.params[0])[0].teams.length === 2, up.sql);
+  assert.throws(() => buildWrite('activity', 'POST', {}, { 'bad key': 1 }), /bad identifier/);
   const rpc = buildRpc('submit_task', { p_title: 'T', p_details: null, p_house: 'gigi', p_needs: 'cloud', p_device: 'boss-pc', p_by: 'Boss' });
   assert.match(rpc.sql, /SELECT to_jsonb\(r\) AS value FROM public\."submit_task"\("p_title" => \$1/);
   assert.throws(() => buildRpc('pg_sleep', { a: 1 }), /no such function/);

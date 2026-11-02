@@ -82,12 +82,17 @@ export function buildWrite(table, method, query, body, prefer = '') {
     const rows = Array.isArray(body) ? body : [body];
     if (!rows.length || typeof rows[0] !== 'object') throw new NovaError(400, 'insert needs an object or an array of objects');
     const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))];
-    const values = rows.map((r) => '(' + keys.map((k) => { params.push(r[k] === undefined ? null : typeof r[k] === 'object' && r[k] !== null ? JSON.stringify(r[k]) : r[k]); return `$${params.length}`; }).join(', ') + ')').join(', ');
+    keys.forEach(q);   // every key must be a plain identifier before it reaches the SQL
+    // The rows are typed by the table's own row type, the way PostgREST does it: a JSON list lands
+    // in a text[] column as a Postgres array and in a jsonb column as JSON. Binding each value as text
+    // sent ["core","keeper"] to a text[] column, which Postgres refuses as a malformed array literal.
+    params.push(JSON.stringify(rows.map((r) => Object.fromEntries(keys.map((k) => [k, r[k] === undefined ? null : r[k]])))));
+    const values = `SELECT ${keys.map(q).join(', ')} FROM jsonb_populate_recordset(NULL::public.${q(table)}, $${params.length}::jsonb)`;
     // PostgREST's upsert: ?on_conflict=a,b with Prefer: resolution=merge-duplicates (the ledger sync uses it)
     let upsert = '';
     if (query.on_conflict && /resolution=merge-duplicates/.test(prefer)) { const cols = String(query.on_conflict).split(',').map((c) => c.trim()); upsert = ` ON CONFLICT (${cols.map(q).join(', ')}) DO UPDATE SET ${keys.filter((k) => !cols.includes(k)).map((k) => `${q(k)} = EXCLUDED.${q(k)}`).join(', ') || `${q(cols[0])} = EXCLUDED.${q(cols[0])}`}`; }
     else if (query.on_conflict && /resolution=ignore-duplicates/.test(prefer)) upsert = ' ON CONFLICT DO NOTHING';
-    return { sql: `INSERT INTO public.${q(table)} (${keys.map(q).join(', ')}) VALUES ${values}${upsert}${returning}`, params };
+    return { sql: `INSERT INTO public.${q(table)} (${keys.map(q).join(', ')}) ${values}${upsert}${returning}`, params };
   }
   if (method === 'PATCH') {
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new NovaError(400, 'update needs an object');
