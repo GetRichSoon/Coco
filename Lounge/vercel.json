@@ -33,7 +33,11 @@
   "rewrites": [
     {
       "source": "/rest/v1/:path*",
-      "destination": "/api/rest/:path*"
+      "destination": "/api/nova?__path=rest/v1/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/nova?__path=api/:path*"
     }
   ]
 }

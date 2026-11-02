@@ -208,12 +208,14 @@ export async function connect() {
 export async function vercel(req, res) {
   const url = new URL(req.url, 'http://nova');
   const query = Object.fromEntries(url.searchParams.entries());
+  // the rewrite in vercel.json carries the caller's path here; without it, the path is the URL's own
+  const path = query.__path ? '/' + String(query.__path).replace(/^\/+/, '') : url.pathname;
+  delete query.__path;
   let body = req.body; if (typeof body === 'string' && body) { try { body = JSON.parse(body); } catch { body = null; } }
   let db = null;
   try {
-    const needsDb = url.pathname !== '/api/health' || true;
-    try { db = needsDb ? await connect() : null; } catch (e) { if (url.pathname === '/api/health') db = { query: async () => { throw e; } }; else { res.status(503).json({ message: 'Nova cannot reach the database', hint: e.message.replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 120) }); return; } }
-    const out = await handle(db, { method: req.method, path: url.pathname, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
+    try { db = await connect(); } catch (e) { if (path === '/api/health') db = { query: async () => { throw e; } }; else { res.status(503).json({ message: 'Nova cannot reach the database', hint: e.message.replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 120) }); return; } }
+    const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');
   } finally { try { await db?.end?.(); } catch {} }
