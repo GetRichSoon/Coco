@@ -222,6 +222,14 @@ export async function handle(db, req, now = Date.now()) {
       invalidate('chat'); log(out.status, { device: who.device_id, chat: out.body.scope || 'refused' });
       return json(out.status, out.body);
     }
+    // the freshness of the YouTube analytics: when the last successful collection happened, and whether it is stale
+    const ym = req.path.match(/^\/api\/youtube\/latest(?:\/([a-z0-9-]{3,40}))?$/);
+    if (ym) {
+      const conn = ym[1] || 'yt-the-flow';
+      const rows = await runAs(db, who, deviceKey, { sql: "SELECT max(at) AS collected_at, max(day) AS day, count(*) FILTER (WHERE day = (SELECT max(day) FROM public.yt_stats WHERE connection_id = $1)) AS rows_today, (SELECT metrics FROM public.yt_stats WHERE connection_id = $1 AND kind = 'channel' AND source = 'data_api' ORDER BY at DESC LIMIT 1) AS channel FROM public.yt_stats WHERE connection_id = $1", params: [conn] }, req.headers['x-engine-key'] || null);
+      const r = rows[0] || {}; const ageH = r.collected_at ? (now - new Date(r.collected_at).getTime()) / 36e5 : null;
+      log(200, { device: who.device_id, youtube: conn }); return json(200, { connection: conn, collected_at: r.collected_at || null, day: r.day || null, age_hours: ageH === null ? null : Math.round(ageH * 10) / 10, stale: ageH === null || ageH > 36, label: ageH === null ? 'no analytics collected yet' : ageH > 36 ? `STALE: last collected ${Math.round(ageH)} h ago` : `collected ${Math.round(ageH)} h ago`, rows_today: Number(r.rows_today || 0), channel: r.channel || null });
+    }
     // one complete AI total for a task: every call and every job under the run tree (coco_run_usage)
     const um = req.path.match(/^\/api\/usage\/run\/([A-Za-z0-9_.:-]{3,80})$/);
     if (um) { const rows = await runAs(db, who, deviceKey, { sql: 'SELECT public.coco_run_usage($1) AS v', params: [um[1]] }, req.headers['x-engine-key'] || null); log(200, { device: who.device_id, usage: um[1] }); return json(200, rows[0]?.v ?? null); }
