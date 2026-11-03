@@ -171,5 +171,33 @@ await t('12 publish_existing: approver, stop, then the copy on Gumroad must have
   assert.equal(JSON.parse(r.body).state, 'ALREADY_PUBLISHED'); assert.ok(!calls.some((c) => c.m === 'PUT'), 'a retry never enables twice');
 });
 
+await t('11 gumroad stats: read-only; without view_sales it says so, with it views, sales and referrers come from get_analytics, and no secret leaks', async () => {
+  const products = res(200, { success: true, products: [{ id: 'p1', name: 'Book', custom_permalink: 'book', published: true, price: 2900, taxonomy_id: null }, { id: 'p2', deleted: true }] });
+  const utm = res(200, { success: true, utm_links: [{ id: 'u1', title: 'yt', utm_source: 'youtube', total_clicks: 7, unique_clicks: 5 }] });
+  let calls = provider({ 'GET https://gumroad.test/v2/products': products, 'GET https://gumroad.test/v2/utm_links': utm });
+  let r = await handle(fakeDb(), req('POST', '/api/publish/stats', { body: { connection_id: 'poppy' } }));
+  let b = JSON.parse(r.body);
+  assert.equal(r.status, 200); assert.equal(b.state, 'PARTIAL'); assert.match(b.reason, /view_sales/); assert.equal(b.referrers, null);
+  assert.deepEqual(b.products.map((p) => p.id), ['p1']); assert.equal(b.products[0].taxonomy_id, null); assert.equal(b.utm_links[0].total_clicks, 7);
+  assert.ok(calls.every((c) => c.m === 'GET'), 'stats never writes to Gumroad'); noSecret(r.body);
+
+  accounts.poppy.permissions = ['edit_products', 'view_profile', 'view_sales'];
+  deps.publishUrls.gumroad_mcp = 'https://gumroad.test/muse/v1/mcp';
+  const analytics = (url, init) => { const by = JSON.parse(init.body).params.arguments.breakdown; return res(200, { jsonrpc: '2.0', id: 1, result: { structuredContent: by === 'referrer'
+    ? { rows: [{ referrer: 'Direct', views: 40, sales: 1, revenue_cents: 2900 }] }
+    : { start_date: '2026-10-05', end_date: '2026-11-03', time_zone: 'UTC', rows: [{ product_id: 'p1', views: 40, sales: 1, revenue_cents: 2900 }] } } }); };
+  calls = provider({ 'GET https://gumroad.test/v2/products': products, 'GET https://gumroad.test/v2/utm_links': utm, 'POST /muse/v1/mcp': analytics });
+  r = await handle(fakeDb(), req('POST', '/api/publish/stats', { body: { connection_id: 'poppy' } }));
+  b = JSON.parse(r.body);
+  assert.equal(b.state, 'OK'); assert.equal(b.products[0].views, 40); assert.equal(b.products[0].sales, 1); assert.equal(b.referrers[0].referrer, 'Direct'); assert.equal(b.window.start, '2026-10-05');
+  assert.ok(calls.filter((c) => c.m === 'POST').every((c) => JSON.parse(c.init.body).params.name === 'get_analytics'), 'the only POST is the read-only analytics tool');
+  noSecret(r.body);
+
+  provider({ 'GET https://gumroad.test/v2/products': products, 'POST /muse/v1/mcp': res(403, 'insufficient_scope token=' + GUM) });
+  r = await handle(fakeDb(), req('POST', '/api/publish/stats', { body: { connection_id: 'poppy' } }));
+  assert.equal(JSON.parse(r.body).state, 'REAUTH_REQUIRED'); noSecret(r.body);
+  accounts.poppy.permissions = []; delete deps.publishUrls.gumroad_mcp;
+});
+
 console.log(`\nnova.publish.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

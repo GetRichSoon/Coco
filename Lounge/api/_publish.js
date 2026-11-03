@@ -13,6 +13,8 @@
 // Routes (all need a paired device key AND a live engine key; the engine key is verified in Postgres):
 //   GET  /api/publish/platforms         what Nova can publish to, and how
 //   POST /api/publish/token             { platform, connection_id }  -> a one-hour provider token for a worker-transport adapter
+//   POST /api/publish/stats             { platform, connection_id }  -> read-only seller numbers (Gumroad: products, category,
+//                                       UTM clicks; with view_sales also 30-day views, sales, revenue, referrers)
 //   POST /api/publish                   { platform, team, subteam?, category?, channel?, connection_id?, idempotency_key, mode,
 //                                         approved_by?, run_id?, artifact: { url, sha256?, name? }, listing, artwork? }
 //                                       Gumroad creates DRAFTS only (and never a second product with the same link or
@@ -296,9 +298,45 @@ async function gumroadPublishExisting({ co, account, body, fetch: f, api = 'http
   } finally { tok = null; }
 }
 
+// Read-only seller numbers for the daily monitor (CocoMaison scripts/gumroad/monitor.mjs). Nothing on
+// Gumroad is changed. Products and UTM-link clicks need only the scopes every connection has; views,
+// sales, revenue and referrers come from Gumroad's own MCP tool get_analytics (the last 30 days in the
+// creator's time zone), which needs view_sales, so without it they are reported missing, never zero.
+// Buyer emails and ids are never asked for, so none can leak.
+const GUMROAD_MCP = 'https://gumroad.com/muse/v1/mcp';
+async function gumroadStats({ co, account, fetch: f, api = 'https://api.gumroad.com', mcp = GUMROAD_MCP }) {
+  if (account.provider !== 'gumroad') throw new PublishError(400, 'ERROR', `${account.connection_id} is not a Gumroad connection`);
+  if (account.state !== 'connected') throw new PublishError(409, 'NOT_CONNECTED', `${account.connection_id} is ${account.state} in Coco`);
+  const scopes = Array.isArray(account.permissions) ? account.permissions : [];
+  let tok = await co.secret(String(account.secret_ref || '').replace(/^vault:/, ''));
+  if (!tok) throw new PublishError(409, 'NOT_CONNECTED', 'the vault holds no Gumroad credential for this connection');
+  try {
+    const gr = gumroadClient(f, api, tok);
+    const products = (((await gr.call('GET', '/products')).json || {}).products || []).filter((p) => p && !p.deleted).map((p) => ({
+      id: p.id, name: p.name, custom_permalink: p.custom_permalink || null, published: p.published === true, price_cents: p.price ?? null,
+      taxonomy_id: p.taxonomy_id ?? null, sales_count: p.sales_count ?? null, sales_usd_cents: p.sales_usd_cents ?? null }));
+    const utm = await gr.call('GET', '/utm_links').catch(() => null);
+    const utm_links = utm ? ((utm.json || {}).utm_links || []).map((u) => ({ id: u.id, title: u.title, target_resource_id: u.target_resource_id, utm_source: u.utm_source, utm_medium: u.utm_medium, utm_campaign: u.utm_campaign, total_clicks: u.total_clicks ?? null, unique_clicks: u.unique_clicks ?? null })) : null;
+    if (!scopes.includes('view_sales')) return { ok: true, state: 'PARTIAL', scopes, products, utm_links, referrers: null, reason: 'the connection lacks view_sales, so views, sales and referrers are not readable; reconnect Gumroad in Coco to add it' };
+    const tool = async (args) => {
+      const r = await f(mcp, { method: 'POST', headers: { authorization: `Bearer ${tok}`, 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_analytics', arguments: args } }) });
+      const text = await r.text();
+      if (r.status === 401 || r.status === 403) throw new PublishError(409, 'REAUTH_REQUIRED', `Gumroad analytics refused the credential (${r.status}): ${redact(text, tok).slice(0, 200)}`);
+      const j = parseJson(text) || parseJson((text.match(/^data: (.+)$/m) || [])[1]) || {};
+      if (!r.ok || j.error || j.result?.isError) throw new PublishError(502, 'PROVIDER_ERROR', `Gumroad analytics failed (${r.status}): ${redact(JSON.stringify(j.error || j.result?.content || text), tok).slice(0, 200)}`);
+      return j.result?.structuredContent || parseJson(j.result?.content?.[0]?.text) || {};
+    };
+    const byProduct = await tool({ breakdown: 'product' }), byReferrer = await tool({ breakdown: 'referrer' });
+    for (const row of byProduct.rows || []) { const p = products.find((x) => x.id === row.product_id); if (p) Object.assign(p, { views: row.views ?? null, sales: row.sales ?? null, revenue_cents: row.revenue_cents ?? null }); }
+    return { ok: true, state: 'OK', scopes, window: { start: byProduct.start_date, end: byProduct.end_date, time_zone: byProduct.time_zone }, products, utm_links,
+      referrers: (byReferrer.rows || []).map((r) => ({ referrer: r.referrer, views: r.views, sales: r.sales, revenue_cents: r.revenue_cents })) };
+  } finally { tok = null; }
+}
+
 export const ADAPTERS = {
   youtube: { transport: 'worker', what: 'a one-hour access token for one verified channel; the worker uploads the video and records the result', token: youtubeToken },
-  gumroad: { transport: 'nova', what: 'the product, its file and its artwork are created here from artifact links; the provider answer is recorded', publish: gumroadPublish },
+  gumroad: { transport: 'nova', what: 'the product, its file and its artwork are created here from artifact links; the provider answer is recorded', publish: gumroadPublish, stats: gumroadStats },
 };
 
 // ---------------------------------------------------------------- the entry point
@@ -324,6 +362,11 @@ export async function handlePublish(db, req, who, deviceKey, { runAs, fetch: f =
       if (!adapter.token) return json(400, { ok: false, state: 'ERROR', reason: `${platform} publishes through Nova itself; it issues no worker token` });
       const r = await adapter.token({ co, account, fetch: f, urls: urls[platform] });
       log(200, { device: who.device_id, publish: 'token', platform, account: account.connection_id }); return json(200, r);
+    }
+    if (req.path === '/api/publish/stats') {
+      if (!adapter.stats) return json(400, { ok: false, state: 'ERROR', reason: `${platform} has no read-only stats` });
+      const r = await adapter.stats({ co, account, fetch: f, api: urls[platform], mcp: urls[`${platform}_mcp`] });
+      log(200, { device: who.device_id, publish: 'stats', platform, account: account.connection_id, state: r.state }); return json(200, r);
     }
     if (req.path !== '/api/publish') return json(404, { message: 'not found' });
     if (!adapter.publish) return json(400, { ok: false, state: 'ERROR', reason: `${platform} is a worker-transport platform: ask /api/publish/token, upload from the worker, record the output` });
