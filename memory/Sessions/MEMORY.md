@@ -76,4 +76,5 @@
 - [Android OTA](project_android_ota.md) — phone self-updates via GitHub releases + Nova /api/apk/latest since 2026-11-02; 2.9.2 (19) needs one manual install first; bump versionCode + release.json per build
 - [Production test 2026-11-02](project_production_test_2026_11_02.md) — Short + ebook PASSED via Nova route; cloud worker paired device; gaps + how Claude steps run
 - [Coco Chat](project_coco_chat_scopes.md) — LIVE 2.10.0: conversational scoped chat via Nova /api/chat builds teams/agents/workflows from words; test with cloud-worker-1, archive E2E items; gaps: B2 uploads, cycle schedule, Gemini key
-- [COCO task intake](project_coco_task_intake.md) — cycle via Nova + deterministic intake; schedule takes ONLY b50ad5b5; waits on Boss's 2026-10-26 emergency stop (os/controls.json)
+- [COCO task intake](project_coco_task_intake.md) — company STARTED 2026-11-03; daily task 1d702f2c runs on the cloud cycle; Claude only for youtube.marquee + ebooks.ebooks-head; needs ANTHROPIC_WORKSPACE_ID secret
+- [YouTube cloud analytics](project_youtube_cloud_analytics.md) — daily 04:10 UTC via Nova since 2026-11-03; diagnose.mjs report; first findings (decline since 9 Oct, body leads, subs weak)
