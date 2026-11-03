@@ -13,6 +13,7 @@
 import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
+import { handleAi } from './_ai.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {} };
 
@@ -233,6 +234,8 @@ export async function handle(db, req, now = Date.now()) {
     // one complete AI total for a task: every call and every job under the run tree (coco_run_usage)
     const um = req.path.match(/^\/api\/usage\/run\/([A-Za-z0-9_.:-]{3,80})$/);
     if (um) { const rows = await runAs(db, who, deviceKey, { sql: 'SELECT public.coco_run_usage($1) AS v', params: [um[1]] }, req.headers['x-engine-key'] || null); log(200, { device: who.device_id, usage: um[1] }); return json(200, rows[0]?.v ?? null); }
+    // the AI door for routine cloud writing (Gemini), locked until a founder enables it
+    if (req.path.startsWith('/api/ai/')) return handleAi(db, req, who, { json, log, fetch: deps.fetch });
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
