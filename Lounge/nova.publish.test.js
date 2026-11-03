@@ -19,12 +19,13 @@ const accounts = {
   'yt-the-flow': { connection_id: 'yt-the-flow', provider: 'youtube', external_id: 'UCflow', external_name: 'The Flow', external_handle: '@theflow', account_label: 'a@b', secret_ref: 'youtube_refresh_token_yt_the_flow', state: 'connected', permissions: [] },
   poppy: { connection_id: 'poppy', provider: 'gumroad', external_id: 'g1', external_name: 'Poppy', external_handle: 'https://lokade.gumroad.com', account_label: 'a@b', secret_ref: 'gumroad_access_token_poppy', state: 'connected', permissions: [] },
 };
-function fakeDb({ engine = true, vault = { youtube_refresh_token_yt_the_flow: REFRESH, gumroad_access_token_poppy: GUM }, existing = null } = {}) {
+function fakeDb({ engine = true, vault = { youtube_refresh_token_yt_the_flow: REFRESH, gumroad_access_token_poppy: GUM }, existing = null, stopped = false } = {}) {
   const sql = [], outputs = [], activity = [];
   return { sql, outputs, activity, async query(text, params = []) {
     sql.push({ text, params });
     if (/FROM public\.devices d JOIN/.test(text)) return { rows: params[0] === sha256(KEY) ? [{ id: 'cloud-worker-1', owner_email: 'boss@example.com', name: 'worker' }] : [] };
     if (/coco_engine_ok/.test(text)) return { rows: [{ ok: engine }] };
+    if (/FROM public.policies WHERE scope = 'company'/.test(text)) return { rows: stopped ? [{ value: true }] : [] };
     if (/FROM public\.integration_accounts WHERE connection_id/.test(text)) return { rows: accounts[params[0]] ? [accounts[params[0]]] : [] };
     if (/coco_publish_target/.test(text)) return { rows: [{ v: params[0] === 'youtube' && params[1] === 'youtube' ? { connection_id: 'yt-the-flow' } : params[0] === 'gumroad' && params[1] === 'ebooks' ? { connection_id: 'poppy' } : null }] };
     if (/coco_publish_secret/.test(text)) return { rows: [{ v: vault[params[0]] ?? null }] };
@@ -39,7 +40,7 @@ function fakeDb({ engine = true, vault = { youtube_refresh_token_yt_the_flow: RE
 const req = (method, path, { body = null, key = KEY, engine = ENGINE } = {}) => ({ method, path, query: {}, headers: { 'x-device-key': key, ...(engine ? { 'x-engine-key': engine } : {}) }, body });
 const res = (status, body, headers = {}) => ({ ok: status >= 200 && status < 300, status, headers: { get: (k) => headers[k.toLowerCase()] ?? null }, text: async () => typeof body === 'string' ? body : JSON.stringify(body), arrayBuffer: async () => Buffer.from(typeof body === 'string' ? body : JSON.stringify(body)), json: async () => JSON.parse(typeof body === 'string' ? body : JSON.stringify(body)) });
 // a scripted provider: a map from "METHOD url-fragment" to a response (or a function of the request)
-const provider = (script) => { const calls = []; deps.fetch = async (url, init = {}) => { const m = (init.method || 'GET').toUpperCase(); calls.push({ m, url: String(url), init }); for (const [k, v] of Object.entries(script)) { const [km, kf] = k.split(' '); if (km === m && String(url).includes(kf)) return typeof v === 'function' ? v(url, init) : v; } return res(404, { message: `unscripted ${m} ${url}` }); }; return calls; };
+const provider = (script) => { const calls = []; deps.fetch = async (url, init = {}) => { const m = (init.method || 'GET').toUpperCase(); calls.push({ m, url: String(url), init }); for (const [k, v] of Object.entries(script)) { const [km, kf] = k.split(' '); if (km === m && String(url).includes(kf)) return typeof v === 'function' ? v(url, init) : v; } if (m === 'GET' && String(url).endsWith('/v2/products')) return res(200, { success: true, products: [] }); return res(404, { message: `unscripted ${m} ${url}` }); }; return calls; };
 const noSecret = (s) => { for (const k of [REFRESH, ACCESS, GUM, 'csecret-SECRET-xyz']) assert.ok(!String(s).includes(k), `a secret leaked: ${k.slice(0, 12)}…`); };
 deps.publishUrls = { youtube: { token: 'https://google.test/token', api: 'https://yt.test/v3' }, gumroad: 'https://gumroad.test' };
 
@@ -96,8 +97,8 @@ await t('6 gumroad publish: the file goes up first, the product is created, the 
     'POST /v2/files/complete': res(200, { file_url: 'https://files.test/book.epub' }), 'POST /v2/products': res(200, { success: true, product: { id: 'prod1', short_url: 'https://lokade.gumroad.com/l/retake', published: false } }) });
   const r = await handle(db, req('POST', '/api/publish', { body: { platform: 'gumroad', team: 'ebooks', idempotency_key: 'retake:1', mode: 'DRAFT', run_id: 'R1', artifact: { url: 'https://b2.test/book.epub', name: 'retake.epub' }, listing: { title: 'The Retake Method', slug: 'retake', price_usd: 7.99, price_by_platform: { gumroad: 29 }, keywords: ['exam technique'] } } }));
   assert.equal(r.status, 200); const b = JSON.parse(r.body); assert.equal(b.state, 'READY'); assert.equal(b.external_id, 'prod1'); assert.equal(b.published, false); assert.ok(b.output_id);
-  const order = calls.map((c) => `${c.m} ${c.url}`); assert.ok(order.findIndex((x) => x.includes('/files/presign')) < order.findIndex((x) => x.includes('/v2/products')), 'file before product');
-  const created = JSON.parse(calls.find((c) => c.url.includes('/v2/products')).init.body); assert.equal(created.draft, true); assert.equal(created.price, 2900); assert.deepEqual(created.files, [{ url: 'https://files.test/book.epub' }]);
+  const order = calls.map((c) => `${c.m} ${c.url}`); assert.ok(order.findIndex((x) => x.includes('/files/presign')) < order.findIndex((x) => x === 'POST https://gumroad.test/v2/products'), 'file before product');
+  const created = JSON.parse(calls.find((c) => c.m === 'POST' && c.url.endsWith('/v2/products')).init.body); assert.equal(created.draft, true); assert.equal(created.price, 2900); assert.deepEqual(created.files, [{ url: 'https://files.test/book.epub' }]);
   assert.equal(db.outputs.length, 1); assert.equal(db.outputs[0][9], 'prod1'); assert.ok(JSON.parse(db.outputs[0][12]).idempotency_key === 'retake:1');
   noSecret(r.body); noSecret(JSON.stringify(db.outputs)); noSecret(JSON.stringify(db.activity));
 });
@@ -128,6 +129,46 @@ await t('9 the artifact hash is checked when given, and a worker-transport platf
   assert.equal(JSON.parse(r.body).state, 'UPLOAD_FAILED'); assert.match(JSON.parse(r.body).reason, /sha256/);
   r = await handle(fakeDb(), req('POST', '/api/publish', { body: { platform: 'youtube', connection_id: 'yt-the-flow', idempotency_key: 'y' } })); assert.equal(r.status, 400); assert.match(JSON.parse(r.body).reason, /token/);
   assert.equal(redact(`Bearer ${ACCESS} refresh_token=${REFRESH}`), 'Bearer [redacted] refresh_token=[redacted]');
+});
+
+await t('10 duplicates: a product with this link or title already in the store is never created again, and nothing is uploaded', async () => {
+  const db = fakeDb();
+  const calls = provider({ 'GET https://gumroad.test/v2/products': res(200, { success: true, products: [{ id: 'old1', name: 'Something else', custom_permalink: 'retake', published: true, short_url: 'https://lokade.gumroad.com/l/retake' }] }), 'GET https://b2.test/book.epub': res(200, 'EPUBBYTES') });
+  const r = await handle(db, req('POST', '/api/publish', { body: { platform: 'gumroad', team: 'ebooks', idempotency_key: 'retake:new', mode: 'DRAFT', artifact: { url: 'https://b2.test/book.epub' }, listing: { title: 'The Retake Method', slug: 'retake', price_usd: 9 } } }));
+  const b = JSON.parse(r.body); assert.equal(b.state, 'DUPLICATE'); assert.equal(b.duplicate_of_product, 'old1');
+  assert.ok(!calls.some((c) => c.m === 'POST'), 'nothing was uploaded or created'); assert.equal(db.outputs.length, 0); noSecret(r.body);
+});
+
+await t('11 a product is never created public: approved or not, the create path makes drafts only', async () => {
+  const calls = provider({});
+  const r = await handle(fakeDb(), req('POST', '/api/publish', { body: { platform: 'gumroad', team: 'ebooks', idempotency_key: 'k2', mode: 'PUBLISH_WITH_APPROVAL', approved_by: 'Mangesh', artifact: { url: 'https://b2.test/x.epub' }, listing: { title: 'T', slug: 't', price_usd: 9 } } }));
+  assert.equal(r.status, 409); assert.match(JSON.parse(r.body).reason, /drafts.*publish_existing/); assert.equal(calls.length, 0);
+});
+
+await t('12 publish_existing: approver, stop, then the copy on Gumroad must have file, title, price, cover AND thumbnail; one enable; Gumroad asked again', async () => {
+  const listing = { title: 'Knife Care', slug: 'knife-care', price_usd: 6.99 };
+  const body = (over = {}) => ({ platform: 'gumroad', team: 'ebooks', action: 'publish_existing', external_id: 'p9', idempotency_key: 'ebook:knife-care:public', approved_by: 'Mangesh (standing permission 2026-10-30)', listing, ...over });
+  const live = { id: 'p9', name: 'Knife Care', price: 699, published: false, files: [{ id: 'f' }], covers: [{ id: 'c' }], thumbnail_url: 'https://public-files.gumroad.com/t.jpg', short_url: 'https://lokade.gumroad.com/l/knife-care' };
+  let calls = provider({});
+  let r = await handle(fakeDb(), req('POST', '/api/publish', { body: body({ approved_by: null }) }));
+  assert.equal(JSON.parse(r.body).needs_approval, true); assert.equal(calls.length, 0);
+  r = await handle(fakeDb({ stopped: true }), req('POST', '/api/publish', { body: body() }));
+  assert.match(JSON.parse(r.body).reason, /emergency stop/); assert.equal(calls.length, 0);
+  calls = provider({ 'GET https://gumroad.test/v2/products/p9': res(200, { success: true, product: { ...live, thumbnail_url: null } }) });
+  r = await handle(fakeDb(), req('POST', '/api/publish', { body: body() }));
+  assert.match(JSON.parse(r.body).reason, /no dedicated thumbnail/); assert.ok(!calls.some((c) => c.m === 'PUT'), 'no enable without the thumbnail');
+  calls = provider({ 'GET https://gumroad.test/v2/products/p9': res(200, { success: true, product: { ...live, price: 999 } }) });
+  r = await handle(fakeDb(), req('POST', '/api/publish', { body: body() }));
+  assert.match(JSON.parse(r.body).reason, /price/); assert.ok(!calls.some((c) => c.m === 'PUT'));
+  let reads = 0; const db = fakeDb();
+  calls = provider({ 'GET https://gumroad.test/v2/products/p9': () => res(200, { success: true, product: { ...live, published: reads++ > 0 } }), 'PUT https://gumroad.test/v2/products/p9/enable': res(200, { success: true }) });
+  r = await handle(db, req('POST', '/api/publish', { body: body() }));
+  const b = JSON.parse(r.body); assert.equal(b.state, 'PUBLISHED'); assert.equal(b.published, true); assert.equal(b.external_id, 'p9');
+  assert.equal(calls.filter((c) => c.m === 'PUT').length, 1); assert.equal(reads, 2, 'Gumroad was asked again after the enable');
+  assert.equal(db.outputs.length, 1); assert.equal(db.outputs[0][8], 'published'); noSecret(r.body); noSecret(JSON.stringify(db.activity));
+  calls = provider({ 'GET https://gumroad.test/v2/products/p9': res(200, { success: true, product: { ...live, published: true } }) });
+  r = await handle(fakeDb(), req('POST', '/api/publish', { body: body({ idempotency_key: 'ebook:knife-care:public:2' }) }));
+  assert.equal(JSON.parse(r.body).state, 'ALREADY_PUBLISHED'); assert.ok(!calls.some((c) => c.m === 'PUT'), 'a retry never enables twice');
 });
 
 console.log(`\nnova.publish.test: ${pass} passed, ${fail} failed`);

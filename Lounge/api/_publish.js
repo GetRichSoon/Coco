@@ -15,6 +15,9 @@
 //   POST /api/publish/token             { platform, connection_id }  -> a one-hour provider token for a worker-transport adapter
 //   POST /api/publish                   { platform, team, subteam?, category?, channel?, connection_id?, idempotency_key, mode,
 //                                         approved_by?, run_id?, artifact: { url, sha256?, name? }, listing, artwork? }
+//                                       Gumroad creates DRAFTS only (and never a second product with the same link or
+//                                       title); { action: 'publish_existing', external_id, approved_by, listing } makes a
+//                                       verified draft public after re-checking file, title, price, cover and thumbnail
 //
 // Modes are the company's own words (PREPARE_ONLY, DRAFT, PUBLISH_WITH_APPROVAL, AUTO_PUBLISH); nothing is
 // public without a named approver, and the provider's answer, not the request's intent, is what is recorded.
@@ -70,6 +73,7 @@ export function company(db, who, deviceKey, engineKey, runAs) {
         [id, row.team_id || null, row.subteam_id || null, row.category_id || null, row.channel_id || null, row.run_id || null, row.kind || 'file', row.title || '', row.status || 'created', row.external_id || null, row.url || null, 'nova-publisher', JSON.stringify(row.meta || {})]);
       return id;
     },
+    async stopped() { const r = await db.query("SELECT value FROM public.policies WHERE scope = 'company' AND scope_id = '*' AND key = 'paused'"); return r.rows[0]?.value === true; },
     async note(action, detail) { await db.query('INSERT INTO public.activity (actor, device_id, action, detail) VALUES ($1, $2, $3, $4)', ['nova-publisher', who?.device_id || null, action, String(detail).slice(0, 1500)]); },
     async accountState(connectionId, state) { await db.query('UPDATE public.integration_accounts SET state = $2, updated_at = now(), updated_by = $3 WHERE connection_id = $1', [connectionId, state, 'nova-publisher']); },
   };
@@ -203,6 +207,7 @@ async function gumroadUploadImage(gr, f, bytes, name, { purpose = null } = {}) {
 async function gumroadPublish({ co, account, body, who, fetch: f, api = 'https://api.gumroad.com' }) {
   if (account.provider !== 'gumroad') throw new PublishError(400, 'ERROR', `${account.connection_id} is not a Gumroad connection`);
   if (account.state !== 'connected') throw new PublishError(409, 'NOT_CONNECTED', `${account.connection_id} is ${account.state} in Coco`);
+  if (body.action === 'publish_existing') return gumroadPublishExisting({ co, account, body, fetch: f, api });
   const listing = body.listing || {};
   if (listing.ready_for_upload === false) throw new PublishError(409, 'UPLOAD_FAILED', `${listing.slug || 'the title'} is not ready to upload: ${(listing.problems || listing.blocking || []).join('; ')}`);
   const mode = String(body.mode || 'PUBLISH_WITH_APPROVAL').toUpperCase();
@@ -213,11 +218,18 @@ async function gumroadPublish({ co, account, body, who, fetch: f, api = 'https:/
   if (mode === 'PREPARE_ONLY') return { ok: true, state: 'READY', ...base, published: false, would_send: { ...payload }, note: 'PREPARE_ONLY: nothing was sent to Gumroad' };
   if (mode === 'PUBLISH_WITH_APPROVAL' && !approvedBy) return { ok: false, state: 'READY', ...base, needs_approval: true, published: false, reason: `${listing.title} waits for a founder YES before anything is created on Gumroad` };
   if (mode === 'AUTO_PUBLISH') throw new PublishError(409, 'PUBLISH_FAILED', 'AUTO_PUBLISH is not enabled for Gumroad');
+  // the artwork is attached after the product exists, so a product is never created public: it goes
+  // public through action publish_existing, which first checks the cover and the thumbnail on Gumroad
+  if (wantPublic) throw new PublishError(409, 'PUBLISH_FAILED', 'Gumroad products are created as drafts; make one public with action "publish_existing" once its cover and thumbnail are verified');
   if (!body.artifact?.url) throw new PublishError(400, 'UPLOAD_FAILED', 'a Gumroad publish needs artifact.url (the built EPUB)');
   let tok = await co.secret(String(account.secret_ref || '').replace(/^vault:/, ''));
   if (!tok) throw new PublishError(409, 'NOT_CONNECTED', 'the vault holds no Gumroad credential for this connection');
   try {
     const gr = gumroadClient(f, api, tok);
+    // the store itself, not only our records: a product with this link or title already there is never made again
+    const twin = (((await gr.call('GET', '/products')).json || {}).products || [])
+      .find((p) => p && !p.deleted && ((listing.slug && p.custom_permalink === listing.slug) || (listing.title && p.name === listing.title)));
+    if (twin) return { ok: false, state: 'DUPLICATE', ...base, published: twin.published === true, duplicate_of_product: twin.id, url: twin.short_url || null, reason: `Gumroad already has "${twin.name}" (${twin.id}); nothing was created` };
     const file = await fetchBytes(f, body.artifact.url, { sha256: body.artifact.sha256 || null, name: body.artifact.name || `${listing.slug}.epub` });
     const up = await gumroadUploadFile(gr, f, file.bytes, body.artifact.name || `${listing.slug}.epub`);
     const created = await gr.call('POST', '/products', { ...payload, files: [{ url: up.url }] });
@@ -246,6 +258,41 @@ async function gumroadPublish({ co, account, body, who, fetch: f, api = 'https:/
       } catch (e) { artwork.thumbnail = { error: redact(e.message, tok).slice(0, 200) }; }
     }
     return { ok: true, state: isPublic ? 'PUBLISHED' : 'READY', ...result, published: isPublic, artwork, note: isPublic ? 'Gumroad confirmed this is published' : (wantPublic ? `Gumroad created it but did not publish it: ${(created.json || {}).warning || 'no reason given'}` : 'created on Gumroad as an unpublished draft') };
+  } finally { tok = null; }
+}
+
+const fileCount = (p) => Array.isArray(p.files) ? p.files.length : Array.isArray(p.file_info) ? p.file_info.length : (p.file_info && typeof p.file_info === 'object' && Object.keys(p.file_info).length ? 1 : 0);
+// A verified draft goes public: a named approver, the emergency stop, then Gumroad's own copy must have the
+// file, the approved title and price, a cover AND the dedicated thumbnail; one write; then Gumroad is asked
+// again, because a 200 on enable is not the same thing as a public product (scripts/publish/gumroad.mjs
+// publishExisting, the same checks, moved here so the token never leaves Nova).
+async function gumroadPublishExisting({ co, account, body, fetch: f, api = 'https://api.gumroad.com' }) {
+  const id = String(body.external_id || ''), approvedBy = body.approved_by || null, listing = body.listing || {};
+  const base = { platform: 'gumroad', account: account.external_handle || account.external_name, connection_id: account.connection_id, slug: listing.slug, title: listing.title, mode: 'PUBLISH_WITH_APPROVAL', approved_by: approvedBy, run_id: body.run_id || null };
+  if (!approvedBy) return { ok: false, state: 'READY', ...base, needs_approval: true, published: false, reason: 'making a product public needs a named founder approval' };
+  if (!id) throw new PublishError(400, 'PUBLISH_FAILED', 'publish_existing needs the Gumroad product id (external_id)');
+  if (await co.stopped()) return { ok: false, state: 'PUBLISH_FAILED', ...base, published: false, reason: 'the company emergency stop is ON: nothing publishes, approval or not' };
+  let tok = await co.secret(String(account.secret_ref || '').replace(/^vault:/, ''));
+  if (!tok) throw new PublishError(409, 'NOT_CONNECTED', 'the vault holds no Gumroad credential for this connection');
+  try {
+    const gr = gumroadClient(f, api, tok);
+    const read = async () => ((await gr.call('GET', `/products/${encodeURIComponent(id)}`)).json || {}).product || {};
+    const p = await read();
+    if (!p.id) return { ok: false, state: 'PUBLISH_FAILED', ...base, published: false, reason: `Gumroad has no product ${id} on this account` };
+    if (p.deleted === true) return { ok: false, state: 'PUBLISH_FAILED', ...base, published: false, reason: `Gumroad reports ${id} as deleted` };
+    if (p.published === true) return { ok: true, state: 'ALREADY_PUBLISHED', ...base, published: true, product_id: id, url: p.short_url || null, note: 'Gumroad already reports this product as published; nothing was sent' };
+    const problems = [], covers = Array.isArray(p.covers) ? p.covers.length : 0;
+    if (listing.title && p.name !== listing.title) problems.push(`the live title is "${p.name}", not the approved one`);
+    if (listing.title && p.price !== productPayload(listing, { mode: 'DRAFT' }).price) problems.push(`the live price is ${p.price} cents, not the approved price`);
+    if (!fileCount(p)) problems.push('no file is attached: a buyer would pay and download nothing');
+    if (covers < 1) problems.push('no product cover is attached');
+    if (!p.thumbnail_url) problems.push('no dedicated thumbnail is attached');
+    if (problems.length) return { ok: false, state: 'PUBLISH_FAILED', ...base, published: false, product_id: id, reason: `not published: ${problems.join('; ')}` };
+    await gr.call('PUT', `/products/${encodeURIComponent(id)}/enable`);
+    const q = await read();
+    if (q.published !== true) return { ok: false, state: 'PUBLISH_FAILED', ...base, published: false, product_id: id, reason: 'Gumroad accepted the enable and still does not report the product as published' };
+    return { ok: true, state: 'PUBLISHED', ...base, external_id: id, url: q.short_url || null, published: true,
+      artwork: { cover: { covers: Array.isArray(q.covers) ? q.covers.length : covers }, thumbnail: { url: q.thumbnail_url || p.thumbnail_url } }, note: 'Gumroad confirmed this product is published' };
   } finally { tok = null; }
 }
 
