@@ -52,6 +52,7 @@ await t('5 a generation books the provider usage and returns the text, never the
   const r = await handle(db, req('POST', '/api/ai/generate', { provider: 'gemini', model: 'gemini-3.1-flash-lite', prompt: 'write', purpose: 'creative_write', team: 'youtube' }));
   assert.equal(r.status, 200); const b = JSON.parse(r.body); assert.equal(b.text, 'a script'); assert.equal(b.usage.total_tokens, 205); noKey(r.body);
   assert.equal(db.calls.length, 1); assert.equal(db.calls[0][1], 'done'); assert.equal(db.calls[0][13], 205);
+  assert.match(String(db.calls[0][17]), /^[0-9a-f]{16}$/, 'the ledger fingerprint is set (the column is required)');
   deps.fetch = async () => res(429, `quota exceeded for key ${GKEY}`);
   const q = await handle(fakeDb({ policy: true }), req('POST', '/api/ai/generate', { provider: 'gemini', model: 'gemini-3.1-flash-lite', prompt: 'write', purpose: 'p' }));
   assert.equal(q.status, 429); assert.equal(JSON.parse(q.body).state, 'RATE_LIMITED'); noKey(q.body);
