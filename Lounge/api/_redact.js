@@ -29,7 +29,8 @@ export function redactText(text) {
     out = out.replace(r.re, (m, ...args) => {
       if (!r.keep) { findings.push(r.type); return PLACEHOLDER; }
       const g = args.slice(0, -2);
-      if (g[2] === PLACEHOLDER) return m;
+      // a number or a flag under a key named like a secret is a setting ("daily_token": 5000), not a credential: leave it alone
+      if (g[2] === PLACEHOLDER || /^(\d[\d.,]*|true|false|null)$/i.test(g[2])) return m;
       findings.push(r.type); return g[0] + g[1] + PLACEHOLDER + g[1];
     });
   }

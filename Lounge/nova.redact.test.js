@@ -61,5 +61,11 @@ await t('6 the gate fails closed: if redaction throws, the write is refused and 
   assert.ok(!db.sql.some((s) => /jsonb_populate_recordset/.test(s.text)));
 });
 
+await t('7 settings that look like secrets by name are left alone: a numeric or boolean value is not a credential', () => {
+  const body = { daily_token: 5000, max_token: '120000', token_ok: true, secret_flag: 'true', note: 'ok' };
+  assert.deepEqual(redactDeep(body).value, body); assert.deepEqual(redactDeep(body).findings, []);
+  assert.ok(redactText(`token=${GUM}`).text.includes(PLACEHOLDER)); // a real-looking value is still caught
+});
+
 console.log(`\nnova.redact.test: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
