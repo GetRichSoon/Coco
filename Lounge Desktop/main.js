@@ -604,7 +604,10 @@ ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings(loginArgs(!
 // Hidden only while a full-screen app is in front (at the office too, Boss 2026-10-22).
 const ISLAND_FILE = () => path.join(app.getPath('userData'), 'island.json');
 let island = null, islandHelper = null, islandFull = false, islandMax = false, islandLast = null;
-const islandSettings = () => { try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(fs.readFileSync(ISLAND_FILE(), 'utf8')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } };
+// A missing file = a fresh install (defaults, Dock on as designed). A file that EXISTS but cannot be parsed is never allowed to switch the Dock on and hide the
+// Windows taskbar: it falls back to defaults with the Dock off. A UTF-8 byte-order mark (Notepad / PowerShell add one) is stripped before parsing. (2026-11-04: a BOM
+// made this silently return defaults, which switched the Dock on and hid the taskbar.)
+const islandSettings = () => { let raw; try { raw = fs.readFileSync(ISLAND_FILE(), 'utf8'); } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(raw.replace(/^\uFEFF/, '')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, dock: false }; } };
 const saveIsland = (s) => { try { fs.writeFileSync(ISLAND_FILE(), JSON.stringify(s)); } catch {} };
 
 // Errors from the island and dock pages go to userData\island.log, so a broken screen can be traced after the fact.
@@ -857,7 +860,7 @@ function createDock() {
   if (dockWatch) { try { dockWatch.close(); } catch {} }
   try { dockWatch = fs.watch(PINNED, () => { clearTimeout(dockWatchTimer); dockWatchTimer = setTimeout(async () => { if (dock) dock.webContents.send('dock-apps', await dockApps()); }, 400); }); } catch { dockWatch = null; }
   placeDock(); dockVisible();
-  startIslandHelper(); setTimeout(() => { if (!islandHelper) return; islandHelper.stdin.write('taskbar hide\n'); if (dockAutoHide()) islandHelper.stdin.write('wheelhook on\n'); }, 1500);
+  startIslandHelper(); setTimeout(() => { if (!islandHelper) return; if (process.env.COCO_KEEP_TASKBAR !== '1') islandHelper.stdin.write('taskbar hide\n'); if (dockAutoHide()) islandHelper.stdin.write('wheelhook on\n'); }, 1500);   // COCO_KEEP_TASKBAR=1 is for tests only
 }
 function removeDock() { if (dock) dock.destroy(); dock = null; if (islandHelper) { islandHelper.stdin.write('wheelhook off\n'); islandHelper.stdin.write('taskbar show\n'); } }
 // With the taskbar hidden the tray icon is hidden too, so the Dock's right-click menu carries the same switches.
@@ -906,12 +909,17 @@ ipcMain.on('dock-appmenu', (_e, a) => {
   if (hwnds.length) items.push({ type: 'separator' }, { label: hwnds.length > 1 ? `Close ${hwnds.length} windows` : 'Close window', click: () => hwnds.forEach((h) => say('closehwnd ' + h)) });
   if (items.length) Menu.buildFromTemplate(items).popup({ window: dock });
 });
+// Chromium stops painting a window that is fully covered, so a capture of it is black (measured: 85% pure-black pixels for a covered Chrome window,
+// 0% for a visible Brave or VS Code window). Such a capture is flagged so the Dock says so instead of showing a black box.
+function mostlyBlack(img) {
+  try { const { width, height } = img.getSize(), b = img.toBitmap(); let dark = 0, n = 0; for (let y = 0; y < height; y += 4) for (let x = 0; x < width; x += 4) { const i = (y * width + x) * 4; n++; if (b[i] + b[i + 1] + b[i + 2] < 12) dark++; } return n > 0 && dark / n >= 0.7; } catch { return false; }
+}
 ipcMain.handle('dock-preview', async (_e, hwnds) => {
   const want = new Set((hwnds || []).slice(0, 8).map((h) => `window:${Math.trunc(h)}:0`));
   try {
     const { desktopCapturer } = require('electron');
     const src = await desktopCapturer.getSources({ types: ['window'], thumbnailSize: { width: 376, height: 236 } });
-    return src.filter((s) => want.has(s.id)).map((s) => ({ hwnd: Number(s.id.split(':')[1]), thumb: s.thumbnail.isEmpty() ? '' : s.thumbnail.toDataURL() }));
+    return src.filter((s) => want.has(s.id)).map((s) => ({ hwnd: Number(s.id.split(':')[1]), thumb: s.thumbnail.isEmpty() || mostlyBlack(s.thumbnail) ? '' : s.thumbnail.toDataURL(), blank: s.thumbnail.isEmpty() || mostlyBlack(s.thumbnail) }));
   } catch { return []; }
 });
 let dockHot = false;

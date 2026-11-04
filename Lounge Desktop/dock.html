@@ -37,6 +37,8 @@ html, body { margin: 0; height: 100%; background: transparent; overflow: hidden;
 .win { width: 200px; border: 0; padding: 6px; background: transparent; color: #fff; border-radius: 10px; cursor: pointer; text-align: left; font: inherit; }
 .win:hover, .win:focus-visible { background: rgba(255,255,255,.1); outline: none; }
 .win b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; margin-bottom: 6px; }
+.win .ph.blank { display: grid; place-items: center; gap: 6px; align-content: center; color: rgba(255,255,255,.62); font-size: 11px; text-align: center; padding: 8px; }
+.win .ph.blank img { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: none; }
 .win img, .win .ph { width: 188px; height: 118px; display: block; border-radius: 6px; object-fit: contain; background: #111; }
 </style></head>
 <body>
@@ -125,7 +127,11 @@ async function showPreview(g, b) {
   pv.classList.add('on'); place(pv, b); report();
   const shots = await D.preview(g.wins.map((w) => w.hwnd));   // live pictures, taken now
   if (pvFor !== g.key) return;
-  for (const s of shots) { const el = pv.querySelector(`[data-h="${s.hwnd}"] .ph`); if (el && s.thumb) el.outerHTML = `<img src="${s.thumb}" alt="">`; }
+  for (const s of shots) {
+    const el = pv.querySelector(`[data-h="${s.hwnd}"] .ph`); if (!el) continue;
+    if (s.thumb) el.outerHTML = `<img src="${s.thumb}" alt="">`;
+    else if (s.blank) { el.classList.add('blank'); el.innerHTML = (g.icon ? `<img src="${g.icon}" alt="">` : '') + '<span>Preview unavailable while this window is covered. Open it to see it.</span>'; }   // honest: the window is not painting
+  }
 }
 function closePreview() { pv.classList.remove('on'); pvFor = null; report(); }
 pv.addEventListener('click', (e) => { const w = e.target.closest('.win'); if (w) { D.focusWin(Number(w.dataset.h)); closePreview(); } });

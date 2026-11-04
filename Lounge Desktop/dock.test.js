@@ -66,4 +66,22 @@ assert.ok(!/MouseLL s[\s\S]{0,400}Emit\([^)]*(s\.pt|s\.data)/.test(cs), 'the whe
 assert.ok(!cs.includes('static void Procs()') && cs.includes('names2.Add(info[0])'), 'the process list comes from the window list, not a second pass over every process');
 assert.ok(cs.includes('new Thread(() => { while (true) { try { Net(); Bright(); }'), 'netsh and WMI run on their own thread, never blocking the loop');
 assert.ok(src.includes('dockAH.shown = true; dockAH.awaySince = dockAH.edgeSince = 0; dockSentShown = null;'), 'after sleep / wake the Dock starts shown again');
+// ---- island.json: a BOM or a damaged file must never switch the Dock on (it hides the Windows taskbar) ----
+{
+  const os = require('os'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'isl-')), file = path.join(tmp, 'island.json');
+  const line = src.split('\n').find((l) => l.startsWith('const islandSettings'));
+  const read = new Function('fs', 'ISLAND_FILE', line + '; return islandSettings;')(fs, () => file);
+  assert.notEqual(read().dock, false, 'no file yet = a fresh install: defaults (Dock on as designed)');
+  fs.writeFileSync(file, Buffer.concat([Buffer.from([0xEF, 0xBB, 0xBF]), Buffer.from(JSON.stringify({ dock: false, prefs: { theme: 'mafia' } }))]));
+  assert.equal(read().dock, false, 'a file that starts with a byte-order mark is still read: Dock stays off'); assert.equal(read().prefs.theme, 'mafia', 'and its other settings survive');
+  fs.writeFileSync(file, '{ not json'); assert.equal(read().dock, false, 'a damaged file never switches the Dock on'); assert.equal(read().enabled, true);
+  fs.writeFileSync(file, JSON.stringify({ dock: true })); assert.equal(read().dock, true, 'a normal file with the Dock on is respected');
+}
+// ---- previews: a blank capture is flagged, not shown as a black box ----
+assert.ok(src.includes('function mostlyBlack(img)') && src.includes('blank: s.thumbnail.isEmpty() || mostlyBlack(s.thumbnail)'), 'blank captures are flagged in main');
+assert.ok(page.includes("el.classList.add('blank')") && page.includes('Preview unavailable while this window is covered'), 'the Dock page explains a blank preview');
+{ const fn = src.slice(src.indexOf('function mostlyBlack(img)'), src.indexOf("ipcMain.handle('dock-preview'")); const mb = new Function(fn + '; return mostlyBlack;')();
+  const img = (w, h, f) => ({ getSize: () => ({ width: w, height: h }), toBitmap: () => { const b = Buffer.alloc(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = f(x, y); const i = (y * w + x) * 4; b[i] = b[i + 1] = b[i + 2] = v; b[i + 3] = 255; } return b; } });
+  assert.equal(mb(img(376, 236, (x, y) => (y < 28 ? 90 : 0))), true, 'a covered Chrome window (tab strip only, rest black) is blank');
+  assert.equal(mb(img(376, 236, () => 33)), false, 'a dark-mode window (#212121) is not blank'); assert.equal(mb(img(376, 236, (x, y) => ((x + y) % 7 ? 60 : 0))), false, 'a normal busy window is not blank'); }
 console.log('dock tests passed');
