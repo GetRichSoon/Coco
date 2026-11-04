@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.goodspace.cocolounge.UpdaterSessionsTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-04T12:30:34" hostname="LAPTOP-LSVOC2SK" time="0.011">
+  <properties/>
+  <testcase name="aPersonTappingIsAlwaysAllowed" classname="com.goodspace.cocolounge.UpdaterSessionsTest" time="0.001"/>
+  <testcase name="staleSessionsAreFreedButActiveOnesNever" classname="com.goodspace.cocolounge.UpdaterSessionsTest" time="0.0"/>
+  <testcase name="firstAttemptAtAnewBuildGoesThrough" classname="com.goodspace.cocolounge.UpdaterSessionsTest" time="0.0"/>
+  <testcase name="theSameBuildIsNotRetriedEveryFifteenMinutes" classname="com.goodspace.cocolounge.UpdaterSessionsTest" time="0.0"/>
+  <testcase name="nothingNewWhileOneIsReallyInProgress" classname="com.goodspace.cocolounge.UpdaterSessionsTest" time="0.0"/>
+  <testcase name="fortyEightHoursOfChecksNeverPileUpSessions" classname="com.goodspace.cocolounge.UpdaterSessionsTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

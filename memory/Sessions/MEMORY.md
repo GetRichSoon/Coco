@@ -78,3 +78,7 @@
 - [Coco Chat](project_coco_chat_scopes.md) — LIVE 2.10.0: conversational scoped chat via Nova /api/chat builds teams/agents/workflows from words; test with cloud-worker-1, archive E2E items; gaps: B2 uploads, cycle schedule, Gemini key
 - [COCO task intake](project_coco_task_intake.md) — company STARTED 2026-11-03; daily task 1d702f2c runs on the cloud cycle; Claude only for youtube.marquee + ebooks.ebooks-head; needs ANTHROPIC_WORKSPACE_ID secret
 - [YouTube cloud analytics](project_youtube_cloud_analytics.md) — daily 04:10 UTC via Nova since 2026-11-03; diagnose.mjs report; first findings (decline since 9 Oct, body leads, subs weak)
+- [Gumroad engine](project_gumroad_monitor.md) — cloud-only Gumroad engine; old pipeline off 2026-11-04; daily monitor + categories; A-023/24/25 gate the next phases
+- [Cloud autonomy audit 2026-11-04](project_cloud_autonomy_audit_2026_11_04.md) — seven steps = YT order 1-7, 5-7 unapproved, PC-OFF unverified, CI schedule failing, Gumroad token leak
+- [Brains + growth engine](project_brains_growth_intel.md) — 2026-11-04: merged + scheduled from main, ALL actions HELD, dashboard deployed; 0031 NOT applied (declined); A-026 status
+- [Verify PR number before merge](feedback_verify_pr_number_before_merge.md) — I merged another session's PR 7 into main by assuming the number; use the number gh pr create printed, check head/base first
