@@ -642,7 +642,8 @@ function sysInfo() {
 }
 // At the office the island shows ONLY approvals (Boss, 2026-10-26): no other Coco status, no toasts (quiet).
 let sentModules = '';
-const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { if (m.coco !== false) m.coco = 'approvals'; m.quiet = true; } return m; };   // quiet = no toasts
+// quiet = no toasts (office mode)
+const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { if (m.coco !== false) m.coco = 'approvals'; m.quiet = true; } return m; };
 function sendModules(force) { const m = islandModules(), k = JSON.stringify(m); if (island && (force || k !== sentModules)) { sentModules = k; island.webContents.send('island-modules', m); } }
 function islandVisible() {
   sendModules(false);
