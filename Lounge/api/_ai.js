@@ -49,10 +49,15 @@ export async function handleAi(db, req, who, { json, log, fetch: f = globalThis.
     const u = j?.usageMetadata || {};
     const id = `AI-${new Date().toISOString().slice(0, 10)}-G${Date.now().toString(36)}`;
     const status = r.ok && j ? 'done' : 'failed';
+    // ai_calls.run_id must be a known run: an unknown label (a GitHub run) is kept in the task text instead,
+    // so the call is ALWAYS booked. A booking that fails is logged, never swallowed in silence.
+    const known = b.run_id ? (await db.query('SELECT 1 FROM public.runs WHERE run_id = $1', [b.run_id]).then((x) => x.rows.length > 0).catch(() => false)) : false;
+    if (b.run_id && !known) b.task = `${String(b.task || '')} [run ${b.run_id}]`;
+    if (!known) b.run_id = null;
     const out = (j?.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
     await db.query(`INSERT INTO public.ai_calls (id, at, status, run_id, team_id, agent_id, provider, model, purpose, expected_output, claude_required, max_tokens, input_tokens, output_tokens, reasoning_tokens, cache_read_tokens, total_tokens, cost, duration_ms, over_budget, measured_by, unverified, result_summary, done_at, requested_by)
       VALUES ($1, now(), $2, $3, $4, $5, 'google', $6, $7, $8, 'routine cloud writing: Gemini, not Claude (Boss 2026-11-03)', $9, $10, $11, $12, $13, $14, 0, $15, false, 'provider', false, $16, now(), $17)`,
-      [id, status, b.run_id || null, b.team || null, b.agent || null, b.model, String(b.purpose).slice(0, 60), String(b.task || '').slice(0, 300), maxOut, u.promptTokenCount || 0, u.candidatesTokenCount || 0, u.thoughtsTokenCount || 0, u.cachedContentTokenCount || 0, u.totalTokenCount || 0, Date.now() - t0, status === 'done' ? out.slice(0, 300) : strip(text, key).slice(0, 300), who.device_id]).catch(() => {});
+      [id, status, b.run_id || null, b.team || null, b.agent || null, b.model, String(b.purpose).slice(0, 60), String(b.task || '').slice(0, 300), maxOut, u.promptTokenCount || 0, u.candidatesTokenCount || 0, u.thoughtsTokenCount || 0, u.cachedContentTokenCount || 0, u.totalTokenCount || 0, Date.now() - t0, status === 'done' ? out.slice(0, 300) : strip(text, key).slice(0, 300), who.device_id]).catch((e) => log(500, { ai: 'gemini', booking_failed: String(e.message).slice(0, 160) }));
     if (!r.ok || !j) { log(r.status, { device: who.device_id, ai: 'gemini', model: b.model, status: r.status }); return json(r.status === 429 ? 429 : 502, { ok: false, state: r.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_ERROR', status: r.status, reason: strip(text, key).slice(0, 300), ai_call_id: id }); }
     log(200, { device: who.device_id, ai: 'gemini', model: b.model, tokens: u.totalTokenCount || 0 });
     return json(200, { ok: true, provider: 'gemini', model: b.model, text: out, finish: j.candidates?.[0]?.finishReason || null, usage: { input_tokens: u.promptTokenCount || 0, output_tokens: u.candidatesTokenCount || 0, reasoning_tokens: u.thoughtsTokenCount || 0, cached_tokens: u.cachedContentTokenCount || 0, total_tokens: u.totalTokenCount || 0, measured_by: 'provider' }, ai_call_id: id, duration_ms: Date.now() - t0 });
