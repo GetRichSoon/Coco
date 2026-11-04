@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Coco Lounge web + Nova, the control API the apps talk to (api/).",
   "scripts": {
-    "test": "node nova.test.js && node live-loop.test.js && node refresh.test.js && node chat.test.js && node chat-cloud.test.js"
+    "test": "node brains.render.test.js && node nova.test.js && node live-loop.test.js && node refresh.test.js && node chat.test.js && node chat-cloud.test.js"
   },
   "dependencies": {
     "pg": "8.13.1"

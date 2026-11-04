@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const src = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 const CP = JSON.parse(fs.readFileSync(path.join(__dirname, 'control-plane.json'), 'utf8'));
+// the brains' records as the cloud wrote them (CocoMaison brains workflow), for the Growth brains tab
+const BRAINS_SAMPLE = JSON.parse(fs.readFileSync(path.join(__dirname, 'brains.sample.json'), 'utf8')).rows;
 
 // ---------------------------------------------------------------- lift the real code out of the page
 const between = (startRe, endRe) => {
@@ -46,9 +48,9 @@ const chip = (s) => `<span class="chip">${esc(s)}</span>`;
 const ago = (iso) => (iso ? '2 min ago' : 'never');
 const store = { get: () => null };   // no browser storage here; Calm motion reads as off
 
-const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago', 'store', 'IDENT_IN', 'STRUCT', 'newKind', 'newParent', 'renaming',
+const make = (state) => new Function('CP', 'LIVE', 'D', 'sub', 'cpRun', 'POLICIES', 'CONTROL_OPS', 'esc', 'chip', 'ago', 'store', 'IDENT_IN', 'STRUCT', 'newKind', 'newParent', 'renaming', 'BRAINS',
   `${constSrc}\n${marksSrc}\nIDENT = IDENT_IN;\n${helpersSrc}\n${controlsSrc}\nconst V = {\n${pagesSrc}\n};\nreturn V;`,
-)(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago, store, IDENT, state.STRUCT || [], state.newKind || 'subteam', {}, null);
+)(state.CP, state.LIVE, state.D, state.sub, state.cpRun || null, state.POLICIES || [], state.CONTROL_OPS || [], esc, chip, ago, store, IDENT, state.STRUCT || [], state.newKind || 'subteam', {}, null, state.BRAINS === undefined ? BRAINS_SAMPLE : state.BRAINS);
 
 const D0 = { approvals: [], activity: [], houses: [], devices: [], tasks: [], decisions: [], rules: [], integrations: [] };
 const PAGES = ['control', 'teams', 'agents', 'runs', 'ai', 'brain', 'workflows', 'system'];
@@ -93,7 +95,7 @@ if (CP.ai.calls.some((c) => c.status === 'blocked')) {
   assert.ok(/Refused|Blocked/.test(refused.replace(/<[^>]*>/g, ' ')), 'the refusal reason is shown in plain words');
 }
 
-const brain = make({ CP, LIVE: { runs: CP.runs }, D: D0, sub: 'x' }).brain();
+const brain = make({ CP, LIVE: { runs: CP.runs }, D: D0, sub: 'memory' }).brain();   // the memory tab (Growth brains is the default tab)
 assert.ok(brain.includes(CP.brain.items[0].id), 'the Brain page lists an item by id');
 assert.ok(/things the company knows/.test(brain));
 
@@ -162,7 +164,7 @@ for (const p of PAGES) {
 }
 // and no snapshot at all
 for (const p of PAGES) {
-  const V = make({ CP: null, LIVE: null, D: D0, sub: SUB0[p] || 'x' });
+  const V = make({ CP: null, LIVE: null, D: D0, sub: SUB0[p] || 'x', BRAINS: null });
   const html = V[p]();
   assert.ok(/Waiting for the first cloud cycle/.test(html), `${p}() must say it is waiting, not render blank`);
 }
