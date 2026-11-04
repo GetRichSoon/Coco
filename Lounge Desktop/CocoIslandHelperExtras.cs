@@ -130,12 +130,13 @@ static partial class Program
     [DllImport("user32.dll")] static extern int GetWindowLongW(IntPtr h, int i);
     [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out int v, int size);
 
-    static string lastWins = "";
+    static string lastWins = "", lastProcs2 = "";
     static readonly Dictionary<uint, string[]> procInfo = new Dictionary<uint, string[]>();
     static void Wins()
     {
         var items = new List<string>();
         var live = new HashSet<uint>();
+        var names2 = new List<string>();
         EnumWindows((h, lp) =>
         {
             if (!IsWindowVisible(h) || GetWindow(h, 4) != IntPtr.Zero) return true;            // hidden, or owned (dialogs)
@@ -154,12 +155,17 @@ static partial class Program
             }
             if (info[0] == "electron" || info[0] == "textinputhost" || info[0] == "explorer" && t.ToString() == "Program Manager") return true;
             string title = t.ToString(); if (title.Length > 90) title = title.Substring(0, 90);
+            names2.Add(info[0]);
             items.Add("{\"hwnd\":" + h.ToInt64() + ",\"name\":" + J(info[0]) + ",\"path\":" + J(info[1]) + ",\"title\":" + J(title) + "}");
             return true;
         }, IntPtr.Zero);
         foreach (uint gone in procInfo.Keys.Where(k => !live.Contains(k)).ToList()) procInfo.Remove(gone);
         string line = "{\"t\":\"wins\",\"front\":" + GetForegroundWindow().ToInt64() + ",\"list\":[" + string.Join(",", items.ToArray()) + "]}";
         if (line != lastWins) { lastWins = line; Emit(line); }
+        // "procs" for the Dock's open dots = the program names behind these same windows (before: a second pass over every process)
+        var names = new System.Collections.Generic.SortedSet<string>(); foreach (var kv in names2) names.Add(kv);
+        string pl = "{\"t\":\"procs\",\"names\":[" + string.Join(",", System.Linq.Enumerable.Select(names, J)) + "]}";
+        if (pl != lastProcs2) { lastProcs2 = pl; Emit(pl); }
     }
 
     static void MinHwnd(long n) { ShowWindow(new IntPtr(n), 6); }

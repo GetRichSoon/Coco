@@ -30,7 +30,7 @@ const a = sys(); assert.equal(a.cpu, null, 'first sample has no CPU yet (honest:
 const t0 = Date.now(); while (Date.now() - t0 < 120); const b = sys(); assert.ok(b.cpu === null || (b.cpu >= 0 && b.cpu <= 100), 'CPU is a real percentage');
 
 // ---- pointer: pinned island keeps its clicks over a maximised app; band follows the island's own position ----
-const hover = between('const BAND_PX', 'setInterval(islandPointer, 40);');
+const hover = between('const BAND_PX', '// One pointer timer for the island and the Dock.');
 let cursor = { x: 0, y: 500 }, now = 0, sent = [], ignore = [], islandBounds = { x: 1920 + 980, y: 0, width: 600, height: 480 };
 const isl = { isVisible: () => true, getBounds: () => islandBounds, setIgnoreMouseEvents: (v) => ignore.push(v), webContents: { send: (c, v) => sent.push(v) } };
 const ipc = { on: (n, f) => (ipc[n] = f) };

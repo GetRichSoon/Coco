@@ -36,5 +36,18 @@ Commits (local, NOT pushed): e11d419, e541bef on cloud-foundation.
 Security note (not mine, found while pushing): github.com/GetRichSoon/Coco reports private=false (public) although memory says it stays private until the old service key is rotated.
 Pre-existing, out of scope: Lounge/index.html chat code still matches a founder by name to pick a call-name (not displayed).
 
+## Taskbar (Coco Dock) + background cost: measured, 2026-11-04 (Boss order: lag, bugs, auto-hide with mouse wheel)
+The Dock is OFF on this PC (island.json dock:false), so it was measured in isolated real Electron windows; the live taskbar was not touched.
+MEASURED idle CPU (same machine, same method, before -> after):
+- Native helper (CocoIslandHelper.exe, always running): 16.5% of a core -> 0.4-0.9%. A stopwatch build showed where: Procs() 195 ms per call (touched MainWindowHandle on every process), Fullscreen() 41 ms every 500 ms (a Process object per tick), Media() 17 ms every tick, netsh 1.8 s blocking the loop. Fixes: Procs removed (the list now comes from the window enumeration that already runs), cheap checks first + cached process name, media every second, netsh/WMI on their own thread every 30 s. Same message types still produced (A/B checked).
+- Island page, idle compact pill (real transparent Electron window): 18.7-20.3% -> 1.0% (60 s average incl. wiggles). Cause: any CSS animation running at 60 fps in that window costs ~5-20% (a trivial 30 px animation alone costs ~5%); no single animation was to blame. The first fix (compositor-only transforms) did NOT help (19%) and was measured and reported as such; what worked is not animating at rest (logo wiggles <2 s every ~25 s, characters move only under the pointer, pulses play 3 times, bars are static shapes while idle).
+- Island open and pinned, nothing hovered: ~17-20% -> 0.9%.
+- Dock page idle: 0.16-0.48% shown, 0.01% hidden.
+- Whole Coco app idle (all processes, live, 60 s): ~24.6% -> ~9.6% of one core. Main process unchanged (2.4%): the adaptive pointer timer (25/s -> 8/s when far) made no measurable CPU difference; kept because the Dock auto-hide needs one shared loop.
+DOCK FIXES: auto-hide (hides after 700 ms off it, returns on 120 ms at the bottom edge or a mouse-wheel turn there, menu switch 'Auto-hide Dock'); one debounced pinned-apps watcher closed with the Dock (was recreated on every switch-on and never closed); Dock page told only when its data changed; hidden Dock reports no clickable area; resumes shown after sleep/wake; Coco mark + accent follow the saved theme (Coco: pink mark, sky blue; Mafia: stern crest, white, sharp corners); Material icon instead of letter tiles; no emoji.
+WHEEL HOOK (privacy): WH_MOUSE_LL in the helper, installed only while auto-hide is on; sees every wheel turn but prints only a bare {"t":"wheel"} when the pointer is within 3 px of a screen's bottom edge (<= 8/s); no position, window, app or count. REAL TEST on the live desktop: wheel mid-screen 0 signals, at the bottom edge 1, after 'wheelhook off' 0.
+NOT VERIFIED: Dock on the real taskbar position (it would hide the live Windows taskbar), Explorer restart, display resolution change, 12-hour leak soak, a second monitor, the Windows taskbar's own auto-hide interplay. Tested instead: sleep/wake handler by test, theme switch by real window, 16 + 53 real-window checks, 13 test files.
+KNOWN OPEN (found while measuring, not fixed): Lounge page logs 'Coco commands: reading commands timed out' every ~30 s (cloud read, probably the Supabase egress restriction).
+
 ## Backlog (unrelated)
 - refresh.test.js hang. - Wire `agent_messages` publishing from the engine. - Phone updater session-limit error. - Optional realtime on the activity feed (blocked by the Supabase egress rule).
