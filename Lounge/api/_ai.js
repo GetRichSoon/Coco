@@ -42,7 +42,7 @@ export async function handleAi(db, req, who, { json, log, fetch: f = globalThis.
     if (today >= DAILY_CAP) return json(429, { ok: false, state: 'CAPPED', reason: `the daily cap of ${DAILY_CAP} Gemini calls is reached` });
     const maxOut = Math.min(MAX_OUTPUT, Math.max(256, Number(b.max_output_tokens) || 4096));
     const t0 = Date.now();
-    const r = await f(`${api}/models/${encodeURIComponent(b.model)}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'content-type': 'application/json' }, signal: AbortSignal.timeout(55000),
+    const r = await f(`${api}/models/${encodeURIComponent(b.model)}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'content-type': 'application/json' }, signal: AbortSignal.timeout(110000),
       body: JSON.stringify({ ...(b.system ? { systemInstruction: { parts: [{ text: String(b.system).slice(0, 8000) }] } } : {}), contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxOut, temperature: 0.7, ...(b.json ? { responseMimeType: 'application/json' } : {}) } }) });
     const text = await r.text();
     const j = (() => { try { return JSON.parse(text); } catch { return null; } })();
