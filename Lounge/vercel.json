@@ -32,7 +32,7 @@
   ],
   "functions": {
     "api/nova.js": {
-      "maxDuration": 60,
+      "maxDuration": 120,
       "includeFiles": "{index.html,control-plane.json,identity.json,release.json}"
     }
   },
