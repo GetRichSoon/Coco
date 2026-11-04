@@ -1,4 +1,4 @@
--- 0029 device sync audit (Boss order 2026-11-04). PREPARED, NOT APPLIED: needs Boss's YES.
+-- 0037 device sync audit (Boss order 2026-11-04; numbered 0037 so it cannot collide with the engine repo's 0029-0036). PREPARED, NOT APPLIED.
 -- Idempotent (safe to run twice). Only ever holds generic device labels, never ids, emails or names.
 -- Cost: one row per 15 minutes = 96 rows a day (~30 KB), read once per cycle with limit 1.
 -- Least privilege: the cloud engine may read and insert; founders may only read; nobody can update or delete an audit row.

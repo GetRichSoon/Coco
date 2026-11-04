@@ -1,5 +1,5 @@
 # The ONE shared four-device sync scheduler (Boss order 2026-11-04). Every 15 minutes, one job, never two at once.
-# NOT ACTIVE until: (1) this file is on the default branch (GitHub only runs schedules from there), (2) migration 0029 is applied,
+# NOT ACTIVE until: (1) this file is on the default branch (GitHub only runs schedules from there), (2) migration 0037 is applied,
 # (3) Nova is deployed with the device_sync_audit table, (4) the secrets below exist. Runs --apply only when APPLY is "true".
 name: device sync
 
