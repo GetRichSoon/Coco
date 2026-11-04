@@ -21,17 +21,17 @@ const fresh = () => new Date().toISOString();
 const stale = () => new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
 // everything the block leans on, supplied exactly as index.html defines it
-const build = (D, RELEASE, CLOUD_RELEASE) => new Function('D', 'RELEASE', 'CLOUD_RELEASE', 'esc', 'online', 'ago',
-  block + '; return releaseDevices;')(D, RELEASE, CLOUD_RELEASE,
+const build = (D, RELEASE, CLOUD_RELEASE, audit = null, auditErr = false) => new Function('D', 'RELEASE', 'CLOUD_RELEASE', 'SYNC_AUDIT', 'SYNC_AUDIT_ERR', 'SYNC_AT', 'sb', 'page', 'render', 'esc', 'online', 'ago',
+  block + '; return releaseDevices;')(D, RELEASE, CLOUD_RELEASE, audit, auditErr, Date.now(), null, 'control', () => {},
     (x) => String(x == null ? '' : x),
     (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000,
     () => 'just now');
 
 const devices = [
-  { id: 'mangesh-pc', name: 'Boss PC', kind: 'pc', app_version: 'desktop-2.9.0', last_seen: fresh() },
-  { id: 'shreya-pc', name: 'Big Boss PC', kind: 'pc', app_version: 'lounge-2', last_seen: fresh() },
-  { id: 'mangesh-phone', name: 'Boss phone', kind: 'phone', app_version: 'android-2.8.2', last_seen: fresh() },
-  { id: 'shreya-phone', name: 'Big Boss phone', kind: 'phone', app_version: 'android-2.8.1', last_seen: stale() },
+  { id: 'boss-pc', name: 'Boss PC', kind: 'pc', app_version: 'desktop-2.9.0', last_seen: fresh() },
+  { id: 'bigboss-pc', name: 'Big Boss PC', kind: 'pc', app_version: 'lounge-2', last_seen: fresh() },
+  { id: 'boss-phone', name: 'Boss phone', kind: 'phone', app_version: 'android-2.8.2', last_seen: fresh() },
+  { id: 'bigboss-phone', name: 'Big Boss phone', kind: 'phone', app_version: 'android-2.8.1', last_seen: stale() },
 ];
 // mirrors the real row on 29 October: the desktop half done, the Android half not built yet
 const rel = { release_id: 'coco-2.9.0', version: '2.9.0', status: 'blocked',
@@ -110,4 +110,24 @@ for (const h of ['Device', 'Platform', 'Installed', 'Latest', 'Status', 'Last se
 html = build({ devices: [{ id: 'q', name: 'Tablet', kind: 'phone', platform: 'android', app_version: 'android-2.9.0', last_seen: fresh() }] }, { version: '2.9.0' }, rel)();
 assert.ok(html.includes('android'), 'the reported platform is used');
 
+// ---- Sync monitor panel: real audit row in, real numbers out; no row, no numbers; generic labels only ----
+{
+  { const mod = { exports: {} }; new Function('module', fs.readFileSync(path.join(here, 'device-sync.js'), 'utf8')).call({}, mod); globalThis.window = { CocoDeviceSync: mod.exports }; }   // the page loads the same file with a script tag
+  const none = build({ devices }, { version: '2.10.0' }, null)(); assert.ok(/Sync monitor/.test(none) && /No sync cycle has been recorded yet/.test(none), 'no audit row: says so, shows no numbers');
+  const noTable = build({ devices }, { version: '2.10.0' }, null, null, true)(); assert.ok(/Audit storage is not set up yet/.test(noTable), 'missing audit storage is named');
+  const now = Date.now(), audit = { at: new Date(now - 4 * 60000).toISOString(), next_check_at: new Date(now + 11 * 60000).toISOString(), current_count: 3, total: 4, calls_total: 6, budget_ok: true, stale: false,
+    state: { lastCycleAt: now - 4 * 60000 }, devices: [{ label: 'Boss PC', status: 'CURRENT', local: '2.10.0', server: '2.10.0', lastSync: now - 4 * 60000, fails: 0 },
+      { label: 'Boss Phone', status: 'ERROR', local: '2.9.2', server: '2.10.0', lastSync: null, lastError: 'install: too many sessions', fails: 2, nextTry: now + 30 * 60000 },
+      { label: 'Big Boss PC', status: 'OFFLINE', local: '2.9.0', server: '2.10.0', lastSync: null, fails: 0 }, { label: 'Big Boss Phone', status: 'CURRENT', local: '2.10.0', server: '2.10.0', lastSync: now - 4 * 60000, fails: 0 }] };
+  const h = build({ devices }, { version: '2.10.0' }, null, audit)();
+  assert.ok(/<b>3\/4<\/b> devices verified current/.test(h), 'verified count comes from the audit row'); assert.ok(/<b>6<\/b> of 7 calls last cycle/.test(h) && /within budget/.test(h), 'actual calls vs the cycle budget');
+  assert.ok(/failed updates: 1/.test(h) && /retry attempts so far: 2/.test(h), 'failed updates and recovery attempts are counted from the rows'); assert.ok(/Scheduler: healthy/.test(h));
+  assert.ok(/install: too many sessions/.test(h) && /never verified/.test(h), 'the real failure and an honest "never verified"');
+  const stalled = build({ devices }, { version: '2.10.0' }, null, { ...audit, state: { lastCycleAt: now - 50 * 60000 } })(); assert.ok(/scheduler stalled/.test(stalled), 'a stalled scheduler is shown, not hidden');
+  const over = build({ devices }, { version: '2.10.0' }, null, { ...audit, calls_total: 9, budget_ok: false })(); assert.ok(/OVER BUDGET/.test(over));
+  // privacy: legacy names on the device rows never reach the screen, only the generic labels
+  const legacy = [{ id: 'a', kind: 'pc', name: ['Boss PC (', 'Len', 'ovo)'].join(''), app_version: 'desktop-2.10.0', last_seen: fresh() }, { id: 'b', kind: 'phone', name: [['mange', 'sh'].join('').slice(0,1).toUpperCase() + ['mange', 'sh'].join('').slice(1), "'s phone"].join(''), app_version: 'android-2.9.2', last_seen: fresh() }];
+  const lh = build({ devices: legacy }, { version: '2.10.0' }, null)(); assert.ok(!new RegExp(['mange', 'sh'].join('') + '|' + ['shre', 'ya'].join(''), 'i').test(lh), 'no personal name on the Release Center'); assert.ok(/Boss PC/.test(lh));
+  console.log('sync monitor panel: 11 checks passed');
+}
 console.log('release center: 4 devices, versions read from their own heartbeats, cloud release wins, platform blocks named — all checks pass');

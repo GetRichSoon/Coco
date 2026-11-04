@@ -613,11 +613,32 @@ function logWindow(w, name) {
     if (level >= 2) try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} ${name}:${line} ${message}
 `); } catch {} });
 }
+// Island 2.0 (Boss, 2026-11-04): the window holds the biggest state (details) plus room for the shadow; it stays
+// click-through outside the pill. Screen and side are saved in island.json (prefs) and survive restarts.
+const ISLAND_W = 600, ISLAND_H = 480;
+const islandPrefs = () => { const p = { theme: 'coco', align: 'center', screen: 0, ...(islandSettings().prefs || {}) }; if (p.theme !== 'mafia') p.theme = 'coco'; return p; };   // two themes; old saved dark / light / auto = the default
+// The saved screen if it is still plugged in, else the main screen (a removed monitor never strands the island).
+function islandDisplay() {
+  const { screen } = require('electron'), all = screen.getAllDisplays(), id = islandPrefs().screen;
+  return all.find((d) => d.id === id) || screen.getPrimaryDisplay();
+}
 function placeIsland() {
   if (!island) return;
-  const { screen } = require('electron');
-  const d = screen.getPrimaryDisplay().bounds, W = 460, H = 310;   // flush with the top edge of the screen, like a notch
-  island.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y, width: W, height: H });
+  const d = islandDisplay().bounds, W = ISLAND_W, H = ISLAND_H, a = islandPrefs().align;
+  const x = a === 'left' ? d.x + 24 : a === 'right' ? d.x + d.width - W - 24 : d.x + (d.width - W) / 2;
+  island.setBounds({ x: Math.round(x), y: d.y, width: W, height: H });
+}
+function sendPrefs() {
+  if (!island) return;
+  const { screen } = require('electron'), p = islandPrefs(), cur = islandDisplay().id;
+  island.webContents.send('island-prefs', { ...p, screen: cur, screens: screen.getAllDisplays().map((d, i) => ({ id: d.id, name: 'Screen ' + (i + 1) + (d.id === screen.getPrimaryDisplay().id ? ' (main)' : ''), size: d.size.width + '×' + d.size.height })) });
+}
+// CPU and RAM for the island's system strip; asked for only while the island is open.
+let cpuPrev = null;
+function sysInfo() {
+  const os = require('os'), c = os.cpus().reduce((a, x) => { for (const k in x.times) a.t += x.times[k]; a.i += x.times.idle; return a; }, { t: 0, i: 0 });
+  const cpu = cpuPrev && c.t > cpuPrev.t ? Math.round(100 * (1 - (c.i - cpuPrev.i) / (c.t - cpuPrev.t))) : null; cpuPrev = c;
+  return { cpu, ram: Math.round(100 * (1 - os.freemem() / os.totalmem())) };
 }
 // At the office the island shows ONLY approvals (Boss, 2026-10-26): no other Coco status, no toasts (quiet).
 let sentModules = '';
@@ -644,19 +665,20 @@ ipcMain.handle('island-enabled-set', (_e, on) => setIslandEnabled(!!on));
 function createIsland() {
   if (island || !islandSettings().enabled) return;
   island = new BrowserWindow({
-    width: 460, height: 310, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, focusable: true,
+    width: ISLAND_W, height: ISLAND_H, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, focusable: true,
     show: false, alwaysOnTop: true, hasShadow: false, title: 'Coco Island',
     webPreferences: { preload: path.join(__dirname, 'island-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   island.setAlwaysOnTop(true, 'screen-saver'); island.setVisibleOnAllWorkspaces(true);
   island.setIgnoreMouseEvents(true, { forward: true });   // clicks pass through until the mouse is over the pill
   island.loadFile(path.join(__dirname, 'island.html'));
-  island.webContents.on('did-finish-load', () => { sendModules(true); islandSend(); sendAccent(); });
+  island.webContents.on('did-finish-load', () => { sendModules(true); sendPrefs(); islandSend(); sendAccent(); });
+  island.webContents.on('render-process-gone', (_e, d) => { logLine('island page gone: ' + d.reason + ', reloading'); setTimeout(() => { if (island && !island.isDestroyed()) island.reload(); }, 2000); });
   island.on('closed', () => { island = null; });
   logWindow(island, 'island');
   placeIsland(); islandVisible();
   const { screen } = require('electron');
-  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, () => { placeIsland(); placeDock(); });
+  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, () => { placeIsland(); placeDock(); sendPrefs(); });
   require('electron').powerMonitor.on('resume', () => { placeIsland(); islandVisible(); placeDock(); });
   startIslandHelper();
 }
@@ -703,12 +725,14 @@ ipcMain.on('island-close', () => { hoverOpen = false; if (island) island.webCont
 function islandPointer() {
   if (!island || !island.isVisible()) { if (hoverOpen) { hoverOpen = false; island && island.webContents.send('island-hover', false); } return; }
   const { screen } = require('electron');
-  const p = screen.getCursorScreenPoint(), d = screen.getPrimaryDisplay().bounds, b = island.getBounds(), now = Date.now();
-  const cx = d.x + d.width / 2;
-  const inBand = p.y <= d.y + BAND_PX && Math.abs(p.x - cx) <= BAND_W / 2;
+  // The band sits above the island itself (any screen, left/centre/right), at the top edge of that screen.
+  const p = screen.getCursorScreenPoint(), b = island.getBounds(), now = Date.now();
+  const cx = b.x + b.width / 2;
+  const inBand = p.y >= b.y && p.y <= b.y + BAND_PX && Math.abs(p.x - cx) <= BAND_W / 2;
   // Over a maximised app (Chrome tabs, VS Code title bar) the pill is faded out and lets every click through; only the
-  // top-edge band with its dwell opens it, so the new-tab button and tabs under it keep working.
-  const onPill = (hoverOpen || !islandMax) && p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - (b.x + b.width / 2)) <= pillRect.w / 2;
+  // top-edge band with its dwell opens it, so the new-tab button and tabs under it keep working. A pinned island
+  // (clicked, Ctrl+Alt+I or details) keeps its clicks until it is collapsed.
+  const onPill = (hoverOpen || pillRect.pin || !islandMax) && p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - cx) <= pillRect.w / 2;
   if (onPill !== clickable) { clickable = onPill; island.setIgnoreMouseEvents(!onPill, { forward: true }); }
   if (!hoverOpen) {
     bandSince = inBand || onPill ? bandSince || now : 0;
@@ -904,12 +928,20 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
   // with its signed-in Supabase client — the exact same path as the Approvals page buttons.
   if (action === 'module') { const k = String(args && args.k); if (!['coco', 'music', 'control', 'focus'].includes(k)) return 'bad'; const s = islandSettings(); s.modules = { ...s.modules, [k]: !!args.on }; saveIsland(s); sendModules(true); if (tray && trayMenu) tray.setContextMenu(trayMenu()); return 'ok'; }
   if (action === 'hide') { setIslandEnabled(false); return 'ok'; }
+  if (action === 'sysinfo') return sysInfo();
+  if (action === 'pref') {   // theme / side / screen, checked against a fixed list before it is saved
+    const k = String(args && args.k), v = args && args.v, { screen } = require('electron');
+    const ok = (k === 'theme' && ['coco', 'mafia'].includes(v)) || (k === 'align' && ['left', 'center', 'right'].includes(v)) || (k === 'screen' && screen.getAllDisplays().some((d) => d.id === v));
+    if (!ok) return 'bad';
+    const s = islandSettings(); s.prefs = { ...(s.prefs || {}), [k]: v }; saveIsland(s); placeIsland(); sendPrefs(); return 'ok';
+  }
   if (action === 'approve') { const id = String((args && args.id) || ''); if (!id || !win) return 'bad'; win.webContents.send('island-approve', { id, yes: !!(args && args.yes) }); return 'ok'; }
   if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
 });
 setInterval(islandVisible, 30000);   // home/office switch
 // Quitting: the helper brings the taskbar back when its input closes, then exits by itself.
+app.on('will-quit', () => { try { require('electron').globalShortcut.unregisterAll(); } catch {} });
 app.on('before-quit', () => { quitting = true; try { if (islandHelper) { if (dock) islandHelper.stdin.write('taskbar show\n'); islandHelper.stdin.end(); } } catch {} });
 
 // ---------- always connected (Boss, 2026-10-23) ----------
@@ -949,6 +981,9 @@ app.on('second-instance', () => { if (win) { win.show(); win.focus(); } });   //
 app.whenReady().then(() => {
   app.setLoginItemSettings(loginArgs(true)); // always rewrite, so an old broken entry gets fixed
   createWindow(); createTray(); createIsland(); createDock();
+  // Ctrl+Alt+I opens the island pinned (or closes it) from anywhere; the island takes focus so Esc and a click elsewhere close it.
+  const { globalShortcut } = require('electron');
+  if (!globalShortcut.register('Control+Alt+I', () => { if (!islandSettings().enabled) setIslandEnabled(true); if (island && island.isVisible()) { island.focus(); island.webContents.send('island-key', 'toggle'); } })) logLine('Ctrl+Alt+I is taken by another app');
   setTimeout(selfUpdate, 60 * 1000); setInterval(selfUpdate, 30 * 60 * 1000);
 });
 
