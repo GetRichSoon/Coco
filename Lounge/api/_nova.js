@@ -14,6 +14,8 @@ import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
 import { handleAi } from './_ai.js';
+import { handleOps } from './_ops.js';
+import { redactDeep } from './_redact.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {} };
 
@@ -21,7 +23,7 @@ const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
   'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations', 'agent_messages', 'notes', 'releases', 'runs', 'run_events', 'ai_calls', 'brain_items', 'policies',
   'control_ops', 'structure', 'integration_accounts', 'integration_links', 'outputs', 'pairing_codes', 'chat', 'controls', 'pipelines', 'pulse', 'jobs',
-  'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats', 'brain_records', 'brain_records_latest']);   // every public table except engine_keys and oauth_states
+  'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats', 'brain_records', 'brain_records_latest', 'ops_snapshots']);   // every public table except engine_keys and oauth_states
 export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_oauth_begin', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status',
   // the cloud runtime's own functions: each one re-checks the engine key itself (private.engine_ok), so a paired device without that header is refused by Postgres, not trusted by Nova
   'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval', 'pair_cloud_worker',
@@ -29,6 +31,7 @@ export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_r
   'coco_structure_provisioned',
   // the publisher asks the company which channel a video belongs to; it never asks Nova for a credential (coco_publish_secret stays off this list)
   'coco_publish_target']);
+export const RPC_CREDENTIAL_OK = new Set();   // RPCs allowed to receive an unredacted body; empty on purpose, add only with a founder-approved reason
 const OPS = { eq: '=', neq: '<>', gt: '>', gte: '>=', lt: '<', lte: '<=', like: 'LIKE', ilike: 'ILIKE' };
 const CACHE_S = Number(process.env.NOVA_CACHE_SECONDS || 15);
 const RATE = Number(process.env.NOVA_RATE_PER_MINUTE || 120);
@@ -124,7 +127,17 @@ export function buildRpc(name, args = {}) {
 const cache = new Map();                      // key -> { at, status, body }
 const buckets = new Map();                    // device id -> { tokens, at }
 const authCache = new Map();                  // key hash -> { at, who }
-export const stats = { requests: 0, cache_hits: 0, cache_misses: 0, db_calls: 0, bytes_out: 0, errors: 0, started: Date.now() };
+export const stats = { requests: 0, cache_hits: 0, cache_misses: 0, db_calls: 0, bytes_out: 0, errors: 0, upstream_failures: 0, coalesced_reads: 0, negative_hits: 0, started: Date.now() };
+const inflight = new Map();                   // read key -> promise: N identical concurrent GETs share one database query
+const down = { until: 0, reason: '' };         // negative cache: after an upstream failure, answer 503 for a few seconds without touching the database
+const DOWN_S = Number(process.env.NOVA_NEGATIVE_CACHE_SECONDS || 10);
+export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; }
+// a failure of the database or the platform behind it (not a bad request, not RLS, not a statement timeout)
+const UPSTREAM = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|connection terminated|connection timeout|timeout exceeded when trying to connect|too many (clients|connections)|exceed_egress|quota|the database system is|no pg_hba|Tenant or user not found/i;
+export const isUpstream = (e) => !(e instanceof NovaError) && (UPSTREAM.test(String(e?.message)) || UPSTREAM.test(String(e?.code)) || /^(08|57P0[1-3]|53300)/.test(String(e?.code || '')));
+const unavailable = (reason) => json(503, { state: 'UPSTREAM_UNAVAILABLE', reason, retry_after_s: DOWN_S }, { 'retry-after': String(DOWN_S) });
+// record the failure: clear safe reason, no connection string, no stack
+export function markDown(e, now = Date.now()) { stats.upstream_failures++; down.until = now + DOWN_S * 1000; down.reason = /exceed_egress|quota/i.test(String(e?.message)) ? 'the data service is over its usage quota' : /ETIMEDOUT|timeout/i.test(String(e?.message) + e?.code) ? 'the database did not answer in time' : 'the database is not reachable'; return unavailable(down.reason); }
 // what the last 200 requests cost, so the slow ones can be named without the platform's logs
 const recent = [];
 export function observe(path, ms, extra = {}) { recent.push({ path, ms, ...extra }); if (recent.length > 200) recent.shift(); }
@@ -175,9 +188,10 @@ export async function handle(db, req, now = Date.now()) {
   const log = (status, extra = {}) => { const ms = Date.now() - t0; observe(req.path, ms, { status, cache: extra.cache || null, device: extra.device || null }); console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms, ...extra })); };
   try {
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
+    if (req.path !== '/api/health' && down.until > now) { stats.negative_hits++; return unavailable(down.reason); }
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
-      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
+      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself
@@ -235,6 +249,7 @@ export async function handle(db, req, now = Date.now()) {
     const um = req.path.match(/^\/api\/usage\/run\/([A-Za-z0-9_.:-]{3,80})$/);
     if (um) { const rows = await runAs(db, who, deviceKey, { sql: 'SELECT public.coco_run_usage($1) AS v', params: [um[1]] }, req.headers['x-engine-key'] || null); log(200, { device: who.device_id, usage: um[1] }); return json(200, rows[0]?.v ?? null); }
     // the AI door for routine cloud writing (Gemini), locked until a founder enables it
+    if (req.path.startsWith('/api/ops/')) return await handleOps(req, who, { json, log, read: async (name) => (await runAs(db, who, deviceKey, { sql: 'SELECT payload, collected_at FROM public.ops_snapshots WHERE name = $1', params: [name] }, req.headers['x-engine-key'] || null))[0] || null }); // authenticated internal snapshots (never static files)
     if (req.path.startsWith('/api/ai/')) return handleAi(db, req, who, { json, log, fetch: deps.fetch });
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
@@ -267,7 +282,10 @@ export async function handle(db, req, now = Date.now()) {
     const [, isRpc, name] = m;
     if (isRpc) {
       if (req.method !== 'POST') return json(405, { message: 'rpc is POST' });
-      const rows = await runAs(db, who, deviceKey, buildRpc(name, req.body || {}), req.headers['x-engine-key'] || null);
+      // The same redaction gate as table writes. No Nova-exposed RPC must carry a raw credential (the vault functions are off the allowlist, pairing has its own route), so the exception list is empty.
+      let safeBody = req.body || {};
+      if (!RPC_CREDENTIAL_OK.has(name)) { try { safeBody = redactDeep(safeBody).value; } catch { throw new NovaError(500, 'the redaction gate failed, so the call was refused'); } }
+      const rows = await runAs(db, who, deviceKey, buildRpc(name, safeBody), req.headers['x-engine-key'] || null);
       invalidate(); log(200, { device: who.device_id, rpc: name });
       const value = rows.length === 1 ? rows[0].value : rows.map((r) => r.value);
       return json(200, value);
@@ -277,16 +295,23 @@ export async function handle(db, req, now = Date.now()) {
       const key = `${who.email}|${name}|${JSON.stringify(req.query)}`;
       const c = cache.get(key);
       if (c && now - c.at < CACHE_S * 1000) { stats.cache_hits++; log(200, { device: who.device_id, table: name, cache: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
-      const rows = await runAs(db, who, deviceKey, buildSelect(name, req.query), req.headers['x-engine-key'] || null);
+      let pending = inflight.get(key);
+      if (pending) stats.coalesced_reads++;
+      else { pending = runAs(db, who, deviceKey, buildSelect(name, req.query), req.headers['x-engine-key'] || null); inflight.set(key, pending); pending.then(() => inflight.delete(key), () => inflight.delete(key)); }
+      const rows = await pending;
       cache.set(key, { at: now, body: rows }); stats.cache_misses++;
       log(200, { device: who.device_id, table: name, cache: 'miss', rows: rows.length });
       return json(200, rows, { 'x-nova-cache': 'miss' });
     }
-    const rows = await runAs(db, who, deviceKey, buildWrite(name, req.method, req.query, req.body, req.headers.prefer || ''), req.headers['x-engine-key'] || null);
-    invalidate(name); log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length });
+    // The one redaction gate: no credential reaches a table through any team's write. Fail closed if the gate itself breaks.
+    let safe;
+    try { safe = redactDeep(req.body); } catch { throw new NovaError(500, 'the redaction gate failed, so the write was refused'); }
+    const rows = await runAs(db, who, deviceKey, buildWrite(name, req.method, req.query, safe.value, req.headers.prefer || ''), req.headers['x-engine-key'] || null);
+    invalidate(name); log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length, ...(safe.findings.length ? { redacted: safe.findings.length, redacted_types: [...new Set(safe.findings)].join(',') } : {}) });
     return json(/return=representation/.test(req.headers.prefer || '') ? 200 : 201, /return=representation/.test(req.headers.prefer || '') ? rows : null);
   } catch (e) {
     stats.errors++;
+    if (isUpstream(e)) { log(503, { upstream: 'unavailable' }); return markDown(e, now); }
     const status = e instanceof NovaError ? e.status : /statement timeout/i.test(e.message) ? 504 : /permission denied|row-level security|violates row-level/i.test(e.message) ? 403 : 500;
     log(status, { error: String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) });
     // a 500 stays opaque to an app, but the cloud runtime (it sent an engine key) is told the redacted cause, so a failing sync can be fixed without the platform's logs
@@ -320,7 +345,7 @@ export async function vercel(req, res) {
   let body = req.body; if (typeof body === 'string' && body) { try { body = JSON.parse(body); } catch { body = null; } }
   let db = null;
   try {
-    try { db = await connect(); } catch (e) { if (path === '/api/health') db = { query: async () => { throw e; } }; else { res.status(503).json({ message: 'Nova cannot reach the database', hint: e.message.replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 120) }); return; } }
+    try { db = await connect(); } catch (e) { if (path === '/api/health') db = { query: async () => { throw e; } }; else { const o = e instanceof NovaError ? { status: 503, headers: { 'retry-after': '10' }, body: JSON.stringify({ state: 'UPSTREAM_UNAVAILABLE', reason: 'Nova has no database configured' }) } : markDown(e); res.status(503); for (const [k, v] of Object.entries(o.headers)) res.setHeader(k, v); res.send(o.body); return; } }
     const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');

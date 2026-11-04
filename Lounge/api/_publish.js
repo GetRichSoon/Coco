@@ -25,6 +25,7 @@
 // public without a named approver, and the provider's answer, not the request's intent, is what is recorded.
 import { createHash } from 'node:crypto';
 
+import { guard, requestOf } from './_broker.js';
 export const MODES = ['PREPARE_ONLY', 'DRAFT', 'PUBLISH_WITH_APPROVAL', 'AUTO_PUBLISH'];
 export class PublishError extends Error { constructor(status, state, reason, extra = {}) { super(reason); this.status = status; this.state = state; this.extra = extra; } }
 
@@ -358,6 +359,12 @@ export async function handlePublish(db, req, who, deviceKey, { runAs, fetch: f =
     if (!adapter) return json(400, { ok: false, state: 'ERROR', reason: `no publisher for "${platform}" (${Object.keys(ADAPTERS).join(', ')})` });
     if (!account && body.team) { const t = await co.target({ provider: platform, team: body.team, subteam: body.subteam || null, category: body.category || null, channel: body.channel || null }); account = t ? await co.account(t.connection_id) : null; }
     if (!account) return json(404, { ok: false, state: 'NOT_ASSIGNED', reason: body.connection_id ? `no connection ${body.connection_id}` : `no ${platform} account is assigned to ${[body.team, body.subteam, body.category, body.channel].filter(Boolean).join(' > ') || 'anything'}. Assign one in Coco under Integrations; nothing is guessed.` });
+    // the access broker: this job's team may use this provider and this connection, or (in enforce mode) it is refused before any credential is read
+    if (['/api/publish/token', '/api/publish/stats', '/api/publish'].includes(req.path)) {
+      const cap = req.path === '/api/publish/token' ? 'token_mint' : req.path === '/api/publish/stats' ? 'stats' : 'publish';
+      const denied = await guard(db, who, requestOf(req, { provider: platform, capability: cap, connectionId: account.connection_id }), log);
+      if (denied) { log(403, { device: who.device_id, publish: 'access_denied', platform }); return json(denied.status, denied.body); }
+    }
     if (req.path === '/api/publish/token') {
       if (!adapter.token) return json(400, { ok: false, state: 'ERROR', reason: `${platform} publishes through Nova itself; it issues no worker token` });
       const r = await adapter.token({ co, account, fetch: f, urls: urls[platform] });

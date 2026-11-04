@@ -451,7 +451,10 @@ ok('the founder sees the agreed explanation before connecting', () => {
 
 ok('the screen never renders a credential', () => {
   assert.ok(!/\$\{c\.secret_ref\}/.test(src), 'secret_ref is printed into the page');
-  assert.ok(!/access_token|client_secret/.test(src), 'a token field is referenced in the UI');
+  // The one legitimate use is the device-pairing sign-in, which hands the pairing response to the Supabase client and renders nothing.
+  // Exactly that statement is exempt; any other mention of a token field anywhere in the page still fails.
+  const scanned = src.replace("sb.auth.setSession({ access_token: out.access_token, refresh_token: out.refresh_token })", '');
+  assert.ok(!/access_token|client_secret/.test(scanned), 'a token field is referenced in the UI');
 });
 
 const done = async () => {

@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 //                                   run_id?, team?, agent? } -> { ok, text, usage, model, ai_call_id }
 //
 // Every generation is booked in ai_calls with the provider's own usage numbers (measured_by 'provider').
+import { guard, requestOf } from './_broker.js';
 export const GEMINI_MODELS = new Set(['gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-2.5-flash-lite']);
 export const DAILY_CAP = 40, MAX_OUTPUT = 8192, MAX_PROMPT_CHARS = 40000;
 const API = 'https://generativelanguage.googleapis.com/v1beta';
@@ -34,6 +35,8 @@ export async function handleAi(db, req, who, { json, log, fetch: f = globalThis.
     if (req.path !== '/api/ai/generate' || req.method !== 'POST') return json(404, { message: 'not found' });
     const b = req.body && typeof req.body === 'object' ? req.body : {};
     if (b.provider !== 'gemini') return json(400, { ok: false, state: 'ERROR', reason: 'provider must be gemini' });
+    const denied = await guard(db, who, requestOf(req, { provider: 'gemini', capability: 'ai_generate' }), log);
+    if (denied) { log(403, { device: who.device_id, ai: 'access_denied' }); return json(denied.status, denied.body); }
     const pol = (await db.query("SELECT value FROM public.policies WHERE scope = 'company' AND key = 'gemini_generate' ORDER BY updated_at DESC LIMIT 1")).rows[0]?.value;
     if (pol !== true && pol?.enabled !== true) return json(403, { ok: false, state: 'LOCKED', reason: 'Gemini generation is locked until a founder confirms the key is on the free tier and sets the company policy gemini_generate to true in Coco' });
     if (!GEMINI_MODELS.has(b.model)) return json(400, { ok: false, state: 'ERROR', reason: `model must be one of ${[...GEMINI_MODELS].join(', ')}` });

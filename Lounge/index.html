@@ -78,6 +78,9 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); display: inline-block; }
 .dot.on { background: #3fb46a; box-shadow: 0 0 0 4px color-mix(in srgb, #3fb46a 25%, transparent); }
+button.orgcard { text-align: left; border: 0; color: inherit; font: inherit; cursor: pointer; transition: background .2s, transform .2s; }
+button.orgcard:hover { background: var(--surface-2); transform: translateY(-2px); }
+button.orgcard:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
 .card2 { background: var(--surface-1); border-radius: 26px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
 .hero { background: linear-gradient(135deg, var(--primary-c), color-mix(in srgb, var(--gold-soft) 60%, var(--surface-1))); color: var(--on-primary-c); border-radius: 30px; padding: 22px; display: grid; gap: 12px; margin-bottom: 16px; }
@@ -533,7 +536,7 @@ async function loadControlPlane() {
   return null;
 }
 
-const PAGES = [['home', 'Home', 'home'], ['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
+const PAGES = [['home', 'Home', 'home'], ['structure', 'Structure', 'schema'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   if (!NOVA) { try { const r = await fetch('nova.json', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); if (j && j.url) { NOVA = String(j.url).replace(/\/$/, ''); store.set('gs-nova-url', NOVA); sb = makeClient(store.get('gs-device-key')); } } } catch {} }
@@ -776,6 +779,282 @@ async function refreshFor(topics) {
   diffAndNotify();
   pushIsland();
 }
+// ---------------------------------------------------------------- Structure: GetRichSoon > COCO > Core + Team Houses > subteams > categories
+// The company registry (org_* tables). When Coco Cloud does not hold it yet the page shows the company structure served by Nova (/api/ops/company-structure) and says so.
+let ORG = null, plTab = 'overview';
+async function loadOrg() {
+  const T = ['org_units', 'org_products', 'org_agents', 'org_repos', 'org_workflows', 'org_access', 'org_metrics', 'org_refs'];
+  const empty = { units: [], products: [], agents: [], repos: [], workflows: [], access: [], metrics: [], refs: [], pipelines: [] };
+  try {
+    const r = await Promise.all(T.map((t) => sb.from(t).select('*')));
+    if (!r[0].error && (r[0].data || []).length) {
+      // pipeline definitions are version-controlled files, not cloud tables: they come from the generated file until a cloud copy exists
+      let pipelines = []; try { const f = await novaFetch('/api/ops/company-structure'); if (f.ok) pipelines = (await f.json()).pipelines || []; } catch {}
+      return { source: 'cloud', pipelines, ...Object.fromEntries(T.map((t, i) => [t.slice(4), r[i].data || []])) };
+    }
+  } catch {}
+  try { const f = await novaFetch('/api/ops/company-structure'); if (f.ok) { const j = await f.json(); return { ...empty, ...j, source: 'dev' }; } } catch {}
+  return { ...empty, source: 'none' };
+}
+function orgPage() {
+  if (!ORG) return `<p class="muted">Loading the company structure…</p>`;
+  if (!ORG.units.length) return `<div class="card2"><h3>No company structure yet</h3><span class="muted">Coco Cloud does not hold it and there is no development data to show.</span></div>`;
+  const units = ORG.units, U = new Map(units.map((u) => [u.id, u]));
+  const kids = (id) => units.filter((u) => u.parent_id === id).sort((a, b) => a.sort - b.sort);
+  const under = (id) => kids(id).flatMap((k) => [k, ...under(k.id)]);
+  const cur = U.get(sub.startsWith('org:') ? sub.slice(4) : 'coco') || U.get('coco') || units[0];
+  const crumbs = []; for (let u = cur; u; u = U.get(u.parent_id)) crumbs.unshift(u);
+  const ids = (u) => new Set([u.id, ...under(u.id).map((x) => x.id)]);
+  const inU = (u, rows) => { const s = ids(u); return rows.filter((r) => s.has(r.unit_id)); };
+  const live = (u) => u.kind === 'house' && u.house_id ? (D.houses || []).find((h) => h.id === u.house_id) : null;
+  const tag = (t, c = '') => `<span class="chip ${c}">${esc(t)}</span>`;
+  const agentTag = (a) => a.status === 'placeholder' ? tag('Placeholder', 'warn') : a.status === 'proposed' ? tag('Proposed') : tag('Confirmed', 'good');
+  const headOf = (u) => ORG.agents.find((a) => a.unit_id === u.id && a.role === 'head');
+  const headTxt = (u) => { const h = headOf(u); return h ? (h.status === 'placeholder' ? 'Head not assigned' : `Head ${h.registry_agent}${h.status === 'proposed' ? ' (proposed)' : ''}`) : 'No head recorded'; };
+  const markOf = (u) => mark(u.kind === 'category' ? 'category' : u.kind === 'subteam' ? 'subteam' : 'team', u.short_name, u.id);
+  const stat = (n, l) => `<div class="stat"><b>${n}</b><span>${esc(l)}</span></div>`;
+  const sec = (title, body) => `<div class="card2" style="margin-top:14px"><h3>${esc(title)}</h3>${body}</div>`;
+  const none = (t) => `<span class="muted">${esc(t)}</span>`;
+  const OPEN = ['queued', 'running', 'working', 'verifying', 'need_approval', 'blocked'];
+  const tasksOf = (u) => u.kind === 'house' && u.house_id ? (D.tasks || []).filter((t) => t.house_id === u.house_id) : [];
+
+  const count = (u) => { const d = under(u.id); return { subs: d.filter((x) => x.kind === 'subteam').length, cats: d.filter((x) => x.kind === 'category').length, chans: inU(u, ORG.products).filter((p) => p.kind === 'channel').length, open: tasksOf(u).filter((t) => OPEN.includes(t.status)).length }; };
+  const card = (u) => { const n = count(u), h = live(u); return `<button class="card2 orgcard" data-sub="org:${esc(u.id)}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div style="display:flex;gap:10px;align-items:center;min-width:0">${markOf(u)}<b>${esc(u.display_name)}</b></div>${h ? chip(h.state) : tag(u.state === 'active' ? 'Active' : 'Planned', u.state === 'active' ? 'good' : '')}</div>
+    ${u.kind === 'category' ? '' : `<span class="muted">${esc(headTxt(u))}</span>`}
+    <span class="muted">${[n.subs && n.subs + ' subteams', n.cats && n.cats + ' categories', n.chans && n.chans + ' channels', n.open && n.open + ' tasks open'].filter(Boolean).join(' · ') || (u.kind === 'category' ? 'Category' : 'Nothing under it yet')}</span></button>`; };
+
+  const h = live(cur), n = count(cur), owners = crumbs.flatMap((u) => ORG.access.filter((a) => a.unit_id === u.id && a.principal_kind === 'founder').map((a) => `${a.principal} (${a.permission}${u.id === cur.id ? '' : ', from ' + u.short_name})`));
+  const header = `<div class="hero"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="display:flex;gap:12px;align-items:center;min-width:0">${markOf(cur)}<div style="min-width:0"><span class="eyebrow">${esc(cur.kind.replace('_', ' '))}</span><h3 style="font-size:24px">${esc(cur.display_name)}</h3></div></div>${h ? chip(h.state) : tag(cur.state === 'active' ? 'Active' : 'Planned')}</div>
+    <div>${cur.purpose ? esc(cur.purpose) : none('Purpose: not written yet.')}</div>
+    <div class="muted">${esc(headTxt(cur))} · Owner ${esc(owners.join(', ') || 'not recorded')}${cur.github_team ? ' · GitHub team (proposed) ' + esc(cur.github_team) : ''}</div>
+    ${h ? `<div class="muted">Live status · ${esc(h.doing || '')}${h.next ? ' · Next: ' + esc(h.next) : ''}${h.blocked ? ' · Blocked: ' + esc(h.blocked) : ''}${h.publish_rule ? ' · Rule: ' + esc(h.publish_rule) : ''}</div>` : ''}
+    <div class="stats">${n.subs ? stat(n.subs, 'subteams') : ''}${n.cats ? stat(n.cats, 'categories') : ''}${stat(n.chans, 'channels')}${stat(inU(cur, ORG.agents).filter((a) => a.status !== 'placeholder').length, 'agents')}${stat(inU(cur, ORG.agents).filter((a) => a.status === 'placeholder').length, 'heads to assign')}${tasksOf(cur).length || cur.kind === 'house' ? stat(n.open, 'tasks open') : ''}</div></div>`;
+
+  const banner = ORG.source === 'dev' ? `<div class="card2" style="border:1px dashed var(--outline);margin-bottom:12px"><b>Development data</b>${none('Coco Cloud does not hold the company structure yet. This is the planned structure; nothing here is live work.')}</div>` : '';
+  const bar = `<div class="tabs">${crumbs.map((u) => `<button data-sub="org:${esc(u.id)}" class="${u.id === cur.id ? 'on' : ''}">${esc(u.short_name)}</button>`).join('')}</div>`;
+
+  const children = cur.id === 'coco' ? [U.get('core'), ...kids('team_houses')].filter(Boolean) : kids(cur.id);
+  const childTitle = cur.id === 'coco' ? 'Houses' : cur.kind === 'house' || cur.id === 'team_houses' ? (cur.id === 'team_houses' ? 'Team Houses' : 'Subteams') : 'Categories';
+  const kidsSec = children.length ? `<h3 style="margin:18px 0 8px">${childTitle}</h3><div class="grid">${children.map(card).join('')}</div>` : '';
+
+  const agentRows = ['coco', 'team_houses', 'getrichsoon'].includes(cur.id) ? ORG.agents.filter((a) => a.unit_id === cur.id) : inU(cur, ORG.agents);
+  const agentsSec = sec(`Agents (${agentRows.length})`, agentRows.length ? agentRows.map((a) => `<div class="row"><div class="grow"><b>${esc(a.name)}</b><div class="muted">${esc(U.get(a.unit_id).short_name)} · ${a.role}${a.registry_agent ? ' · ' + esc(a.registry_agent) : ''}${a.meta && a.meta.what ? ' · ' + esc(a.meta.what) : ''}</div></div>${agentTag(a)}</div>`).join('') : none('No agents recorded here.'));
+
+  const prods = inU(cur, ORG.products);
+  const legacy = cur.kind === 'house' && cur.house_id ? (D.offerings || []).filter((o) => o.house_id === cur.house_id).length : 0;
+  const prodSec = sec(`Products and channels (${prods.length})`, (prods.length ? prods.map((p) => `<div class="row"><div class="grow"><b>${esc(p.name)}</b><div class="muted">${esc(p.kind)} · ${esc(U.get(p.unit_id).short_name)}${p.meta && p.meta.needs_category ? ' · category to be chosen' : ''}</div></div>${tag(p.status, p.status === 'connected' ? 'good' : p.status === 'waiting-founder' ? 'warn' : '')}</div>`).join('') : none('No products or channels recorded here yet.')) + (legacy ? `<div class="muted" style="margin-top:8px">${legacy} existing offerings in Coco Cloud belong to this House and are not placed in this structure yet.</div>` : ''));
+
+  let queue = '';
+  if (cur.kind === 'house' || cur.id === 'coco') {
+    const t = tasksOf(cur).filter((x) => OPEN.includes(x.status)), wait = (D.approvals || []).filter((a) => a.state === 'waiting').length;
+    queue = sec('Work queue and approvals', (cur.kind === 'house' ? (t.length ? t.slice(0, 8).map((x) => `<div class="row"><div class="grow"><b>${esc(x.title)}</b></div>${chip(x.status)}</div>`).join('') : none('No open tasks tagged to this House.')) : none(`${(D.tasks || []).filter((x) => OPEN.includes(x.status)).length} tasks open across the company.`))
+      + `<div class="muted" style="margin-top:8px">${cur.id === 'coco' ? `${wait} approvals wait for a YES. <a href="#approvals">Open approvals</a>` : 'Approvals are not tagged by House yet, so they are shown on COCO only.'}</div>`);
+  }
+
+  const mets = inU(cur, ORG.metrics);
+  const perfSec = sec('Performance and revenue', mets.length ? mets.slice(0, 12).map((m) => `<div class="row"><div class="grow"><b>${esc(m.metric)}</b><div class="muted">${esc(m.period)} · ${esc(m.source)}</div></div><b>${esc(m.value)} ${esc(m.unit)}</b></div>`).join('') : none('No revenue, expense or performance data recorded yet. Nothing is estimated.'));
+  const refs = inU(cur, ORG.refs);
+  const refSec = sec('Reference Intelligence', refs.length ? refs.map((r) => `<div class="row"><div class="grow">${esc(r.brain_item_id)}${r.note ? `<div class="muted">${esc(r.note)}</div>` : ''}</div></div>`).join('') : none('No Brain items are linked to this part of the company yet.'));
+
+  const rp = inU(cur, ORG.repos), wf = inU(cur, ORG.workflows);
+  const techSec = rp.length || wf.length ? sec('Repositories and workflows', rp.map((r) => `<div class="row"><div class="grow"><b>${esc(r.repo)}</b><div class="muted">${esc(r.kind)} · ${esc(r.visibility || '')} · ${esc(r.state)}${r.notes ? ' · ' + esc(r.notes) : ''}</div></div>${tag(r.mapping_status === 'confirmed' ? 'Confirmed' : 'Proposed mapping')}</div>`).join('')
+    + wf.map((w) => `<div class="row"><div class="grow"><b>${esc(w.file)}</b><div class="muted">${esc(w.repo)} · ${esc(w.branch)} · ${w.schedule ? esc(w.schedule) : 'manual or push only'}</div></div>${tag(w.state === 'observed' ? 'Observed' : w.state)}</div>`).join('')) : '';
+
+
+  // ---- Pipeline workspace: every subteam has exactly one, with eleven tabs. A design is not an operation: status comes from evidence.
+  const PL_TABS = [['overview', 'Pipeline Overview'], ['builder', 'Pipeline Builder'], ['stages', 'Stages & Workflow'], ['agents', 'Agents & Responsibilities'], ['tools', 'Tools & AI Models'], ['io', 'Inputs & Outputs'], ['gates', 'Approval Gates'], ['schedule', 'Scheduling'], ['history', 'Execution History'], ['analytics', 'Analytics & Costs'], ['versions', 'Version History']];
+  const plTone = (x) => x === 'LIVE' ? 'good' : ['BLOCKED', 'FAILED', 'PAUSED'].includes(x) ? 'warn' : '';
+  const pipelineSec = () => {
+    const w = (ORG.pipelines || []).find((x) => x.unit_id === cur.id) || { id: 'pl.' + cur.id, unit_id: cur.id, name: cur.display_name + ' pipeline workspace', version: '0.0.0', status: 'PLANNED', designed: false, summary: 'No pipeline has been designed for this subteam yet. Nothing is assumed or invented.', inputs: [], outputs: [], stages: [], agents: [], tools_models: [], approval_gates: [], scheduling: { workflows: [], activated: false }, analytics: { sources: [], costs: [] }, versions: [] };
+    const tab = PL_TABS.some((t) => t[0] === plTab) ? plTab : 'overview';
+    const st = w.stages || [], evN = (x) => (x.evidence || []).length;
+    const list = (a, f) => (a || []).map(f).join('');
+    const row = (title, subt, right) => `<div class="row"><div class="grow"><b>${esc(title)}</b>${subt ? `<div class="muted">${esc(subt)}</div>` : ''}</div>${right || ''}</div>`;
+    const empty = (t) => none(w.designed ? t : 'Nothing designed yet. This workspace stays empty until a pipeline is designed for this subteam.');
+    const gaps = st.filter((x) => x.gap || x.reason);
+    const views = {
+      overview: () => `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${tag(w.status, plTone(w.status))}${tag('v' + w.version)}${tag(w.designed ? 'Designed' : 'Not designed')}</div><p>${esc(w.summary)}</p>
+        <div class="stats">${stat(st.length, 'stages')}${stat(st.filter((x) => evN(x)).length, 'with evidence')}${stat(st.filter((x) => x.status === 'BLOCKED').length, 'blocked')}${stat(st.filter((x) => x.status === 'PAUSED').length, 'paused')}${stat(st.filter((x) => x.status === 'LIVE').length, 'live')}</div>
+        ${st.length ? `<p class="muted">A pipeline is only LIVE with a verified production run behind it. This one is ${esc(w.status)}.</p>` : ''}
+        ${gaps.length ? `<h3 style="margin:14px 0 6px">What is pending or blocked</h3>${list(gaps, (x) => row(x.name, x.reason || x.gap, tag(x.status, plTone(x.status))))}` : ''}
+        ${(w.retired || []).length ? `<h3 style="margin:14px 0 6px">Retired (stays off)</h3>${list(w.retired, (r) => row(r.item, r.evidence || '', tag(r.state, 'warn')))}` : ''}
+        ${w.channels ? `<h3 style="margin:14px 0 6px">Channels</h3><div class="muted">${esc(w.channels.engine)}. Category mapping: ${esc(w.channels.category_mapping)}. Cloud credentials today: ${esc((w.channels.cloud_credentials || []).join(', ') || 'none')}.</div>` : ''}`,
+      builder: () => `<p>${w.designed ? 'The design is a version-controlled file, validated on every build. It describes the pipeline; it does not run it. Execution stays in the shared queue, worker and workflows.' : 'No design exists. A pipeline is added by writing its definition file; nothing here is invented.'}</p>
+        ${row('Definition file', `os/cloud/company-structure/pipelines/${w.unit_id}.json`, tag(w.designed ? 'In git' : 'Not created'))}
+        ${row('Rules the validator enforces', 'a status needs evidence; LIVE needs a successful production run; BLOCKED, PAUSED and FAILED need a reason; no stage on a PC; no schedule activated by a definition; Gemini free tier only')}
+        ${row('Stage kinds', 'research, selection, brief, generate, check, build, render, qa, approval, publish, analytics, feedback, monitor, draft')}
+        ${row('Changing a design', 'a reviewed commit, then a founder YES for anything public, paid, scheduled or credentialed')}`,
+      stages: () => st.length ? list(st, (x, i) => row(`${i + 1}. ${x.name}`, `${x.kind} · runs on ${x.runs_on}${(x.depends_on || []).length ? ' · after ' + x.depends_on.join(', ') : ''}${x.workflow ? ' · ' + x.workflow : ''}${x.reason ? ' · ' + x.reason : x.gap ? ' · ' + x.gap : ''}`, tag(x.status, plTone(x.status)))) : empty('No stages.'),
+      agents: () => (w.agents || []).length ? list(w.agents, (a) => row(a.agent, `${a.does} · ${a.source}`, tag(a.state === 'existing' ? 'Existing' : a.state === 'placeholder' ? 'Placeholder' : 'Proposed', a.state === 'placeholder' ? 'warn' : a.state === 'existing' ? 'good' : ''))) : empty('No agents.'),
+      tools: () => (w.tools_models || []).length ? list(w.tools_models, (m) => row(m.name, `${m.use} · ${m.policy}`)) + list(st.filter((x) => x.model), (x) => row(x.name, `${x.model.provider}: ${x.model.name} · ${x.model.policy}`)) : empty('No tools or models.'),
+      io: () => `<h3 style="margin:0 0 6px">Inputs</h3>${list(w.inputs, (t) => row(t)) || none('None recorded.')}<h3 style="margin:14px 0 6px">Outputs</h3>${list(w.outputs, (t) => row(t)) || none('None recorded.')}`,
+      gates: () => ((w.approval_gates || []).length || st.some((x) => x.kind === 'approval')) ? list(w.approval_gates, (g) => row(g.what, `decided by ${g.who}`, tag(g.id))) + list(st.filter((x) => x.kind === 'approval'), (x) => row(x.name, 'a stage that waits for a founder', tag(x.status, plTone(x.status)))) : empty('No approval gates.'),
+      schedule: () => `<p class="muted">${w.scheduling && w.scheduling.activated ? 'Activated.' : 'No schedule is activated by this workspace. A schedule runs only from the file registered on the main branch, after a founder YES.'}</p>${list(w.scheduling && w.scheduling.workflows, (x) => row(x.file, `${x.repo} · ${x.cron || 'manual or push only'}${x.note ? ' · ' + x.note : ''}`, tag(x.state === 'registered_unproven' ? 'Registered, not proven' : x.state === 'obsolete_on_main' ? 'Obsolete on main' : x.state === 'manual_only' ? 'Manual only' : x.state, x.state === 'obsolete_on_main' ? 'warn' : ''))) || empty('No workflows.')}`,
+      history: () => { const ev = st.flatMap((x) => (x.evidence || []).map((e) => ({ ...e, stage: x.name }))).sort((a, b) => String(b.at).localeCompare(String(a.at))); return ev.length ? `<p class="muted">Evidence recorded against stages. A run id links to GitHub; this is not a live log.</p>` + list(ev, (e) => `<div class="row"><div class="grow"><b>${esc(e.stage)}</b><div class="muted">${esc(e.type)} · ${esc(e.at)}${e.event ? ' · ' + esc(e.event) : ''}${e.note ? ' · ' + esc(e.note) : ''}</div></div>${e.type === 'run' ? `<a href="https://github.com/GetRichSoon/CocoMaison/actions/runs/${esc(e.ref)}" target="_blank" rel="noopener">${tag('run ' + e.result, e.result === 'success' ? 'good' : 'warn')}</a>` : tag(e.result + ' · ' + e.ref, e.result === 'passed' ? 'good' : '')}</div>`) : empty('No execution evidence recorded.'); },
+      analytics: () => { const m = inU(cur, ORG.metrics); return list(w.analytics && w.analytics.sources, (t) => row(t, 'source')) + list(w.analytics && w.analytics.costs, (t) => row(t, 'cost')) + (m.length ? list(m.slice(0, 12), (x) => row(x.metric, `${x.period} · ${x.source}`, `<b>${esc(x.value)} ${esc(x.unit)}</b>`)) : `<div style="margin-top:8px">${none('No revenue or cost numbers are recorded for this subteam. Nothing is estimated.')}</div>`); },
+      versions: () => (w.versions || []).length ? list(w.versions, (v) => row('v' + v.version + ' · ' + v.date, v.change, tag('Rollback: ' + v.rollback))) : empty('No versions.'),
+    };
+    return `<div class="card2" style="margin-top:14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><h3>Pipeline workspace</h3>${tag(w.status, plTone(w.status))}</div>
+      <div class="tabs" style="margin-top:8px">${PL_TABS.map(([k, l]) => `<button data-pltab="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>${views[tab]()}</div>`;
+  };
+
+  return banner + bar + header + (cur.kind === 'subteam' ? pipelineSec() : '') + kidsSec + (cur.kind === 'category' ? '' : agentsSec) + prodSec + queue + perfSec + refSec + techSec;
+}
+// ---------------------------------------------------------------- Cloud: autonomy, security, integrations, teams
+// Every number on this page comes from a cloud table (devices, jobs, capability_uses, policies, integrations, activity) or from a
+// data file produced by an engine script. A source that cannot be read is named on screen; nothing here is a typed-in count.
+let CLOUD = null, cloudAt = 0, cloudBusy = false;
+const CLOUD_TABS = [['autonomy', 'Autonomy'], ['security', 'Security'], ['integrations', 'Integrations'], ['teams', 'Teams']];
+const INTEG_EVIDENCE_MS = 72 * 3600 * 1000;
+// Mapping from real rows to one status word. "Connected" is claimed only with evidence: a verified timestamp on an account or a
+// successful operation (last_ok_at) in the last 72 h. A connected row with no recent evidence is UNKNOWN, never a guess.
+function integStatus(i, accts, incs, now) {
+  accts = accts || []; incs = incs || []; now = now || Date.now();
+  if (!i) return { status: 'UNKNOWN', why: 'No integration row.' };
+  const st = String(i.state || ''), fresh = (t) => t && now - new Date(t).getTime() <= INTEG_EVIDENCE_MS && now - new Date(t).getTime() >= -3600000;
+  const evidence = [i.last_ok_at, ...accts.filter((a) => a.state === 'connected').map((a) => a.last_verified_at)].filter(Boolean).sort().pop() || null;
+  if (st === 'paused') return { status: 'DISCONNECTED', why: 'Paused on purpose.', evidence };
+  if (st === 'not_connected') return accts.some((a) => a.secret_ref) || i.last_ok_at ? { status: 'DISCONNECTED', why: 'Was set up, now not connected.', evidence } : { status: 'NOT_CONFIGURED', why: 'Never set up.', evidence };
+  const err = `${i.error || ''} ${accts.filter((a) => a.state === 'error').map((a) => a.note || '').join(' ')}`.toLowerCase();
+  if (st === 'error' || accts.some((a) => a.state === 'error')) {
+    if (/expire/.test(err)) return { status: 'EXPIRED', why: 'The credential has expired.', evidence };
+    if (/invalid|revoked|unauthori[sz]ed|\b401\b|bad credential/.test(err)) return { status: 'INVALID', why: 'The platform rejects the credential.', evidence };
+    if (/permission|scope|\b403\b|forbidden/.test(err)) return { status: 'INSUFFICIENT_PERMISSION', why: 'The credential lacks a permission.', evidence };
+    return { status: 'CONNECTED_BUT_FAILING', why: 'Last check failed.', evidence };
+  }
+  if (st === 'connected' || st === 'partial') {
+    if (!fresh(evidence)) return { status: 'UNKNOWN', why: 'No verification or successful operation in the last 72 h.', evidence };
+    if (st === 'partial') return { status: 'CONNECTED_BUT_FAILING', why: 'Only partly connected.', evidence };
+    const inc = incs.find((n) => n.status !== 'CLOSED' && new RegExp('(^|[^a-z0-9-])' + String(i.id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9-]|$)', 'i').test(n.affected || ''));
+    return inc ? { status: 'CONNECTED_BUT_INSECURE', why: `Works, but ${inc.id} is ${inc.status}.`, evidence } : { status: 'CONNECTED_AND_VERIFIED', why: 'Verified recently.', evidence };
+  }
+  return { status: 'UNKNOWN', why: 'State not recognised.', evidence };
+}
+// defence in depth: a value that looks like a credential never reaches the screen, whatever a row holds
+const cloudSafe = (s) => String(s ?? '').replace(/\b(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9_-]{28,}\b/g, '[hidden]').replace(/\bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*/g, '[hidden]').replace(/\b(sk|pk|ghp|gho|xox[a-z])[-_][A-Za-z0-9_-]{10,}/g, '[hidden]');
+async function cloudLoad(force) {
+  if (cloudBusy || (!force && CLOUD && Date.now() - cloudAt < 60000)) return;
+  cloudBusy = true;
+  const file = async (n) => { try { const r = await novaFetch('/api/ops/' + n); return r.ok ? await r.json() : null; } catch { return null; } };
+  const tbl = async (q) => { try { const r = await q; return r.error ? { err: true } : { rows: r.data || [] }; } catch { return { err: true }; } };
+  try {
+    const [jobs, uses, act, hist, ops, pcd, sec] = await Promise.all([
+      tbl(sb.from('jobs').select('id,team_id,type,status,attempt,max_attempts,created_at,run_after').order('created_at', { ascending: false }).limit(500)),
+      tbl(sb.from('capability_uses').select('at,capability_id,team_id,ok,note').like('capability_id', 'access:%').order('at', { ascending: false }).limit(500)),
+      tbl(sb.from('activity').select('*').order('at', { ascending: false }).limit(300)),
+      tbl(sb.from('integration_health').select('*').order('at', { ascending: false }).limit(100)),
+      file('ops-status'), file('pc-dependencies'), file('security-status'),
+    ]);
+    CLOUD = { jobs, uses, act, hist, ops, pcd, sec };
+  } catch { CLOUD = { jobs: { err: true }, uses: { err: true }, act: { err: true }, hist: { err: true }, ops: null, pcd: null, sec: null }; }
+  cloudAt = Date.now(); cloudBusy = false;
+  if (page === 'cloud') render();
+}
+function cloudPage() {
+  const tab = CLOUD_TABS.some((t) => t[0] === sub) ? sub : 'autonomy';
+  const bar = `<div class="tabs">${CLOUD_TABS.map(([k, l]) => `<button data-sub="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>`;
+  if (!CLOUD) return bar + `<p class="muted">Reading the cloud…</p>`;
+  const C = CLOUD, tag = (t, c = '') => `<span class="chip ${c}">${esc(t)}</span>`, none = (t) => `<span class="muted">${esc(t)}</span>`;
+  const sec = (title, body) => `<div class="card2" style="margin-top:14px"><h3>${esc(title)}</h3>${body}</div>`;
+  const stat = (n, l) => `<div class="stat"><b>${esc(n)}</b><span>${esc(l)}</span></div>`;
+  const row = (head, sub2, right) => `<div class="row"><div class="grow" style="min-width:0;overflow-wrap:anywhere"><b>${esc(head)}</b>${sub2 ? `<div class="muted">${esc(sub2)}</div>` : ''}</div>${right || ''}</div>`;
+  const when = (t) => t ? ago(t) : 'never';
+  const incs = (C.sec && C.sec.incidents) || [];
+  const stTone = (s) => s === 'CONNECTED_AND_VERIFIED' ? 'good' : ['UNKNOWN', 'NOT_CONFIGURED', 'DISCONNECTED'].includes(s) ? '' : 'bad';
+  const accountsOf = (i) => (CONNS || []).filter((c) => c.provider === i.id);
+  const integs = (D.integrations || []).map((i) => ({ i, s: integStatus(i, accountsOf(i), incs) }));
+  const unread = (name) => none(`${name} could not be read right now.`);
+  const missing = (f, how) => none(`Not collected yet. ${f} does not exist; ${how}`);
+
+  if (tab === 'autonomy') {
+    const devs = D.devices || [], on = devs.filter(online);
+    const workers = sec('Running workers and devices', `<div class="stats">${stat(on.length, 'online now')}${stat(devs.length, 'devices known')}</div>`
+      + (devs.length ? devs.map((d) => row(d.name || d.id, `${d.platform || d.kind || ''} · last heartbeat ${when(d.last_seen)}`, tag(online(d) ? 'Online' : 'Offline', online(d) ? 'good' : 'warn'))).join('') : none('No devices have reported.')));
+    let queue;
+    if (C.jobs.err) queue = sec('Queue health', unread('The job queue'));
+    else {
+      const J = C.jobs.rows, by = (s) => J.filter((j) => j.status === s), q = by('queued');
+      const oldest = q.map((j) => j.created_at).filter(Boolean).sort()[0];
+      queue = sec(`Queue health (latest ${J.length} jobs)`, J.length ? `<div class="stats">${stat(q.length, 'queued')}${stat(by('running').length, 'running')}${stat(by('blocked').length, 'blocked')}${stat(by('failed').length, 'failed')}${stat(by('done').length, 'done')}${stat(J.filter((j) => Number(j.attempt) > 1).length, 'retried')}</div>
+        <div class="muted" style="margin-top:8px">Oldest queued job: ${oldest ? esc(ago(oldest)) : 'none waiting'}</div>` : none('The queue holds no jobs.'));
+    }
+    const o = C.ops, orows = Array.isArray(o) ? o : o && Array.isArray(o.rows) ? o.rows : null;
+    const wf = sec('Scheduled workflow health', orows ? (orows.length ? `<div class="stats">${stat(orows.filter((r) => r.class === 'HEALTHY').length, 'healthy')}${stat(orows.filter((r) => r.class !== 'HEALTHY').length, 'need a person')}</div>`
+      + orows.slice().sort((a, b) => (a.class === 'HEALTHY') - (b.class === 'HEALTHY')).map((r) => row(r.name || r.file, [r.file, (r.crons || []).join('; '), r.reason || (r.last ? `last ${r.last.conclusion} ${when(r.last.at)}` : '')].filter(Boolean).join(' · '), tag(r.class || 'UNKNOWN', r.class === 'HEALTHY' ? 'good' : 'bad'))).join('') : none('The health file lists no scheduled workflows.'))
+      + (o && o.collected_at ? `<div class="muted" style="margin-top:8px">Collected ${esc(when(o.collected_at))}</div>` : '') : missing('Nova ops-status', 'node scripts/ops/workflow-health.mjs --json produces it.'));
+    const P = C.pcd, items = P && Array.isArray(P.items) ? P.items : null;
+    const grp = (cls, title, note) => { const g = (items || []).filter((x) => x.class === cls); return g.length ? `<h4 style="margin:12px 0 4px">${esc(title)} (${g.length})</h4><div class="muted">${esc(note)}</div>${g.map((x) => row(x.task, x.cloud_answer, tag(x.verdict.split(' (')[0].slice(0, 40), cls === 'cloud_ready' ? 'good' : cls === 'pc_required' ? 'warn' : ''))).join('')}` : ''; };
+    const deps = sec('PC dependencies and cloud-ready work', items ? (items.length ? grp('pc_required', 'Still needs a PC', 'Genuine exceptions: physical devices or data that exists only on the PC.')
+      + grp('cloud_built_untested', 'Built for the cloud, not yet proven', 'Replacement exists; no successful real cloud run yet.') + grp('cloud_ready', 'Cloud ready', 'Replaced and shown to run in the cloud.')
+      + grp('mixed', 'Partly cloud', 'One half is covered, the other is not.') + grp('dev_tool', 'Development tools', 'Not part of running the company.') : none('The dependency file lists nothing.')) : missing('Nova pc-dependencies', 'node scripts/ops/pc-deps-json.mjs produces it.'));
+    const v = P && P.pc_off_verification ? P.pc_off_verification : { status: 'NOT VERIFIED', run_ids: [] };
+    const off = sec('PC-off verification', `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${tag(v.status, v.status === 'VERIFIED' ? 'good' : 'bad')}${(v.run_ids || []).map((r) => tag('run ' + r)).join('')}</div><div class="muted" style="margin-top:6px">${esc(v.note || (v.run_ids && v.run_ids.length ? '' : 'No run has shown the company working with every PC off.'))}</div>`);
+    return bar + workers + queue + wf + deps + off;
+  }
+
+  if (tab === 'security') {
+    const m = (POLICIES || []).find((p) => p.scope === 'company' && p.key === 'access_broker_mode');
+    const raw = m ? (m.value && typeof m.value === 'object' ? m.value.mode : m.value) : undefined;
+    const mode = raw === undefined ? 'shadow (default; no mode row set)' : String(raw);
+    const modeSec = sec('Access broker policy', `<div style="display:flex;gap:8px;align-items:center">${tag(mode, /^enforce/.test(mode) ? 'good' : 'warn')}</div><div class="muted" style="margin-top:6px">${/^shadow/.test(mode) ? 'Shadow: every decision is recorded, but a would-be denial still lets the call through.' : /^enforce/.test(mode) ? 'Enforce: a denied call is refused.' : esc(mode)}</div>`);
+    let uses;
+    if (C.uses.err) uses = sec('Credential access decisions', unread('The access log'));
+    else {
+      const U = C.uses.rows.map((r) => { let n = {}; try { n = JSON.parse(r.note || '{}') || {}; } catch {} return { at: r.at, team: r.team_id, decision: n.decision || (r.ok ? 'allow' : 'deny'), provider: n.provider || String(r.capability_id || '').replace(/^access:/, '').split('.')[0], capability: n.capability || '', reason: n.reason || '' }; });
+      const cnt = (d) => U.filter((u) => u.decision === d).length, den = U.filter((u) => u.decision !== 'allow');
+      uses = sec(`Credential access decisions (latest ${U.length})`, U.length ? `<div class="stats">${stat(cnt('allow'), 'allowed')}${stat(cnt('shadow_deny'), 'would deny (shadow)')}${stat(cnt('deny'), 'denied')}</div>
+        <h4 style="margin:12px 0 4px">Recent denials</h4>${den.length ? den.slice(0, 12).map((u) => row(`${u.team || 'unknown team'} → ${u.provider || 'unknown provider'}${u.capability ? ' · ' + u.capability : ''}`, `${cloudSafe(u.reason)} · ${when(u.at)}`, tag(u.decision, 'bad'))).join('') : none('No denial recorded.')}` : none('No credential access has been recorded yet.'));
+    }
+    const S = C.sec;
+    const incSec = sec('Security incidents', S ? (incs.length ? incs.map((n) => `<div class="row"><div class="grow" style="min-width:0;overflow-wrap:anywhere"><b>${esc(n.id)}</b><div class="muted">${esc(cloudSafe(n.affected))}</div><div style="margin-top:6px"><b>Founder action:</b> ${esc(cloudSafe(n.founder_action))}</div></div>${tag(n.status, n.status === 'CLOSED' ? 'good' : 'bad')}</div>`).join('') : none('No incidents on record.')) : missing('Nova security-status', 'node scripts/ops/incidents-json.mjs produces it from company/security/INCIDENTS.md.'));
+    const rot = integs.filter((x) => ['CONNECTED_BUT_INSECURE', 'EXPIRED', 'INVALID'].includes(x.s.status) || /rotat/i.test(x.i.error || ''));
+    const rotSec = sec('Credential rotation required', (rot.length ? rot.map((x) => row(x.i.platform || x.i.id, `${x.s.why} Last verified ${when(x.s.evidence)}.${x.i.next_action ? ' Next: ' + cloudSafe(x.i.next_action) : ''}`, tag(x.s.status, stTone(x.s.status)))).join('') : none('No integration row asks for a rotation.'))
+      + (incs.filter((n) => n.status !== 'CLOSED').length ? `<div class="muted" style="margin-top:8px">Open incidents above also need a rotation at the source: ${esc(incs.filter((n) => n.status !== 'CLOSED').map((n) => n.id).join(', '))}.</div>` : ''));
+    const scan = sec('Secret scanning', S && (S.repos || []).length ? S.repos.map((r) => row(r.repo, `${r.visibility} · push protection ${r.push_protection} · branch protection ${r.branch_protection}`, tag('scanning ' + r.secret_scanning, /^(enabled|on)/i.test(r.secret_scanning) ? 'good' : 'warn'))).join('') : missing('Nova security-status', 'it carries the repository protection table.'));
+    let audit;
+    if (C.act.err) audit = sec('Audit history', unread('The activity log'));
+    else {
+      const A = C.act.rows.filter((a) => /secur|broker|rotat|redact|secret|credential|incident|scan|access/i.test(`${a.actor} ${a.action}`)).slice(0, 20);
+      audit = sec('Audit history (security actors)', A.length ? A.map((a) => row(`${a.actor || 'unknown'} · ${a.action || ''}`, `${cloudSafe(a.detail || '')} · ${when(a.at)}`)).join('') : none('No security activity recorded.'));
+    }
+    return bar + modeSec + uses + incSec + rotSec + scan + audit;
+  }
+
+  if (tab === 'integrations') {
+    const counts = {}; for (const x of integs) counts[x.s.status] = (counts[x.s.status] || 0) + 1;
+    const owner = (i) => [...new Set((CONN_LINKS || []).filter((l) => l.integration_id === i.id && l.enabled).map((l) => l.team_id))].join(', ') || 'no team linked';
+    const rec = (x) => cloudSafe(x.i.next_action) || (x.s.status === 'CONNECTED_AND_VERIFIED' ? 'Nothing to do.' : x.s.status === 'NOT_CONFIGURED' ? 'Connect it from the Integrations page.' : x.s.status === 'UNKNOWN' ? 'Run a verification; nothing recent proves it works.' : 'Reconnect or rotate the credential, then verify.');
+    const H = C.hist;
+    const hist = sec('Health history', H.err ? none('History not recorded yet.') : H.rows.length ? H.rows.slice(0, 30).map((h) => row(`${h.integration_id || h.provider || ''} · ${h.status || h.state || ''}`, `${cloudSafe(h.detail || h.note || h.error || '')} ${when(h.at)}`)).join('') : none('History not recorded yet.'));
+    return bar + sec(`All integrations (${integs.length})`, `<div class="stats">${Object.entries(counts).map(([k, n]) => stat(n, k)).join('')}</div>`)
+      + `<div class="card2" style="margin-top:14px">${integs.length ? integs.map((x) => `<div class="row"><div class="grow" style="min-width:0;overflow-wrap:anywhere"><b>${esc(x.i.platform || x.i.id)}</b>${x.i.account ? ' · ' + esc(x.i.account) : ''}
+        <div class="muted">${esc(x.s.why)} · last verified ${esc(when(x.s.evidence))} · last successful operation ${esc(when(x.i.last_ok_at))}</div>
+        <div class="muted">Owner: ${esc(owner(x.i))} · Recovery: ${esc(rec(x))}</div></div>${tag(x.s.status, stTone(x.s.status))}</div>`).join('') : none('No integrations are listed.')}</div>` + hist;
+  }
+
+  // teams
+  if (!ORG || !ORG.units || !ORG.units.length) return bar + none('The company structure is not loaded.');
+  const U = ORG.units, subs = U.filter((u) => u.kind === 'subteam'), houses = U.filter((u) => u.kind === 'house');
+  const flagOf = (u, pl, deps) => {
+    const f = [];
+    if (!pl || !pl.designed) f.push(['no pipeline designed', '']); else if (!(pl.approval_gates || []).length) f.push(['pipeline lists no approval gate', 'warn']);
+    for (const d of deps) if (['CONNECTED_BUT_INSECURE', 'EXPIRED', 'INVALID', 'INSUFFICIENT_PERMISSION', 'CONNECTED_BUT_FAILING'].includes(d.s.status)) f.push([`${d.i.platform || d.i.id}: ${d.s.status}`, 'bad']);
+    return f;
+  };
+  const block = (h) => {
+    const list = subs.filter((s) => s.parent_id === h.id || s.id.startsWith(h.id + '.'));
+    return sec(`${h.display_name} (${list.length} subteams)`, list.length ? list.map((s) => {
+      const pl = (ORG.pipelines || []).find((p) => p.unit_id === s.id), ag = (ORG.agents || []).filter((a) => a.unit_id === s.id || String(a.unit_id).startsWith(s.id + '.'));
+      const tail = s.id.split('.').pop(), top = h.house_id || h.id;
+      const depIds = [...new Set((CONN_LINKS || []).filter((l) => l.enabled && [top, h.id].includes(l.team_id) && (!l.subteam_id || [tail, s.id].includes(l.subteam_id))).map((l) => l.integration_id))];
+      const deps = depIds.map((id) => integs.find((x) => x.i.id === id)).filter(Boolean);
+      const flags = flagOf(s, pl, deps);
+      return `<div class="row"><div class="grow" style="min-width:0;overflow-wrap:anywhere"><b>${esc(s.display_name)}</b><div class="muted">${ag.filter((a) => a.status !== 'placeholder').length} agents${ag.some((a) => a.status === 'placeholder') ? ' · head not assigned' : ''} · integrations: ${deps.length ? esc(deps.map((d) => d.i.platform || d.i.id).join(', ')) : 'none linked'}</div>
+        ${flags.length ? `<div style="margin-top:4px">${flags.map(([t, c]) => tag(t, c)).join(' ')}</div>` : ''}</div>${tag(pl ? pl.status : 'NO PIPELINE', pl && ['LIVE', 'TESTING'].includes(pl.status) ? 'good' : '')}</div>`;
+    }).join('') : none('No subteams under this team.'));
+  };
+  return bar + `<p class="muted">${subs.length} subteams in ${houses.length} teams. Flags show only what the data says: pipeline design, approval gates and the status of linked integrations.</p>` + houses.map(block).join('');
+}
 async function loadAllNow() {
   const q = (t, s = '*', o) => { let r = sb.from(t).select(s); if (o) r = r.order(o[0], { ascending: o[1] }); return r; };
   const res = await Promise.all([
@@ -792,6 +1071,7 @@ async function loadAllNow() {
   // the founder session under RLS). control-plane.json stays as the cache for the parts that are
   // registry, not rows: teams, policies, budgets, workflows. Whichever is missing is said, not guessed.
   CP = await loadControlPlane();
+  ORG = await loadOrg();
   // The marks are a small fixed list, so it is fetched once and kept. If it cannot be fetched
   // nothing breaks: markFor() falls back to a derived mark from the same curated palette.
   if (!IDENT) { try { const r = await fetch('identity.json'); if (r.ok) { IDENT = await r.json(); OUTLINE.clear(); } } catch {} }
@@ -3939,8 +4219,10 @@ const V = {
       <h3 style="margin:8px 0">Waiting (${w.length})</h3><div class="card2">${w.map(row).join('') || '<span class="muted">All clear.</span>'}</div>
       <h3 style="margin:18px 0 8px">Decided</h3><div class="card2">${r.map(row).join('')}</div>`;
   },
+  structure() { return orgPage(); },
+  cloud() { cloudLoad(); return cloudPage(); },
   company() {
-    const tabs = `<div class="tabs">${D.houses.map(h => `<button data-sub="${h.id}" class="${sub === h.id ? 'on' : ''}">${esc(h.name)}</button>`).join('')}<button data-sub="decisions" class="${sub === 'decisions' ? 'on' : ''}">Decisions</button></div>`;
+    const tabs =`<div class="tabs">${D.houses.map(h => `<button data-sub="${h.id}" class="${sub === h.id ? 'on' : ''}">${esc(h.name)}</button>`).join('')}<button data-sub="decisions" class="${sub === 'decisions' ? 'on' : ''}">Decisions</button></div>`;
     if (sub === 'decisions') return tabs + `<div class="card2">${D.decisions.map(d => `<div class="row"><div class="grow">${esc(d.text)}<div class="muted">${esc(d.decided_on)} · ${esc(d.by_name)}</div></div></div>`).join('')}</div>`;
     const h = D.houses.find(x => x.id === sub) || D.houses[0]; if (!h) return tabs;
     const cats = D.categories.filter(c => c.house_id === h.id);
@@ -4465,7 +4747,7 @@ function render() {
     if (name) await structureOp('edit', f.dataset.rename, null, { p_name: name });
   }));
 }
-const SUB0 = { teams: 'teams', ai: 'calls', system: 'runtime', company: 'houses' };
+const SUB0 = { teams: 'teams', ai: 'calls', system: 'runtime', company: 'houses', structure: 'org:coco', cloud: 'autonomy' };
 // Settings the founders change live in Coco Cloud, so a reload shows what the runtime is really using.
 addEventListener('hashchange', () => { page = location.hash.slice(1) || 'home'; if (SUB0[page]) sub = SUB0[page]; if (page !== 'runs') cpRun = null; render(); scrollTo(0, 0); });
 
@@ -4573,7 +4855,8 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const ds = b.dataset;
-  if (ds.sub) { sub = ds.sub; render(); }
+  if (ds.pltab) { plTab = ds.pltab; render(); }
+  if (ds.sub) { sub = ds.sub; plTab = 'overview'; render(); }
   if (ds.bi === 'toggle') { BI_OPEN = !BI_OPEN; renderBrainIsland(); }
   if (ds.bifocus) { BI_FOCUS = ds.bifocus; BI_OPEN = true; renderBrainIsland(); }
   if (ds.bipage) { sub = 'growth'; location.hash = 'brain'; }

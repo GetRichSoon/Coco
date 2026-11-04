@@ -6,10 +6,10 @@
 // write to a table empties that table's cache; a device is rate limited; no error ever echoes a
 // connection string.
 import assert from 'node:assert/strict';
-import { handle, buildSelect, buildWrite, buildRpc, sha256, invalidate, rateOk, NovaError } from './api/_nova.js';
+import { handle, buildSelect, buildWrite, buildRpc, sha256, invalidate, rateOk, resetUpstream, NovaError } from './api/_nova.js';
 
 let pass = 0, fail = 0;
-const t = async (name, fn) => { try { await fn(); pass++; console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} — ${e.message}`); } };
+const t = async (name, fn) => { resetUpstream(); try { await fn(); pass++; console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} — ${e.message}`); } };
 
 const KEY = 'device-key-0123456789abcdef';
 const fakeDb = (rows = []) => { const sql = []; return { sql, async query(text, params = []) { sql.push({ text, params });
@@ -84,11 +84,11 @@ await t('6 rate limit per device: the 121st request in a minute is refused, and 
   assert.equal(rateOk('d1', 1000 + 30000), true, 'half a minute later half the bucket is back');
 });
 
-await t('7 errors: RLS refusals are 403, timeouts 504, anything else 500 without the connection string; health reports the database state', async () => {
+await t('7 errors: RLS refusals are 403, timeouts 504, a database outage 503 UPSTREAM_UNAVAILABLE, anything else 500 without the connection string; health reports the database state', async () => {
   const rls = { query: async (text, params) => { if (/devices d JOIN/.test(text)) return { rows: [{ id: 'd', owner_email: 'boss@example.com', name: 'x' }] }; if (/SELECT \* FROM/.test(text)) throw new Error('new row violates row-level security policy'); return { rows: [] }; } };
   invalidate(); assert.equal((await handle(rls, req('GET', '/rest/v1/founders', { query: { select: '*' } }))).status, 403);
   const boom = { query: async (text) => { if (/devices d JOIN/.test(text)) return { rows: [{ id: 'd', owner_email: 'boss@example.com', name: 'x' }] }; if (/SELECT \* FROM/.test(text)) throw new Error('connect ECONNREFUSED postgresql://example:not-a-password@h/db'); return { rows: [] }; } };
-  invalidate(); const r = await handle(boom, req('GET', '/rest/v1/tasks', { query: { select: '*' } })); assert.equal(r.status, 500); assert.ok(!/not-a-password/.test(r.body));
+  invalidate(); const r = await handle(boom, req('GET', '/rest/v1/tasks', { query: { select: '*' } })); assert.equal(r.status, 503); assert.equal(JSON.parse(r.body).state, 'UPSTREAM_UNAVAILABLE'); assert.ok(!/not-a-password/.test(r.body)); resetUpstream();
   const h = await handle(fakeDb(), req('GET', '/api/health', { key: '' })); assert.equal(h.status, 200); assert.equal(JSON.parse(h.body).db, 'ok');
   const down = { query: async () => { throw new Error('nope'); } }; assert.equal(JSON.parse((await handle(down, req('GET', '/api/health', { key: '' }))).body).db, 'unavailable');
 });
