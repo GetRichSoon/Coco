@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
 import { handleAi } from './_ai.js';
+import { handleOrbiTrending } from './_orbi_trending.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {} };
 
@@ -178,6 +179,12 @@ export async function handle(db, req, now = Date.now()) {
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
       return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
+    }
+    // Orbi wallpaper "Trending": anonymous pick counts from the Orbi extension, not a Coco device (api/_orbi_trending.js)
+    if (req.path.startsWith('/api/orbi/wall/')) {
+      const out = await handleOrbiTrending(db, req, now);
+      log(out.status, { orbi: req.path.slice(15) });
+      return out.status === 204 ? { status: 204, headers: cors(), body: null } : json(out.status, out.body, out.headers || {});
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself

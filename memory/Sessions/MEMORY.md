@@ -82,3 +82,4 @@
 - [Cloud autonomy audit 2026-11-04](project_cloud_autonomy_audit_2026_11_04.md) — seven steps = YT order 1-7, 5-7 unapproved, PC-OFF unverified, CI schedule failing, Gumroad token leak
 - [Brains + growth engine](project_brains_growth_intel.md) — 2026-11-04: merged + scheduled from main, ALL actions HELD, dashboard deployed; 0031 NOT applied (declined); A-026 status
 - [Verify PR number before merge](feedback_verify_pr_number_before_merge.md) — I merged another session's PR 7 into main by assuming the number; use the number gh pr create printed, check head/base first
+- [Penthouse thumbnail style](penthouse-thumbnail-style.md) — rear-view black unbranded coupe, wet street, neutral iPhone colour (no yellow/gold), headline left
