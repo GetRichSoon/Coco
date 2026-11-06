@@ -83,3 +83,6 @@
 - [Brains + growth engine](project_brains_growth_intel.md) — 2026-11-04: merged + scheduled from main, ALL actions HELD, dashboard deployed; 0031 NOT applied (declined); A-026 status
 - [Verify PR number before merge](feedback_verify_pr_number_before_merge.md) — I merged another session's PR 7 into main by assuming the number; use the number gh pr create printed, check head/base first
 - [Penthouse thumbnail style](penthouse-thumbnail-style.md) — rear-view black unbranded coupe, wet street, neutral iPhone colour (no yellow/gold), headline left
+- [Penthouse video 001](project_penthouse_video_001.md) — LIVE 2026-11-06 youtu.be/I0iVeP8PqVg (3rd upload; first two removed: >15 min feature was off); Porsche thumbnail set via API; files in studio/penthouse_frequency/out/final
+- [Moonveil bedroom + Flow mantis](project_moonveil_bedroom_flow_mantis.md) — BOTH LIVE 2026-11-06: Moonveil 3 h youtu.be/rKq5l4-UgmE, Flow mantis 7:22 youtu.be/tNbX-iIn8jc; Flow login now youtube-the-flow.env (old youtube.env dead)
+- [STT on Nova](project_stt_nova.md) — 2026-11-06 STT 5.7.0 = Nova screentimetracker-api on its own Supabase Postgres (obbhqrsfnssmiwtvmbrz); Pro bound to the Gmail via the shared payment server (no license key), one trial per Google account, community open to guests with live posts, plan-refresh loop (the lag bug) fixed; store publish + old data import open
