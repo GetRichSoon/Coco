@@ -1,0 +1,65 @@
+PAYHIP METADATA
+Product name: The Job Interview Playbook: 100 Common Interview Questions, Powerful Answer Frameworks, Resume & LinkedIn Strategies
+Short description: 100 interview questions, each with what the interviewer wants, an answer framework, an example and beginner and experienced tips, plus resume and LinkedIn guides.
+Price: 12.99 USD (Gumroad price; confirm for Payhip)
+Tags: interview questions,interview prep,job interview,star method,resume,linkedin
+Product URL (suggested): payhip.com/b/<auto>  (Payhip makes the URL; slug idea: job-interview-playbook-100-questions)
+Files to upload: 09_job-interview-playbook-100-questions.pdf, 09_job-interview-playbook-100-questions.epub
+Cover/thumbnail: 09_job-interview-playbook-100-questions_cover_1600x2560.jpg (portrait) or the landscape/square images in the book folder
+Download instructions (put in the product's note): After purchase, download the PDF for reading on a computer or tablet and the EPUB for phones and e-readers. If a file will not open, reply to the receipt email.
+Preview: attach the free sample PDF from the book folder as a free preview file (not the paid book)
+Description:
+Most people lose interviews on questions they could have prepared for. The Job Interview Playbook gives you 100 common interview questions, and for every one it shows what the interviewer is really trying to learn, a framework for building your own answer, a realistic example, the mistakes to avoid, and how to adapt it whether you are a beginner or experienced.
+
+It is a 97-page guide for students, graduates, entry-level applicants, experienced professionals and career changers. It also covers the rest of the job search: resume, applicant tracking systems, LinkedIn, cover letters, preparation, salary talks and follow-ups.
+
+It does not guarantee interviews or offers, and it does not give you scripts to memorise. Example answers are fictional illustrations; the book teaches you to build every answer from your own true experience.
+
+WHAT YOU GET
+• 20 chapters (nearly 15,000 words)
+• 100 distinct interview questions in seven groups: 20 introductory and personal, 20 behavioral, 15 teamwork and leadership, 15 problem-solving, 10 strengths, weaknesses and motivation, 10 career and salary, and 10 challenging or unexpected
+• For every question: what the interviewer wants to understand, an answer framework, an example answer, common mistakes, a beginner adaptation and an experienced candidate adaptation
+• A plain-text, applicant-tracking-friendly resume structure, with beginner and experienced examples
+• A cover letter template with an example
+• A LinkedIn profile checklist based on what LinkedIn's own help page says (checked 2026-11-07)
+• A STAR answer worksheet with a filled example, and a bank of 30 prompts to help you find your own true stories
+• Interview preparation checklist, and questions to ask the interviewer
+• 4 thank-you email templates and 5 follow-up scripts
+• 7 salary negotiation scripts, plus guidance on researching a range
+• A job application tracker layout and a 30-day job search planner
+• Common mistakes, a glossary and a reference list
+
+WHAT IS INSIDE
+1 Understanding the hiring process. 2 Resume writing. 3 Applicant tracking systems. 4 LinkedIn optimisation. 5 Cover letters. 6 Interview preparation. 7 Behavioural interviews. 8 Technical interviews. 9 Situational questions. 10 Communication skills. 11 Salary negotiation. 12 Interview follow-ups. 13 Job search planning. 14 to 20: the 100 questions.
+
+HOW IT IS DIFFERENT
+Questions are grouped by situation, every one has both a beginner and an experienced adaptation, and it includes the practical documents (resume, cover letter, LinkedIn, tracker) in the same book.
+
+WHO IT IS FOR
+University students, recent graduates, entry-level applicants, experienced professionals and people changing careers.
+
+WHO IT IS NOT FOR
+Anyone looking for memorised answers that work for everyone, or a guarantee of employment.
+
+GOOD TO KNOW
+• Hiring practices differ by employer and country. The book says where advice is general.
+• No resume format can guarantee that an applicant tracking system will select you. Sources disagree on file type (for example .docx versus PDF), so the book tells you to follow the instructions in each posting.
+• The 15/10/50/25 split used for STAR answers is labelled as a rule of thumb, not research.
+• Many example answers are short to keep the book focused; use them to see the shape, then write your own.
+
+
+FAQ
+Q: Are the answers ready to copy?
+A: No. They are illustrations of structure. Interviewers can tell a rehearsed script, and the book tells you to use your own true experience.
+
+Q: I have no work experience. Is it useful?
+A: Yes. Every question has a beginner adaptation, and Chapter 7 shows how to use study, volunteering and projects.
+
+Q: Does it cover technical interviews?
+A: It gives a general method for preparing for technical and role-specific questions across fields, with illustrative examples. It does not teach a specific technical subject.
+
+Q: Does it guarantee that I will get a job?
+A: No. It helps you prepare and present your experience clearly. Outcomes depend on many things outside your control.
+
+Q: Does it cover salary negotiation?
+A: Yes: how to research a range, when to talk about pay, and seven scripts for common situations. Practices differ by country.

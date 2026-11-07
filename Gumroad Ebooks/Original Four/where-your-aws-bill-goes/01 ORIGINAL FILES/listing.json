@@ -1,0 +1,105 @@
+{
+  "slug": "where-your-aws-bill-goes",
+  "title": "Where Your AWS Bill Goes",
+  "subtitle": "The five shapes of cloud cost, the decisions that set them, and a monthly review that takes an hour",
+  "author": "The Velvet Foundry Editorial Team",
+  "language": "en",
+  "publisher": "The Velvet Foundry",
+  "description": "Somebody forwarded you the AWS invoice and asked what happened. You opened the console, found a number, and could not explain it. Not because you are careless, but because almost nothing about a cloud bill is arranged to answer that question.\n\nThis book is about the arrangement. Nearly every AWS charge is one of five pricing shapes applied to a large number of services. Once you can recognise the shapes, a service you have never used becomes readable from its pricing page in two minutes, and your own bill becomes a document you can explain line by line.\n\nWHAT YOU WILL BE ABLE TO DO: trace any line on your bill back to the decision that caused it; find the three things driving most of your spend in about an hour; read a cost graph's shape and know whether you are looking at a deploy, an accumulation or a scheduled job before you have grouped anything; and tell the difference between a cost that is a problem and one that is simply the price of running the thing.\n\nWHAT IS INSIDE: 25 chapters covering the five shapes you actually pay for; reading the bill as a structure rather than a total; tagging and attribution; account and organisation design; data transfer, the cost nobody models; per-gigabyte network appliances; idle and orphaned resources; storage, retention and lifecycle; provisioned capacity and commitments; right-sizing without guessing; managed databases and their five meters; serverless against always-on; non-production environments; budgets, alarms and anomaly detection; costing a design before you build it; a one-hour monthly review; a full month worked end to end from a surprising bill to a fixed one; and when to stop optimising. Every chapter ends with the ways it goes wrong and a checklist.\n\nWHAT MAKES IT DIFFERENT: it contains no prices. Not one rate, tier, allowance or figure. That is deliberate. AWS prices differ by region, change without notice and depend on commitments, so a book stating them would be wrong for most readers on the day it shipped, and wrong in a way that looked authoritative. This book teaches what you are charged for and which decisions change how much you consume. AWS tells you how much, for free, and correctly.\n\nWHO IT IS FOR: the engineer or small team who owns an AWS bill they did not entirely design, and who would like to be able to explain it.\n\nWHO SHOULD NOT BUY IT: cloud financial management specialists with a dedicated team and a commitment portfolio, anyone who wants to be told which instance to buy without understanding why, and anyone looking for a list of tricks to apply without the reasoning.\n\nFORMAT: reflowable EPUB, about 15,000 words, readable on a phone. No worksheets to print.\n\nGeneral educational material about cloud cost mechanics. Not financial, accounting or procurement advice. Not affiliated with, endorsed by or sponsored by Amazon Web Services, Inc.",
+  "keywords": [
+    "aws cost optimization",
+    "cloud cost management",
+    "aws billing explained",
+    "devops cost control",
+    "aws architecture cost",
+    "cloud financial operations",
+    "reduce aws bill"
+  ],
+  "categories": [
+    "Computers & Technology > Networking & Cloud Computing > Cloud Computing",
+    "Computers & Technology > Programming > Software Design & Engineering",
+    "Business & Money > Management & Leadership > Information Management"
+  ],
+  "template": "ebook-howto",
+  "team": "ebooks",
+  "subteam": "ebooks/developer-guides",
+  "category": "ebooks/developer-guides/aws",
+  "price_usd": 9.99,
+  "price_by_platform": {
+    "gumroad": 39.0,
+    "kdp": 9.99
+  },
+  "tags_by_platform": {
+    "gumroad": [
+      "aws",
+      "cloud cost",
+      "devops",
+      "serverless",
+      "aws cost",
+      "cloud computing",
+      "infrastructure",
+      "engineering",
+      "cost optimization"
+    ]
+  },
+  "kdp": {
+    "list_price": 9.99,
+    "file_mb": 0.05,
+    "delivery_cost_usd": 0.01,
+    "royalty_35_usd": 3.5,
+    "eligible_for_70": true,
+    "royalty_70_usd": 6.99,
+    "min_list_price_at_35": 0.99,
+    "best_rate": "70%",
+    "requires_print_price_at_least": 12.49,
+    "note_70_percent": "to keep 70%, no print edition may be listed below $12.49"
+  },
+  "direct": {
+    "payhip_free_5pct": 37.05,
+    "payhip_pro_0pct": 39.0,
+    "gumroad_direct": 34.6,
+    "gumroad_discover": 27.3,
+    "note": "processor fees are charged on top by Payhip and are inside Gumroad's cut"
+  },
+  "per_store_limits": {
+    "kdp": {
+      "title": 200,
+      "subtitle": 200,
+      "description": 4000,
+      "keywords": 7,
+      "categories": 3
+    },
+    "google_play_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 0,
+      "categories": 2
+    },
+    "payhip": {
+      "title": 200,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "gumroad": {
+      "title": 150,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "kobo": {
+      "title": 200,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 3
+    },
+    "apple_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 2
+    }
+  },
+  "problems": [],
+  "ready_for_upload": true
+}

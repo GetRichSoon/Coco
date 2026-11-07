@@ -1,0 +1,64 @@
+{
+ "slug": "where-your-aws-bill-goes",
+ "title": "Where Your AWS Bill Goes",
+ "subtitle": "The five shapes of cloud cost, the decisions that set them, and a monthly review that takes an hour",
+ "author": "The Velvet Foundry Editorial Team",
+ "language": "en",
+ "publisher": "The Velvet Foundry",
+ "modified": "2026-10-30T00:00:00Z",
+ "template": "ebook-howto",
+ "team": "ebooks",
+ "subteam": "ebooks/developer-guides",
+ "category": "ebooks/developer-guides/aws",
+ "gumroad_category": "software-development/web-development/aws",
+ "product_id": "TVF-DEV-0001",
+ "version": "1.0.0",
+ "price_usd": 9.99,
+ "price_by_platform": {
+  "gumroad": 39,
+  "kdp": 9.99
+ },
+ "description": "Somebody forwarded you the AWS invoice and asked what happened. You opened the console, found a number, and could not explain it. Not because you are careless, but because almost nothing about a cloud bill is arranged to answer that question.\n\nThis book is about the arrangement. Nearly every AWS charge is one of five pricing shapes applied to a large number of services. Once you can recognise the shapes, a service you have never used becomes readable from its pricing page in two minutes, and your own bill becomes a document you can explain line by line.\n\nWHAT YOU WILL BE ABLE TO DO: trace any line on your bill back to the decision that caused it; find the three things driving most of your spend in about an hour; read a cost graph's shape and know whether you are looking at a deploy, an accumulation or a scheduled job before you have grouped anything; and tell the difference between a cost that is a problem and one that is simply the price of running the thing.\n\nWHAT IS INSIDE: 25 chapters covering the five shapes you actually pay for; reading the bill as a structure rather than a total; tagging and attribution; account and organisation design; data transfer, the cost nobody models; per-gigabyte network appliances; idle and orphaned resources; storage, retention and lifecycle; provisioned capacity and commitments; right-sizing without guessing; managed databases and their five meters; serverless against always-on; non-production environments; budgets, alarms and anomaly detection; costing a design before you build it; a one-hour monthly review; a full month worked end to end from a surprising bill to a fixed one; and when to stop optimising. Every chapter ends with the ways it goes wrong and a checklist.\n\nWHAT MAKES IT DIFFERENT: it contains no prices. Not one rate, tier, allowance or figure. That is deliberate. AWS prices differ by region, change without notice and depend on commitments, so a book stating them would be wrong for most readers on the day it shipped, and wrong in a way that looked authoritative. This book teaches what you are charged for and which decisions change how much you consume. AWS tells you how much, for free, and correctly.\n\nWHO IT IS FOR: the engineer or small team who owns an AWS bill they did not entirely design, and who would like to be able to explain it.\n\nWHO SHOULD NOT BUY IT: cloud financial management specialists with a dedicated team and a commitment portfolio, anyone who wants to be told which instance to buy without understanding why, and anyone looking for a list of tricks to apply without the reasoning.\n\nFORMAT: reflowable EPUB, about 15,000 words, readable on a phone. No worksheets to print.\n\nGeneral educational material about cloud cost mechanics. Not financial, accounting or procurement advice. Not affiliated with, endorsed by or sponsored by Amazon Web Services, Inc.",
+ "keywords": [
+  "aws cost optimization",
+  "cloud cost management",
+  "aws billing explained",
+  "devops cost control",
+  "aws architecture cost",
+  "cloud financial operations",
+  "reduce aws bill"
+ ],
+ "categories": [
+  "Computers & Technology > Networking & Cloud Computing > Cloud Computing",
+  "Computers & Technology > Programming > Software Design & Engineering",
+  "Business & Money > Management & Leadership > Information Management"
+ ],
+ "note": "Scope is deliberately mechanics only: what AWS charges for and which decisions change the quantity consumed. It contains no prices, rates, tiers, free-tier allowances or cost figures, by design, because they differ by region and commitment and change without notice. Every point needing a current number routes the reader to the AWS pricing pages and the Pricing Calculator, both free and authoritative. Negotiated agreements, tax treatment, payroll of cloud spend and other providers are explicitly out of scope and say so in chapter 2. No commitment purchase is recommended; chapter 13 explains the structure and stops. Chosen on 2026-10-30 from measured evidence in company/publishing/ebooks/CATEGORIES-FINAL.md: software-development/web-development/aws holds only 27 products above the price filter, the lowest competition measured anywhere, with the DynamoDB Book ladder verified on its own page at $79/106 ratings, $129/110 and $249/177, 55.6% of the node is PDF, and risk is the lowest of any category assessed because correctness is executable and no licensed profession, health claim or income claim is involved. Gumroad tags are kept separately from the KDP keywords: Gumroad refuses any tag of 20 characters or more.",
+ "tags_by_platform": {
+  "gumroad": [
+   "aws",
+   "cloud cost",
+   "devops",
+   "serverless",
+   "aws cost",
+   "cloud computing",
+   "infrastructure",
+   "engineering",
+   "cost optimization"
+  ]
+ },
+ "cover": {
+  "art": "blueprint",
+  "lines": [
+   "WHERE YOUR",
+   "AWS BILL",
+   "GOES"
+  ],
+  "disclaimer": [
+   "Contains no prices, rates or figures, by design.",
+   "Not affiliated with or endorsed by Amazon Web Services."
+  ],
+  "marks": 5,
+  "note": "The blueprint art direction: left-aligned Space Grotesk on a flat cool ground with a cyan accent, deliberately nothing like the centred Cinzel serif of the study-plan titles, because a technical reference should not look like a literary one. The motif is five bars of differing length, one per cost shape in chapter 4, which is the book's own organising idea rather than decoration. The three display lines are what must stay legible at 160 px. The disclaimer is part of the artwork because the absence of prices is this book's distinguishing feature, not a gap."
+ }
+}

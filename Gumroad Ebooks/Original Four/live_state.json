@@ -1,0 +1,16 @@
+{
+ "store": "https://thevelvetfoundry.gumroad.com",
+ "read_on": "2026-11-07",
+ "products": {
+  "aswb-clinical-90-day-study-plan": {"title": "The 90-Day Clinical Licensing Exam Study Plan", "dashboard_id": "lyvicp", "gumroad_product_id": "0jWYk9KIpU_l_ugbZaOHnQ==", "url": "https://thevelvetfoundry.gumroad.com/l/aswb-clinical-90-day-study-plan", "price_usd": 34, "category": "Education", "tags": "exam prep|social work|aswb|study schedule|study plan|lcsw exam|licensing exam|exam retake|lcsw 2026", "file": "EPUB only, 59.6 KB, 28 sections", "summary_field": "empty", "refund_policy": "none", "ratings": "0, display on", "sales": 0, "live_cover": "01_live_assets_as_found/live_cover.jpg (1005x565)", "live_thumbnail": "01_live_assets_as_found/live_thumbnail.jpg (600x600)"},
+  "keep-your-own-books": {"title": "Keep Your Own Books", "dashboard_id": "jmadaz", "gumroad_product_id": "3yf8NiWrLOU4wEDuGHdvhw==", "url": "https://thevelvetfoundry.gumroad.com/l/keep-your-own-books", "price_usd": 29, "category": "Other (not in Discover)", "tags": "small business|freelancer|self employed|bookkeeping|business finance|sole trader|accounting basics|month end close|double entry", "file": "EPUB only, 51.9 KB, 22 sections", "summary_field": "empty", "refund_policy": "none", "ratings": "0, display on", "sales": 0, "live_cover": "01_live_assets_as_found/live_cover.jpg", "live_thumbnail": "01_live_assets_as_found/live_thumbnail.jpg"},
+  "retake-exam-technique": {"title": "The Retake Method: Exam Technique for Candidates Retaking a Professional Licensing Exam", "dashboard_id": "cothmo", "gumroad_product_id": "w839C4SJX_JHmKzy4A7ifg==", "url": "https://thevelvetfoundry.gumroad.com/l/retake-exam-technique", "price_usd": 29, "category": "Other (not in Discover)", "tags": "exam technique (only one tag)", "file": "EPUB only, 52.7 KB, 22 sections", "summary_field": "empty", "refund_policy": "none", "ratings": "0, display on", "sales": 0, "live_cover": "01_live_assets_as_found/live_cover.jpg", "live_thumbnail": "01_live_assets_as_found/live_thumbnail.png (NOTE: the public page metadata lists a thumbnail identical to the Job Interview Playbook thumbnail, while the editor shows no thumbnail of its own for this product; unresolved)"},
+  "where-your-aws-bill-goes": {"title": "Where Your AWS Bill Goes", "dashboard_id": "rmuuwc", "gumroad_product_id": "20rrIQ1EAJCMSajuqoaT_g==", "url": "https://thevelvetfoundry.gumroad.com/l/where-your-aws-bill-goes", "price_usd": 39, "category": "Other (not in Discover)", "tags": "devops|engineering|cloud computing|aws|serverless|infrastructure|cloud cost|aws cost|cost optimization", "file": "EPUB only, 53.5 KB, 25 sections", "summary_field": "empty", "refund_policy": "none", "ratings": "0, display on", "sales": 0, "live_cover": "01_live_assets_as_found/live_cover.jpg", "live_thumbnail": "01_live_assets_as_found/live_thumbnail.jpg"}
+ },
+ "notes": [
+  "All four: sales 0, revenue $0. Gumroad Discover needs a category other than Other, plus a first sale and the Risk Review.",
+  "Pages detail is empty on all four.",
+  "Author shown on covers: The Velvet Foundry Editorial Team (publisher brand).",
+  "Do not change any live product, price, URL or file."
+ ]
+}

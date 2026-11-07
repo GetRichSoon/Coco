@@ -1,0 +1,93 @@
+{
+  "slug": "retake-exam-technique",
+  "title": "The Retake Method: Exam Technique for Candidates Retaking a Professional Licensing Exam",
+  "subtitle": "How to read a failed score report, decide between two plausible answers, pace the sitting, and have the conversations that make a second attempt possible",
+  "author": "The Velvet Foundry Editorial Team",
+  "language": "en",
+  "publisher": "The Velvet Foundry",
+  "description": "After reading, the reader can turn a failed score report into a diagnosis, apply fixed decision rules to FIRST, NEXT, BEST and MOST LIKELY questions, break ties between two plausible options, hold a per-question pace, hold the retake conversation with employer and family, and run an exam-day routine and a last-ten-minutes routine.\n\nWHO IT IS FOR: An adult who failed a professional licensing exam once or more, in any field, has a multiple-choice style retake booked or planned, and wants a method for how to sit the exam rather than another content review.\n\nWHO SHOULD NOT BUY IT: Anyone who wants subject content, practice questions or a pass guarantee, or whose exam is oral, practical or essay-only.\n\nWHAT IS INSIDE: 17 chapters on the playbook arc: the situation after a fail, a decision framework for reading questions and breaking ties, the scripts to say to yourself and to others, prose templates, and an action plan for the next hour, week and month.\n\nFORMAT: reflowable EPUB, about 17000 words, readable on a phone. No worksheets to print or write into.\n\nGeneral educational material about exam technique. Exam-agnostic. Not affiliated with, endorsed by or approved by any examination body. Not clinical, legal, tax or financial advice.",
+  "keywords": [
+    "exam technique",
+    "retaking a licensing exam",
+    "failed licensing exam what next",
+    "professional exam retake",
+    "multiple choice exam strategy",
+    "test anxiety exam day",
+    "licensing exam study method"
+  ],
+  "categories": [
+    "Education & Teaching > Studying & Workbooks > Study Skills",
+    "Education & Teaching > Test Preparation",
+    "Business & Money > Careers"
+  ],
+  "template": "ebook-playbook",
+  "team": "ebooks",
+  "subteam": "ebooks/direct",
+  "category": "ebooks/direct/exam-technique",
+  "price_usd": 7.99,
+  "price_by_platform": {
+    "gumroad": 29.0,
+    "kdp": 7.99
+  },
+  "tags_by_platform": {},
+  "kdp": {
+    "list_price": 7.99,
+    "file_mb": 0.05,
+    "delivery_cost_usd": 0.01,
+    "royalty_35_usd": 2.8,
+    "eligible_for_70": true,
+    "royalty_70_usd": 5.59,
+    "min_list_price_at_35": 0.99,
+    "best_rate": "70%",
+    "requires_print_price_at_least": 9.99,
+    "note_70_percent": "to keep 70%, no print edition may be listed below $9.99"
+  },
+  "direct": {
+    "payhip_free_5pct": 27.55,
+    "payhip_pro_0pct": 29.0,
+    "gumroad_direct": 25.6,
+    "gumroad_discover": 20.3,
+    "note": "processor fees are charged on top by Payhip and are inside Gumroad's cut"
+  },
+  "per_store_limits": {
+    "kdp": {
+      "title": 200,
+      "subtitle": 200,
+      "description": 4000,
+      "keywords": 7,
+      "categories": 3
+    },
+    "google_play_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 0,
+      "categories": 2
+    },
+    "payhip": {
+      "title": 200,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "gumroad": {
+      "title": 150,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "kobo": {
+      "title": 200,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 3
+    },
+    "apple_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 2
+    }
+  },
+  "problems": [],
+  "ready_for_upload": true
+}

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 626" width="800" height="626" font-family="Georgia, Segoe UI, serif"><title>The 90 days in four phases</title>
+<rect width="800" height="626" fill="#f4efe6"/>
+<text x="400.0" y="40.0" text-anchor="middle" font-size="30" font-weight="bold" fill="#0f2238">The 90 days in four phases</text>
+<text x="400.0" y="74.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Bar widths are proportional to the number of days</text>
+<rect x="30.0" y="100.0" width="57.6" height="70.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="58.8" y="144.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#f4efe6">1</text>
+<rect x="87.6" y="100.0" width="460.4" height="70.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="317.8" y="144.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">2 Rotate</text>
+<rect x="548.0" y="100.0" width="172.7" height="70.0" rx="0" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="634.3" y="144.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">3</text>
+<rect x="720.7" y="100.0" width="49.3" height="70.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="745.3" y="144.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#f4efe6">4</text>
+<rect x="30.0" y="195.0" width="26.0" height="26.0" rx="4" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="215.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 1: days 1 to 7</text>
+<text x="70.0" y="245.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Baseline, priority order, written calendar.</text>
+<rect x="30.0" y="276.0" width="26.0" height="26.0" rx="4" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="296.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 2: days 8 to 63 (8 weeks)</text>
+<text x="70.0" y="326.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">5 study days, 1 review day, 1 off day, plus 1</text>
+<text x="70.0" y="355.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">absorbing slot a week.</text>
+<rect x="30.0" y="386.0" width="26.0" height="26.0" rx="4" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="406.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 3: days 64 to 84 (3 weeks)</text>
+<text x="70.0" y="436.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Pacing every week plus repair. No new statements after</text>
+<text x="70.0" y="465.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">day 70.</text>
+<rect x="30.0" y="496.0" width="26.0" height="26.0" rx="4" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="516.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 4: days 85 to 90</text>
+<text x="70.0" y="546.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Light retrieval and logistics. No new material. Day 90</text>
+<text x="70.0" y="575.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">is examination day.</text>
+</svg>

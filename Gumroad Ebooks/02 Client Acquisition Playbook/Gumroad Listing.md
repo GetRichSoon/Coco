@@ -1,0 +1,99 @@
+# Book 02 listing: THE CLIENT ACQUISITION PLAYBOOK
+
+Prepared 2026-11-07. Claims below were checked against the final PDF (85 pages) and the manuscript. Research basis: `..\Organic Research\02_Client_Acquisition_research.md` (16 competing Gumroad pages read on 2026-11-07; prices, ratings and seller-shown sales taken as displayed, not verified; keywords are hypotheses, no volume data).
+
+## TITLE
+The Client Acquisition Playbook: Find Leads, Book Calls & Win Clients (for Freelancers, Consultants & Small Agencies)
+
+## COVER SUBTITLE (on the cover; do not change)
+A Practical System for Finding Leads, Booking Calls & Winning Clients
+
+## CATEGORY
+Business & Money (confirm the exact name in the product editor; Gumroad's category list can change)
+
+## TAGS (8)
+client acquisition, freelance clients, lead generation, cold outreach, discovery call, proposals, consulting, small agency
+
+## PRICE
+$19 (US dollars). Justification: the 16 competing pages ranged from free to $118; template-only packs cost about $7 to $10 and narrow guides about $19 to $57. This book covers the whole path from niche to signed proposal and follow-up, so it sits above template packs. The one page showing hundreds of sales is a $118 course, not an ebook. No discounts or "was" prices.
+
+## URL SLUG
+client-acquisition-playbook
+
+## SHORT SUMMARY (under 160 characters)
+A step-by-step client acquisition system: 20 outreach templates, 10 follow-ups, 10 discovery call scripts, 5 proposal frameworks and a 30-day plan.
+
+## SEO
+Primary keyword (hypothesis): client acquisition system for freelancers
+
+Related keywords (10): freelance lead generation, how to get freelance clients, cold email for freelancers, discovery call script, proposal template for consultants, client acquisition for small agencies, LinkedIn outreach for freelancers, sales pipeline tracker for freelancers, how to find clients without Upwork, freelance follow-up emails
+
+Long-tail phrases (15): how to book discovery calls from cold outreach; client acquisition system for small agencies; freelance lead generation checklist; proposal and follow-up process for consultants; how to find freelance clients without Upwork; cold email to booked call for consultants; referral and warm outreach system for freelancers; freelance sales pipeline tracker and weekly routine; how to win clients after a discovery call; how to qualify a client before sending a proposal; discovery call questions for freelancers; how to follow up after sending a proposal; how to price a project for a new client; 30 day plan to get freelance clients; is cold emailing legal for freelancers
+
+Google description (about 155 characters): An 85-page guide to finding leads, booking discovery calls and winning clients, with 20 outreach templates, 10 follow-ups, call scripts and proposals.
+
+## DESCRIPTION (paste into Gumroad; plain text)
+If your client pipeline depends on luck and the occasional referral, this book replaces it with a system you can run every week: choose a niche, make a clear offer, find the right people, start honest conversations, run discovery calls, send proposals and follow up without nagging.
+
+The Client Acquisition Playbook is an 85-page guide for freelancers, independent consultants, small agencies and service businesses. It follows one path from "who should I contact?" to "signed proposal", and every step has a template you can copy, instructions for using it, and a filled-in example.
+
+WHAT YOU GET
+• 15 chapters plus an introduction, a conclusion and five appendices (more than 13,000 words)
+• 20 outreach templates: cold email, LinkedIn messages, referral asks, warm introductions, community replies and more
+• 10 follow-up templates
+• 10 discovery call scripts for different situations
+• 5 proposal frameworks, each with a filled example
+• An ideal customer profile worksheet with a filled example
+• A client qualification worksheet with a simple scoring method and a worked example
+• A lead tracking system and a CRM spreadsheet structure (4 sheets, drop-down lists, example rows and conversion formulas)
+• A 30-day client acquisition roadmap
+• Pricing worked through with real arithmetic (hourly, project, value and retainer)
+• An appendix on ethics, consent, anti-spam rules and platform rules, pointing you to the official sources to read
+• Common mistakes and fixes in every chapter, a glossary, a templates index and references
+
+WHAT IS INSIDE
+1 Understanding client acquisition. 2 Finding profitable customer niches. 3 Understanding ideal customers. 4 Creating attractive service offers. 5 Building portfolios and credibility. 6 Finding leads. 7 Cold email prospecting. 8 LinkedIn outreach. 9 Content driven lead generation. 10 Discovery calls. 11 Client qualification. 12 Proposals and closing. 13 Pricing and negotiation. 14 Follow up systems. 15 Building repeatable client acquisition processes.
+
+HOW IT IS DIFFERENT
+Most client acquisition products are narrow: a pack of cold email templates, or a beginner's overview. This one covers the whole chain and shows you how the pieces connect. It does not promise income, "10x" results or overnight clients, and it does not recommend scraping or automation that breaks a platform's rules.
+
+WHO IT IS FOR
+Freelancers, consultants, coaches, small agencies and service-based business owners who want a repeatable way to find and win clients.
+
+WHO IT IS NOT FOR
+Anyone looking for guaranteed results or a bot that sends messages for them. This book is about honest, personal outreach.
+
+GOOD TO KNOW
+• Examples are for fictional businesses and are for illustration.
+• Rules about cold outreach, privacy and advertising differ by country. The book explains the principles and tells you where the official guidance is; it is not legal advice.
+• The CRM formulas were tested in LibreOffice on a small test workbook. They were not tested in Excel or Google Sheets, and the book says so.
+• The qualification score cut-offs are a decision aid proposed in the book, not a validated model.
+
+FREE SAMPLE
+Download the free sample first: it has the contents, the ideal customer profile worksheet, outreach templates, discovery call scripts, the qualification worksheet and proposal frameworks, exactly as they appear in the book.
+
+FAQ
+Q: Who is this for?
+A: Freelancers, consultants and small agencies who sell their own services and want a repeatable way to find clients.
+
+Q: Does it guarantee clients or income?
+A: No. It gives you a system, templates and checklists. Results depend on your offer, your market and your consistency.
+
+Q: Is cold emailing allowed?
+A: It depends on your country and on who you contact. Appendix A explains the main principles (honesty, consent where required, easy opt-out) and points to the official pages to read. It is not legal advice.
+
+Q: Do I need special software?
+A: No. A spreadsheet and your email or LinkedIn account are enough. The CRM structure works in Excel, Google Sheets or LibreOffice.
+
+Q: I am just starting. Is it too advanced?
+A: No. It begins with choosing a niche and an offer, and it includes a 30-day plan.
+
+## FREE SAMPLE DESCRIPTION
+13-page preview: cover, contents, the ideal customer profile worksheet, outreach templates, discovery call scripts, the qualification worksheet and proposal frameworks.
+
+## CROSS-SELL
+- Recommended with Book 01 (The AI Workflow Playbook): Workflows 15 to 18 cover outreach drafting, follow-ups and call preparation with ChatGPT; this book supplies the strategy.
+- Recommended with Book 03 (Python Automation for Beginners) for readers who want to tidy lead lists and reports.
+
+## CLAIM CHECK (verified 2026-11-07)
+85 pages; 15 chapters; templates O1 to O20, F1 to F10, C1 to C10, P1 to P5; appendices A to E; no author text; no income claims.

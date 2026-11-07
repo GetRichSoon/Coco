@@ -1,0 +1,105 @@
+{
+  "slug": "aswb-clinical-90-day-study-plan",
+  "title": "The 90-Day Clinical Licensing Exam Study Plan",
+  "subtitle": "A structured, independent preparation schedule for the 2026 ASWB Clinical (LCSW) examination",
+  "author": "The Velvet Foundry Editorial Team",
+  "language": "en",
+  "publisher": "The Velvet Foundry",
+  "description": "You have ninety days before you can sit the Clinical examination again, a free content outline, and a blank study-plan template. This book is the part nobody gives you: the sequenced, dated implementation. It assigns all ninety days across four phases, allocates your study time by the published 2026 area weights, schedules spaced review on named days, and rehearses pacing for a 122-question paper in four hours. It shows you how to turn an outline statement into a self-test question of your own, how to read a failed score report without over-reading it, and what to change when a week goes wrong. Written for the candidate who does not need another pile of content, but a plan that survives contact with a real calendar. Contains no examination questions and no confidential examination material. Not affiliated with, endorsed by or approved by ASWB.",
+  "keywords": [
+    "lcsw exam study plan",
+    "clinical social work licensing exam",
+    "aswb clinical exam preparation",
+    "social work licensing exam 2026",
+    "lcsw study schedule",
+    "90 day study plan",
+    "social work exam retake"
+  ],
+  "categories": [
+    "Education & Teaching > Studying & Workbooks > Study Guides",
+    "Politics & Social Sciences > Social Sciences > Social Work",
+    "Education & Teaching > Studying & Workbooks > Test Preparation"
+  ],
+  "template": "ebook-study-guide",
+  "team": "ebooks",
+  "subteam": "ebooks/gumroad",
+  "category": "ebooks/gumroad/licensing-exam-prep",
+  "price_usd": 12.99,
+  "price_by_platform": {
+    "gumroad": 34.0,
+    "kdp": 12.99
+  },
+  "tags_by_platform": {
+    "gumroad": [
+      "lcsw exam",
+      "aswb",
+      "social work",
+      "exam prep",
+      "study plan",
+      "licensing exam",
+      "study schedule",
+      "lcsw 2026",
+      "exam retake"
+    ]
+  },
+  "kdp": {
+    "list_price": 12.99,
+    "file_mb": 0.06,
+    "delivery_cost_usd": 0.01,
+    "royalty_35_usd": 4.55,
+    "eligible_for_70": true,
+    "royalty_70_usd": 9.09,
+    "min_list_price_at_35": 0.99,
+    "best_rate": "70%",
+    "requires_print_price_at_least": 16.24,
+    "note_70_percent": "to keep 70%, no print edition may be listed below $16.24"
+  },
+  "direct": {
+    "payhip_free_5pct": 32.3,
+    "payhip_pro_0pct": 34.0,
+    "gumroad_direct": 30.1,
+    "gumroad_discover": 23.8,
+    "note": "processor fees are charged on top by Payhip and are inside Gumroad's cut"
+  },
+  "per_store_limits": {
+    "kdp": {
+      "title": 200,
+      "subtitle": 200,
+      "description": 4000,
+      "keywords": 7,
+      "categories": 3
+    },
+    "google_play_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 0,
+      "categories": 2
+    },
+    "payhip": {
+      "title": 200,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "gumroad": {
+      "title": 150,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "kobo": {
+      "title": 200,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 3
+    },
+    "apple_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 2
+    }
+  },
+  "problems": [],
+  "ready_for_upload": true
+}

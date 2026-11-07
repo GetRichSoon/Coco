@@ -1,0 +1,6 @@
+AI Workflow Playbook covers (Gumroad Product 01)
+
+cover_portrait_6x9.png 1800x2700 front cover
+gumroad_cover_1280x720.png 2560x1440 product cover
+gumroad_thumbnail_600x600.png 1200x1200 thumbnail
+cover.html: source, open with ?f=portrait|landscape|square

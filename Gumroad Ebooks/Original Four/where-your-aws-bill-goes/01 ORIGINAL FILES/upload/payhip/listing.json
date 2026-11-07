@@ -1,0 +1,30 @@
+{
+  "platform": "Payhip",
+  "platform_id": "payhip",
+  "slug": "where-your-aws-bill-goes",
+  "fields": {
+    "title": "Where Your AWS Bill Goes",
+    "author": "The Velvet Foundry Editorial Team",
+    "description": "Somebody forwarded you the AWS invoice and asked what happened. You opened the console, found a number, and could not explain it. Not because you are careless, but because almost nothing about a cloud bill is arranged to answer that question.\n\nThis book is about the arrangement. Nearly every AWS charge is one of five pricing shapes applied to a large number of services. Once you can recognise the shapes, a service you have never used becomes readable from its pricing page in two minutes, and your own bill becomes a document you can explain line by line.\n\nWHAT YOU WILL BE ABLE TO DO: trace any line on your bill back to the decision that caused it; find the three things driving most of your spend in about an hour; read a cost graph's shape and know whether you are looking at a deploy, an accumulation or a scheduled job before you have grouped anything; and tell the difference between a cost that is a problem and one that is simply the price of running the thing.\n\nWHAT IS INSIDE: 25 chapters covering the five shapes you actually pay for; reading the bill as a structure rather than a total; tagging and attribution; account and organisation design; data transfer, the cost nobody models; per-gigabyte network appliances; idle and orphaned resources; storage, retention and lifecycle; provisioned capacity and commitments; right-sizing without guessing; managed databases and their five meters; serverless against always-on; non-production environments; budgets, alarms and anomaly detection; costing a design before you build it; a one-hour monthly review; a full month worked end to end from a surprising bill to a fixed one; and when to stop optimising. Every chapter ends with the ways it goes wrong and a checklist.\n\nWHAT MAKES IT DIFFERENT: it contains no prices. Not one rate, tier, allowance or figure. That is deliberate. AWS prices differ by region, change without notice and depend on commitments, so a book stating them would be wrong for most readers on the day it shipped, and wrong in a way that looked authoritative. This book teaches what you are charged for and which decisions change how much you consume. AWS tells you how much, for free, and correctly.\n\nWHO IT IS FOR: the engineer or small team who owns an AWS bill they did not entirely design, and who would like to be able to explain it.\n\nWHO SHOULD NOT BUY IT: cloud financial management specialists with a dedicated team and a commitment portfolio, anyone who wants to be told which instance to buy without understanding why, and anyone looking for a list of tricks to apply without the reasoning.\n\nFORMAT: reflowable EPUB, about 15,000 words, readable on a phone. No worksheets to print.\n\nGeneral educational material about cloud cost mechanics. Not financial, accounting or procurement advice. Not affiliated with, endorsed by or sponsored by Amazon Web Services, Inc.",
+    "keywords": [
+      "aws cost optimization",
+      "cloud cost management",
+      "aws billing explained",
+      "devops cost control",
+      "aws architecture cost",
+      "cloud financial operations",
+      "reduce aws bill"
+    ],
+    "price_usd": 9.99
+  },
+  "upload_file": "where-your-aws-bill-goes.epub",
+  "cover_file": "cover.jpg",
+  "cover_required": false,
+  "notes": [
+    "Takes the EPUB directly.",
+    "5% on the free plan, plus processor fees."
+  ],
+  "ready_for_upload": true,
+  "blocking": [],
+  "connection": "not checked here - run scripts/publishing-readiness.mjs"
+}

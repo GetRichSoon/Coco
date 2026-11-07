@@ -1,0 +1,23 @@
+{
+  "cover": "cover.jpg",
+  "shape": "portrait",
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "facts": {
+    "bytes": 227096,
+    "format": "JPEG",
+    "mode": "RGB",
+    "width": 1600,
+    "height": 2560,
+    "dpi": 300,
+    "shape": "portrait",
+    "ratio": 1.6,
+    "wants_ratio": 1.6,
+    "stdev": 47.94,
+    "edge_luma": 25.2,
+    "thumb_px": "160x256",
+    "thumb_title_contrast": 59.73,
+    "cover_text_checked": 177
+  }
+}

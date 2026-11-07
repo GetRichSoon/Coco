@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" width="1200" height="650" font-family="Georgia, Segoe UI, serif"><title>Spaced review schedule for phase 2 material</title>
+<rect width="1200" height="650" fill="#f4efe6"/>
+<text x="600.0" y="48.0" text-anchor="middle" font-size="32" font-weight="bold" fill="#0f2238">Spaced review: studied once, back at +1, +3 and +6 weeks</text>
+<text x="600.0" y="82.0" text-anchor="middle" font-size="20" font-weight="normal" fill="#0f2238">S = studied that week. R = reviewed on that week's review day. Phase 3 = reviewed again in weeks 10 to 12</text>
+<rect x="190.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="242.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 1</text>
+<rect x="298.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="350.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 2</text>
+<rect x="406.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="458.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 3</text>
+<rect x="514.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="566.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 4</text>
+<rect x="622.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="674.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 5</text>
+<rect x="730.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="782.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 6</text>
+<rect x="838.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="890.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 7</text>
+<rect x="946.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="998.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Wk 8</text>
+<rect x="1054.0" y="104.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="134.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#f4efe6">Phase 3</text>
+<text x="40.0" y="134.0" text-anchor="start" font-size="22" font-weight="bold" fill="#0f2238">Studied in</text>
+<text x="40.0" y="190.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 1</text>
+<rect x="190.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="190.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="242.0" y="189.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="298.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="350.0" y="189.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="514.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="566.0" y="189.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="838.0" y="158.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="890.0" y="189.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="242.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 2</text>
+<rect x="190.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="350.0" y="241.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="406.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="458.0" y="241.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="622.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="674.0" y="241.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="946.0" y="210.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="998.0" y="241.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="294.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 3</text>
+<rect x="190.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="458.0" y="293.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="514.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="566.0" y="293.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="730.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="782.0" y="293.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="1054.0" y="262.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="293.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="346.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 4</text>
+<rect x="190.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="566.0" y="345.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="622.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="674.0" y="345.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="838.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="890.0" y="345.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="1054.0" y="314.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="345.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="398.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 5</text>
+<rect x="190.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="674.0" y="397.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="730.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="782.0" y="397.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="946.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="998.0" y="397.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="1054.0" y="366.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="397.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="450.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 6</text>
+<rect x="190.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="782.0" y="449.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="838.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="890.0" y="449.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="1054.0" y="418.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="449.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="502.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 7</text>
+<rect x="190.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="890.0" y="501.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="946.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="998.0" y="501.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<rect x="1054.0" y="470.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="501.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="40.0" y="554.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Week 8</text>
+<rect x="190.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="298.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="406.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="514.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="622.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="730.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="838.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="1054.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#ffffff" stroke="#0f2238" stroke-width="1"/>
+<rect x="946.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="998.0" y="553.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#f4efe6">S</text>
+<rect x="1054.0" y="522.0" width="104.0" height="44.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="1106.0" y="553.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">R</text>
+<text x="600.0" y="630.0" text-anchor="middle" font-size="19" font-weight="normal" fill="#0f2238">Material from weeks 6, 7 and 8 returns twice in phase 3; the Phase 3 column marks the first return.</text>
+</svg>

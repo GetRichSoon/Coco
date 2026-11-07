@@ -1,0 +1,11 @@
+Product 01: The AI Workflow Playbook (final package, v2, 2026-11-07)
+NOT PUBLISHED.
+The_AI_Workflow_Playbook.pdf             final manuscript PDF (65 pages, 6x9 in, bookmarks + linked contents)
+The_AI_Workflow_Playbook_FREE_SAMPLE.pdf 6-page sample for the product page
+1 Strategy, SEO and Sales Page v2.md     listing, SEO, competitors, price (v1 file kept)
+2-4 Manuscript Part 1-3 (.md)            source text (build_pdf.py rebuilds the PDF)
+5 PDF Formatting, Image Prompts and Checklist.md   image prompts (no images made)
+6 Organic Discovery Strategy (all five books).md
+_backup v1 2026-11-07/                   original v1 files, untouched
+Cover images from the earlier session: ..\..\Design Atelier\Gumroad Covers\AI Workflow Playbook\ (kept)
+Research for Books 02-05: ..\Organic Research\

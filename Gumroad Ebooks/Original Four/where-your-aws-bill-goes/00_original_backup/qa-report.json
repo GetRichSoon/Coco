@@ -1,0 +1,217 @@
+{
+  "product_id": "TVF-DEV-0001",
+  "slug": "where-your-aws-bill-goes",
+  "title": "Where Your AWS Bill Goes",
+  "version": "1.0.0",
+  "checked_at_utc": "2026-10-29T20:39:43+00:00",
+  "checker": "studio/ebooks/check_content.py",
+  "verdict": "PASS",
+  "production_ready": true,
+  "critical_failures": 0,
+  "warnings": 1,
+  "checks": [
+    {
+      "id": "no_pass_guarantee",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must not promise an examination result",
+      "evidence": []
+    },
+    {
+      "id": "no_affiliation_claim",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must not imply any relationship with the awarding body",
+      "evidence": []
+    },
+    {
+      "id": "no_exam_content_claim",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must not claim to contain examination material",
+      "evidence": []
+    },
+    {
+      "id": "no_placeholders",
+      "severity": "critical",
+      "ok": true,
+      "detail": "no unresolved placeholder may reach a store",
+      "evidence": []
+    },
+    {
+      "id": "disclaimer_complete",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the disclaimer must carry all 4 required clauses",
+      "evidence": []
+    },
+    {
+      "id": "scenarios_labelled",
+      "severity": "critical",
+      "ok": true,
+      "detail": "every illustrative scenario must say it is not an examination question",
+      "evidence": [
+        {
+          "scenarios_found": 0,
+          "unlabelled_at_lines": []
+        }
+      ]
+    },
+    {
+      "id": "no_duplicate_chapters",
+      "severity": "critical",
+      "ok": true,
+      "detail": "two chapters must not share a title",
+      "evidence": []
+    },
+    {
+      "id": "no_duplicate_paragraphs",
+      "severity": "critical",
+      "ok": true,
+      "detail": "a substantial paragraph must not appear twice",
+      "evidence": []
+    },
+    {
+      "id": "no_stale_format_facts",
+      "severity": "critical",
+      "ok": true,
+      "detail": "retired-format facts may only appear as history, never as the current position",
+      "evidence": []
+    },
+    {
+      "id": "current_terminology",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must use the terminology and figures its subject requires",
+      "evidence": []
+    },
+    {
+      "id": "no_unsupported_claims",
+      "severity": "warning",
+      "ok": false,
+      "detail": "generalisations a reviewer should confirm or soften",
+      "evidence": [
+        {
+          "match": "always",
+          "line": 88,
+          "context": "onsume.** The current number for your region and account is always one click away in the AWS pricing pages and the AWS Pricing"
+        },
+        {
+          "match": "always",
+          "line": 624,
+          "context": "onents. Cache. Aggregate before shipping. This is    almost always the largest saving and the only one that compounds. 2. **Mo"
+        },
+        {
+          "match": "always",
+          "line": 694,
+          "context": "estion to ask of any managed network component is therefore always the same: **what does it cost to exist, and what does it co"
+        },
+        {
+          "match": "always",
+          "line": 1143,
+          "context": "scheduled off when nobody is using them.  # Serverless and always-on have different cost shapes  Not better and worse. Differ"
+        },
+        {
+          "match": "Always",
+          "line": 1150,
+          "context": "sion as much as an architectural one.  ## The two shapes  **Always-on** costs a roughly flat amount per unit of time regardles"
+        },
+        {
+          "match": "always",
+          "line": 1161,
+          "context": "cally, because most workloads are idle most of the time and always-on pays for the idleness. Above it, always-on wins, because"
+        },
+        {
+          "match": "always",
+          "line": 1161,
+          "context": "of the time and always-on pays for the idleness. Above it, always-on wins, because at high steady utilisation you stop paying"
+        },
+        {
+          "match": "always",
+          "line": 1167,
+          "context": "h long quiet periods means per-request. Flat and high means always-on. Flat and low means you are paying for idle and should b"
+        },
+        {
+          "match": "always",
+          "line": 1192,
+          "context": "d concurrency you provisioned to control latency \u2014 which is always-on cost wearing serverless clothing.  Count the whole path"
+        },
+        {
+          "match": "always",
+          "line": 1201,
+          "context": "r than the function, or provisioned concurrency has made it always-on. Check logs first; log ingestion is a frequent and ungla"
+        },
+        {
+          "match": "always",
+          "line": 1209,
+          "context": "ory settings and compare the product, not the rate.  **\"The always-on version looks cheaper per request.\"** At current volume"
+        },
+        {
+          "match": "always",
+          "line": 1219,
+          "context": "ot just compute. - Provisioned concurrency is recognised as always-on cost.  # Environments, and how non-production escapes  F"
+        }
+      ]
+    },
+    {
+      "id": "word_count",
+      "severity": "warning",
+      "ok": true,
+      "detail": "body words should sit between 15000 and 25000",
+      "evidence": [
+        {
+          "words": 15072
+        }
+      ]
+    },
+    {
+      "id": "chapter_count",
+      "severity": "warning",
+      "ok": true,
+      "detail": "at least 6 chapters",
+      "evidence": [
+        {
+          "chapters": 25
+        }
+      ]
+    },
+    {
+      "id": "epub_structure",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the package must pass check_epub.py",
+      "evidence": []
+    }
+  ],
+  "structural": {
+    "ran": true,
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "facts": {
+      "bytes": 54770,
+      "opf_path": "OEBPS/content.opf",
+      "metadata": {
+        "identifier": "urn:uuid:6d55ef72-7895-5fc2-882b-8af119a499e1",
+        "title": "Where Your AWS Bill Goes",
+        "language": "en",
+        "creator": "The Velvet Foundry Editorial Team"
+      },
+      "spine_length": 25,
+      "toc_entries": 25,
+      "external_links": [],
+      "sections_present": [
+        "copyright",
+        "introduction",
+        "conclusion",
+        "about",
+        "next book"
+      ],
+      "words": 15233
+    }
+  },
+  "upload_readiness": {
+    "ran": false
+  },
+  "note": "production_ready is false whenever any critical check fails. The publishing step reads this field and refuses to send a book that does not carry a PASS."
+}

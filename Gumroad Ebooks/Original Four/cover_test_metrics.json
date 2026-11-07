@@ -1,0 +1,118 @@
+{
+ "aswb-clinical-90-day-study-plan": [
+  [
+   "A",
+   "Bold exam-prep blue with exam name and year",
+   6.9,
+   4.8,
+   6.0,
+   51,
+   36
+  ],
+  [
+   "B",
+   "Clean planner, light with orange exam day",
+   12.5,
+   2.7,
+   8.7,
+   51,
+   36
+  ],
+  [
+   "C",
+   "Navy and copper (old baseline)",
+   14.3,
+   7.6,
+   12.3,
+   51,
+   36
+  ]
+ ],
+ "keep-your-own-books": [
+  [
+   "A",
+   "Ledger page, light cream with green band",
+   14.6,
+   5.3,
+   14.6,
+   42,
+   30
+  ],
+  [
+   "B",
+   "Solid teal guide with coral accent",
+   5.5,
+   3.7,
+   5.5,
+   42,
+   30
+  ],
+  [
+   "C",
+   "Navy and copper (old baseline)",
+   14.4,
+   7.6,
+   12.3,
+   42,
+   30
+  ]
+ ],
+ "retake-exam-technique": [
+  [
+   "A",
+   "Annotated score report (cream, navy, copper)",
+   14.0,
+   3.3,
+   14.0,
+   38,
+   27
+  ],
+  [
+   "B",
+   "Two bubbles (white, navy, teal)",
+   16.1,
+   4.1,
+   16.1,
+   38,
+   27
+  ],
+  [
+   "C",
+   "Badge and proof (deep blue, teal band)",
+   16.1,
+   5.5,
+   13.6,
+   38,
+   27
+  ]
+ ],
+ "where-your-aws-bill-goes": [
+  [
+   "A",
+   "The bill, opened (light paper, circled line)",
+   16.0,
+   3.3,
+   16.0,
+   51,
+   36
+  ],
+  [
+   "B",
+   "Five meters (dark navy tiles)",
+   14.6,
+   6.3,
+   14.1,
+   51,
+   36
+  ],
+  [
+   "C",
+   "Cut the spike (bold yellow and black)",
+   11.7,
+   11.7,
+   11.7,
+   51,
+   36
+  ]
+ ]
+}

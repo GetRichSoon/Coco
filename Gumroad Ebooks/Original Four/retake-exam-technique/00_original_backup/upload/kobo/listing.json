@@ -1,0 +1,38 @@
+{
+  "platform": "Kobo Writing Life",
+  "platform_id": "kobo",
+  "slug": "retake-exam-technique",
+  "fields": {
+    "title": "The Retake Method: Exam Technique for Candidates Retaking a Professional Licensing Exam",
+    "subtitle": "How to read a failed score report, decide between two plausible answers, pace the sitting, and have the conversations that make a second attempt possible",
+    "author": "The Velvet Foundry Editorial Team",
+    "publisher": "The Velvet Foundry",
+    "language": "en",
+    "description": "After reading, the reader can turn a failed score report into a diagnosis, apply fixed decision rules to FIRST, NEXT, BEST and MOST LIKELY questions, break ties between two plausible options, hold a per-question pace, hold the retake conversation with employer and family, and run an exam-day routine and a last-ten-minutes routine.\n\nWHO IT IS FOR: An adult who failed a professional licensing exam once or more, in any field, has a multiple-choice style retake booked or planned, and wants a method for how to sit the exam rather than another content review.\n\nWHO SHOULD NOT BUY IT: Anyone who wants subject content, practice questions or a pass guarantee, or whose exam is oral, practical or essay-only.\n\nWHAT IS INSIDE: 17 chapters on the playbook arc: the situation after a fail, a decision framework for reading questions and breaking ties, the scripts to say to yourself and to others, prose templates, and an action plan for the next hour, week and month.\n\nFORMAT: reflowable EPUB, about 17000 words, readable on a phone. No worksheets to print or write into.\n\nGeneral educational material about exam technique. Exam-agnostic. Not affiliated with, endorsed by or approved by any examination body. Not clinical, legal, tax or financial advice.",
+    "keywords": [
+      "exam technique",
+      "retaking a licensing exam",
+      "failed licensing exam what next",
+      "professional exam retake",
+      "multiple choice exam strategy",
+      "test anxiety exam day",
+      "licensing exam study method"
+    ],
+    "categories": [
+      "Education & Teaching > Studying & Workbooks > Study Skills",
+      "Education & Teaching > Test Preparation",
+      "Business & Money > Careers"
+    ],
+    "price_usd": 7.99
+  },
+  "upload_file": "retake-exam-technique.epub",
+  "cover_file": "cover.jpg",
+  "cover_required": false,
+  "notes": [
+    "Takes the EPUB directly.",
+    "Royalty terms were NOT verified in the 2026-10-28 research run: confirm in the Writing Life dashboard before pricing."
+  ],
+  "ready_for_upload": true,
+  "blocking": [],
+  "connection": "not checked here - run scripts/publishing-readiness.mjs"
+}

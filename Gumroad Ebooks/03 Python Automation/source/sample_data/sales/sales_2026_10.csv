@@ -1,0 +1,25 @@
+date,region,product,units,unit_price
+2026-10-03,North,Notebook,20,4.5
+2026-10-04,East,Pen set,11,7.25
+2026-10-04,North,Notebook,19,4.5
+2026-10-04,South,Notebook,15,4.5
+2026-10-05,East,Folder,9,2.2
+2026-10-05,East,Planner,28,12.0
+2026-10-06,North,Folder,11,2.2
+2026-10-06,South,Planner,25,12.0
+2026-10-07,East,Notebook,12,4.5
+2026-10-07,North,Notebook,7,4.5
+2026-10-13,South,Folder,13,2.2
+2026-10-14,East,Pen set,12,7.25
+2026-10-15,East,Notebook,26,4.5
+2026-10-16,East,Notebook,13,4.5
+2026-10-16,East,Planner,6,12.0
+2026-10-16,South,Folder,3,2.2
+2026-10-18,East,Pen set,25,7.25
+2026-10-18,North,Pen set,12,7.25
+2026-10-20,South,Planner,16,12.0
+2026-10-21,North,Planner,20,12.0
+2026-10-23,East,Pen set,30,7.25
+2026-10-23,South,Notebook,17,4.5
+2026-10-25,East,Notebook,10,4.5
+2026-10-26,North,Pen set,27,7.25

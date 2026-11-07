@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500" font-family="Georgia, Segoe UI, serif"><title>The 90 days in four phases</title>
+<rect width="1200" height="500" fill="#f4efe6"/>
+<text x="600.0" y="52.0" text-anchor="middle" font-size="34" font-weight="bold" fill="#0f2238">The 90 days in four phases</text>
+<text x="600.0" y="88.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Bar widths are proportional to days</text>
+<rect x="40.0" y="120.0" width="84.1" height="100.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="82.6" y="182.0" text-anchor="middle" font-size="30" font-weight="bold" fill="#f4efe6">1</text>
+<rect x="127.1" y="120.0" width="693.9" height="100.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="475.6" y="165.0" text-anchor="middle" font-size="28" font-weight="bold" fill="#0f2238">2 Rotate</text>
+<text x="475.6" y="200.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Days 8-63</text>
+<rect x="824.0" y="120.0" width="258.3" height="100.0" rx="0" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="954.7" y="165.0" text-anchor="middle" font-size="28" font-weight="bold" fill="#0f2238">3 Consolidate</text>
+<text x="954.7" y="200.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Days 64-84</text>
+<rect x="1085.3" y="120.0" width="71.7" height="100.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="1121.7" y="182.0" text-anchor="middle" font-size="30" font-weight="bold" fill="#f4efe6">4</text>
+<text x="40.0" y="270.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 1: days 1-7</text>
+<text x="40.0" y="300.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Baseline, priority order, written calendar</text>
+<text x="40.0" y="340.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 2: days 8-63 (8 weeks)</text>
+<text x="40.0" y="370.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">5 study days, 1 review day, 1 off day, plus 1 absorbing slot a week</text>
+<text x="40.0" y="410.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Phase 3: days 64-84 (3 weeks)</text>
+<text x="40.0" y="440.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">2 pacing sessions a week plus repair; no new statements after day 70</text>
+<text x="1160.0" y="270.0" text-anchor="end" font-size="24" font-weight="bold" fill="#0f2238">Phase 4: days 85-90</text>
+<text x="1160.0" y="300.0" text-anchor="end" font-size="22" font-weight="normal" fill="#0f2238">No new material; day 90 is exam day</text>
+</svg>

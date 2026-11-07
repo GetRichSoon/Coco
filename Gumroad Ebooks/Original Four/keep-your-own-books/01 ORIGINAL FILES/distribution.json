@@ -1,0 +1,63 @@
+{
+  "product_id": "TVF-BIZ-0001",
+  "slug": "keep-your-own-books",
+  "version": "1.0.0",
+  "title": "Keep Your Own Books",
+  "state": "PUBLISHED",
+  "state_at": "2026-10-29T20:09:00.801Z",
+  "approved_by": "mangesh",
+  "approved_at": "2026-10-29T20:08:59.253Z",
+  "history": [
+    {
+      "at": "2026-10-29T20:08:52.697Z",
+      "from": "RESEARCHED",
+      "to": "SPEC_APPROVED",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    },
+    {
+      "at": "2026-10-29T20:08:54.128Z",
+      "from": "SPEC_APPROVED",
+      "to": "BUILDING",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    },
+    {
+      "at": "2026-10-29T20:08:56.011Z",
+      "from": "BUILDING",
+      "to": "QA",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    },
+    {
+      "at": "2026-10-29T20:08:57.059Z",
+      "from": "QA",
+      "to": "GUMROAD_DRAFT",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    },
+    {
+      "at": "2026-10-29T20:08:58.048Z",
+      "from": "GUMROAD_DRAFT",
+      "to": "FOUNDER_REVIEW",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    },
+    {
+      "at": "2026-10-29T20:08:59.253Z",
+      "from": "FOUNDER_REVIEW",
+      "to": "APPROVED",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    },
+    {
+      "at": "2026-10-29T20:09:00.801Z",
+      "from": "APPROVED",
+      "to": "PUBLISHED",
+      "by": "mangesh",
+      "note": "standing authorisation, founder instruction 2026-10-30: publish each completed ebook, do not ask for approval between products"
+    }
+  ],
+  "platforms": {},
+  "note": "PUBLISHED is reachable only from APPROVED, and APPROVED only from FOUNDER_REVIEW with a named founder. Nothing in this repository can publish without that."
+}

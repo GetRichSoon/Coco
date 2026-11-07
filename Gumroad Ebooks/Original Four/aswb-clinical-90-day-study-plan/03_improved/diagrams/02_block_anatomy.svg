@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" font-family="Georgia, Segoe UI, serif"><title>Anatomy of a 90 minute study block</title>
+<rect width="1200" height="640" fill="#f4efe6"/>
+<text x="600.0" y="52.0" text-anchor="middle" font-size="34" font-weight="bold" fill="#0f2238">One 90 minute study block</text>
+<text x="600.0" y="88.0" text-anchor="middle" font-size="21" font-weight="normal" fill="#0f2238">One content area per block. With only 60 minutes, cut the middle, never the retrieval or the questions.</text>
+<rect x="40.0" y="120.0" width="121.4" height="80.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="102.2" y="168.0" text-anchor="middle" font-size="26" font-weight="bold" fill="#f4efe6">10 min</text>
+<rect x="164.4" y="120.0" width="681.4" height="80.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="506.7" y="168.0" text-anchor="middle" font-size="26" font-weight="bold" fill="#0f2238">55 min</text>
+<rect x="848.9" y="120.0" width="245.9" height="80.0" rx="0" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="973.3" y="168.0" text-anchor="middle" font-size="26" font-weight="bold" fill="#0f2238">20 min</text>
+<rect x="1097.8" y="120.0" width="59.2" height="80.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="1128.9" y="168.0" text-anchor="middle" font-size="17" font-weight="bold" fill="#f4efe6">5 min</text>
+<rect x="40.0" y="248.0" width="26.0" height="26.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="84.0" y="270.0" text-anchor="start" font-size="26" font-weight="bold" fill="#0f2238">Retrieve (10 min)</text>
+<text x="84.0" y="302.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Source closed. Write what you remember from the last block.</text>
+<rect x="40.0" y="336.0" width="26.0" height="26.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="84.0" y="358.0" text-anchor="start" font-size="26" font-weight="bold" fill="#0f2238">Work statements (55 min)</text>
+<text x="84.0" y="390.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">2 or 3 statements: what it is, why it matters in practice,</text>
+<text x="84.0" y="418.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">how it shows up in a decision, what it is often confused with.</text>
+<rect x="40.0" y="452.0" width="26.0" height="26.0" rx="0" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="84.0" y="474.0" text-anchor="start" font-size="26" font-weight="bold" fill="#0f2238">Write questions (20 min)</text>
+<text x="84.0" y="506.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">From memory, source closed: recall and decision questions.</text>
+<rect x="40.0" y="540.0" width="26.0" height="26.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="84.0" y="562.0" text-anchor="start" font-size="26" font-weight="bold" fill="#0f2238">Log (5 min)</text>
+<text x="84.0" y="594.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Area, statements, retrieval result, confidence 1-5 on the scorecard.</text>
+</svg>

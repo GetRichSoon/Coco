@@ -1,0 +1,66 @@
+PAYHIP METADATA
+Product name: Where Your AWS Bill Goes: Understand and Reduce Your AWS Costs
+Short description: Plain-English guide to why your AWS bill is what it is: five pricing shapes, a one-hour monthly review and an order for cutting cost.
+Price: 39.00 USD (Gumroad price; confirm for Payhip)
+Tags: aws,aws cost,cloud cost,cost optimization,aws billing,finops
+Product URL (suggested): payhip.com/b/<auto>  (Payhip makes the URL; slug idea: where-your-aws-bill-goes)
+Files to upload: 04_where-your-aws-bill-goes.pdf, 04_where-your-aws-bill-goes.epub
+Cover/thumbnail: 04_where-your-aws-bill-goes_cover_1600x2560.jpg (portrait) or the landscape/square images in the book folder
+Download instructions (put in the product's note): After purchase, download the PDF for reading on a computer or tablet and the EPUB for phones and e-readers. If a file will not open, reply to the receipt email.
+Preview: attach the free sample PDF from the book folder as a free preview file (not the paid book)
+Description:
+Somebody forwarded you the AWS bill and asked why it went up. This guide shows you how to read it, trace each line to the decision that caused it, and reduce the cost in the right order, without needing a dedicated FinOps team.
+
+WHAT YOU WILL BE ABLE TO DO
+• Trace any line on your AWS bill back to the decision that caused it
+• Read a cost graph's shape (a step, a ramp or a sawtooth) and know whether you are looking at a deploy, an accumulation or a scheduled job
+• Tell a cost that is a problem from a cost that is simply the price of running the thing
+• Understand data transfer, public IPv4 addresses, NAT gateways, idle and orphaned resources, storage retention, commitments and managed databases in plain language
+• Set up one alarm, one monthly review and one written note, so the next surprise reaches you in days rather than at month end
+
+THE IDEA
+Almost every AWS charge is one of five pricing shapes: time, storage, requests, data transfer and provisioned capacity. Learn the shapes and an unfamiliar service becomes readable from its pricing page in a couple of minutes. The book then gives you the order that matters: delete what nobody wants, then resize, then (only then) buy a discount.
+
+WHAT IS INSIDE
+• 20 numbered chapters plus a conclusion and sources: about 18,000 words, 68 pages
+• Why cloud bills surprise people, and the five things you actually pay for
+• Reading the bill as a structure: the billing pages, Cost Explorer, Data Exports and the Cost and Usage Report
+• Tagging and attribution; accounts, organisations and consolidated billing
+• Data transfer, the cost nobody models; the NAT gateway and other per-gigabyte appliances
+• Idle, forgotten and orphaned resources; storage, retention and lifecycle rules
+• Provisioned capacity and commitments; right-sizing without guessing
+• Managed databases and serverless against always-on; non-production environments
+• Budgets, alarms and anomaly detection; the one-hour monthly cost review
+• A full month worked from a surprising bill to a fixed one; costing a design before you build it; when to stop optimising
+• Five diagrams: the five pricing shapes, the why-did-it-go-up procedure, data-transfer boundaries, the right-sizing order and the monthly review
+• Checked against AWS documentation on 7 November 2026, with a dated sources list
+
+WHAT YOU DOWNLOAD
+A 6 x 9 inch PDF with a linked contents page and an EPUB for phones, tablets and e-readers (same text and diagrams).
+
+WHO IT IS FOR
+The engineer, tech lead or small team that owns an AWS bill they did not entirely design and would like to be able to explain it, including anyone who has just inherited an AWS account.
+
+WHO SHOULD NOT BUY IT
+Cloud financial management specialists with a dedicated team and a commitment portfolio; anyone who wants to be told which instance to buy without understanding why; anyone looking for tricks without the reasoning.
+
+HONEST LIMITS
+This book contains no prices, rates or free-tier amounts. AWS prices change and differ by region, so any figure printed here would be stale. The book teaches what you are charged for and which decisions change how much you consume; AWS's own pricing pages and Pricing Calculator tell you how much. Some statements about AWS behaviour could not be confirmed against current documentation and are worded cautiously in the text. Other cloud providers are not covered.
+
+This is general educational material about cloud cost mechanics, not financial, accounting or procurement advice. This book is independent. It is not affiliated with, endorsed by or sponsored by Amazon Web Services, Inc. or Amazon.com, Inc. "AWS" and the names of individual services are trademarks of their respective owners and are used only to identify the services described.
+
+FAQ
+Q: Does the book give me prices or example dollar amounts?
+A: No, on purpose. AWS prices change and differ by region. The book teaches where the money goes and which decisions change the quantity you consume.
+
+Q: Do I need to be an AWS expert?
+A: No. You need access to your account's billing data (the book explains the permission step) and some familiarity with terms like instance, bucket and region.
+
+Q: Is this the same as the AWS documentation?
+A: It covers ground that AWS documents, organised around five pricing shapes, an order of operations and a monthly routine, with sources so you can check each point.
+
+Q: Does it cover other clouds?
+A: No, only AWS.
+
+Q: What formats do I get?
+A: A PDF and an EPUB.

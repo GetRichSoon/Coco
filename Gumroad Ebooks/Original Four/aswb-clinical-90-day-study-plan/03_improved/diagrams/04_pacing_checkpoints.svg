@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 470" width="1200" height="470" font-family="Georgia, Segoe UI, serif"><title>Pacing checkpoints for 122 questions in 240 minutes</title>
+<rect width="1200" height="470" fill="#f4efe6"/>
+<text x="600.0" y="48.0" text-anchor="middle" font-size="34" font-weight="bold" fill="#0f2238">Pacing checkpoints: 122 questions, 240 minutes</text>
+<text x="600.0" y="82.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Working target 210 minutes (about 103 seconds a question), reserve 30 minutes</text>
+<rect x="60.0" y="190.0" width="945.0" height="50.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<rect x="1005.0" y="190.0" width="135.0" height="50.0" rx="0" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="611.2" y="222.0" text-anchor="middle" font-size="19" font-weight="bold" fill="#0f2238">Working time</text>
+<text x="1072.5" y="223.0" text-anchor="middle" font-size="20" font-weight="bold" fill="#0f2238">Reserve</text>
+<line x1="60.0" y1="174" x2="60.0" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="60.0" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">0 min</text>
+<text x="60.0" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Start</text>
+<line x1="217.5" y1="174" x2="217.5" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="217.5" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">35 min</text>
+<text x="217.5" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Q20</text>
+<line x1="370.5" y1="174" x2="370.5" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="370.5" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">69 min</text>
+<text x="370.5" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Q40</text>
+<line x1="532.5" y1="174" x2="532.5" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="532.5" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">105 min</text>
+<text x="532.5" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Q61</text>
+<line x1="690.0" y1="174" x2="690.0" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="690.0" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">140 min</text>
+<text x="690.0" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Q81</text>
+<line x1="843.0" y1="174" x2="843.0" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="843.0" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">174 min</text>
+<text x="843.0" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Q101</text>
+<line x1="1005.0" y1="174" x2="1005.0" y2="256" stroke="#0f2238" stroke-width="3"/>
+<text x="1005.0" y="166.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">210 min</text>
+<text x="1005.0" y="286.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Q122</text>
+<text x="532.5" y="320.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#b87333">End of section 1 (61 questions)</text>
+<text x="600.0" y="380.0" text-anchor="middle" font-size="26" font-weight="bold" fill="#0f2238">If you check only once, check at the end of section one: about 105 minutes.</text>
+<text x="600.0" y="418.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">At 130 minutes you have a problem you can still fix. At question 110 you cannot.</text>
+</svg>

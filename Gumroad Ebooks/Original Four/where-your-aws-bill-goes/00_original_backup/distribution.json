@@ -1,0 +1,63 @@
+{
+  "product_id": "TVF-DEV-0001",
+  "slug": "where-your-aws-bill-goes",
+  "version": "1.0.0",
+  "title": "Where Your AWS Bill Goes",
+  "state": "PUBLISHED",
+  "state_at": "2026-10-29T20:41:51.802Z",
+  "approved_by": "mangesh",
+  "approved_at": "2026-10-29T20:41:51.318Z",
+  "history": [
+    {
+      "at": "2026-10-29T20:41:47.924Z",
+      "from": "RESEARCHED",
+      "to": "SPEC_APPROVED",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    },
+    {
+      "at": "2026-10-29T20:41:48.474Z",
+      "from": "SPEC_APPROVED",
+      "to": "BUILDING",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    },
+    {
+      "at": "2026-10-29T20:41:49.093Z",
+      "from": "BUILDING",
+      "to": "QA",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    },
+    {
+      "at": "2026-10-29T20:41:50.159Z",
+      "from": "QA",
+      "to": "GUMROAD_DRAFT",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    },
+    {
+      "at": "2026-10-29T20:41:50.648Z",
+      "from": "GUMROAD_DRAFT",
+      "to": "FOUNDER_REVIEW",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    },
+    {
+      "at": "2026-10-29T20:41:51.318Z",
+      "from": "FOUNDER_REVIEW",
+      "to": "APPROVED",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    },
+    {
+      "at": "2026-10-29T20:41:51.802Z",
+      "from": "APPROVED",
+      "to": "PUBLISHED",
+      "by": "mangesh",
+      "note": "standing authorisation 2026-10-30"
+    }
+  ],
+  "platforms": {},
+  "note": "PUBLISHED is reachable only from APPROVED, and APPROVED only from FOUNDER_REVIEW with a named founder. Nothing in this repository can publish without that."
+}

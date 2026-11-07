@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1174" width="800" height="1174" font-family="Georgia, Segoe UI, serif"><title>When you are behind: what to cut and what never to cut</title>
+<rect width="800" height="1174" fill="#f4efe6"/>
+<text x="400.0" y="40.0" text-anchor="middle" font-size="30" font-weight="bold" fill="#0f2238">Are you behind? Decide in advance</text>
+<rect x="30.0" y="66.0" width="740.0" height="140.0" rx="8" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="400.0" y="100.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#f4efe6">Two questions</text>
+<text x="400.0" y="134.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#f4efe6">1. More than 3 study blocks missed in the last fortnight?</text>
+<text x="400.0" y="168.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#f4efe6">2. Review accuracy flat or falling in 2 or more areas?</text>
+<rect x="30.0" y="240.0" width="740.0" height="84.0" rx="8" fill="#ffffff" stroke="#0f2238" stroke-width="2"/>
+<text x="50.0" y="274.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Neither</text>
+<text x="50.0" y="304.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Not behind. The absorbing slot handles it. Carry on.</text>
+<rect x="30.0" y="340.0" width="740.0" height="84.0" rx="8" fill="#ffffff" stroke="#0f2238" stroke-width="2"/>
+<text x="50.0" y="374.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">One</text>
+<text x="50.0" y="404.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Use the absorbing slot, then the triage order below.</text>
+<rect x="30.0" y="440.0" width="740.0" height="84.0" rx="8" fill="#ffffff" stroke="#0f2238" stroke-width="2"/>
+<text x="50.0" y="474.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Both</text>
+<text x="50.0" y="504.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Run the compressed plan (you have lost 2 weeks or more).</text>
+<text x="400.0" y="570.0" text-anchor="middle" font-size="26" font-weight="bold" fill="#0f2238">Triage order when time is short</text>
+<rect x="30.0" y="594.0" width="236.0" height="226.0" rx="8" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="148.0" y="628.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">Cut 1st</text>
+<text x="148.0" y="662.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">New rated-3</text>
+<text x="148.0" y="691.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">statements</text>
+<rect x="282.0" y="594.0" width="236.0" height="226.0" rx="8" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="400.0" y="628.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">Cut 2nd</text>
+<text x="400.0" y="662.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Rated-2 breadth</text>
+<text x="400.0" y="691.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">in your strongest</text>
+<text x="400.0" y="720.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">area</text>
+<rect x="534.0" y="594.0" width="236.0" height="226.0" rx="8" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="652.0" y="628.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">Cut 3rd</text>
+<text x="652.0" y="662.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">One block a week</text>
+<text x="652.0" y="691.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">from your</text>
+<text x="652.0" y="720.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">strongest area,</text>
+<text x="652.0" y="749.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">down to the one-</text>
+<text x="652.0" y="778.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">block floor</text>
+<text x="400.0" y="856.0" text-anchor="middle" font-size="26" font-weight="bold" fill="#0f2238">Never cut</text>
+<rect x="30.0" y="876.0" width="236.0" height="110.0" rx="8" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="148.0" y="920.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">The review day</text>
+<rect x="282.0" y="876.0" width="236.0" height="110.0" rx="8" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="400.0" y="920.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">Phase 3 pacing</text>
+<text x="400.0" y="949.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">sessions</text>
+<rect x="534.0" y="876.0" width="236.0" height="110.0" rx="8" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="652.0" y="920.0" text-anchor="middle" font-size="22" font-weight="bold" fill="#0f2238">The off day</text>
+<text x="30.0" y="1026.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Compressed plan: phase 2 shrinks to 6 weeks (rated-1</text>
+<text x="30.0" y="1055.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">statements only). Phases 3 and 4 stay unchanged.</text>
+<text x="30.0" y="1096.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">More than 4 weeks lost: decide at day 63 (end of study week 8)</text>
+<text x="30.0" y="1125.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">whether to sit on day 90 at all.</text>
+</svg>

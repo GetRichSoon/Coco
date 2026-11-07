@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: The AI Workflow Playbook
+Subtitle: 30 Practical ChatGPT Systems for Small Business, Marketing, Sales & Daily Operations
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>You already know ChatGPT can write. The problem is turning that into work you can trust: every new chat starts from nothing, answers come out generic, and you are never sure what to check before you send.</p><p>The AI Workflow Playbook gives you 30 repeatable workflows for the jobs a small business does every week, each with a copy-and-paste prompt and a checklist for reviewing the result before anyone sees it. It is a 67-page guide for small business owners, freelancers, solopreneurs, consultants and creators. No technical background is needed.</p><h3>WHAT YOU GET</h3><ul><li>12 chapters (about 9,300 words)</li><li>30 workflows, each laid out the same way: problem, outcome, tools, steps, prompt, example input, example output, a verify checklist and common mistakes</li><li>31 copy-and-paste prompts, plus a reusable prompt template</li><li>6 worksheets: task audit, business context notes, workflow test log, privacy rules, review ladder and 30-day scorecard</li><li>A one-page AI use policy template you can adapt for your business</li><li>A worked week-1 example and a 30-day implementation plan</li><li>A setup section on ChatGPT projects, memory, file uploads and data controls, described as documented on 7 November 2026</li><li>A glossary and a list of official sources to check</li></ul><h3>INSIDE THE 30 WORKFLOWS</h3><p>Foundations: a reusable Business Context Block, a prompt improver, an output-format library. Research: customer profiles from your own messages, competitor comparison from pages you paste, review theme analysis. Marketing: a monthly content calendar, one piece in five formats, posts in your voice, blog briefs. Email: a welcome sequence, customer reply drafting, newsletters from rough notes, a tone check for difficult messages. Sales: an ideal lead profile, personalized outreach, follow-ups, call prep and summaries. Customer service: FAQ builder, reply macros, complaint triage. Admin: meeting notes to actions, proposals, job descriptions. Data: list cleaning, spreadsheet formulas, plain-English monthly reports. Systems: an SOP builder, checklists and quick training, and an audit of what to automate first.</p><h3>WHY IT IS DIFFERENT FROM A PROMPT LIST</h3><p>Every workflow ends with a human check. The book teaches you to anonymize what you paste, mark what the AI does not know, and verify numbers, dates and promises yourself. One rule runs through it: AI drafts, you decide.</p><h3>WHO IT IS FOR</h3><p>Small business owners, freelancers, solopreneurs, consultants and creators who already use or want to start using ChatGPT at work.</p><h3>WHO IT IS NOT FOR</h3><p>People looking for guaranteed income, &quot;set and forget&quot; automation, or a technical guide to building bots or integrations. The book makes no income or growth promises and does not cover tools such as Zapier.</p><h3>GOOD TO KNOW</h3><ul><li>The workflows run in a normal chat by pasting text. Features such as projects, memory and file uploads change by plan and over time, so check your own account.</li><li>Examples are fictional and for illustration.</li><li>This is an educational guide, not legal, tax or professional advice.</li><li>The PDF contains no diagrams or photographs.</li></ul><p> FAQ Q: Do I need a paid ChatGPT plan? A: The workflows are written for a normal chat with pasted text. Some optional features differ by plan, so check what your account offers.</p><p>Q: Will it work with other AI assistants? A: The prompts are plain text and usually adapt, but the book is written for ChatGPT and has not been tested with others.</p><p>Q: I do not run a business. Is it useful? A: Many workflows (email, summaries, SOPs, spreadsheets, meeting notes) suit freelancers and professionals. Chapters 6 and 7 assume you serve customers.</p><p>Q: Is it safe to put customer information into ChatGPT? A: Chapter 11 explains what not to paste, how to anonymize, and which account settings to check. It does not rep
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Business & Money > Small Business & Entrepreneurship
+  2. Computers & Technology > Artificial Intelligence & Semantics
+Keywords (7 boxes, each up to 50 characters):
+  1. ChatGPT for small business
+  2. ChatGPT prompts for business
+  3. AI workflows small business
+  4. ChatGPT SOP templates
+  5. ChatGPT marketing prompts
+  6. AI productivity for freelancers
+  7. ChatGPT customer service templates
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 05_chatgpt-workflows-small-business.epub  (0.4 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 05_chatgpt-workflows-small-business_cover_1600x2560.jpg (upscaled from 1024x1536: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 14.00 USD  -> 35% royalty = 4.90.  B) 12.99 USD -> 70% = 9.03, 35% = 4.55. NOT SET: needs your approval.

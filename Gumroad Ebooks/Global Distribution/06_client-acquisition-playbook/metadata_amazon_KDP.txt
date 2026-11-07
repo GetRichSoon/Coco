@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: The Client Acquisition Playbook
+Subtitle: A Practical System for Finding Leads, Booking Calls & Winning Clients
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>If your client pipeline depends on luck and the occasional referral, this book replaces it with a system you can run every week: choose a niche, make a clear offer, find the right people, start honest conversations, run discovery calls, send proposals and follow up without nagging.</p><p>The Client Acquisition Playbook is an 85-page guide for freelancers, independent consultants, small agencies and service businesses. It follows one path from &quot;who should I contact?&quot; to &quot;signed proposal&quot;, and every step has a template you can copy, instructions for using it, and a filled-in example.</p><h3>WHAT YOU GET</h3><ul><li>15 chapters plus an introduction, a conclusion and five appendices (more than 13,000 words)</li><li>20 outreach templates: cold email, LinkedIn messages, referral asks, warm introductions, community replies and more</li><li>10 follow-up templates</li><li>10 discovery call scripts for different situations</li><li>5 proposal frameworks, each with a filled example</li><li>An ideal customer profile worksheet with a filled example</li><li>A client qualification worksheet with a simple scoring method and a worked example</li><li>A lead tracking system and a CRM spreadsheet structure (4 sheets, drop-down lists, example rows and conversion formulas)</li><li>A 30-day client acquisition roadmap</li><li>Pricing worked through with real arithmetic (hourly, project, value and retainer)</li><li>An appendix on ethics, consent, anti-spam rules and platform rules, pointing you to the official sources to read</li><li>Common mistakes and fixes in every chapter, a glossary, a templates index and references</li></ul><h3>WHAT IS INSIDE</h3><p>1 Understanding client acquisition. 2 Finding profitable customer niches. 3 Understanding ideal customers. 4 Creating attractive service offers. 5 Building portfolios and credibility. 6 Finding leads. 7 Cold email prospecting. 8 LinkedIn outreach. 9 Content driven lead generation. 10 Discovery calls. 11 Client qualification. 12 Proposals and closing. 13 Pricing and negotiation. 14 Follow up systems. 15 Building repeatable client acquisition processes.</p><h3>HOW IT IS DIFFERENT</h3><p>Most client acquisition products are narrow: a pack of cold email templates, or a beginner&#x27;s overview. This one covers the whole chain and shows you how the pieces connect. It does not promise income, &quot;10x&quot; results or overnight clients, and it does not recommend scraping or automation that breaks a platform&#x27;s rules.</p><h3>WHO IT IS FOR</h3><p>Freelancers, consultants, coaches, small agencies and service-based business owners who want a repeatable way to find and win clients.</p><h3>WHO IT IS NOT FOR</h3><p>Anyone looking for guaranteed results or a bot that sends messages for them. This book is about honest, personal outreach.</p><h3>GOOD TO KNOW</h3><ul><li>Examples are for fictional businesses and are for illustration.</li><li>Rules about cold outreach, privacy and advertising differ by country. The book explains the principles and tells you where the official guidance is; it is not legal advice.</li><li>The CRM formulas were tested in LibreOffice on a small test workbook. They were not tested in Excel or Google Sheets, and the book says so.</li><li>The qualification score cut-offs are a decision aid proposed in the book, not a validated model.</li></ul><p> FAQ Q: Who is this for? A: Freelancers, consultants and small agencies who sell their own services and want a repeatable way to find clients.</p><p>Q: Does it guarantee clients or income? A: No. It gives you a system, templates and checklists. Results depend on your offer, your market and your consistency.</p><p>Q: Is cold emailing allowed? A: It depends on your country and on who you contact. Appendix A explains the main principles (honesty, consent where required, easy opt-out) and points to the official pages to read. It is not legal advice.</p><p>Q: Do I need special so
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Business & Money > Marketing & Sales > Sales & Selling
+  2. Business & Money > Entrepreneurship
+Keywords (7 boxes, each up to 50 characters):
+  1. client acquisition for freelancers
+  2. freelance lead generation
+  3. cold email templates freelancers
+  4. discovery call script
+  5. proposal templates consultants
+  6. find freelance clients
+  7. sales pipeline freelancers
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 06_client-acquisition-playbook.epub  (0.39 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 06_client-acquisition-playbook_cover_1600x2560.jpg (upscaled from 1024x1536: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 19.00 USD  -> 35% royalty = 6.65.  B) 12.99 USD -> 70% = 9.03, 35% = 4.55. NOT SET: needs your approval.

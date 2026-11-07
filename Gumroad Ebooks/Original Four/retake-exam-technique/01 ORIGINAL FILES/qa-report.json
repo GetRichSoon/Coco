@@ -1,0 +1,156 @@
+{
+  "product_id": "TVF-EXAM-0002",
+  "slug": "retake-exam-technique",
+  "title": "The Retake Method: Exam Technique for Candidates Retaking a Professional Licensing Exam",
+  "version": "1.0.0",
+  "checked_at_utc": "2026-11-02T13:46:22+00:00",
+  "checker": "studio/ebooks/check_content.py",
+  "verdict": "PASS",
+  "production_ready": true,
+  "critical_failures": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "id": "no_pass_guarantee",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must not promise an examination result",
+      "evidence": []
+    },
+    {
+      "id": "no_affiliation_claim",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must not imply any relationship with the awarding body",
+      "evidence": []
+    },
+    {
+      "id": "no_exam_content_claim",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must not claim to contain examination material",
+      "evidence": []
+    },
+    {
+      "id": "no_placeholders",
+      "severity": "critical",
+      "ok": true,
+      "detail": "no unresolved placeholder may reach a store",
+      "evidence": []
+    },
+    {
+      "id": "disclaimer_complete",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the disclaimer must carry all 4 required clauses",
+      "evidence": []
+    },
+    {
+      "id": "scenarios_labelled",
+      "severity": "critical",
+      "ok": true,
+      "detail": "every illustrative scenario must say it is not an examination question",
+      "evidence": [
+        {
+          "scenarios_found": 0,
+          "unlabelled_at_lines": []
+        }
+      ]
+    },
+    {
+      "id": "no_duplicate_chapters",
+      "severity": "critical",
+      "ok": true,
+      "detail": "two chapters must not share a title",
+      "evidence": []
+    },
+    {
+      "id": "no_duplicate_paragraphs",
+      "severity": "critical",
+      "ok": true,
+      "detail": "a substantial paragraph must not appear twice",
+      "evidence": []
+    },
+    {
+      "id": "no_stale_format_facts",
+      "severity": "critical",
+      "ok": true,
+      "detail": "retired-format facts may only appear as history, never as the current position",
+      "evidence": []
+    },
+    {
+      "id": "current_terminology",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the book must use the terminology and figures its subject requires",
+      "evidence": []
+    },
+    {
+      "id": "no_unsupported_claims",
+      "severity": "warning",
+      "ok": true,
+      "detail": "generalisations a reviewer should confirm or soften",
+      "evidence": []
+    },
+    {
+      "id": "word_count",
+      "severity": "warning",
+      "ok": true,
+      "detail": "body words should sit between 15000 and 30000",
+      "evidence": [
+        {
+          "words": 17748
+        }
+      ]
+    },
+    {
+      "id": "chapter_count",
+      "severity": "warning",
+      "ok": true,
+      "detail": "at least 6 chapters",
+      "evidence": [
+        {
+          "chapters": 22
+        }
+      ]
+    },
+    {
+      "id": "epub_structure",
+      "severity": "critical",
+      "ok": true,
+      "detail": "the package must pass check_epub.py",
+      "evidence": []
+    }
+  ],
+  "structural": {
+    "ran": true,
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "facts": {
+      "bytes": 54015,
+      "opf_path": "OEBPS/content.opf",
+      "metadata": {
+        "identifier": "urn:uuid:c17b4a93-fecb-519f-9dbf-773aa8384236",
+        "title": "The Retake Method: Exam Technique for Candidates Retaking a Professional Licensing Exam",
+        "language": "en",
+        "creator": "The Velvet Foundry Editorial Team"
+      },
+      "spine_length": 22,
+      "toc_entries": 22,
+      "external_links": [],
+      "sections_present": [
+        "copyright",
+        "introduction",
+        "conclusion",
+        "about",
+        "next book"
+      ],
+      "words": 17952
+    }
+  },
+  "upload_readiness": {
+    "ran": false
+  },
+  "note": "production_ready is false whenever any critical check fails. The publishing step reads this field and refuses to send a book that does not carry a PASS."
+}

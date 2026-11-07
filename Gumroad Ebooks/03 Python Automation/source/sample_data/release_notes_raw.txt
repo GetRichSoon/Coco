@@ -1,0 +1,9 @@
+  * fixed login bug  
+
+
+- Added dark mode
+• improved   search speed
+-added dark mode
+
+* FIXED crash on startup.
+   -  update   docs

@@ -1,0 +1,11 @@
+# Quality check (retake-exam-technique) 2026-11-07
+- [x] Corrected manuscript (02 FINAL MANUSCRIPTS/manuscript_final.md) and changelog with evidence
+- [x] Internal references verified by script (crossref_check.md; 0 unresolved)
+- [x] 5 diagrams integrated with captions (rebuilt for print legibility)
+- [x] Final PDF 6x9, contents links all resolve, page renders inspected (sample pages viewed)
+- [x] EPUB 3 built and validated with EPUBCheck 5.3: 0 fatals, 0 errors, 0 warnings
+- [x] Approved cover, landscape 1280x720, square 600x600 present
+- [x] Free sample PDF built (not published)
+- [x] Listing text matches the manuscript; category and tags set in Gumroad
+- [x] Price and URL unchanged
+- Limits: the full text of the ASWB and AWS books was not re-read line by line after correction; EPUB not opened on a physical reader.

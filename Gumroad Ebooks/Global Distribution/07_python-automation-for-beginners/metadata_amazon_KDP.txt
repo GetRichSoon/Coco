@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: Python Automation for Beginners
+Subtitle: 25 Practical Projects for Files, Spreadsheets, Reports & Everyday Work
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>If you do the same computer chores every week (renaming files, tidying spreadsheets, merging reports), a short Python script can do them in seconds. This book teaches Python automation through 25 complete projects instead of theory: you get the full code, an explanation of how it works, sample input, the real output from a test run, and the mistakes to watch for.</p><p>It is a 136-page guide for beginners, students and office professionals. You do not need programming experience. Chapter 2 walks you through installing Python and setting up, and Chapter 3 teaches only the Python you need.</p><h3>WHAT YOU GET</h3><ul><li>12 chapters, an introduction, a conclusion and six appendices</li><li>25 complete projects. Each has: the problem, the expected result, required tools, exact installation commands, the complete source code, a line-by-line explanation, sample input, the real sample output, how to run it, common errors and fixes, safe-use notes and an optional challenge</li><li>A free downloadable ZIP with all 25 scripts, the sample data, a requirements file, a README and the test log (83 files)</li><li>Python cheat sheet, common error reference, glossary, a project checklist, a 30-day learning plan and references</li></ul><h3>THE 25 PROJECTS</h3><p>Files and folders: bulk file renaming; organising a folder by file type; duplicate file detection (reports only, never deletes); automated backups with timestamps; folder size report; photo organising by date. CSV: CSV cleanup; splitting a large CSV; simple expense tracking; contact list de-duplication; data validation report; invoice number generator. Excel: Excel report generation; merging spreadsheets. PDF: PDF text extraction; merging PDFs; splitting a PDF by page range. Text: word frequency; find and replace across files with a dry run; release notes cleaner; log file summary. Reports and automation: a monthly report (Excel, Markdown and HTML); email draft preparation (drafts only, nothing is sent); API data retrieval with error handling; a scheduled report runner.</p><h3>SAFE BY DESIGN</h3><p>Scripts that change files have a dry-run mode or a backup step, nothing is deleted automatically, no passwords are stored in code, and the network project respects the public API it uses. The book teaches these habits.</p><h3>WHAT WAS TESTED</h3><p>All 25 scripts were run on Windows 11 with Python 3.14.4 (openpyxl 3.1.5, pypdf 7.0.0) on 2026-11-07, and the sample outputs in the book are the real outputs. A smaller compatibility check was run on Python 3.12.12: all 25 compile and show help, and nine representative scripts gave the same results.</p><h3>WHAT WAS NOT TESTED</h3><p>macOS and Linux, Windows Task Scheduler, cron and launchd, opening the email drafts in a mail program, opening the Excel files in Excel itself, and OCR for scanned PDFs. The book says so wherever it matters.</p><h3>WHO IT IS FOR</h3><p>Beginners, students, office professionals and freelancers who want to automate repetitive computer tasks.</p><h3>WHO IT IS NOT FOR</h3><p>People who want advanced software engineering, web development or data science. It is a first step, not a replacement for a full programming course, and it does not promise you will become a professional developer.</p><h3>GOOD TO KNOW</h3><ul><li>Needs Python 3.12 or newer. Only 6 of the 25 projects need an extra package (openpyxl or pypdf); the rest use the standard library.</li><li>Word documents (.docx) are not covered.</li><li>Run scripts on copies of your files first.</li></ul><p> FAQ Q: Do I need to know programming? A: No. Chapter 3 teaches the basics you need, and every project explains its code.</p><p>Q: Which Python version and operating system? A: Python 3.12 or newer. The scripts were tested on Windows 11. They use portable code and should work on macOS and Linux, but those were not tested.</p><p>Q: Do the scripts really work? A: Every script was run against the sample data included in th
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Computers & Technology > Programming > Python
+  2. Computers & Technology > Programming > Software Development
+Keywords (7 boxes, each up to 50 characters):
+  1. Python automation for beginners
+  2. automate Excel with Python
+  3. Python projects beginners
+  4. Python file automation scripts
+  5. Python CSV PDF automation
+  6. Python scripts office work
+  7. openpyxl pypdf tutorial
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 07_python-automation-for-beginners.epub  (0.45 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 07_python-automation-for-beginners_cover_1600x2560.jpg (upscaled from 1024x1536: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 14.00 USD  -> 35% royalty = 4.90.  B) 12.99 USD -> 70% = 9.03, 35% = 4.55. NOT SET: needs your approval.

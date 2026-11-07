@@ -1,0 +1,23 @@
+{
+  "cover": "cover-thumb.jpg",
+  "shape": "square",
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "facts": {
+    "bytes": 131458,
+    "format": "JPEG",
+    "mode": "RGB",
+    "width": 1024,
+    "height": 1024,
+    "dpi": 300,
+    "shape": "square",
+    "ratio": 1.0,
+    "wants_ratio": 1.0,
+    "stdev": 60.54,
+    "edge_luma": 30.7,
+    "thumb_px": "160x160",
+    "thumb_title_contrast": 60.77,
+    "cover_text_checked": 191
+  }
+}

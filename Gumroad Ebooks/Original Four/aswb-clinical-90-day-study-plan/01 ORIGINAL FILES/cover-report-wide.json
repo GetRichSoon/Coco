@@ -1,0 +1,23 @@
+{
+  "cover": "cover-wide.jpg",
+  "shape": "wide",
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "facts": {
+    "bytes": 160310,
+    "format": "JPEG",
+    "mode": "RGB",
+    "width": 1920,
+    "height": 1080,
+    "dpi": 300,
+    "shape": "wide",
+    "ratio": 0.5625,
+    "wants_ratio": 0.5625,
+    "stdev": 40.26,
+    "edge_luma": 30.9,
+    "thumb_px": "160x90",
+    "thumb_title_contrast": 38.77,
+    "cover_text_checked": 191
+  }
+}
