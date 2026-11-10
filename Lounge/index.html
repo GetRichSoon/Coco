@@ -905,6 +905,83 @@ function orgPage() {
 // data file produced by an engine script. A source that cannot be read is named on screen; nothing here is a typed-in count.
 let CLOUD = null, cloudAt = 0, cloudBusy = false;
 const CLOUD_TABS = [['autonomy', 'Autonomy'], ['compute', 'Compute'], ['security', 'Security'], ['integrations', 'Integrations'], ['teams', 'Teams']];
+// ---------------------------------------------------------------- Structure page, extra tabs for the unified organisation (0039 + 0040)
+// The tree itself stays the Structure page's own (loadOrg/orgPage). These tabs add what 0039/0040 bring: readiness, the founder's
+// decisions and the brain routes. Units/products come from the Structure page's own load (no second read); only brains,
+// readiness and decisions are fetched here. Until 0039 is applied in Coco Cloud the tables are missing and the tabs say so.
+let OU = null, ouAt = 0, ouBusy = false;
+const OU_TABS = [['readiness', 'Readiness'], ['decisions', 'Decisions'], ['brains', 'Brains']];
+async function ouLoad(force) {
+  if (ouBusy || (!force && OU && Date.now() - ouAt < 60000)) return;
+  ouBusy = true;
+  const t = async (q) => { try { const r = await q; return r.error ? { err: r.error.message || 'error' } : { rows: r.data || [] }; } catch (e) { return { err: String(e.message || e) }; } };
+  const [brains, ready, recon] = await Promise.all([
+    t(sb.from('org_brains').select('id,level,unit_id,product_id,parent_brain_id,state').limit(3000)),
+    t(sb.from('org_readiness').select('id,entity,readiness,missing').limit(4000)),
+    t(sb.from('org_reconciliation_view').select('*').order('id').limit(500)),
+  ]);
+  OU = { brains, ready, recon }; ouAt = Date.now(); ouBusy = false;
+  if (page === 'structure') render();
+}
+function ouPage() {
+  const tab = OU_TABS.some((x) => x[0] === sub) ? sub : 'readiness';
+  const sec = (title, body) => `<div class="card2" style="margin-top:14px"><h3>${esc(title)}</h3>${body}</div>`;
+  if (!OU || !ORG) return '<p class="muted">Reading the organisation…</p>';
+  if (ORG.source !== 'cloud' || OU.brains.err) return sec('Unified organisation', `<span class="muted">Built and tested, not applied in Coco Cloud yet: migrations 0034, 0039 and 0040 wait for a verified backup and a founder YES.${OU.brains.err ? ' (' + esc(OU.brains.err) + ')' : ''}</span>`);
+  const U = ORG.units, P = ORG.products || [], BR = OU.brains.rows || [], R = (OU.ready.rows || []), Q = (OU.recon.rows || []);
+  const kids = (id) => U.filter((u) => u.parent_id === id && u.state !== 'retired');
+  const rd = new Map(R.map((r) => [r.entity + ':' + r.id, r]));
+  const tone = { CLOUD_READY: 'good', TOOLS_CONNECTED: 'warn', BRAIN_ASSIGNED: 'warn' };
+  const ready = (ent, id) => { const r = rd.get(ent + ':' + id); return r ? `<span class="chip ${tone[r.readiness] || ''}" title="${esc((r.missing || []).join('; '))}">${esc(r.readiness.replace(/_/g, ' ').toLowerCase())}</span>` : ''; };
+  const below = (id) => { const out = []; const walk = (x) => kids(x).forEach((k) => { out.push(k); walk(k.id); }); walk(id); return out; };
+  const houses = U.filter((u) => u.kind === 'house'), openQ = Q.filter((q) => q.status === 'open');
+  if (tab === 'readiness') {
+    const stat = (n, l) => `<div class="stat"><b>${esc(String(n))}</b><span>${esc(l)}</span></div>`;
+    const opts = U.filter((u) => u.state !== 'retired' && !['organisation', 'group'].includes(u.kind)).map((u) => `<option value="${esc(u.id)}">${esc(u.display_name)} (${esc(u.id)})</option>`).join('');
+    return sec('GoodSpace', `<div class="stats">${stat(houses.length, 'Houses')}${stat(U.filter((u) => u.state !== 'retired').length, 'units')}${stat(P.filter((p) => !['merged', 'retired'].includes(p.status)).length, 'products')}${stat(BR.filter((b) => b.state !== 'retired').length, 'brains')}${stat(R.filter((r) => r.readiness === 'CLOUD_READY').length, 'ready for cloud work')}${stat(openQ.length, 'decisions open')}</div>
+      <div class="muted" style="margin-top:8px">Ready for cloud work = a brain, an agent with a prompt file and a workflow are connected. It does not mean tested.</div>`)
+      + sec('Give a unit a task', `<div class="actions"><select id="orgTaskUnit">${opts}</select><input id="orgTaskTitle" placeholder="What should it do?" style="flex:1;min-width:180px"><button class="btn filled" data-orgtask="1">Give task</button></div>
+      <div class="muted">It goes on the Board under the unit's House; the cloud executor picks the unit's brain and head agent.</div>`)
+      + sec('Houses', houses.map((h) => { const sub2 = below(h.id), ids = new Set([h.id, ...sub2.map((x) => x.id)]), prods = P.filter((p) => ids.has(p.unit_id) && !['merged', 'retired'].includes(p.status));
+        const pr = prods.filter((p) => (rd.get('product:' + p.id) || {}).readiness === 'CLOUD_READY').length;
+        return `<div class="row"><div class="grow"><b>${esc(h.display_name)}</b><div class="muted">${sub2.length} units · ${prods.length} products (${pr} ready for cloud work)</div></div>${ready('unit', h.id)}</div>`; }).join(''));
+  }
+  if (tab === 'decisions') {
+    const targets = (q) => `<select id="orgt-${q.id}"><option value="">Choose…</option>${(q.candidates || []).map((x) => `<option value="${esc(x.id)}">${esc(x.name)} (${esc(x.id)})</option>`).join('')}${houses.map((h) => `<option value="${esc(h.id)}">${esc(h.display_name)}</option>`).join('')}</select>`;
+    const card = (q) => `<div class="card2" style="margin-top:12px"><div style="display:flex;justify-content:space-between;gap:8px"><b>#${q.id} · ${esc(q.source)} ${esc(q.source_table)} · ${esc(q.legacy_id)}</b><span class="chip ${q.status === 'open' ? 'warn' : 'good'}">${esc(q.status)}</span></div>
+      <div style="margin-top:6px">${esc(q.question)}</div>
+      <div class="muted">Now: ${q.canonical_id ? esc((q.current_name || '') + ' (' + q.canonical_id + ')') : 'not placed'}${q.match ? ' · ' + esc(q.match) : ''}</div>
+      <div class="muted">Evidence: ${esc(q.evidence || 'none')}</div>
+      ${q.status === 'open' ? `<div class="actions" style="margin-top:8px">${targets(q)}<input id="orgn-${q.id}" placeholder="Note (optional)" style="flex:1;min-width:140px">
+        ${q.canonical_id ? `<button class="btn tonal" data-orgdo="${q.id}|confirm">Keep as it is</button>` : ''}<button class="btn tonal" data-orgdo="${q.id}|merge">Merge into chosen</button>
+        ${q.canonical_kind === 'unit' && String(q.canonical_id || '').startsWith('coco.unplaced.') ? `<button class="btn tonal" data-orgdo="${q.id}|move">Move under chosen</button>` : ''}
+        <button class="btn text" data-orgdo="${q.id}|retire">Retire</button><button class="btn text" data-orgdo="${q.id}|dismiss">Not now</button></div>`
+        : `<div class="muted">Decided: ${esc(q.resolution || '')} · ${esc(q.resolved_by || '')}${q.resolved_at ? ' · ' + esc(ago(q.resolved_at)) : ''}</div>`}</div>`;
+    return `<div class="muted" style="margin-top:10px">${openQ.length} open. Nothing here was guessed: each question is a link the old systems could not prove. A merge keeps the old record as retired history; nothing is deleted.</div>`
+      + openQ.map(card).join('') + (Q.length > openQ.length ? sec('Decided', Q.filter((q) => q.status !== 'open').map(card).join('')) : '');
+  }
+  const lv = BR.reduce((a, b) => ((a[b.level] = (a[b.level] || 0) + 1), a), {});
+  const bmap = new Map(BR.map((b) => [b.id, b])), chainOf = (id) => { const out = []; let c = bmap.get(id); while (c && out.length < 40) { out.push(c.id); c = bmap.get(c.parent_brain_id); } return out; };
+  return sec('Brains by level', Object.entries(lv).map(([k, v]) => `<div class="row"><div class="grow">${esc(k)}</div><b>${v}</b></div>`).join(''))
+    + sec('House brains and their route to the Global Brain', houses.map((h) => `<div class="row"><div class="grow"><b>${esc(h.display_name)}</b><div class="muted">${esc(chainOf('brain.' + h.id).join(' > ') || 'no brain')}</div></div></div>`).join(''));
+}
+async function orgDecide(spec) {
+  const [id, action] = spec.split('|'), target = ($('#orgt-' + id) || {}).value || null, note = ($('#orgn-' + id) || {}).value || null;
+  if (['merge', 'move'].includes(action) && !target) { toast('Choose where it goes first'); return; }
+  if (['merge', 'retire'].includes(action) && !confirm(action === 'merge' ? `Merge #${id} into ${target}? The old record stays as retired history.` : `Retire #${id}? It stays as history.`)) return;
+  const { error } = await sb.rpc('org_reconcile_decide', { p_id: Number(id), p_action: action, p_target: target, p_note: note });
+  if (error) { toast(error.message.replace(/^.*?:\s*/, '')); return; }
+  toast('Decided'); await ouLoad(true);
+}
+async function orgTask() {
+  const unitId = ($('#orgTaskUnit') || {}).value, title = (($('#orgTaskTitle') || {}).value || '').trim();
+  if (!unitId || !title) { toast('Choose a unit and write the task'); return; }
+  const units = (ORG && ORG.units) || [];
+  let h = units.find((x) => x.id === unitId); while (h && !h.house_id && h.parent_id) h = units.find((x) => x.id === h.parent_id);
+  const { error } = await sb.rpc('submit_task', { p_title: title, p_details: `unit: ${unitId}; brain: brain.${unitId}`, p_house: (h && h.house_id) || null, p_needs: 'cloud', p_device: deviceId, p_by: founderName() });
+  if (error) { toast(error.message.replace(/^.*?:\s*/, '')); return; }
+  toast('Task given'); $('#orgTaskTitle').value = '';
+}
 // Compute tab: renders CP.cloud from the control-plane snapshot (nova-hq scripts/cloud-monitor.mjs). Three kinds of numbers are
 // kept apart on screen - provider-reported, COCO-measured, estimated - and an unknown value says so; it is never drawn as 0.
 function cloudComputeTab() {
@@ -4280,7 +4357,12 @@ const V = {
       <h3 style="margin:8px 0">Waiting (${w.length})</h3><div class="card2">${w.map(row).join('') || '<span class="muted">All clear.</span>'}</div>
       <h3 style="margin:18px 0 8px">Decided</h3><div class="card2">${r.map(row).join('')}</div>`;
   },
-  structure() { return orgPage(); },
+  structure() {
+    const extra = OU_TABS.some((t) => t[0] === sub), open = OU && OU.recon && OU.recon.rows ? OU.recon.rows.filter((q) => q.status === 'open').length : null;
+    const bar = `<div class="tabs"><button data-sub="org:coco" class="${extra ? '' : 'on'}">Tree</button>${OU_TABS.map(([k, l]) => `<button data-sub="${k}" class="${k === sub ? 'on' : ''}">${esc(l)}${k === 'decisions' && open != null ? ' (' + open + ')' : ''}</button>`).join('')}</div>`;
+    if (extra) { ouLoad(); return bar + ouPage(); }
+    return bar + orgPage();
+  },
   cloud() { cloudLoad(); return cloudPage(); },
   company() {
     const tabs =`<div class="tabs">${D.houses.map(h => `<button data-sub="${h.id}" class="${sub === h.id ? 'on' : ''}">${esc(h.name)}</button>`).join('')}<button data-sub="decisions" class="${sub === 'decisions' ? 'on' : ''}">Decisions</button></div>`;
@@ -4921,6 +5003,8 @@ document.addEventListener('click', async (e) => {
   if (ds.bi === 'toggle') { BI_OPEN = !BI_OPEN; renderBrainIsland(); }
   if (ds.bifocus) { BI_FOCUS = ds.bifocus; BI_OPEN = true; renderBrainIsland(); }
   if (ds.bipage) { sub = 'growth'; location.hash = 'brain'; }
+  if (ds.orgdo) await orgDecide(ds.orgdo);
+  if (ds.orgtask) await orgTask();
   if (ds.newkind) { newKind = ds.newkind; newParent = {}; render(); }
   if (ds.sarchive) await structureOp('archive', ds.sarchive, `Archive ${ds.sarchive}? It stays in the company and can be restored.`);
   if (ds.srestore) await structureOp('restore', ds.srestore);
