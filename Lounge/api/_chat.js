@@ -31,7 +31,7 @@ export function engineFactory() {
   factory = new Function(
     'CP', 'LIVE', 'D', 'OUTPUTS', 'CONNS', 'CONN_LINKS', 'STRUCT', 'POLICIES', 'IDENT_IN', 'RELEASE_IN', 'CLOUD_RELEASE_IN',
     'esc', 'ago', 'num', 'online', 'devVersion', 'store', 'sb', 'toast', 'loadAll', 'policyOf', 'effective',
-    'control', 'connectionOp', 'structureOp', 'confirm', 'oauthConnect', 'connectionVerify', 'VERIFY_SAID',
+    'control', 'connectionOp', 'structureOp', 'confirm', 'oauthConnect', 'connectionVerify', 'VERIFY_SAID', 'ORGX',
     `${marks}\nIDENT = IDENT_IN; RELEASE = RELEASE_IN; CLOUD_RELEASE = CLOUD_RELEASE_IN;\n${struct}\n${chat}\n`
     + 'return { chatSend, chatSetScope, chatScopeKey, chatScopeLabel, chatTree, chatPending, chatResume, chatSetLive, chatCtxSave, chatCtxLoad,'
     + ' chatIntentOf: (t) => chatIntent(t), chatKnows: (id) => structureTree().nodes.has(id), setWho: (w) => { CHAT_WHO = w; } };');
@@ -62,7 +62,28 @@ const worlds = new Map();                     // founder email -> { at, w }
 async function world(run, email, now) {
   const hit = worlds.get(email); if (hit && now - hit.at < WORLD_MS) return hit.w;
   const [w] = await run({ sql: WORLD_SQL, params: [] });
+  w.org = await orgWorld(run);
   worlds.set(email, { at: now, w }); return w;
+}
+// The unified organisation (migrations 0034 + 0039 + 0040), read only when its tables exist: a separate statement, so the
+// main world query never fails because of it, and any error simply means "not applied" (null) for the engine.
+const ORG_SQL = `SELECT json_build_object(
+  'houses', (SELECT coalesce(json_agg(h ORDER BY h.name), '[]') FROM (SELECT u.id, u.display_name AS name,
+     (SELECT count(*) FROM public.org_products p JOIN public.org_units pu ON pu.id = p.unit_id WHERE (pu.id = u.id OR pu.id LIKE u.id || '.%') AND p.status NOT IN ('merged','retired')) AS products,
+     (SELECT count(*) FROM public.org_products p JOIN public.org_units pu ON pu.id = p.unit_id JOIN public.org_readiness r ON r.entity = 'product' AND r.id = p.id
+       WHERE (pu.id = u.id OR pu.id LIKE u.id || '.%') AND p.status NOT IN ('merged','retired') AND r.readiness = 'CLOUD_READY') AS ready
+     FROM public.org_units u WHERE u.kind = 'house') h),
+  'readiness', (SELECT coalesce(json_object_agg(readiness, n), '{}') FROM (SELECT readiness, count(*) n FROM public.org_readiness GROUP BY 1) x),
+  'brains', (SELECT count(*) FROM public.org_brains WHERE state <> 'retired'),
+  'not_ready_count', (SELECT count(*) FROM public.org_readiness WHERE readiness <> 'CLOUD_READY'),
+  'not_ready', (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, readiness, missing FROM public.org_readiness WHERE readiness <> 'CLOUD_READY' ORDER BY entity DESC, id LIMIT 8) x),
+  'open_decisions', (SELECT count(*) FROM public.org_reconciliation WHERE status = 'open')) AS org`;
+async function orgWorld(run) {
+  try {
+    const [p] = await run({ sql: "SELECT to_regclass('public.org_readiness') IS NOT NULL AND to_regclass('public.org_reconciliation') IS NOT NULL AS ok", params: [] });
+    if (!p || !p.ok) return null;
+    const [o] = await run({ sql: ORG_SQL, params: [] }); return (o && o.org) || null;
+  } catch { return null; }
 }
 export const forgetWorlds = () => worlds.clear();
 
@@ -99,7 +120,7 @@ export async function engineFor({ run, rpc, email, device, now = Date.now() }) {
     // of them. Checking an account is a platform call the cloud makes from Integrations.
     async () => ({ started: false, why: 'connecting opens the platform\'s own consent screen, so it is done from Integrations on the Lounge' }),
     async () => { notes.push('the account check runs from Integrations on the Lounge'); return null; },
-    {});
+    {}, w.org || null);
   const me = (w.founders || []).find((f) => String(f.email).toLowerCase() === String(email).toLowerCase());
   E.setWho({ device, by: (me && me.name) || email, call: (me && me.call_me) || null });
   return { E, notes, w };

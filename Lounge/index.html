@@ -2015,6 +2015,9 @@ const CHAT_WORDS = {
   pause: ['pause', 'roko', 'rok do', 'band karo', 'band kar', 'stop'],
   resume: ['resume', 'chalu', 'start karo', 'shuru', 'on karo'],
   claude: ['claude', 'token', 'tokens', 'ai usage', 'kharcha'],
+  // the unified organisation (0039): readiness, brains that cannot take work yet, the founder's open questions
+  organisation: ['organisation', 'organization', 'readiness', 'cloud ready', 'cloud-ready', 'disconnected brain', 'brains without', 'not ready',
+                 'open decisions', 'organisation decision', 'organization decision', 'unplaced', 'seven houses', 'all houses', 'saare house', 'sabhi house'],
   // The four devices and the one Coco version. Both answered from cloud rows the page already holds -
   // devices from their own heartbeats, the version from the release registry - so neither question
   // costs a Claude call and neither can be answered with a guess.
@@ -3130,6 +3133,8 @@ function chatIntent(message) {
   // "Are all four updated?" and "what version is Coco on?" are different questions about the same
   // two cloud rows, so they are matched before approvals: "is the update approved" is about a
   // release, not about the approvals list.
+  // before approvals/brain/connect: "show every disconnected brain" and "pending organisation decisions" are organisation questions
+  if (has('organisation')) return { intent: 'organisation', text, entities: found };
   if (has('devicever')) return { intent: 'devices_version', entities: found };
   if (has('release')) return { intent: 'release_state', entities: found };
   if (has('approvals')) return { intent: 'approvals', text, entities: found };
@@ -3364,6 +3369,20 @@ function chatRead(it) {
     o.forEach((x) => { byFlow[x.workflow_id || 'other'] = (byFlow[x.workflow_id || 'other'] || 0) + 1; });
     return say(o.length ? o.length + ' outputs recorded.' : 'No outputs have been produced yet.',
       Object.keys(byFlow).slice(0, 4).map((k) => ({ t: k, v: String(byFlow[k]), go: '#runs' })));
+  }
+  if (it.intent === 'organisation') {
+    // ORGX is handed in by the cloud engine (api/_chat.js orgWorld); on a page that ran the engine itself it is simply absent
+    const X = typeof ORGX !== 'undefined' ? ORGX : null;
+    if (!X) return say('The unified organisation is built and tested, but not applied in Coco Cloud yet, so I cannot read it. Migrations 0034, 0039 and 0040 wait for a verified backup and your YES.',
+      [{ t: 'Structure', v: 'open', go: '#structure' }]);
+    const r = X.readiness || {}, all = Object.values(r).reduce((a, b) => a + Number(b), 0), ready = Number(r.CLOUD_READY || 0);
+    if (/disconnect|without|not ready|missing|kaun nahi/i.test(it.text || '')) {
+      return say(`${X.not_ready_count} of ${all} units and products cannot take cloud work yet. ` + (X.not_ready || []).slice(0, 3).map((x) => `${x.id}: ${(x.missing || []).join(', ') || x.readiness}`).join('; ') + '.',
+        (X.not_ready || []).slice(0, 4).map((x) => ({ t: String(x.readiness).toLowerCase().replace(/_/g, ' '), v: x.id, go: '#structure' })));
+    }
+    if (/decision|reconcil|unplaced|faisla/i.test(it.text || '')) return say(`${X.open_decisions} organisation questions wait for your decision. Each shows its evidence; nothing was guessed.`, [{ t: 'Decisions', v: String(X.open_decisions), go: '#structure' }]);
+    return say(`${(X.houses || []).length} Houses, ${X.brains} brains. ${ready} of ${all} units and products are ready for cloud work (connected, not yet tested). ${X.open_decisions} organisation decisions are open.`,
+      (X.houses || []).slice(0, 8).map((h) => ({ t: h.name, v: `${h.ready}/${h.products} products ready`, go: '#structure' })));
   }
   if (it.intent === 'brain') {
     const items = chatBrain();
