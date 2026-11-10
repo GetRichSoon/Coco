@@ -904,7 +904,67 @@ function orgPage() {
 // Every number on this page comes from a cloud table (devices, jobs, capability_uses, policies, integrations, activity) or from a
 // data file produced by an engine script. A source that cannot be read is named on screen; nothing here is a typed-in count.
 let CLOUD = null, cloudAt = 0, cloudBusy = false;
-const CLOUD_TABS = [['autonomy', 'Autonomy'], ['security', 'Security'], ['integrations', 'Integrations'], ['teams', 'Teams']];
+const CLOUD_TABS = [['autonomy', 'Autonomy'], ['compute', 'Compute'], ['security', 'Security'], ['integrations', 'Integrations'], ['teams', 'Teams']];
+// Compute tab: renders CP.cloud from the control-plane snapshot (nova-hq scripts/cloud-monitor.mjs). Three kinds of numbers are
+// kept apart on screen - provider-reported, COCO-measured, estimated - and an unknown value says so; it is never drawn as 0.
+function cloudComputeTab() {
+  const X = CP && CP.cloud;
+  if (!X) return `<div class="card2" style="margin-top:14px"><h3>Compute</h3><span class="muted">Compute data arrives with the next control-plane snapshot (scripts/coco-control-snapshot.mjs).</span></div>`;
+  if (X.error) return `<div class="card2" style="margin-top:14px"><h3>Compute</h3><span class="chip bad">${esc(X.error)}</span></div>`;
+  const P = X.providers || {}, K = P.kaggle || {}, q = K.quota || {}, m = q.coco_measured || {};
+  const na = (why) => `<span class="muted">${esc(why || 'not available')}</span>`;
+  const v = (x, unit = '', why) => x == null ? na(why) : `<b>${esc(String(x))}</b>${unit ? ' ' + esc(unit) : ''}`;
+  const sec = (title, body) => `<div class="card2" style="margin-top:14px"><h3>${esc(title)}</h3>${body}</div>`;
+  const stat = (x, l) => `<div class="stat"><b>${x == null ? '–' : esc(String(x))}</b><span>${esc(l)}${x == null ? ' (unknown)' : ''}</span></div>`;
+  const tone = { ok: 'good', stale: 'warn', unknown: '' }, lvl = { ok: 'good', info: '', warning: 'warn', restrict: 'bad', stop: 'bad', unknown: '' };
+  const hrs = (h) => h == null ? null : h < 1 ? Math.round(h * 60) + ' min' : h + ' h';
+  const accepting = X.accepting_jobs || [];
+  // Overview
+  const overview = sec('Cloud overview', `<div class="stats">${stat(Object.keys(P).length, 'providers known')}${stat(Object.values(P).filter((p) => p.health === 'ok').length, 'healthy')}${stat(accepting.length, 'accepting jobs')}${stat((K.hardware && K.hardware.gpu) ? K.hardware.gpu.count : null, 'GPUs measured')}</div>
+    <div class="muted" style="margin-top:8px">Accepting new jobs: ${accepting.length ? accepting.map(esc).join(', ') : 'none'} · snapshot ${esc(ago(X.generated_at))}</div>`);
+  // Providers
+  const provs = sec('Provider manager', Object.entries(P).map(([id, p]) => `<div class="row"><div class="grow" style="min-width:0;overflow-wrap:anywhere"><b>${esc(p.name || id)}</b> <span class="muted">· ${esc(p.role || '')}${p.always_on === false ? ' · session based, not always on' : ''}</span>
+      <div class="muted">Login: ${esc((p.auth || {}).state || 'unknown')}${(p.auth || {}).missing && p.auth.missing.length ? ' (missing ' + p.auth.missing.map(esc).join(', ') + ')' : ''} · Connection: ${esc((p.connection || {}).state || 'unknown')}${(p.connection || {}).at ? ' ' + esc(ago(p.connection.at)) : ''}</div>
+      ${p.last_error ? `<div class="muted">Last problem: ${esc(p.last_error.text)} · ${esc(ago(p.last_error.at))}</div>` : ''}
+      ${(p.capabilities || []).length ? `<div class="muted">Can do: ${p.capabilities.map(esc).join(', ')}</div>` : ''}</div>
+      <span class="chip ${tone[p.health] || ''}">${esc(p.health === 'ok' ? 'Healthy' : p.health === 'stale' ? 'Stale' : 'Unknown')}</span></div>`).join(''));
+  // CPU / GPU / RAM & storage
+  const cpu = (K.hardware || {}).cpu, gpu = (K.hardware || {}).gpu;
+  const cpuSec = sec('CPU monitor', `<div>Kaggle cores: ${v(cpu && cpu.cores)} · RAM: ${v(cpu && cpu.ram_gb, 'GB')}</div>
+    <div class="muted">CPU sessions recorded by COCO: ${esc(String(m.cpu_only_sessions ?? '–'))} · all session time: ${v(hrs(m.session_hours_total))} · Kaggle publishes no CPU-hour allowance, so none is shown.</div>`);
+  const gpuSec = sec('GPU monitor', gpu ? `${gpu.devices.map((d) => `<div class="row"><div class="grow"><b>GPU ${esc(String(d.index))} · ${esc(d.name)}</b><div class="muted">${esc(String(d.vram_mib))} MiB on this card</div></div><span class="chip good">Measured</span></div>`).join('')}
+    <div class="muted">${esc(String(gpu.count))} separate GPUs. Their memory is not shared: a job needs to fit on one card. PyTorch ${esc((gpu.torch || {}).version || '?')}, CUDA ${esc((gpu.torch || {}).cuda_build || '?')} · measured ${esc(ago(gpu.at))}</div>
+    <div class="muted">GPU sessions: ${esc(String(m.gpu_sessions ?? '–'))} · GPU time this week (COCO-measured): ${v(hrs(m.gpu_session_hours_this_week))} · times a GPU was asked for but not given: ${esc(String(m.requested_gpu_got_cpu ?? '–'))}</div>` : na('No GPU has been measured on any provider yet.'));
+  const store = sec('RAM and storage', `<div>Kaggle RAM: ${v(cpu && cpu.ram_gb, 'GB')}</div>
+    <div>Backblaze B2: ${(P.b2 && P.b2.quota && P.b2.quota.coco_measured) ? v(P.b2.quota.coco_measured.rows, 'transfers recorded') : na('not connected, so nothing is measured')}</div>
+    <div class="muted">${P.b2 && P.b2.limits ? `Free storage ${esc(String(P.b2.limits.free_storage_gb.value))} GB, then $${esc(String(P.b2.limits.storage_price_usd_per_tb_month.value))}/TB a month (checked ${esc(P.b2.limits.free_storage_gb.checked)})` : ''}</div>`);
+  // Quota: three columns kept apart
+  const quota = sec('Quota manager', Object.entries(P).map(([id, p]) => { const Q = p.quota || {};
+      const pr = Q.provider_reported || {}, prText = pr.text || Object.entries(pr).map(([k, x]) => x && x.value != null ? `${k}: ${x.value}` : `${k}: ${x && x.why ? x.why : 'not available'}`).join(' · ') || 'not available';
+      return `<div class="row"><div class="grow" style="min-width:0;overflow-wrap:anywhere"><b>${esc(p.name || id)}</b>
+        <div class="muted"><b>Provider says:</b> ${esc(prText)}</div>
+        <div class="muted"><b>COCO measured:</b> ${Q.coco_measured ? esc(id === 'kaggle' ? `${m.sessions} sessions, GPU ${hrs(m.gpu_session_hours_total)} in total` : JSON.stringify(Q.coco_measured)) : 'nothing yet'}</div>
+        <div class="muted"><b>Founder confirmed:</b> ${Q.founder_confirmed ? esc(`${Q.founder_confirmed.gpu_hours_left} GPU h left, by ${Q.founder_confirmed.by} ${ago(Q.founder_confirmed.at)}`) : 'none'}</div>
+        <div class="muted"><b>Estimate:</b> ${Q.estimated ? esc(`${Q.estimated.gpu_hours_left} GPU h left (${Q.estimated.how})`) : id === 'kaggle' ? 'none (needs a founder-confirmed number)' : 'none'}</div></div>
+        <span class="chip ${lvl[Q.level] || ''}">${esc(Q.level === 'unknown' ? 'Level unknown' : Q.level)}</span></div>`; }).join('')
+    + `<div class="muted" style="margin-top:8px">Rules: 70% notify, 80% warn, 90% only essential work, 100% stop. Nothing is upgraded or paid for automatically.</div>`);
+  // Jobs, workers, bandwidth, cost, logs
+  const jobs = sec('Job manager (staging queue)', X.jobs && X.jobs.counts ? `<div class="stats">${Object.entries(X.jobs.counts).map(([k, n]) => stat(n, k)).join('')}</div>` : na(`${(X.jobs || {}).source || 'Staging queue'}: ${(X.jobs || {}).state || 'not connected'}`));
+  const workers = sec('Worker health', `<div class="muted">Kaggle runs a worker only while a session is open; between sessions nothing is running and that is expected. Last session ${K.last_success ? esc(ago(K.last_success)) : 'never'}.</div>`);
+  const bw = sec('Bandwidth', `<div>Neon egress: ${na('not connected')} · limit ${P.neon && P.neon.limits ? esc(String(P.neon.limits.egress_gb_month_per_project.value)) + ' GB a month' : '?'}</div><div>B2 download: ${na('not connected')} · free up to 3x the stored amount</div>`);
+  const cost = sec('Cost and usage', `<div>Spend so far: <b>$0</b> <span class="muted">(only free plans are in use; any paid step needs a YES)</span></div>
+    <div class="muted">Neon Free: ${P.neon && P.neon.limits ? esc(String(P.neon.limits.compute_cu_hours_month_per_project.value)) + ' CU-hours and ' + esc(String(P.neon.limits.storage_gb_per_project.value)) + ' GB per project' : '?'} (checked ${P.neon && P.neon.limits ? esc(P.neon.limits.compute_cu_hours_month_per_project.checked) : '?'})</div>`);
+  const logs = sec('Cloud notices', (X.notifications || []).map((n) => `<div class="row"><div class="grow">${esc(n.text)}</div><span class="chip ${lvl[n.severity] || ''}">${esc(n.severity)}</span></div>`).join('') || na('Nothing needs attention.'));
+  // History: one bar per real session, height = minutes, gold = GPU, grey = CPU, red outline = GPU asked but not given
+  const H = K.history || [], maxS = Math.max(60, ...H.map((h) => h.seconds || 0)), bw2 = 34;
+  const chart = H.length ? `<svg viewBox="0 0 ${H.length * (bw2 + 10) + 10} 130" style="width:100%;max-width:${H.length * 44 + 20}px;height:150px" role="img" aria-label="Session length per Kaggle session">
+      ${H.map((h, i) => { const ht = Math.max(2, Math.round((h.seconds || 0) / maxS * 100)), x = 10 + i * (bw2 + 10);
+        return `<rect x="${x}" y="${110 - ht}" width="${bw2}" height="${ht}" rx="6" fill="${h.gpu_count ? 'var(--primary)' : '#9aa0a6'}" ${h.mismatch ? 'stroke="var(--bad, #c0392b)" stroke-width="2"' : ''}><title>${esc(h.kernel)} v${esc(String(h.version))} · ${Math.round((h.seconds || 0) / 60 * 10) / 10} min · ${h.gpu_count ? h.gpu_count + ' GPU' : 'CPU only'}</title></rect>
+          <text x="${x + bw2 / 2}" y="124" font-size="9" text-anchor="middle" fill="currentColor">${esc(new Date(h.started).toISOString().slice(11, 16))}</text>`; }).join('')}
+    </svg><div class="muted">Each bar is one real Kaggle session (minutes). Accent colour: GPU. Grey: CPU only. Red edge: a GPU was asked for and not given.</div>` : na('No sessions recorded yet.');
+  const hist = sec('Historical performance', chart);
+  return overview + provs + cpuSec + gpuSec + store + quota + jobs + workers + bw + cost + logs + hist;
+}
 const INTEG_EVIDENCE_MS = 72 * 3600 * 1000;
 // Mapping from real rows to one status word. "Connected" is claimed only with evidence: a verified timestamp on an account or a
 // successful operation (last_ok_at) in the last 72 h. A connected row with no recent evidence is UNKNOWN, never a guess.
@@ -953,6 +1013,7 @@ async function cloudLoad(force) {
 function cloudPage() {
   const tab = CLOUD_TABS.some((t) => t[0] === sub) ? sub : 'autonomy';
   const bar = `<div class="tabs">${CLOUD_TABS.map(([k, l]) => `<button data-sub="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>`;
+  if (tab === 'compute') return bar + cloudComputeTab();   // from the control-plane snapshot; needs no live table read
   if (!CLOUD) return bar + `<p class="muted">Reading the cloud…</p>`;
   const C = CLOUD, tag = (t, c = '') => `<span class="chip ${c}">${esc(t)}</span>`, none = (t) => `<span class="muted">${esc(t)}</span>`;
   const sec = (title, body) => `<div class="card2" style="margin-top:14px"><h3>${esc(title)}</h3>${body}</div>`;

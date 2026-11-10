@@ -1,0 +1,316 @@
+{
+ "generated_at": "2026-11-10T11:10:46.053Z",
+ "thresholds": {
+  "info": 0.7,
+  "warning": 0.8,
+  "restrict": 0.9,
+  "stop": 1,
+  "_": "founder policy 2026-11-10: 70% notify, 80% warn, 90% restrict nonessential, 100% stop anything that could charge or exceed a quota"
+ },
+ "providers": {
+  "kaggle": {
+   "name": "Kaggle",
+   "role": "primary experimental CPU/GPU",
+   "always_on": false,
+   "auth": {
+    "state": "verified",
+    "how": "kaggle CLI login, account friendlyneighborhood",
+    "at": "2026-11-10T10:43:48Z"
+   },
+   "connection": {
+    "state": "last session completed",
+    "at": "2026-11-10T10:43:48Z"
+   },
+   "health": "ok",
+   "last_success": "2026-11-10T10:43:48Z",
+   "last_error": {
+    "at": "2026-11-10T09:35:39.000Z",
+    "text": "GPU requested but session ran CPU-only"
+   },
+   "hardware": {
+    "gpu": {
+     "at": "2026-11-10T10:43:48Z",
+     "count": 2,
+     "devices": [
+      {
+       "index": 0,
+       "name": "Tesla T4",
+       "vram_mib": 15360
+      },
+      {
+       "index": 1,
+       "name": "Tesla T4",
+       "vram_mib": 15360
+      }
+     ],
+     "vram_pooled": false,
+     "torch": {
+      "version": "2.11.0+cu130",
+      "cuda_build": "13.0",
+      "cuda_available": true
+     }
+    },
+    "cpu": {
+     "cores": 4,
+     "ram_gb": 31
+    }
+   },
+   "capabilities": [
+    "cpu",
+    "gpu",
+    "ffmpeg",
+    "nvenc",
+    "python",
+    "pytorch-cuda"
+   ],
+   "quota": {
+    "provider_reported": {
+     "gpu_hours_left": null,
+     "text": "Provider quota: Not available through supported API"
+    },
+    "coco_measured": {
+     "sessions": 6,
+     "gpu_sessions": 3,
+     "cpu_only_sessions": 3,
+     "requested_gpu_got_cpu": 3,
+     "session_hours_total": 0.342,
+     "gpu_session_hours_total": 0.097,
+     "gpu_session_hours_this_week": 0.097,
+     "week_starts": "2026-11-09T00:00:00.000Z"
+    },
+    "founder_confirmed": null,
+    "estimated": null,
+    "level": "unknown"
+   },
+   "restrictions": [
+    "one account, no quota multiplication",
+    "terms must be rechecked before commercial or monetized use",
+    "GPU only after the accelerator is chosen in the Kaggle UI; reuse that saved metadata (kernels pull -m)"
+   ],
+   "history": [
+    {
+     "started": "2026-11-10T09:04:29Z",
+     "seconds": 435,
+     "gpu_count": 0,
+     "requested": "gpu",
+     "mismatch": true,
+     "kernel": "friendlyneighborhood/coco-cloud-compute-proof",
+     "version": 1
+    },
+    {
+     "started": "2026-11-10T09:16:55Z",
+     "seconds": 435,
+     "gpu_count": 0,
+     "requested": "gpu",
+     "mismatch": true,
+     "kernel": "friendlyneighborhood/coco-cloud-compute-proof",
+     "version": 2
+    },
+    {
+     "started": "2026-11-10T09:35:39.000Z",
+     "seconds": 11,
+     "gpu_count": 0,
+     "requested": "gpu",
+     "mismatch": true,
+     "kernel": "friendlyneighborhood/coco-gpu-diagnostic",
+     "version": 1
+    },
+    {
+     "started": "2026-11-10T09:52:41Z",
+     "seconds": 62,
+     "gpu_count": 2,
+     "requested": "gpu",
+     "mismatch": false,
+     "kernel": "friendlyneighborhood/coco-gpu-diagnostic",
+     "version": 3
+    },
+    {
+     "started": "2026-11-10T09:55:21Z",
+     "seconds": 73,
+     "gpu_count": 2,
+     "requested": "gpu",
+     "mismatch": false,
+     "kernel": "friendlyneighborhood/coco-gpu-diagnostic",
+     "version": 4
+    },
+    {
+     "started": "2026-11-10T10:43:48Z",
+     "seconds": 215,
+     "gpu_count": 2,
+     "requested": "gpu",
+     "mismatch": false,
+     "kernel": "friendlyneighborhood/coco-gpu-diagnostic",
+     "version": 5
+    }
+   ]
+  },
+  "neon": {
+   "name": "Neon (coco-staging)",
+   "role": "isolated staging job queue",
+   "always_on": false,
+   "auth": {
+    "state": "not configured",
+    "missing": [
+     "NEON_CONNECTION_STRING",
+     "NEON_HTTP_ENDPOINT"
+    ]
+   },
+   "connection": {
+    "state": "not connected"
+   },
+   "health": "unknown",
+   "last_success": null,
+   "last_error": null,
+   "capabilities": [
+    "postgres",
+    "job-queue-staging"
+   ],
+   "limits": {
+    "plan": "Free",
+    "compute_cu_hours_month_per_project": {
+     "value": 100,
+     "source": "https://neon.com/pricing",
+     "checked": "2026-11-10",
+     "page_updated": "2026-11-04"
+    },
+    "storage_gb_per_project": {
+     "value": 1,
+     "source": "https://neon.com/pricing",
+     "checked": "2026-11-10"
+    },
+    "egress_gb_month_per_project": {
+     "value": 5,
+     "source": "https://neon.com/pricing",
+     "checked": "2026-11-10"
+    },
+    "autoscale_max_cu": {
+     "value": 2,
+     "source": "https://neon.com/pricing",
+     "checked": "2026-11-10"
+    }
+   },
+   "quota": {
+    "provider_reported": {
+     "cu_hours_used": {
+      "value": null,
+      "why": "not connected: project coco-staging not created yet; Neon's consumption API needs a Neon API key"
+     }
+    },
+    "coco_measured": null,
+    "estimated": null,
+    "level": "unknown"
+   }
+  },
+  "b2": {
+   "name": "Backblaze B2 (proof/ prefix)",
+   "role": "persistent artifacts",
+   "always_on": true,
+   "auth": {
+    "state": "not configured",
+    "missing": [
+     "STORAGE_ENDPOINT",
+     "STORAGE_REGION",
+     "STORAGE_BUCKET",
+     "STORAGE_ACCESS_KEY_ID",
+     "STORAGE_SECRET_ACCESS_KEY"
+    ]
+   },
+   "connection": {
+    "state": "not connected"
+   },
+   "health": "unknown",
+   "last_success": null,
+   "last_error": null,
+   "capabilities": [
+    "object-storage",
+    "sha256-verified-artifacts"
+   ],
+   "limits": {
+    "free_storage_gb": {
+     "value": 10,
+     "source": "https://www.backblaze.com/cloud-storage/pricing",
+     "checked": "2026-11-10"
+    },
+    "storage_price_usd_per_tb_month": {
+     "value": 6.95,
+     "source": "https://www.backblaze.com/cloud-storage/pricing",
+     "checked": "2026-11-10"
+    },
+    "free_egress_rule": {
+     "value": "3x average monthly storage",
+     "overage_usd_per_gb": 0.01,
+     "source": "https://www.backblaze.com/cloud-storage/pricing",
+     "checked": "2026-11-10"
+    },
+    "class_d_free_calls_per_day": {
+     "value": 2500,
+     "source": "https://www.backblaze.com/cloud-storage/pricing",
+     "checked": "2026-11-10"
+    }
+   },
+   "quota": {
+    "provider_reported": {
+     "stored_bytes": {
+      "value": null,
+      "why": "no restricted proof/ key on this host yet"
+     }
+    },
+    "coco_measured": null,
+    "estimated": null,
+    "level": "unknown"
+   }
+  },
+  "lightning": {
+   "name": "Lightning AI",
+   "role": "future backup",
+   "always_on": false,
+   "auth": {
+    "state": "not set up"
+   },
+   "connection": {
+    "state": "not connected"
+   },
+   "health": "unknown",
+   "last_success": null,
+   "last_error": null,
+   "capabilities": [],
+   "limits": null,
+   "quota": {
+    "provider_reported": {
+     "gpu_hours_month": {
+      "value": null,
+      "why": "no account connected; free allowance not verified from an official page"
+     }
+    },
+    "coco_measured": null,
+    "estimated": null,
+    "level": "unknown"
+   }
+  }
+ },
+ "notifications": [
+  {
+   "key": "kaggle.quota.unknown",
+   "severity": "info",
+   "text": "Kaggle GPU quota unknown: add the hours shown in the Kaggle UI to keep an estimate"
+  },
+  {
+   "key": "neon.not_connected",
+   "severity": "warning",
+   "text": "Neon (coco-staging) is not connected: missing NEON_CONNECTION_STRING, NEON_HTTP_ENDPOINT"
+  },
+  {
+   "key": "b2.not_connected",
+   "severity": "warning",
+   "text": "Backblaze B2 (proof/ prefix) is not connected: missing STORAGE_ENDPOINT, STORAGE_REGION, STORAGE_BUCKET, STORAGE_ACCESS_KEY_ID, STORAGE_SECRET_ACCESS_KEY"
+  }
+ ],
+ "jobs": {
+  "source": "Neon staging queue (os/cloud/kaggle/neon)",
+  "state": "not connected",
+  "counts": null
+ },
+ "accepting_jobs": [
+  "kaggle"
+ ]
+}
