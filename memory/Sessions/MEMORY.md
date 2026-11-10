@@ -87,3 +87,6 @@
 - [Moonveil bedroom + Flow mantis](project_moonveil_bedroom_flow_mantis.md) — BOTH LIVE 2026-11-06: Moonveil 3 h youtu.be/rKq5l4-UgmE, Flow mantis 7:22 youtu.be/tNbX-iIn8jc; Flow login now youtube-the-flow.env (old youtube.env dead)
 - [STT on Nova](project_stt_nova.md) — 2026-11-06 STT 5.7.0 = Nova screentimetracker-api on its own Supabase Postgres (obbhqrsfnssmiwtvmbrz); Pro bound to the Gmail via the shared payment server (no license key), one trial per Google account, community open to guests with live posts, plan-refresh loop (the lag bug) fixed; store publish + old data import open
 - [Velvet Foundry commercial strategy](feedback_velvet_foundry_commercial_strategy.md) — 9 books: category-appropriate covers + premium identity; old four first; 2-3 concepts; no live changes before approval
+- [Vintage oldies engine](project_vintage_oldies_engine.md) — 2026-11-09 Engine A built + 150 s test; vocals = research only; workflow not pushed
+- [Penthouse deep house 3 h](project_penthouse_deephouse_3h.md) — LIVE 2026-11-09 youtu.be/HoO7B0lF4gc; engine, backup WAV, publisher gates, unlistened audio
+- [Penthouse four video audio](project_penthouse_four_video_audio.md) — 4 verified 3 h masters in draft releases of CocoMaison 2026-11-09; stale drafts to delete on Boss's yes; C: nearly full
