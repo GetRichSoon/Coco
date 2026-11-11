@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: The Job Interview Playbook
+Subtitle: 100 Common Interview Questions, Powerful Answer Frameworks, Resume & LinkedIn Strategies
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>Most people lose interviews on questions they could have prepared for. The Job Interview Playbook gives you 100 common interview questions, and for every one it shows what the interviewer is really trying to learn, a framework for building your own answer, a realistic example, the mistakes to avoid, and how to adapt it whether you are a beginner or experienced.</p><p>It is a 97-page guide for students, graduates, entry-level applicants, experienced professionals and career changers. It also covers the rest of the job search: resume, applicant tracking systems, LinkedIn, cover letters, preparation, salary talks and follow-ups.</p><p>It does not guarantee interviews or offers, and it does not give you scripts to memorise. Example answers are fictional illustrations; the book teaches you to build every answer from your own true experience.</p><h3>WHAT YOU GET</h3><ul><li>20 chapters (nearly 15,000 words)</li><li>100 distinct interview questions in seven groups: 20 introductory and personal, 20 behavioral, 15 teamwork and leadership, 15 problem-solving, 10 strengths, weaknesses and motivation, 10 career and salary, and 10 challenging or unexpected</li><li>For every question: what the interviewer wants to understand, an answer framework, an example answer, common mistakes, a beginner adaptation and an experienced candidate adaptation</li><li>A plain-text, applicant-tracking-friendly resume structure, with beginner and experienced examples</li><li>A cover letter template with an example</li><li>A LinkedIn profile checklist based on what LinkedIn&#x27;s own help page says (checked 2026-11-07)</li><li>A STAR answer worksheet with a filled example, and a bank of 30 prompts to help you find your own true stories</li><li>Interview preparation checklist, and questions to ask the interviewer</li><li>4 thank-you email templates and 5 follow-up scripts</li><li>7 salary negotiation scripts, plus guidance on researching a range</li><li>A job application tracker layout and a 30-day job search planner</li><li>Common mistakes, a glossary and a reference list</li></ul><h3>WHAT IS INSIDE</h3><p>1 Understanding the hiring process. 2 Resume writing. 3 Applicant tracking systems. 4 LinkedIn optimisation. 5 Cover letters. 6 Interview preparation. 7 Behavioural interviews. 8 Technical interviews. 9 Situational questions. 10 Communication skills. 11 Salary negotiation. 12 Interview follow-ups. 13 Job search planning. 14 to 20: the 100 questions.</p><h3>HOW IT IS DIFFERENT</h3><p>Questions are grouped by situation, every one has both a beginner and an experienced adaptation, and it includes the practical documents (resume, cover letter, LinkedIn, tracker) in the same book.</p><h3>WHO IT IS FOR</h3><p>University students, recent graduates, entry-level applicants, experienced professionals and people changing careers.</p><h3>WHO IT IS NOT FOR</h3><p>Anyone looking for memorised answers that work for everyone, or a guarantee of employment.</p><h3>GOOD TO KNOW</h3><ul><li>Hiring practices differ by employer and country. The book says where advice is general.</li><li>No resume format can guarantee that an applicant tracking system will select you. Sources disagree on file type (for example .docx versus PDF), so the book tells you to follow the instructions in each posting.</li><li>The 15/10/50/25 split used for STAR answers is labelled as a rule of thumb, not research.</li><li>Many example answers are short to keep the book focused; use them to see the shape, then write your own.</li></ul><p> FAQ Q: Are the answers ready to copy? A: No. They are illustrations of structure. Interviewers can tell a rehearsed script, and the book tells you to use your own true experience.</p><p>Q: I have no work experience. Is it useful? A: Yes. Every question has a beginner adaptation, and Chapter 7 shows how to use study, volunteering and projects.</p><p>Q: Does it cover technical interviews? A: It gives a general method for 
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Business & Money > Job Hunting & Careers > Interviewing
+  2. Business & Money > Job Hunting & Careers > Resumes
+Keywords (7 boxes, each up to 50 characters):
+  1. job interview questions and answers
+  2. behavioral interview STAR method
+  3. interview preparation guide
+  4. resume and LinkedIn tips
+  5. first job interview questions
+  6. salary negotiation scripts
+  7. career change interview
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 09_job-interview-playbook-100-questions.epub  (0.51 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 09_job-interview-playbook-100-questions_cover_1600x2560.jpg (upscaled from 1024x1536: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 12.99 USD  -> 35% royalty = 4.55; 70% = 9.02.  B) 12.99 USD -> 70% = 9.02, 35% = 4.55. NOT SET: needs your approval.

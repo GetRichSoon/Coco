@@ -1,0 +1,1 @@
+Automation saves time when the task repeats. The task must be clear before the script is written.

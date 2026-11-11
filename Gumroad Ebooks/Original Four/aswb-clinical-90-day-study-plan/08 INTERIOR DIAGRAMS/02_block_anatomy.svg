@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 769" width="800" height="769" font-family="Georgia, Segoe UI, serif"><title>One 90 minute study block</title>
+<rect width="800" height="769" fill="#f4efe6"/>
+<text x="400.0" y="40.0" text-anchor="middle" font-size="30" font-weight="bold" fill="#0f2238">One 90 minute study block</text>
+<text x="400.0" y="76.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">One content area per block. With only 60 minutes, cut the</text>
+<text x="400.0" y="105.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">middle, never the retrieval or the questions.</text>
+<rect x="30.0" y="150.0" width="82.2" height="64.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="71.1" y="191.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#f4efe6">10</text>
+<rect x="112.2" y="150.0" width="452.2" height="64.0" rx="0" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="338.3" y="191.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">55</text>
+<rect x="564.4" y="150.0" width="164.4" height="64.0" rx="0" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="646.7" y="191.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#0f2238">20</text>
+<rect x="728.9" y="150.0" width="41.1" height="64.0" rx="0" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="749.4" y="191.0" text-anchor="middle" font-size="24" font-weight="bold" fill="#f4efe6">5</text>
+<text x="400.0" y="250.0" text-anchor="middle" font-size="22" font-weight="normal" fill="#0f2238">Minutes</text>
+<rect x="30.0" y="280.0" width="26.0" height="26.0" rx="4" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="300.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Retrieve (10 min)</text>
+<text x="70.0" y="330.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Source closed. Write what you remember from the last</text>
+<text x="70.0" y="359.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">block.</text>
+<rect x="30.0" y="390.0" width="26.0" height="26.0" rx="4" fill="#3aa6a0" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="410.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Work statements (55 min)</text>
+<text x="70.0" y="440.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">2 or 3 statements: what it is, why it matters in</text>
+<text x="70.0" y="469.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">practice, how it shows up in a decision, what it is</text>
+<text x="70.0" y="498.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">often confused with.</text>
+<rect x="30.0" y="529.0" width="26.0" height="26.0" rx="4" fill="#b87333" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="549.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Write questions (20 min)</text>
+<text x="70.0" y="579.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">From memory, source closed: about 4 recall questions</text>
+<text x="70.0" y="608.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">and 1 decision question.</text>
+<rect x="30.0" y="639.0" width="26.0" height="26.0" rx="4" fill="#0f2238" stroke="#0f2238" stroke-width="2"/>
+<text x="70.0" y="659.0" text-anchor="start" font-size="24" font-weight="bold" fill="#0f2238">Log (5 min)</text>
+<text x="70.0" y="689.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">Area, statements, retrieval result and confidence 1 to</text>
+<text x="70.0" y="718.0" text-anchor="start" font-size="22" font-weight="normal" fill="#0f2238">5 on the scorecard.</text>
+</svg>

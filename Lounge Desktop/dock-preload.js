@@ -3,6 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('cocoDock', {
   onApps: (f) => ipcRenderer.on('dock-apps', (_e, d) => f(d)),
   onWins: (f) => ipcRenderer.on('dock-wins', (_e, d) => f(d)),
+  onTheme: (f) => ipcRenderer.on('dock-theme', (_e, t) => f(String(t))),
+  onVisible: (f) => ipcRenderer.on('dock-visible', (_e, v) => f(!!v)),
   rects: (r) => ipcRenderer.send('dock-rects', r),
   preview: (hwnds) => ipcRenderer.invoke('dock-preview', hwnds.map(Number)),
   focusWin: (hwnd) => ipcRenderer.send('dock-focuswin', Number(hwnd)),

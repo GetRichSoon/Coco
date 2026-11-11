@@ -1,0 +1,119 @@
+{
+ "checked_at": "2026-11-07T15:55:31.431127",
+ "channels": [
+  {
+   "file": "youtube-moonveil-audio.env",
+   "id": "UCf-lgZ6w96r4KR7B8h4DjnA",
+   "title": "Moonveil Audio",
+   "handle": "@moooonveilaudio",
+   "url": "https://www.youtube.com/channel/UCf-lgZ6w96r4KR7B8h4DjnA",
+   "created": "2026-10-27",
+   "country": "IN",
+   "subscribers": 2,
+   "views": 87,
+   "videos": 5,
+   "description": "",
+   "keywords": "",
+   "long_uploads": "allowed",
+   "has_banner": false,
+   "playlists": [],
+   "recent_sampled": 5,
+   "recent_shorts": 0,
+   "recent_long": 5
+  },
+  {
+   "file": "youtube-penthouse-frequency.env",
+   "id": "UCQ7HRdvJEemDPYPaOEKi34w",
+   "title": "Penthouse Frequency",
+   "handle": "@penthousefrequencyy",
+   "url": "https://www.youtube.com/channel/UCQ7HRdvJEemDPYPaOEKi34w",
+   "created": "2026-11-05",
+   "country": "",
+   "subscribers": 1,
+   "views": 10,
+   "videos": 1,
+   "description": "",
+   "keywords": "",
+   "long_uploads": "allowed",
+   "has_banner": false,
+   "playlists": [],
+   "recent_sampled": 1,
+   "recent_shorts": 0,
+   "recent_long": 1
+  },
+  {
+   "file": "youtube-the-flow.env",
+   "id": "UCDmTAcfXbYp6uxmD4eM14WA",
+   "title": "The Flow – Daily Science",
+   "handle": "@theflowdailyscience",
+   "url": "https://www.youtube.com/channel/UCDmTAcfXbYp6uxmD4eM14WA",
+   "created": "2026-10-07",
+   "country": "",
+   "subscribers": 12,
+   "views": 8678,
+   "videos": 16,
+   "description": "",
+   "keywords": "",
+   "long_uploads": "allowed",
+   "has_banner": true,
+   "playlists": [],
+   "recent_sampled": 17,
+   "recent_shorts": 14,
+   "recent_long": 3
+  }
+ ],
+ "dead_logins": [
+  {
+   "file": "youtube-ai-software.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-biology-health.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-devotional.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-feminism.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-food.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-history-geography.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-human-behaviour.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-kahani-ghar.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-mixed.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-money.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-stories.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube-study.env",
+   "error": "HTTP Error 400: Bad Request"
+  },
+  {
+   "file": "youtube.env",
+   "error": "HTTP Error 400: Bad Request"
+  }
+ ]
+}

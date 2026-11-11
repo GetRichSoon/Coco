@@ -1,0 +1,30 @@
+# The ONE shared four-device sync scheduler (Boss order 2026-11-04). Every 15 minutes, one job, never two at once.
+# NOT ACTIVE until: (1) this file is on the default branch (GitHub only runs schedules from there), (2) migration 0037 is applied,
+# (3) Nova is deployed with the device_sync_audit table, (4) the secrets below exist. Runs --apply only when APPLY is "true".
+name: device sync
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'     # every 15 minutes, off the busy :00 / :30 marks
+  workflow_dispatch:
+
+concurrency:
+  group: device-sync              # a second trigger waits instead of running beside the first
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: One sync cycle (dry run unless APPLY is true)
+        env:
+          NOVA_DEVICE_KEY: ${{ secrets.NOVA_DEVICE_KEY }}
+          NOVA_ENGINE_KEY: ${{ secrets.NOVA_ENGINE_KEY }}
+        run: node "Cloud/Device Sync.mjs" ${{ vars.DEVICE_SYNC_APPLY == 'true' && '--apply' || '' }}

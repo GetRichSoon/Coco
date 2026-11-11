@@ -1,0 +1,99 @@
+{
+  "product_id": "TVF-EXAM-0001",
+  "slug": "aswb-clinical-90-day-study-plan",
+  "version": "1.0.0",
+  "title": "The 90-Day Clinical Licensing Exam Study Plan",
+  "state": "PUBLISHED",
+  "state_at": "2026-10-29T11:12:25.265Z",
+  "approved_by": "mangesh",
+  "approved_at": "2026-10-29T11:12:25.256Z",
+  "history": [
+    {
+      "at": "2026-10-28T18:43:29.802Z",
+      "from": "RESEARCHED",
+      "to": "SPEC_APPROVED",
+      "by": "mangesh",
+      "note": "authorised by the founder's 12-phase brief, 2026-10-29"
+    },
+    {
+      "at": "2026-10-28T18:43:30.223Z",
+      "from": "SPEC_APPROVED",
+      "to": "BUILDING",
+      "by": null,
+      "note": "manuscript written, 28 chapters"
+    },
+    {
+      "at": "2026-10-28T18:43:30.538Z",
+      "from": "BUILDING",
+      "to": "QA",
+      "by": null,
+      "note": "EPUB built, structural and content gates run"
+    },
+    {
+      "at": "2026-10-28T19:13:25.179Z",
+      "from": "QA",
+      "to": "GUMROAD_DRAFT",
+      "by": null,
+      "note": "created on Gumroad as an unpublished draft from a cloud runner, run 40751962166"
+    },
+    {
+      "at": "2026-10-28T19:13:26.321Z",
+      "from": "GUMROAD_DRAFT",
+      "to": "FOUNDER_REVIEW",
+      "by": null,
+      "note": "awaiting founder review; publishing needs an explicit YES"
+    },
+    {
+      "at": "2026-10-29T11:12:25.256Z",
+      "from": "FOUNDER_REVIEW",
+      "to": "APPROVED",
+      "by": "mangesh",
+      "note": "A-019 approved explicitly in chat, 2026-10-29: \"Make the product live/public after all checks pass.\""
+    },
+    {
+      "at": "2026-10-29T11:12:25.265Z",
+      "from": "APPROVED",
+      "to": "PUBLISHED",
+      "by": "mangesh",
+      "note": "Gumroad confirmed published:true; public page verified in a browser (200, cover renders, 28 sections, 59.6 KB)"
+    }
+  ],
+  "platforms": {
+    "gumroad": {
+      "state": "published",
+      "url": "https://lokade.gumroad.com/l/aswb-clinical-90-day-study-plan",
+      "product_id": "0jWYk9KIpU_l_ugbZaOHnQ==",
+      "price_usd": 34,
+      "updated_at": "2026-10-29T11:12:25.271Z",
+      "file_count": 1,
+      "file_attached_at": "2026-10-29T04:45:47.143Z",
+      "file_name": "aswb-clinical-90-day-study-plan.epub",
+      "provider_verified_at": "2026-10-29T04:46:05.666Z",
+      "provider_published": true,
+      "provider_price_cents": 3400,
+      "custom_permalink": "aswb-clinical-90-day-study-plan",
+      "note": "Published 2026-10-29. Verified twice: Gumroad API says published true, and the public page returns 200 with the cover rendering, both disclaimer sentences, the I want this CTA, and Gumroad's own reading of the EPUB as 28 sections / 59.6 KB. Thumbnail NOT set: it needs the edit_profile OAuth scope, which this connection does not hold (migration 0019 adds it for the next connect).",
+      "published_at": "2026-10-29T11:10:55.305Z",
+      "run_id": "chat-2026-10-29-a019",
+      "approval_id": "A-019",
+      "covers_count": 1,
+      "thumbnail_url": null,
+      "category": "Education",
+      "taxonomy_id": 177,
+      "checkout_url": "https://gumroad.com/checkout?product=lyvicp&quantity=1",
+      "provider_reports": {
+        "sections": 28,
+        "size": "59.6 KB"
+      }
+    },
+    "amazon_kdp": {
+      "state": "founder_upload_required",
+      "price_usd": 12.99,
+      "updated_at": "2026-10-29T04:46:05.687Z",
+      "cover": "cover.jpg",
+      "cover_ok": true,
+      "note": "Package complete except the title decision: research/ebooks/aswb-title-legal-review-001.md is LEGAL REVIEW REQUIRED on the subtitle."
+    }
+  },
+  "note": "PUBLISHED is reachable only from APPROVED, and APPROVED only from FOUNDER_REVIEW with a named founder. Nothing in this repository can publish without that."
+}

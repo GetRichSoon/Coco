@@ -18,6 +18,7 @@ import { handleAutomation } from './_templates.js';
 import { handleAi } from './_ai.js';
 import { handleOps } from './_ops.js';
 import { redactDeep } from './_redact.js';
+import { handleOrbiTrending } from './_orbi_trending.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {} };
 
@@ -25,7 +26,7 @@ const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
   'decisions', 'activity', 'founders', 'rules', 'commands', 'integrations', 'agent_messages', 'notes', 'releases', 'runs', 'run_events', 'ai_calls', 'brain_items', 'policies',
   'control_ops', 'structure', 'integration_accounts', 'integration_links', 'outputs', 'pairing_codes', 'chat', 'controls', 'pipelines', 'pulse', 'jobs',
-  'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats', 'brain_records', 'brain_records_latest', 'ops_snapshots',
+  'device_sync_audit', 'events', 'templates', 'template_uses', 'capabilities', 'capability_uses', 'run_requests', 'yt_stats', 'brain_records', 'brain_records_latest', 'ops_snapshots',
   // the unified organisation (0034 + 0039 + 0040); RLS: founders only, the engine key reads brains and the legacy map
   'org_units', 'org_products', 'org_agents', 'org_brains', 'org_refs', 'org_legacy_map', 'org_readiness', 'org_reconciliation_view',
   // the integration hub + cloud portability (0041): RLS lets founders read them; the engine key reads providers and switches
@@ -202,6 +203,12 @@ export async function handle(db, req, now = Date.now()) {
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
       return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
+    }
+    // Orbi wallpaper "Trending": anonymous pick counts from the Orbi extension, not a Coco device (api/_orbi_trending.js)
+    if (req.path.startsWith('/api/orbi/wall/')) {
+      const out = await handleOrbiTrending(db, req, now);
+      log(out.status, { orbi: req.path.slice(15) });
+      return out.status === 204 ? { status: 204, headers: cors(), body: null } : json(out.status, out.body, out.headers || {});
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself

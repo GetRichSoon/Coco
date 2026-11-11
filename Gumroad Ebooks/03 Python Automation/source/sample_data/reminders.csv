@@ -1,0 +1,4 @@
+name,email,invoice,amount,due
+Alice Johnson,alice@example.com,INV-2026-0001,120.00,2026-11-15
+Bob Smith,bob@example.com,INV-2026-0002,340.50,2026-11-20
+Bad Row,missing-at-sign,INV-2026-0003,10.00,2026-11-22

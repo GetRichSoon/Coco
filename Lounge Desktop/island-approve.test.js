@@ -22,13 +22,14 @@ assert.ok(src.includes("action === 'approve'"), 'main forwards approve to the Lo
 const lounge = fs.readFileSync(require('path').join(__dirname, '..', 'Lounge', 'index.html'), 'utf8');
 assert.ok(lounge.includes('function decideApproval'), 'Lounge page has the one decide path');
 assert.ok(lounge.includes('id="islandStrip"') && lounge.includes('function renderStrip'), 'in-app island strip exists');
-assert.ok(lounge.includes('setInterval(pollApprovals, 15000)'), '15 s approvals poll armed');
+assert.ok(lounge.includes('pollApprovals(); }, 15000)'), '15 s approvals poll armed');   // the poll is conditional now (skips while realtime is live)
 // Live feed + chip safety (Boss 2026-10-26, after one accidental click rejected A-001)
 assert.ok(page.includes('#pill:not(.open) .abtn { pointer-events: none; }'), 'chips are inert on the compact pill');
 assert.ok(page.includes('(d.ayes || d.ano || d.aig) && (!open || Date.now() - openedAt < 400)) return'), 'chip clicks need the opened panel (and 400 ms settle)');
 assert.ok(page.includes('live feed ticker') && page.includes('Live team feed'), 'island streams the team feed (pill ticker + panel)');
-assert.ok(lounge.includes("table: 'agent_messages' }, feedSoon") && lounge.includes("table: 'activity' }, feedSoon"), 'realtime on activity + agent_messages');
-assert.ok(lounge.includes("from('agent_messages').select('*').order('at', { ascending: false }).limit(40)") && lounge.includes('setInterval(pollApprovals, 15000)'), '15 s feed poll fallback');
+// The feed is polled (15 s, below) and refreshed by feedSoon on task changes: no realtime subscription on activity/agent_messages (Supabase egress, 2026-11-02).
+assert.ok(lounge.includes("table: 'tasks' }, feedSoon"), 'task changes refresh the feed at once');
+assert.ok(lounge.includes("from('agent_messages').select('*').order('at', { ascending: false }).limit(40)") && lounge.includes('pollApprovals(); }, 15000)'), '15 s feed poll fallback');
 // behaviour: run the real click handler with a fake pill
 { const m = page.match(/pill\.addEventListener\('click', \(e\) => \{[\s\S]*?\n\}\);/)[0]; const sent = [];
   const mk = (isOpen, age) => { const h = { }; const pill = { addEventListener: (n, f) => { if (n === 'click') h.f = f; } };

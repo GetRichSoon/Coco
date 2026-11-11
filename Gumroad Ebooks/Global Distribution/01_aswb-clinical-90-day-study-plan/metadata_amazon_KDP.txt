@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: The 90-Day Clinical Licensing Exam Study Plan
+Subtitle: A Day-by-Day Schedule for the ASWB Clinical (LCSW) Exam
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3528 used):
+<h3>A 90-DAY PLAN FOR THE ASWB CLINICAL (LCSW) EXAM, DAY BY DAY</h3><p>You can download ASWB&#x27;s free content outline and a blank study plan template. What is missing is the decision about what you study on day 14, and how you know by day 40 whether it is working. This book is that decision, written out for 90 days.</p><p>It is written first for candidates waiting out the 90-day gap before a retake. The method works for a first attempt too, and the book says which parts to adjust. It is for the Clinical (LCSW) licensing exam for social workers, not a medical exam.</p><h3>WHAT YOU GET</h3><ul><li>A phased 90-day schedule: a diagnostic week, a content phase, a pacing-and-repair phase and a final taper, with the days numbered</li><li>How to read a score report without over-reading it, and how to turn the content outline into a priority order</li><li>How to build the plan on a real calendar, and the shape of a study week with study blocks</li><li>How to study a content area instead of reading about it, and how to write your own retrieval questions</li><li>A spaced review schedule and week-by-week guidance for the content phase</li><li>Pacing for 122 questions in four hours, including the optional break as described in ASWB&#x27;s 2026 guidebook</li><li>A way to reason through a decision question</li><li>Three rules for changing the plan, and what to do when you are not on track</li><li>Re-registering, the waiting period and the waiver, and a start-to-finish exam-day guide</li><li>What to do after the examination, whichever way it goes</li><li>Five diagrams: the phases timeline, a study block, the review schedule, the pacing checkpoints and the behind-schedule triage</li></ul><h3>WHAT YOU DOWNLOAD</h3><p>A 6 x 9 inch PDF with a linked contents page and an EPUB for phones, tablets and e-readers (same text and diagrams). 22 numbered chapters, about 19,600 words, 105 pages.</p><h3>CHECKED AGAINST ASWB&#x27;S OWN DOCUMENTS</h3><p>Exam facts in the book (122 questions of which 110 are scored and 12 are pretest, two sections of 61, four hours, the 90-day wait with the waiver) were checked against ASWB&#x27;s 2026 examination guidebook (08/2026) and ASWB web pages on 7 November 2026. A sources list with access dates is at the end of the book. A few points that could not be confirmed are worded cautiously.</p><h3>WHO IT IS FOR</h3><p>Social work candidates preparing for the ASWB Clinical exam, especially those waiting between attempts who want a structured plan rather than another pile of content.</p><h3>WHO SHOULD NOT BUY IT</h3><p>Anyone who wants practice questions, subject content or a promise of a pass. The book contains no examination questions and promises no result.</p><h3>IMPORTANT</h3><p>This is an independent guide. It is not affiliated with, endorsed by or approved by ASWB. It contains no examination questions and no pass is promised. Always rely on ASWB&#x27;s current published information for exam rules.</p><h3>FAQ</h3><p>Q: Is this an official ASWB product? A: No. It is independent and not affiliated with, endorsed by or approved by ASWB.</p><p>Q: Does it contain practice questions? A: No. It is a plan and a method. You bring your own practice material.</p><p>Q: Can I use it for a first attempt? A: Yes. It is written first for retakers, and the book explains what to adjust for a first attempt.</p><p>Q: Does it guarantee that I will pass? A: No. No book can. It gives you a structured way to use 90 days.</p><p>Q: What formats do I get? A: A PDF and an EPUB.</p>
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Education & Teaching > Test Preparation
+  2. Health, Fitness & Dieting > Mental Health > Counseling
+Keywords (7 boxes, each up to 50 characters):
+  1. LCSW exam study plan
+  2. ASWB clinical exam prep
+  3. social work licensing exam
+  4. 90 day study schedule
+  5. LCSW retake
+  6. clinical social work exam
+  7. ASWB exam study guide
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 01_aswb-clinical-90-day-study-plan.epub  (1.34 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 01_aswb-clinical-90-day-study-plan_cover_1600x2560.jpg (upscaled from 1800x2700: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 34.00 USD  -> 35% royalty = 11.90.  B) 12.99 USD -> 70% = 8.89, 35% = 4.55. NOT SET: needs your approval.

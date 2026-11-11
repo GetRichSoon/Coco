@@ -1,7 +1,7 @@
 // Run: node island-hover.test.js   Test: drives Coco Island's real islandPointer() (copied out of main.js) with a fake cursor and clock.
 const fs = require('fs'); const assert = require('assert');
 const src = fs.readFileSync(require('path').join(__dirname, 'main.js'), 'utf8');
-const block = src.slice(src.indexOf('const BAND_PX'), src.indexOf('setInterval(islandPointer, 40);'));
+const block = src.slice(src.indexOf('const BAND_PX'), src.indexOf('// One pointer timer for the island and the Dock.'));
 let cursor = { x: 0, y: 500 }, now = 0, visible = true, sent = [], ignore = [];
 const island = { isVisible: () => visible, getBounds: () => ({ x: 730, y: 0, width: 460, height: 310 }), setIgnoreMouseEvents: (v) => ignore.push(v), webContents: { send: (c, v) => sent.push(v) } };
 const screen = { getCursorScreenPoint: () => cursor, getPrimaryDisplay: () => ({ bounds: { x: 0, y: 0, width: 1920, height: 1200 } }) };

@@ -1,0 +1,38 @@
+{
+  "platform": "Apple Books",
+  "platform_id": "apple_books",
+  "slug": "aswb-clinical-90-day-study-plan",
+  "fields": {
+    "title": "The 90-Day Clinical Licensing Exam Study Plan",
+    "subtitle": "A structured, independent preparation schedule for the 2026 ASWB Clinical (LCSW) examination",
+    "author": "The Velvet Foundry Editorial Team",
+    "publisher": "The Velvet Foundry",
+    "language": "en",
+    "description": "You have ninety days before you can sit the Clinical examination again, a free content outline, and a blank study-plan template. This book is the part nobody gives you: the sequenced, dated implementation. It assigns all ninety days across four phases, allocates your study time by the published 2026 area weights, schedules spaced review on named days, and rehearses pacing for a 122-question paper in four hours. It shows you how to turn an outline statement into a self-test question of your own, how to read a failed score report without over-reading it, and what to change when a week goes wrong. Written for the candidate who does not need another pile of content, but a plan that survives contact with a real calendar. Contains no examination questions and no confidential examination material. Not affiliated with, endorsed by or approved by ASWB.",
+    "keywords": [
+      "lcsw exam study plan",
+      "clinical social work licensing exam",
+      "aswb clinical exam preparation",
+      "social work licensing exam 2026",
+      "lcsw study schedule",
+      "90 day study plan",
+      "social work exam retake"
+    ],
+    "categories": [
+      "Education & Teaching > Studying & Workbooks > Study Guides",
+      "Politics & Social Sciences > Social Sciences > Social Work"
+    ],
+    "price_usd": 12.99
+  },
+  "upload_file": "aswb-clinical-90-day-study-plan.epub",
+  "cover_file": "cover.jpg",
+  "cover_required": false,
+  "notes": [
+    "Takes the EPUB directly.",
+    "Royalty terms were NOT verified in the 2026-10-28 research run: confirm in Apple Books Connect before pricing.",
+    "Publishing normally requires a Mac tool or an aggregator."
+  ],
+  "ready_for_upload": true,
+  "blocking": [],
+  "connection": "not checked here - run scripts/publishing-readiness.mjs"
+}

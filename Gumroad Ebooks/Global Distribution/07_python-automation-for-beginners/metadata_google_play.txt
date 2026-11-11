@@ -1,0 +1,71 @@
+GOOGLE PLAY BOOKS PARTNER CENTER METADATA
+Title: Python Automation for Beginners
+Subtitle: 25 Practical Projects for Files, Spreadsheets, Reports & Everyday Work
+Language: English
+Author: DECISION REQUIRED (no approved author name)
+Publisher: The Velvet Foundry
+Publication date: 2026-11-07
+Identifier: ISBN not assigned (decision: buy ISBNs or check whether Partner Center accepts a book without one)
+Categories / subjects: Computers / Programming Languages / Python; Computers / Programming / General
+Content file: 07_python-automation-for-beginners.epub (EPUB preferred) ; alternative 07_python-automation-for-beginners.pdf
+Cover file: 07_python-automation-for-beginners_cover_1600x2560.jpg
+List price (USD): 14.00  (Gumroad price; NOT approved for Google Play: needs your approval)
+Territories: all territories you hold rights for (confirm)
+Preview: allow preview of up to 20% (default) or per your choice
+DRM: your choice
+Description (plain text):
+If you do the same computer chores every week (renaming files, tidying spreadsheets, merging reports), a short Python script can do them in seconds. This book teaches Python automation through 25 complete projects instead of theory: you get the full code, an explanation of how it works, sample input, the real output from a test run, and the mistakes to watch for.
+
+It is a 136-page guide for beginners, students and office professionals. You do not need programming experience. Chapter 2 walks you through installing Python and setting up, and Chapter 3 teaches only the Python you need.
+
+WHAT YOU GET
+• 12 chapters, an introduction, a conclusion and six appendices
+• 25 complete projects. Each has: the problem, the expected result, required tools, exact installation commands, the complete source code, a line-by-line explanation, sample input, the real sample output, how to run it, common errors and fixes, safe-use notes and an optional challenge
+• A free downloadable ZIP with all 25 scripts, the sample data, a requirements file, a README and the test log (83 files)
+• Python cheat sheet, common error reference, glossary, a project checklist, a 30-day learning plan and references
+
+THE 25 PROJECTS
+Files and folders: bulk file renaming; organising a folder by file type; duplicate file detection (reports only, never deletes); automated backups with timestamps; folder size report; photo organising by date.
+CSV: CSV cleanup; splitting a large CSV; simple expense tracking; contact list de-duplication; data validation report; invoice number generator.
+Excel: Excel report generation; merging spreadsheets.
+PDF: PDF text extraction; merging PDFs; splitting a PDF by page range.
+Text: word frequency; find and replace across files with a dry run; release notes cleaner; log file summary.
+Reports and automation: a monthly report (Excel, Markdown and HTML); email draft preparation (drafts only, nothing is sent); API data retrieval with error handling; a scheduled report runner.
+
+SAFE BY DESIGN
+Scripts that change files have a dry-run mode or a backup step, nothing is deleted automatically, no passwords are stored in code, and the network project respects the public API it uses. The book teaches these habits.
+
+WHAT WAS TESTED
+All 25 scripts were run on Windows 11 with Python 3.14.4 (openpyxl 3.1.5, pypdf 7.0.0) on 2026-11-07, and the sample outputs in the book are the real outputs. A smaller compatibility check was run on Python 3.12.12: all 25 compile and show help, and nine representative scripts gave the same results.
+
+WHAT WAS NOT TESTED
+macOS and Linux, Windows Task Scheduler, cron and launchd, opening the email drafts in a mail program, opening the Excel files in Excel itself, and OCR for scanned PDFs. The book says so wherever it matters.
+
+WHO IT IS FOR
+Beginners, students, office professionals and freelancers who want to automate repetitive computer tasks.
+
+WHO IT IS NOT FOR
+People who want advanced software engineering, web development or data science. It is a first step, not a replacement for a full programming course, and it does not promise you will become a professional developer.
+
+GOOD TO KNOW
+• Needs Python 3.12 or newer. Only 6 of the 25 projects need an extra package (openpyxl or pypdf); the rest use the standard library.
+• Word documents (.docx) are not covered.
+• Run scripts on copies of your files first.
+
+
+FAQ
+Q: Do I need to know programming?
+A: No. Chapter 3 teaches the basics you need, and every project explains its code.
+
+Q: Which Python version and operating system?
+A: Python 3.12 or newer. The scripts were tested on Windows 11. They use portable code and should work on macOS and Linux, but those were not tested.
+
+Q: Do the scripts really work?
+A: Every script was run against the sample data included in the download, and the outputs in the book are from those runs. See the "What was tested" section.
+
+Q: Is it safe to run on my files?
+A: Use copies first. Scripts that change files have a dry run or backup, and the duplicate finder only reports.
+
+Q: Does it cover web scraping?
+A: No. It covers one documented public API and teaches responsible use. It does not teach scraping sites that forbid it.
+AI content: record kept; Google asks for accurate declarations: text AI-generated (Claude), cover AI-generated (ChatGPT Image Generation), diagrams AI-drawn in code.

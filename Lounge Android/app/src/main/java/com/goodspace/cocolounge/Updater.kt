@@ -24,6 +24,19 @@ import java.security.MessageDigest
  * The phone checks on open and every 15 minutes, downloads in the background, then one tap installs it.
  * shortcut: Android always asks once per update for a side-loaded app; fully silent needs Play Store or device owner.
  */
+/** The rules for PackageInstaller sessions, pure so they are tested without a phone (UpdaterSessionsTest). */
+object InstallSessions {
+    data class S(val id: Int, val active: Boolean)
+    const val COOLDOWN_MS = 30 * 60 * 1000L
+    /** Sessions this app left behind that nobody is working on: safe to abandon. */
+    fun stale(mine: List<S>): List<Int> = mine.filter { !it.active }.map { it.id }
+    /** A new session only when none is in progress, and the same build is not hammered (a person tapping always may). */
+    fun mayStart(mine: List<S>, code: Long, triedCode: Long, triedAt: Long, now: Long, byPerson: Boolean): Boolean {
+        if (mine.any { it.active }) return false
+        return byPerson || code != triedCode || now - triedAt >= COOLDOWN_MS
+    }
+}
+
 object Updater {
     private val http = OkHttpClient()
     private val lock = Mutex()   // app, worker and service may all check at once
@@ -121,8 +134,19 @@ object Updater {
         { v -> if (v == null) "Coco Lounge is up to date" else "Installing Coco Lounge $v" },
         { "Could not check: ${it.message}" })
 
-    /** Hands the downloaded build to Android's installer (the system shows one "Update" button). */
-    fun install(ctx: Context) {
+    /**
+     * Hands the downloaded build to Android's installer (the system shows one "Update" button).
+     *
+     * "Too many active sessions for UID" (both phones, 2026-11-04): every call used to open a NEW installer
+     * session and never closed one. A session leaks whenever the commit throws, the confirm screen is never
+     * tapped, or Android refuses the file, and this runs on every 15 minute check plus every app open, so the
+     * leaks piled up until Android's per-app limit. Now: one install at a time, the stale sessions this app
+     * left behind are abandoned first, nothing new is opened while one is genuinely in progress, the same
+     * build is not retried more than every 30 minutes on its own (a person tapping always goes through), and a
+     * session whose commit fails is abandoned on the spot. Authentication and Android's limit are untouched.
+     */
+    @Synchronized
+    fun install(ctx: Context, byPerson: Boolean = false) {
         val file = apk(ctx)
         if (!file.exists()) return
         if (!ctx.packageManager.canRequestPackageInstalls()) {
@@ -131,13 +155,25 @@ object Updater {
             return
         }
         val pi = ctx.packageManager.packageInstaller
+        val prefs = ctx.getSharedPreferences("coco_update", Context.MODE_PRIVATE)
+        val mine = pi.mySessions.map { InstallSessions.S(it.sessionId, it.isActive) }
+        InstallSessions.stale(mine).forEach { runCatching { pi.abandonSession(it) } }   // free what earlier attempts leaked
+        val code = prefs.getLong("ready", 0)
+        if (!InstallSessions.mayStart(mine, code, prefs.getLong("tried", 0), prefs.getLong("tried_at", 0), System.currentTimeMillis(), byPerson)) return
+        prefs.edit().putLong("tried", code).putLong("tried_at", System.currentTimeMillis()).apply()
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
         if (Build.VERSION.SDK_INT >= 31) params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-        val id = pi.createSession(params)
-        pi.openSession(id).use { s ->
-            s.openWrite("coco", 0, file.length()).use { out -> file.inputStream().use { it.copyTo(out) }; s.fsync(out) }
-            val done = PendingIntent.getBroadcast(ctx, id, Intent(ctx, Result::class.java), PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            s.commit(done.intentSender)
+        var id = -1
+        try {
+            id = pi.createSession(params)
+            pi.openSession(id).use { s ->
+                s.openWrite("coco", 0, file.length()).use { out -> file.inputStream().use { it.copyTo(out) }; s.fsync(out) }
+                val done = PendingIntent.getBroadcast(ctx, id, Intent(ctx, Result::class.java), PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+                s.commit(done.intentSender)
+            }
+        } catch (e: Exception) {
+            if (id >= 0) runCatching { pi.abandonSession(id) }   // never leave a half-made session behind
+            throw e
         }
     }
 
@@ -146,8 +182,9 @@ object Updater {
         override fun onReceive(ctx: Context, intent: Intent) {
             val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, -1)
             if (status != PackageInstaller.STATUS_SUCCESS && status != PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                // Broken or refused file: forget it, so the next check downloads it again.
-                apk(ctx).delete(); ctx.getSharedPreferences("coco_update", Context.MODE_PRIVATE).edit().remove("ready").apply()
+                // Broken or refused file: forget it, so the next check downloads it again, and close its session.
+                apk(ctx).delete(); ctx.getSharedPreferences("coco_update", Context.MODE_PRIVATE).edit().remove("ready").remove("tried").apply()
+                intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1).takeIf { it >= 0 }?.let { sid -> runCatching { ctx.packageManager.packageInstaller.abandonSession(sid) } }
             }
             if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 @Suppress("DEPRECATION") val confirm = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT) ?: return

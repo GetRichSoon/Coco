@@ -1,0 +1,87 @@
+{
+  "slug": "aswb-clinical-90-day-study-plan",
+  "title": "The 90-Day Clinical Licensing Exam Study Plan",
+  "subtitle": "A structured, independent preparation schedule for the 2026 ASWB Clinical (LCSW) examination",
+  "author": "The Velvet Foundry Editorial Team",
+  "language": "en",
+  "publisher": "The Velvet Foundry",
+  "modified": "2026-10-28T00:00:00Z",
+  "template": "ebook-study-guide",
+  "team": "ebooks",
+  "subteam": "ebooks/gumroad",
+  "category": "ebooks/gumroad/licensing-exam-prep",
+  "product_id": "TVF-EXAM-0001",
+  "version": "1.0.0",
+  "price_usd": 12.99,
+  "price_by_platform": {
+    "gumroad": 34.0,
+    "kdp": 12.99
+  },
+  "description": "You have ninety days before you can sit the Clinical examination again, a free content outline, and a blank study-plan template. This book is the part nobody gives you: the sequenced, dated implementation. It assigns all ninety days across four phases, allocates your study time by the published 2026 area weights, schedules spaced review on named days, and rehearses pacing for a 122-question paper in four hours. It shows you how to turn an outline statement into a self-test question of your own, how to read a failed score report without over-reading it, and what to change when a week goes wrong. Written for the candidate who does not need another pile of content, but a plan that survives contact with a real calendar. Contains no examination questions and no confidential examination material. Not affiliated with, endorsed by or approved by ASWB.",
+  "keywords": [
+    "lcsw exam study plan",
+    "clinical social work licensing exam",
+    "aswb clinical exam preparation",
+    "social work licensing exam 2026",
+    "lcsw study schedule",
+    "90 day study plan",
+    "social work exam retake"
+  ],
+  "categories": [
+    "Education & Teaching > Studying & Workbooks > Study Guides",
+    "Politics & Social Sciences > Social Sciences > Social Work",
+    "Education & Teaching > Studying & Workbooks > Test Preparation"
+  ],
+  "note": "Scope is deliberately method, schedule and exam process: planning, self-assessment, retrieval practice, pacing, tracking and logistics. It contains no clinical-treatment teaching, because The Velvet Foundry has no licensed social worker on staff and a licensing examination gates a helping profession. Facts about the examination trace to ASWB's published material, checked October 2026, and are cited in the book so a reader can verify them. Full reasoning: research/ebooks/aswb-clinical-90-day-product-spec-001.md Gumroad tags are kept separately from the KDP keywords: Gumroad refuses any tag of 20 characters or more (measured 2026-10-29 from a refused create call), while KDP keywords are search phrases up to 35 characters.",
+  "tags_by_platform": {
+    "gumroad": [
+      "lcsw exam",
+      "aswb",
+      "social work",
+      "exam prep",
+      "study plan",
+      "licensing exam",
+      "study schedule",
+      "lcsw 2026",
+      "exam retake"
+    ]
+  },
+  "cover": {
+    "lines": [
+      "90-DAY",
+      "CLINICAL LICENSING EXAM",
+      "STUDY PLAN"
+    ],
+    "disclaimer": [
+      "Not affiliated with, endorsed by or approved by ASWB.",
+      "Contains no examination questions."
+    ],
+    "marks": 90,
+    "phases": [
+      [
+        1,
+        7
+      ],
+      [
+        8,
+        35
+      ],
+      [
+        36,
+        70
+      ],
+      [
+        71,
+        90
+      ]
+    ],
+    "note": "The three display lines are what must be legible in a 160 px thumbnail, so they are set here rather than guessed from the title. marks/phases drive the grid motif: one mark per day of the plan, banded by the four phases chapter 1 assigns, so the cover and the book cannot drift apart. The subtitle on the cover is the book's own subtitle field."
+  },
+  "awarding_body": {
+    "name": "Association of Social Work Boards",
+    "aliases": [
+      "ASWB"
+    ],
+    "note": "Drives the affiliation checks in check_content.py. The check used to hardcode this body, which meant a title about any OTHER examination got no affiliation check at all."
+  }
+}

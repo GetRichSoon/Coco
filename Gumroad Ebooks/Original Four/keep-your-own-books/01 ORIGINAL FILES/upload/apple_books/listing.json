@@ -1,0 +1,38 @@
+{
+  "platform": "Apple Books",
+  "platform_id": "apple_books",
+  "slug": "keep-your-own-books",
+  "fields": {
+    "title": "Keep Your Own Books",
+    "subtitle": "A bookkeeping routine for freelancers and sole traders, from the first invoice to a month you can close in an hour",
+    "author": "The Velvet Foundry Editorial Team",
+    "publisher": "The Velvet Foundry",
+    "language": "en",
+    "description": "You started working for yourself, somebody said \"keep your books\", and nobody explained what that meant. You now have a business bank account, a folder of receipts, a spreadsheet you abandoned, and a quiet worry that you are doing it wrong.\n\nThis book teaches one system: the same double-entry method every accountant uses, which has five moving parts and can be learned in an afternoon by anyone who can add. Not software. The system underneath the software, so you stop being at its mercy.\n\nWHAT YOU WILL BE ABLE TO DO: record any transaction your business can produce; prove your records against your bank statement; close a month in about an hour; and read your own profit and loss and balance sheet without anyone translating them for you.\n\nWHAT IS INSIDE: 21 chapters across the five kinds of account, double entry without the jargon, a working chart of accounts you can copy, recording money in and out, cash basis against accrual, the bank reconciliation, drawings and owner's money, untangling mixed personal spending, a one-hour month-end routine, reading both statements, a full month worked end to end from opening balance to closing statements, what records to keep, what your accountant actually wants, and when to stop doing this yourself. Every chapter ends with the ways it goes wrong and a checklist.\n\nWHAT MAKES IT DIFFERENT: it contains no tax rates, thresholds, deadlines or filing rules. That is deliberate. Those are specific to your country and they change, so a book stating them would be wrong for most readers on the day it shipped, and wrong in a way that looked authoritative. This book teaches the part that is the same everywhere and does not expire: how to record what happened. It names the three questions only a local professional can answer, and tells you to go and ask them.\n\nWHO IT IS FOR: sole traders, freelancers, independent contractors and single-owner businesses doing their own books, with no accounting background assumed.\n\nWHO SHOULD NOT BUY IT: if you employ people and need payroll, if you run an incorporated company with filing obligations, or if you want to be told your tax rates and deadlines, this is the wrong book and it says so in chapter 2.\n\nFORMAT: reflowable EPUB, about 15,000 words, readable on a phone. No worksheets to print or write into.\n\nGeneral educational material about bookkeeping method. Not accounting, tax, legal or financial advice.",
+    "keywords": [
+      "bookkeeping for freelancers",
+      "sole trader bookkeeping",
+      "double entry bookkeeping basics",
+      "small business bookkeeping",
+      "self employed accounts",
+      "bank reconciliation guide",
+      "month end close small business"
+    ],
+    "categories": [
+      "Business & Money > Accounting > Bookkeeping",
+      "Business & Money > Small Business & Entrepreneurship > Accounting"
+    ],
+    "price_usd": 9.99
+  },
+  "upload_file": "keep-your-own-books.epub",
+  "cover_file": "cover.jpg",
+  "cover_required": false,
+  "notes": [
+    "Takes the EPUB directly.",
+    "Royalty terms were NOT verified in the 2026-10-28 research run: confirm in Apple Books Connect before pricing.",
+    "Publishing normally requires a Mac tool or an aggregator."
+  ],
+  "ready_for_upload": true,
+  "blocking": [],
+  "connection": "not checked here - run scripts/publishing-readiness.mjs"
+}

@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: The Practical Money System
+Subtitle: A Beginner's Guide to Budgeting, Saving, Debt Payoff & Building Wealth
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>Most money guides teach one skill and leave you guessing about the rest. The Practical Money System puts budgeting, an emergency fund, debt payoff, saving and the basics of investing into one clear order of steps you can follow at your own pace.</p><p>It is a 72-page educational guide for beginners, students, young professionals and freelancers. It explains each idea in plain language, shows the arithmetic, and gives you worksheets to fill in with your own numbers.</p><p>This is general financial education, not personal financial advice. It makes no promises about returns or results, and it does not recommend any product.</p><h3>WHAT YOU GET</h3><ul><li>12 chapters, an introduction, a conclusion with a 90-day action plan, and four appendices (about 12,000 words)</li><li>Three worked budgets: low income, middle income and irregular freelance income</li><li>A monthly budget worksheet and an income and expense tracker layout, with advice for building it in a spreadsheet</li><li>An emergency fund planner with a method for choosing a target, not a magic number</li><li>A debt inventory and a debt repayment comparison worksheet</li><li>A full comparison of three payoff strategies (avalanche, snowball and hybrid) on the same four debts, with the numbers shown</li><li>A savings goal planner and a sinking-fund method for annual bills</li><li>Compound interest explained with six worked examples, the rule of 72 with its error shown, and the effect of fees and inflation</li><li>An introduction to investing and risk: volatility, diversification, time horizon, fees and common behaviour mistakes, with no product recommendations</li><li>A scam-check checklist and what to do if you have been scammed</li><li>A net worth statement, an annual review, a monthly review checklist and a week-by-week 90-day action plan</li><li>A glossary and a reference list of official sources</li></ul><h3>CHECKED NUMBERS</h3><p>Every calculation printed in the book was run in a script, and 47 printed figures were compared with the script output (no mismatches). All interest rates are assumptions for illustration, labelled as such.</p><h3>WHAT IS INSIDE</h3><p>1 Understanding personal money management. 2 Income and expenses. 3 Building a realistic budget. 4 Emergency funds. 5 Managing debt. 6 Debt repayment strategies. 7 Saving systems. 8 Compound interest. 9 Introduction to investing. 10 Understanding financial risk. 11 Avoiding financial scams. 12 Long term financial planning.</p><h3>HOW IT IS DIFFERENT</h3><p>It covers the whole beginner path in one guide, uses a neutral currency so it works anywhere, separates universal principles from country-specific rules, and shows its working so you can check it.</p><h3>WHO IT IS FOR</h3><p>Beginners, students, young professionals and freelancers who want to organise their money and understand the basics.</p><h3>WHO IT IS NOT FOR</h3><p>People looking for stock tips, get-rich-quick plans, tax or legal advice, or a guaranteed investment strategy.</p><h3>GOOD TO KNOW</h3><ul><li>Tax, retirement accounts, deposit protection and consumer credit rules differ by country. Where the book gives a country example it is labelled and sourced from an official page; always check your own country&#x27;s rules.</li><li>Some official pages could not be opened during research and are not cited as read.</li><li>Investing involves risk, including the loss of money.</li></ul><p> FAQ Q: Is this financial advice? A: No. It is general education. It does not know your situation and cannot replace a qualified adviser.</p><p>Q: Will it work in my country? A: The principles do. The examples use a neutral currency. Country-specific rules (tax, retirement accounts, consumer credit) differ, so the book shows you how to check your own.</p><p>Q: Does it tell me what to invest in? A: No. It explains risk, diversification and fees in general terms and recommends no securities, funds or apps.</p><p>Q: I have 
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Business & Money > Personal Finance > Budgeting & Money Management
+  2. Business & Money > Personal Finance > Credit & Debt
+Keywords (7 boxes, each up to 50 characters):
+  1. personal finance for beginners
+  2. budgeting for beginners
+  3. how to pay off debt
+  4. emergency fund guide
+  5. debt snowball vs avalanche
+  6. compound interest explained
+  7. beginner money management
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 08_practical-money-system-beginners.epub  (0.45 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 08_practical-money-system-beginners_cover_1600x2560.jpg (upscaled from 1024x1536: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 9.00 USD  -> 35% royalty = 3.15; 70% = 6.23.  B) 9.00 USD -> 70% = 6.23, 35% = 3.15. NOT SET: needs your approval.

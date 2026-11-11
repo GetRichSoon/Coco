@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: Keep Your Own Books
+Subtitle: Bookkeeping for Freelancers and Sole Traders
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>Keep Your Own Books is a plain-English bookkeeping guide for freelancers, sole traders and other one-person businesses.</p><p>You work for yourself, somebody told you to &quot;keep your books&quot;, and nobody explained what that means. You have a business bank account, a folder of receipts and a worry that you are doing it wrong. This book teaches you one system, the double-entry method accountants use, so you can record your business properly, check it against your bank, and understand your own numbers.</p><h3>WHAT YOU WILL BE ABLE TO DO</h3><ul><li>Record any transaction your business produces, using both halves of the entry</li><li>Prove your records against your bank statement with a monthly reconciliation</li><li>Close a month in about an hour with a seven-step routine</li><li>Read your own profit and loss and balance sheet</li><li>Tell the difference between profit and cash, and see why your bank balance is not your profit</li><li>Keep records your accountant can use, so you pay for advice instead of tidying</li></ul><h3>WHAT IS INSIDE</h3><ul><li>16 numbered chapters plus a conclusion and further resources: about 15,800 words, 88 pages</li><li>The five kinds of account, and a test that sorts almost every transaction</li><li>Double entry without the jargon, with worked transactions</li><li>A working chart of accounts for a one-person business</li><li>Recording money in and money out, including deposits, refunds, discounts and part payments</li><li>Cash basis and accrual explained with the same December, both ways</li><li>The bank reconciliation, with the three piles and what to do with each</li><li>Drawings and owner&#x27;s money, and untangling personal and business spending</li><li>The one-hour month-end close, and how to read your profit and loss and balance sheet</li><li>A full month worked end to end, with every figure checked</li><li>What records to keep, what your accountant actually wants, and when to stop doing it yourself</li><li>Five diagrams: the five kinds of account, the life of a sale and a bill, the bank reconciliation, the month-end close and why profit is not cash</li><li>Every chapter ends with a checklist; the first fifteen also end with &quot;When it goes wrong&quot;</li></ul><h3>WHAT YOU DOWNLOAD</h3><p>A 6 x 9 inch PDF with a linked contents page and an EPUB for phones, tablets and e-readers (same text and diagrams).</p><h3>WHAT MAKES IT DIFFERENT</h3><p>This book contains no tax rates, thresholds, deadlines or filing rules. That is deliberate. Those rules depend on your country, change often, and are not what you need first. This book teaches how to record what happened, which is the same everywhere. It names the questions only a local professional can answer and tells you to ask them.</p><h3>WHO IT IS FOR</h3><p>Sole traders, sole proprietors, freelancers, independent contractors and single-owner businesses doing their own books. No accounting background needed.</p><h3>WHO SHOULD NOT BUY IT</h3><p>If you have employees and need payroll, run a limited company or corporation with filing duties, or want to be told your tax rates and deadlines, this is the wrong book. It says so early in the text.</p><h3>GOOD TO KNOW</h3><ul><li>Examples use round numbers and no currency.</li><li>Spelling and terms are British (sole trader, drawings, receivables).</li><li>It is not a spreadsheet or template pack: the chart of accounts and worked month are in the text.</li></ul><p>General educational material about bookkeeping method. Not accounting, tax, legal or financial advice. Not affiliated with or endorsed by any tax authority, accounting standard setter, professional body or software vendor.</p><h3>FAQ</h3><p>Q: Do I need an accounting background? A: No. The book starts from what bookkeeping is.</p><p>Q: Does it tell me what tax I owe? A: No. It contains no tax rates, thresholds, deadlines or filing steps. It teaches the records your accountant or tax autho
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Business & Money > Accounting
+  2. Business & Money > Small Business & Entrepreneurship
+Keywords (7 boxes, each up to 50 characters):
+  1. bookkeeping for freelancers
+  2. sole trader bookkeeping
+  3. self employed bookkeeping guide
+  4. double entry basics
+  5. bank reconciliation guide
+  6. small business accounting beginners
+  7. month end close
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 02_keep-your-own-books.epub  (1.09 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 02_keep-your-own-books_cover_1600x2560.jpg (upscaled from 1800x2700: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 29.00 USD  -> 35% royalty = 10.15.  B) 12.99 USD -> 70% = 8.93, 35% = 4.55. NOT SET: needs your approval.

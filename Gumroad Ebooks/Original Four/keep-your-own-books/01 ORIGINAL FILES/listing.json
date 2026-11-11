@@ -1,0 +1,105 @@
+{
+  "slug": "keep-your-own-books",
+  "title": "Keep Your Own Books",
+  "subtitle": "A bookkeeping routine for freelancers and sole traders, from the first invoice to a month you can close in an hour",
+  "author": "The Velvet Foundry Editorial Team",
+  "language": "en",
+  "publisher": "The Velvet Foundry",
+  "description": "You started working for yourself, somebody said \"keep your books\", and nobody explained what that meant. You now have a business bank account, a folder of receipts, a spreadsheet you abandoned, and a quiet worry that you are doing it wrong.\n\nThis book teaches one system: the same double-entry method every accountant uses, which has five moving parts and can be learned in an afternoon by anyone who can add. Not software. The system underneath the software, so you stop being at its mercy.\n\nWHAT YOU WILL BE ABLE TO DO: record any transaction your business can produce; prove your records against your bank statement; close a month in about an hour; and read your own profit and loss and balance sheet without anyone translating them for you.\n\nWHAT IS INSIDE: 21 chapters across the five kinds of account, double entry without the jargon, a working chart of accounts you can copy, recording money in and out, cash basis against accrual, the bank reconciliation, drawings and owner's money, untangling mixed personal spending, a one-hour month-end routine, reading both statements, a full month worked end to end from opening balance to closing statements, what records to keep, what your accountant actually wants, and when to stop doing this yourself. Every chapter ends with the ways it goes wrong and a checklist.\n\nWHAT MAKES IT DIFFERENT: it contains no tax rates, thresholds, deadlines or filing rules. That is deliberate. Those are specific to your country and they change, so a book stating them would be wrong for most readers on the day it shipped, and wrong in a way that looked authoritative. This book teaches the part that is the same everywhere and does not expire: how to record what happened. It names the three questions only a local professional can answer, and tells you to go and ask them.\n\nWHO IT IS FOR: sole traders, freelancers, independent contractors and single-owner businesses doing their own books, with no accounting background assumed.\n\nWHO SHOULD NOT BUY IT: if you employ people and need payroll, if you run an incorporated company with filing obligations, or if you want to be told your tax rates and deadlines, this is the wrong book and it says so in chapter 2.\n\nFORMAT: reflowable EPUB, about 15,000 words, readable on a phone. No worksheets to print or write into.\n\nGeneral educational material about bookkeeping method. Not accounting, tax, legal or financial advice.",
+  "keywords": [
+    "bookkeeping for freelancers",
+    "sole trader bookkeeping",
+    "double entry bookkeeping basics",
+    "small business bookkeeping",
+    "self employed accounts",
+    "bank reconciliation guide",
+    "month end close small business"
+  ],
+  "categories": [
+    "Business & Money > Accounting > Bookkeeping",
+    "Business & Money > Small Business & Entrepreneurship > Accounting",
+    "Business & Money > Accounting > Financial"
+  ],
+  "template": "ebook-howto",
+  "team": "ebooks",
+  "subteam": "ebooks/business-micro-skills",
+  "category": "ebooks/business-micro-skills/small-business-finance",
+  "price_usd": 9.99,
+  "price_by_platform": {
+    "gumroad": 29.0,
+    "kdp": 9.99
+  },
+  "tags_by_platform": {
+    "gumroad": [
+      "bookkeeping",
+      "freelancer",
+      "sole trader",
+      "small business",
+      "double entry",
+      "self employed",
+      "accounting basics",
+      "month end close",
+      "business finance"
+    ]
+  },
+  "kdp": {
+    "list_price": 9.99,
+    "file_mb": 0.05,
+    "delivery_cost_usd": 0.01,
+    "royalty_35_usd": 3.5,
+    "eligible_for_70": true,
+    "royalty_70_usd": 6.99,
+    "min_list_price_at_35": 0.99,
+    "best_rate": "70%",
+    "requires_print_price_at_least": 12.49,
+    "note_70_percent": "to keep 70%, no print edition may be listed below $12.49"
+  },
+  "direct": {
+    "payhip_free_5pct": 27.55,
+    "payhip_pro_0pct": 29.0,
+    "gumroad_direct": 25.6,
+    "gumroad_discover": 20.3,
+    "note": "processor fees are charged on top by Payhip and are inside Gumroad's cut"
+  },
+  "per_store_limits": {
+    "kdp": {
+      "title": 200,
+      "subtitle": 200,
+      "description": 4000,
+      "keywords": 7,
+      "categories": 3
+    },
+    "google_play_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 0,
+      "categories": 2
+    },
+    "payhip": {
+      "title": 200,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "gumroad": {
+      "title": 150,
+      "description": 5000,
+      "keywords": 10,
+      "categories": 1
+    },
+    "kobo": {
+      "title": 200,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 3
+    },
+    "apple_books": {
+      "title": 255,
+      "description": 4000,
+      "keywords": 10,
+      "categories": 2
+    }
+  },
+  "problems": [],
+  "ready_for_upload": true
+}

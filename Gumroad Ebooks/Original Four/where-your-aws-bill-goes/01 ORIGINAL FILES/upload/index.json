@@ -1,0 +1,15 @@
+{
+  "slug": "where-your-aws-bill-goes",
+  "title": "Where Your AWS Bill Goes",
+  "platforms": [
+    "amazon_kdp",
+    "google_play_books",
+    "payhip",
+    "gumroad",
+    "kobo",
+    "apple_books"
+  ],
+  "ready_for_upload": true,
+  "blocking": [],
+  "warning": "A pack is text. Nothing here means an account is connected or anything was published."
+}

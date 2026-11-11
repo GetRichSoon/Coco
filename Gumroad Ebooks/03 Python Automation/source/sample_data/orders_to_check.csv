@@ -1,0 +1,7 @@
+order_id,email,amount,date,status
+1001,a@example.com,25.00,2026-10-01,paid
+1002,not-an-email,10.00,2026-10-02,paid
+1003,c@example.com,-5,2026-10-03,paid
+1004,d@example.com,12.50,2026-13-40,pending
+1005,e@example.com,9.99,2026-10-05,shipped??
+,f@example.com,7,2026-10-06,paid

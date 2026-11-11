@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: Where Your AWS Bill Goes
+Subtitle: Understand and Reduce Your AWS Costs
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<p>Somebody forwarded you the AWS bill and asked why it went up. This guide shows you how to read it, trace each line to the decision that caused it, and reduce the cost in the right order, without needing a dedicated FinOps team.</p><h3>WHAT YOU WILL BE ABLE TO DO</h3><ul><li>Trace any line on your AWS bill back to the decision that caused it</li><li>Read a cost graph&#x27;s shape (a step, a ramp or a sawtooth) and know whether you are looking at a deploy, an accumulation or a scheduled job</li><li>Tell a cost that is a problem from a cost that is simply the price of running the thing</li><li>Understand data transfer, public IPv4 addresses, NAT gateways, idle and orphaned resources, storage retention, commitments and managed databases in plain language</li><li>Set up one alarm, one monthly review and one written note, so the next surprise reaches you in days rather than at month end</li></ul><h3>THE IDEA</h3><p>Almost every AWS charge is one of five pricing shapes: time, storage, requests, data transfer and provisioned capacity. Learn the shapes and an unfamiliar service becomes readable from its pricing page in a couple of minutes. The book then gives you the order that matters: delete what nobody wants, then resize, then (only then) buy a discount.</p><h3>WHAT IS INSIDE</h3><ul><li>20 numbered chapters plus a conclusion and sources: about 18,000 words, 68 pages</li><li>Why cloud bills surprise people, and the five things you actually pay for</li><li>Reading the bill as a structure: the billing pages, Cost Explorer, Data Exports and the Cost and Usage Report</li><li>Tagging and attribution; accounts, organisations and consolidated billing</li><li>Data transfer, the cost nobody models; the NAT gateway and other per-gigabyte appliances</li><li>Idle, forgotten and orphaned resources; storage, retention and lifecycle rules</li><li>Provisioned capacity and commitments; right-sizing without guessing</li><li>Managed databases and serverless against always-on; non-production environments</li><li>Budgets, alarms and anomaly detection; the one-hour monthly cost review</li><li>A full month worked from a surprising bill to a fixed one; costing a design before you build it; when to stop optimising</li><li>Five diagrams: the five pricing shapes, the why-did-it-go-up procedure, data-transfer boundaries, the right-sizing order and the monthly review</li><li>Checked against AWS documentation on 7 November 2026, with a dated sources list</li></ul><h3>WHAT YOU DOWNLOAD</h3><p>A 6 x 9 inch PDF with a linked contents page and an EPUB for phones, tablets and e-readers (same text and diagrams).</p><h3>WHO IT IS FOR</h3><p>The engineer, tech lead or small team that owns an AWS bill they did not entirely design and would like to be able to explain it, including anyone who has just inherited an AWS account.</p><h3>WHO SHOULD NOT BUY IT</h3><p>Cloud financial management specialists with a dedicated team and a commitment portfolio; anyone who wants to be told which instance to buy without understanding why; anyone looking for tricks without the reasoning.</p><h3>HONEST LIMITS</h3><p>This book contains no prices, rates or free-tier amounts. AWS prices change and differ by region, so any figure printed here would be stale. The book teaches what you are charged for and which decisions change how much you consume; AWS&#x27;s own pricing pages and Pricing Calculator tell you how much. Some statements about AWS behaviour could not be confirmed against current documentation and are worded cautiously in the text. Other cloud providers are not covered.</p><p>This is general educational material about cloud cost mechanics, not financial, accounting or procurement advice. This book is independent. It is not affiliated with, endorsed by or sponsored by Amazon Web Services, Inc. or Amazon.com, Inc. &quot;AWS&quot; and the names of individual services are trademarks of their respective owners and are used only to ide
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Computers & Technology > Networking & Cloud Computing
+  2. Business & Money > Management & Leadership
+Keywords (7 boxes, each up to 50 characters):
+  1. reduce AWS bill
+  2. AWS cost optimization
+  3. understand AWS billing
+  4. cloud cost management guide
+  5. AWS data transfer costs
+  6. FinOps for engineers
+  7. AWS monthly cost review
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 04_where-your-aws-bill-goes.epub  (0.81 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 04_where-your-aws-bill-goes_cover_1600x2560.jpg (upscaled from 1800x2700: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 39.00 USD  -> 35% royalty = 13.65.  B) 12.99 USD -> 70% = 8.97, 35% = 4.55. NOT SET: needs your approval.

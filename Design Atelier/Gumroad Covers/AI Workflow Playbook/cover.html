@@ -1,0 +1,55 @@
+<!doctype html><meta charset="utf-8"><title>AI Workflow Playbook cover</title>
+<style>html,body{margin:0;background:#070d24;overflow:hidden}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script>
+// ?f=portrait|landscape|square
+const f=new URLSearchParams(location.search).get('f')||'portrait';
+const S={portrait:[900,1350],landscape:[1280,720],square:[600,600]}[f];
+const [W,H]=S, c=document.getElementById('c'), dpr=devicePixelRatio||1;
+c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
+const g=c.getContext('2d');g.scale(dpr,dpr);
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const GOLD='#d9bd84',BLUE='#3d8bff',LB='#8fc2ff';
+// layout: orb centre/radius, text anchor/align/size
+const L={
+ portrait:{cx:W/2,cy:H*.37,R:W*.36,tx:W/2,ty:H*.72,al:'center',t:92,s:25,w:W*.84},
+ landscape:{cx:W*.80,cy:H/2,R:H*.38,tx:W*.07,ty:H*.30,al:'left',t:70,s:21,w:W*.5},
+ square:{cx:W*.72,cy:H*.30,R:W*.30,tx:W*.08,ty:H*.60,al:'left',t:52,s:15,w:W*.84}}[f];
+// background
+let bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0a1332');bg.addColorStop(1,'#050a1c');
+g.fillStyle=bg;g.fillRect(0,0,W,H);
+let gl=g.createRadialGradient(L.cx,L.cy,0,L.cx,L.cy,L.R*2.2);
+gl.addColorStop(0,'rgba(61,139,255,.35)');gl.addColorStop(.5,'rgba(30,70,170,.12)');gl.addColorStop(1,'rgba(0,0,0,0)');
+g.fillStyle=gl;g.fillRect(0,0,W,H);
+// dust
+for(let i=0;i<160;i++){g.fillStyle=`rgba(143,194,255,${rnd()*.35})`;g.beginPath();g.arc(rnd()*W,rnd()*H,rnd()*1.6+.3,0,7);g.fill();}
+// sphere network
+const N=230,P=[],tilt=.5,ph=(1+Math.sqrt(5))/2;
+for(let i=0;i<N;i++){const y=1-2*(i+.5)/N,r=Math.sqrt(1-y*y),a=2*Math.PI*i/ph;
+ let x=Math.cos(a)*r,z=Math.sin(a)*r,y2=y*Math.cos(tilt)-z*Math.sin(tilt),z2=y*Math.sin(tilt)+z*Math.cos(tilt);
+ P.push({x:L.cx+x*L.R,y:L.cy+y2*L.R,z:z2,gold:rnd()<.09});}
+for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+ const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y),z=(P[i].z+P[j].z)/2;
+ if(d<L.R*.26){g.strokeStyle=`rgba(90,160,255,${.1+.45*(z+1)/2})`;g.lineWidth=.8;g.beginPath();g.moveTo(P[i].x,P[i].y);g.lineTo(P[j].x,P[j].y);g.stroke();}}
+for(const p of P){const a=.35+.65*(p.z+1)/2,r=(p.gold?2.8:1.8)*(.7+.5*(p.z+1)/2)*(W/900>.8?1:.8);
+ g.shadowBlur=p.gold?14:8;g.shadowColor=p.gold?GOLD:BLUE;g.fillStyle=p.gold?GOLD:LB;g.globalAlpha=a;
+ g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill();}
+g.globalAlpha=1;g.shadowBlur=0;
+// gold orbit ring
+g.save();g.translate(L.cx,L.cy);g.rotate(-.35);g.strokeStyle='rgba(217,189,132,.7)';g.lineWidth=1.4;
+g.beginPath();g.ellipse(0,0,L.R*1.28,L.R*.34,0,0,7);g.stroke();g.restore();
+// text (exact, typeset in code)
+const A=L.al;g.textAlign=A;g.textBaseline='alphabetic';
+const words=['THE','AI WORKFLOW','PLAYBOOK'];
+let y=L.ty;
+g.font=`600 ${L.s*.9}px "Segoe UI",Arial`;g.fillStyle=GOLD;g.letterSpacing=L.s*.35+'px';
+g.fillText('THE',L.tx,y);y+=L.t*1.05;
+g.font=`700 ${L.t}px Georgia,"Times New Roman",serif`;g.fillStyle='#f6f1e6';g.letterSpacing='2px';
+g.fillText('AI WORKFLOW',L.tx,y);y+=L.t*1.05;g.fillText('PLAYBOOK',L.tx,y);
+y+=L.t*.4;g.fillStyle=GOLD;
+const x0=A=='center'?L.tx-40:L.tx;g.fillRect(x0,y,80,2.5);y+=L.s*1.9;
+g.font=`400 ${L.s}px "Segoe UI",Arial`;g.fillStyle='#c9d6f2';g.letterSpacing='.5px';
+const sub=f=='square'?['30 Practical ChatGPT Systems','for Small Business']:['30 Practical ChatGPT Systems for','Small Business, Marketing, Sales','& Daily Operations'];
+if(f=='portrait'){sub.length=0;sub.push('30 Practical ChatGPT Systems for Small Business,','Marketing, Sales & Daily Operations');}
+for(const s of sub){g.fillText(s,L.tx,y);y+=L.s*1.5;}
+</script>

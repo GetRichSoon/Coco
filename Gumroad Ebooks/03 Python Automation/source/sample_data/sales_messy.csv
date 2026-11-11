@@ -1,0 +1,9 @@
+Name, Region ,Amount,Date
+  alice  JOHNSON ,north,"$1,200.50",2026-10-03
+BOB smith,SOUTH,340,03/10/2026
+,,,
+bob smith,south,340,03/10/2026
+carol  Diaz,East,"$89.9",Oct 5 2026
+dan Lee,north,abc,2026-10-06
+erin Cho,West,150,31-10-2026
+erin Cho,West,150,not a date

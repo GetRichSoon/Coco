@@ -1,0 +1,19 @@
+date,category,description,amount
+2026-09-01,Rent,Rent item,902
+2026-09-03,Food,Food item,58.5
+2026-09-05,Transport,Transport item,26
+2026-09-08,Food,Food item,59.5
+2026-09-12,Software,Software item,21
+2026-09-15,Food,Food item,55.5
+2026-09-18,Health,Health item,77
+2026-09-21,Transport,Transport item,38
+2026-09-25,Food,Food item,50.5
+2026-10-01,Rent,Rent item,914
+2026-10-03,Food,Food item,58.5
+2026-10-05,Transport,Transport item,39
+2026-10-08,Food,Food item,51.5
+2026-10-12,Software,Software item,24
+2026-10-15,Food,Food item,47.5
+2026-10-18,Health,Health item,65
+2026-10-21,Transport,Transport item,32
+2026-10-25,Food,Food item,42.5

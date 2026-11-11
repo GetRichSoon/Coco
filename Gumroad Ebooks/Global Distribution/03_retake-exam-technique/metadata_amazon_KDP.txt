@@ -1,0 +1,36 @@
+AMAZON KDP METADATA (non-exclusive: DO NOT enroll in KDP Select)
+Language: English
+Book title: The Retake Method
+Subtitle: Exam Technique After You Fail a Licensing Exam
+Series: none
+Edition number: 1
+Author: DECISION REQUIRED (no approved author name; the original four used "The Velvet Foundry Editorial Team")
+Contributors: none
+Publisher (optional field): The Velvet Foundry
+Description (paste in KDP, HTML allowed; limit 4,000 characters; 3950 used):
+<h3>FAILED A LICENSING EXAM? RE-READING THE SAME BOOKS MAY NOT FIX WHAT WENT WRONG.</h3><p>A failed result can come from three different places: you did not know the material, you knew it but chose the wrong option, or the exam conditions got to you. Each has a different fix. This book helps you work out which one is costing you the most, then gives you a method for the exam room.</p><p>It does not teach your subject and it contains no exam questions. It teaches how to sit a multiple-choice exam, for any profession.</p><h3>WHO IT IS FOR</h3><ul><li>Adults who have failed a professional licensing exam once or more, in any field</li><li>Anyone with a computer-based or paper multiple-choice retake booked or planned</li><li>People who want a method for how to sit the exam, not another content review</li></ul><h3>WHO SHOULD NOT BUY IT</h3><ul><li>Anyone who wants subject content or practice questions</li><li>Anyone looking for a pass guarantee: no book can promise a result</li><li>Candidates whose exam is oral, practical or essay-only</li></ul><h3>WHAT YOU WILL BE ABLE TO DO</h3><ul><li>Read a failed score report word for word and turn it into clear diagnosis sentences</li><li>Run a two-day diagnostic that separates knowledge gaps, method gaps and nerves</li><li>Spot the qualifier in every question and apply a fixed rule for FIRST, NEXT, BEST and MOST LIKELY</li><li>Break a tie between two plausible answers with a step-by-step sequence</li><li>Eliminate options for named reasons, and change an answer only when you can state a reason</li><li>Work out your own time per question, set checkpoints and use a skip rule</li><li>Use word-for-word scripts for the moments you are stuck, blank or panicking</li><li>Have the retake conversation with your employer and with family, using ready-to-adapt messages</li><li>Keep a practice error log and follow a method-based study week</li><li>Run an exam-day routine and a last-ten-minutes routine</li><li>Plan the next 24 hours, week and month after the result, whichever way it goes</li></ul><h3>WHAT IS INSIDE</h3><ul><li>18 numbered chapters plus a conclusion, further resources and an about page: about 18,000 words, 97 pages</li><li>Worked questions with each answer option on its own line, set in everyday scenes (kitchens, bicycles, journeys) so none can be mistaken for exam content</li><li>Five diagrams: the two-day diagnostic, the reading routine, the four decision rules, the tie-breaker sequence and the pacing timeline</li><li>Copy-and-adapt templates and scripts, and a practice error log</li><li>Chapters: what a failed attempt tells you; why people fail a retake; reading your score report; method gap or knowledge gap; the anatomy of a question; FIRST, NEXT, BEST and MOST LIKELY; tie-breakers; elimination and changing answers; pacing; what to say to yourself; the employer and family conversations; the error log; a study week; the exam-day routine; the last ten minutes; after the result</li></ul><h3>WHAT YOU DOWNLOAD</h3><p>A 6 x 9 inch PDF with a linked contents page and an EPUB for phones, tablets and e-readers (same text and diagrams).</p><h3>EXAM-AGNOSTIC BY DESIGN</h3><p>You take your own exam&#x27;s length, time limit and rules from your exam body&#x27;s published information, and the book shows you how to apply each technique to them. Examples are hypothetical; outcomes are not promised.</p><h3>IMPORTANT</h3><p>This is general educational material about exam technique. It does not guarantee any examination result. It is not clinical, legal, tax or financial advice. It is not affiliated with, endorsed by or approved by any examination body, licensing authority or professional body.</p><h3>FAQ</h3><p>Q: Is this for one particular exam? A: No. It works for any multiple-choice licensing exam. It contains no content for any specific exam.</p><p>Q: Does it guarantee that I will pass? A: No. No book can. It gives you a method for diagnosing what went
+
+I own the copyright / publishing rights: only select after you confirm rights (see rights notes in the report)
+Publishing rights territories: worldwide rights only if you confirm you hold them
+Primary audience: not adult content
+Categories (choose 3 in KDP; names to be confirmed in KDP's category picker):
+  1. Education & Teaching > Studying & Workbooks
+  2. Education & Teaching > Test Preparation
+Keywords (7 boxes, each up to 50 characters):
+  1. retake licensing exam
+  2. failed licensing exam what next
+  3. multiple choice exam technique
+  4. test taking strategies
+  5. exam retake strategy
+  6. how to read a score report
+  7. exam day routine
+
+AI-GENERATED CONTENT DISCLOSURE (KDP asks: text / images / translations)
+  Text: YES, AI-generated. AI-generated text: the manuscript was written by an AI assistant (Claude) from research prompts and then checked with scripts and by the publisher; it was not human-written. Declare it as AI-generated.
+  Images: YES, AI-generated. AI-generated images: the cover was generated with ChatGPT Image Generation (OpenAI) and then adjusted in code; the interior diagrams (where present) were drawn in code by the AI assistant. Declare cover and diagrams as AI-generated.
+  Translations: not applicable.
+Manuscript file: 03_retake-exam-technique.epub  (1.0 MB)
+Cover (upload as cover image, JPEG/TIFF, ideal 1600 x 2560): 03_retake-exam-technique_cover_1600x2560.jpg (upscaled from 1800x2700: see report)
+KDP Select: NO
+DRM: your choice (recommended: off for a how-to guide; decide)
+Kindle price options (US): A) keep 29.00 USD  -> 35% royalty = 10.15.  B) 12.99 USD -> 70% = 8.94, 35% = 4.55. NOT SET: needs your approval.

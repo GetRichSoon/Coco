@@ -604,7 +604,10 @@ ipcMain.handle('set-startup', (_e, on) => { app.setLoginItemSettings(loginArgs(!
 // Hidden only while a full-screen app is in front (at the office too, Boss 2026-10-22).
 const ISLAND_FILE = () => path.join(app.getPath('userData'), 'island.json');
 let island = null, islandHelper = null, islandFull = false, islandMax = false, islandLast = null;
-const islandSettings = () => { try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(fs.readFileSync(ISLAND_FILE(), 'utf8')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } };
+// A missing file = a fresh install (defaults, Dock on as designed). A file that EXISTS but cannot be parsed is never allowed to switch the Dock on and hide the
+// Windows taskbar: it falls back to defaults with the Dock off. A UTF-8 byte-order mark (Notepad / PowerShell add one) is stripped before parsing. (2026-11-04: a BOM
+// made this silently return defaults, which switched the Dock on and hid the taskbar.)
+const islandSettings = () => { let raw; try { raw = fs.readFileSync(ISLAND_FILE(), 'utf8'); } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true } }; } try { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, ...JSON.parse(raw.replace(/^\uFEFF/, '')) }; } catch { return { enabled: true, modules: { coco: true, music: true, control: true, focus: true }, dock: false }; } };
 const saveIsland = (s) => { try { fs.writeFileSync(ISLAND_FILE(), JSON.stringify(s)); } catch {} };
 
 // Errors from the island and dock pages go to userData\island.log, so a broken screen can be traced after the fact.
@@ -613,15 +616,37 @@ function logWindow(w, name) {
     if (level >= 2) try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} ${name}:${line} ${message}
 `); } catch {} });
 }
+// Island 2.0 (Boss, 2026-11-04): the window holds the biggest state (details) plus room for the shadow; it stays
+// click-through outside the pill. Screen and side are saved in island.json (prefs) and survive restarts.
+const ISLAND_W = 600, ISLAND_H = 480;
+const islandPrefs = () => { const p = { theme: 'coco', align: 'center', screen: 0, ...(islandSettings().prefs || {}) }; if (p.theme !== 'mafia') p.theme = 'coco'; return p; };   // two themes; old saved dark / light / auto = the default
+// The saved screen if it is still plugged in, else the main screen (a removed monitor never strands the island).
+function islandDisplay() {
+  const { screen } = require('electron'), all = screen.getAllDisplays(), id = islandPrefs().screen;
+  return all.find((d) => d.id === id) || screen.getPrimaryDisplay();
+}
 function placeIsland() {
   if (!island) return;
-  const { screen } = require('electron');
-  const d = screen.getPrimaryDisplay().bounds, W = 460, H = 310;   // flush with the top edge of the screen, like a notch
-  island.setBounds({ x: Math.round(d.x + (d.width - W) / 2), y: d.y, width: W, height: H });
+  const d = islandDisplay().bounds, W = ISLAND_W, H = ISLAND_H, a = islandPrefs().align;
+  const x = a === 'left' ? d.x + 24 : a === 'right' ? d.x + d.width - W - 24 : d.x + (d.width - W) / 2;
+  island.setBounds({ x: Math.round(x), y: d.y, width: W, height: H });
+}
+function sendPrefs() {
+  if (!island) return;
+  const { screen } = require('electron'), p = islandPrefs(), cur = islandDisplay().id;
+  island.webContents.send('island-prefs', { ...p, screen: cur, screens: screen.getAllDisplays().map((d, i) => ({ id: d.id, name: 'Screen ' + (i + 1) + (d.id === screen.getPrimaryDisplay().id ? ' (main)' : ''), size: d.size.width + '×' + d.size.height })) });
+}
+// CPU and RAM for the island's system strip; asked for only while the island is open.
+let cpuPrev = null;
+function sysInfo() {
+  const os = require('os'), c = os.cpus().reduce((a, x) => { for (const k in x.times) a.t += x.times[k]; a.i += x.times.idle; return a; }, { t: 0, i: 0 });
+  const cpu = cpuPrev && c.t > cpuPrev.t ? Math.round(100 * (1 - (c.i - cpuPrev.i) / (c.t - cpuPrev.t))) : null; cpuPrev = c;
+  return { cpu, ram: Math.round(100 * (1 - os.freemem() / os.totalmem())) };
 }
 // At the office the island shows ONLY approvals (Boss, 2026-10-26): no other Coco status, no toasts (quiet).
 let sentModules = '';
-const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { if (m.coco !== false) m.coco = 'approvals'; m.quiet = true; } return m; };   // quiet = no toasts
+// quiet = no toasts (office mode)
+const islandModules = () => { const m = { ...islandSettings().modules }; if (atOffice()) { if (m.coco !== false) m.coco = 'approvals'; m.quiet = true; } return m; };
 function sendModules(force) { const m = islandModules(), k = JSON.stringify(m); if (island && (force || k !== sentModules)) { sentModules = k; island.webContents.send('island-modules', m); } }
 function islandVisible() {
   sendModules(false);
@@ -644,20 +669,21 @@ ipcMain.handle('island-enabled-set', (_e, on) => setIslandEnabled(!!on));
 function createIsland() {
   if (island || !islandSettings().enabled) return;
   island = new BrowserWindow({
-    width: 460, height: 310, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, focusable: true,
+    width: ISLAND_W, height: ISLAND_H, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, focusable: true,
     show: false, alwaysOnTop: true, hasShadow: false, title: 'Coco Island',
     webPreferences: { preload: path.join(__dirname, 'island-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   island.setAlwaysOnTop(true, 'screen-saver'); island.setVisibleOnAllWorkspaces(true);
   island.setIgnoreMouseEvents(true, { forward: true });   // clicks pass through until the mouse is over the pill
   island.loadFile(path.join(__dirname, 'island.html'));
-  island.webContents.on('did-finish-load', () => { sendModules(true); islandSend(); sendAccent(); });
+  island.webContents.on('did-finish-load', () => { sendModules(true); sendPrefs(); islandSend(); sendAccent(); });
+  island.webContents.on('render-process-gone', (_e, d) => { logLine('island page gone: ' + d.reason + ', reloading'); setTimeout(() => { if (island && !island.isDestroyed()) island.reload(); }, 2000); });
   island.on('closed', () => { island = null; });
   logWindow(island, 'island');
   placeIsland(); islandVisible();
   const { screen } = require('electron');
-  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, () => { placeIsland(); placeDock(); });
-  require('electron').powerMonitor.on('resume', () => { placeIsland(); islandVisible(); placeDock(); });
+  for (const ev of ['display-metrics-changed', 'display-added', 'display-removed']) screen.on(ev, () => { placeIsland(); placeDock(); sendPrefs(); });
+  require('electron').powerMonitor.on('resume', () => { placeIsland(); islandVisible(); placeDock(); dockAH.shown = true; dockAH.awaySince = dockAH.edgeSince = 0; dockSentShown = null; });
   startIslandHelper();
 }
 function startIslandHelper() {
@@ -675,9 +701,10 @@ function startIslandHelper() {
       if (['net', 'bright', 'max', 'vol', 'radio', 'wifilist', 'wifiresult', 'wifipass', 'btlist'].includes(m.t) && island) island.webContents.send('island-sys', m);
       if (m.t === 'wins') { dockWins = m.list; dockFront = m.front || 0; sendDockWins(); }
       if (m.t === 'max') islandMax = !!m.on;
+      if (m.t === 'wheel') { dockAH.wheelAt = Date.now(); dockPointer(); }   // a wheel turn at the bottom edge of a screen
     }
   });
-  islandHelper.on('exit', () => { islandHelper = null; if (!quitting && (island || dock)) setTimeout(() => { startIslandHelper(); if (dock) setTimeout(() => islandHelper && islandHelper.stdin.write('taskbar hide\n'), 1000); }, 5000); });   // crashed: start again
+  islandHelper.on('exit', () => { islandHelper = null; if (!quitting && (island || dock)) setTimeout(() => { startIslandHelper(); if (dock) setTimeout(() => { if (!islandHelper) return; islandHelper.stdin.write('taskbar hide\n'); if (dockAutoHide()) islandHelper.stdin.write('wheelhook on\n'); }, 1000); }, 5000); });   // crashed: start again
 }
 // Claude Code sessions that wrote in the last 5 minutes (liveSessions above) ride along with every push.
 function islandSend() {
@@ -701,14 +728,16 @@ let pillRect = { w: 200, h: 32 }, hoverOpen = false, bandSince = 0, leftSince = 
 ipcMain.on('island-rect', (_e, r) => { pillRect = r; });
 ipcMain.on('island-close', () => { hoverOpen = false; if (island) island.webContents.send('island-hover', false); });
 function islandPointer() {
-  if (!island || !island.isVisible()) { if (hoverOpen) { hoverOpen = false; island && island.webContents.send('island-hover', false); } return; }
+  if (!island || !island.isVisible()) { if (hoverOpen) { hoverOpen = false; island && island.webContents.send('island-hover', false); } return false; }
   const { screen } = require('electron');
-  const p = screen.getCursorScreenPoint(), d = screen.getPrimaryDisplay().bounds, b = island.getBounds(), now = Date.now();
-  const cx = d.x + d.width / 2;
-  const inBand = p.y <= d.y + BAND_PX && Math.abs(p.x - cx) <= BAND_W / 2;
+  // The band sits above the island itself (any screen, left/centre/right), at the top edge of that screen.
+  const p = screen.getCursorScreenPoint(), b = island.getBounds(), now = Date.now();
+  const cx = b.x + b.width / 2;
+  const inBand = p.y >= b.y && p.y <= b.y + BAND_PX && Math.abs(p.x - cx) <= BAND_W / 2;
   // Over a maximised app (Chrome tabs, VS Code title bar) the pill is faded out and lets every click through; only the
-  // top-edge band with its dwell opens it, so the new-tab button and tabs under it keep working.
-  const onPill = (hoverOpen || !islandMax) && p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - (b.x + b.width / 2)) <= pillRect.w / 2;
+  // top-edge band with its dwell opens it, so the new-tab button and tabs under it keep working. A pinned island
+  // (clicked, Ctrl+Alt+I or details) keeps its clicks until it is collapsed.
+  const onPill = (hoverOpen || pillRect.pin || !islandMax) && p.y >= b.y && p.y <= b.y + pillRect.h && Math.abs(p.x - cx) <= pillRect.w / 2;
   if (onPill !== clickable) { clickable = onPill; island.setIgnoreMouseEvents(!onPill, { forward: true }); }
   if (!hoverOpen) {
     bandSince = inBand || onPill ? bandSince || now : 0;
@@ -716,14 +745,24 @@ function islandPointer() {
   } else if (inBand || onPill) leftSince = 0;
   else if (!leftSince) leftSince = now;
   else if (now - leftSince >= LEAVE_MS) { hoverOpen = false; bandSince = 0; island.webContents.send('island-hover', false); }
+  // "near" = worth looking again in 40 ms: a hover or dwell is running, the island is pinned open, or the pointer is close to it
+  return hoverOpen || !!pillRect.pin || !!bandSince || !!leftSince || (Math.abs(p.x - cx) <= BAND_W / 2 + 140 && p.y >= b.y && p.y <= b.y + Math.max(pillRect.h, 80) + 60);
 }
-setInterval(islandPointer, 40);
+// One pointer timer for the island and the Dock. It was a check every 40 ms forever (measured: the main process burned CPU all day for a
+// pointer that was usually nowhere near). Now 25 checks a second only while the pointer is close to the island or the Dock, otherwise 8 a second;
+// the "near" zone is wide enough that the fast rate is already running when the pointer arrives, so hover latency does not change.
+function pointerLoop() {
+  let near = false;
+  try { near = islandPointer() | dockPointer(); } catch (e) { logLine('pointer: ' + e.message); }
+  setTimeout(pointerLoop, near ? 40 : 120);
+}
+app.whenReady().then(pointerLoop);
 
 // ---------- Coco Dock (Boss, 2026-10-22): our taskbar, Bloom-style look; the Windows taskbar is hidden while it runs ----------
 // Pinned apps = the taskbar's own pinned shortcuts. Open windows come from the helper (every top-level app window, like
 // the taskbar), the front window too. Hover previews are live pictures from Windows (desktopCapturer).
 const PINNED = path.join(process.env.APPDATA || '', 'Microsoft', 'Internet Explorer', 'Quick Launch', 'User Pinned', 'TaskBar');
-let dock = null, dockWins = [], dockFront = 0, dockRects = [];
+let dock = null, dockWins = [], dockFront = 0, dockRects = [], dockWatch = null, dockWatchTimer = 0, lastDockPayload = '';
 const dockOn = () => islandSettings().dock !== false;
 const exeIcons = new Map();
 // getFileIcon can hang when called many times at once: one at a time, and never longer than 2 s each.
@@ -795,7 +834,8 @@ async function sendDockWins() {
     list.push({ hwnd: w.hwnd, name: w.name, title: w.title, path: isStore ? '' : w.path, icon: isStore ? winIcons.get(w.name) || '' : exeIcons.get(w.path) });
   }
   const badge = atOffice() ? 0 : ((islandLast && islandLast.approvals) || []).length;   // no Coco status at the office
-  if (dock) dock.webContents.send('dock-wins', { list, badge, front: dockFront });
+  const payload = { list, badge, front: dockFront }, key = JSON.stringify(payload);   // the page is told only when something it shows changed
+  if (dock && key !== lastDockPayload) { lastDockPayload = key; dock.webContents.send('dock-wins', payload); }
 }
 function placeDock() {   // full width, 300 px tall at the bottom: room for previews; all of it but the bar and preview lets clicks through
   if (!dock) return;
@@ -807,19 +847,22 @@ function createDock() {
   if (dock || !dockOn()) return;
   dock = new BrowserWindow({ width: 800, height: 300, frame: false, transparent: true, resizable: false, movable: false, skipTaskbar: true, show: false,
     alwaysOnTop: true, hasShadow: false, title: 'Coco Dock', webPreferences: { preload: path.join(__dirname, 'dock-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  lastDockPayload = ''; dockAH.shown = true; dockAH.awaySince = dockAH.edgeSince = dockAH.wheelAt = 0; dockSentShown = null;
   dock.setAlwaysOnTop(true, 'screen-saver'); dock.setIgnoreMouseEvents(true, { forward: true });
   dock.loadFile(path.join(__dirname, 'dock.html'));
   dock.webContents.on('did-finish-load', async () => {
-    try { dock.webContents.send('dock-apps', await dockApps()); await sendDockWins(); }
+    try { dock.webContents.send('dock-theme', islandPrefs().theme); dock.webContents.send('dock-apps', await dockApps()); await sendDockWins(); }
     catch (e) { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} dock main: ${e.stack}\n`); } catch {} }
   });
-  dock.on('closed', () => { dock = null; });
+  dock.on('closed', () => { dock = null; if (dockWatch) { try { dockWatch.close(); } catch {} dockWatch = null; } clearTimeout(dockWatchTimer); });
   logWindow(dock, 'dock');
-  try { fs.watch(PINNED, async () => { if (dock) dock.webContents.send('dock-apps', await dockApps()); }); } catch {}
+  // One watcher, closed with the Dock (it used to be created again on every switch-on and never closed), and the icons are rebuilt once per burst of changes.
+  if (dockWatch) { try { dockWatch.close(); } catch {} }
+  try { dockWatch = fs.watch(PINNED, () => { clearTimeout(dockWatchTimer); dockWatchTimer = setTimeout(async () => { if (dock) dock.webContents.send('dock-apps', await dockApps()); }, 400); }); } catch { dockWatch = null; }
   placeDock(); dockVisible();
-  startIslandHelper(); setTimeout(() => islandHelper && islandHelper.stdin.write('taskbar hide\n'), 1500);
+  startIslandHelper(); setTimeout(() => { if (!islandHelper) return; if (process.env.COCO_KEEP_TASKBAR !== '1') islandHelper.stdin.write('taskbar hide\n'); if (dockAutoHide()) islandHelper.stdin.write('wheelhook on\n'); }, 1500);   // COCO_KEEP_TASKBAR=1 is for tests only
 }
-function removeDock() { if (dock) dock.destroy(); dock = null; if (islandHelper) islandHelper.stdin.write('taskbar show\n'); }
+function removeDock() { if (dock) dock.destroy(); dock = null; if (islandHelper) { islandHelper.stdin.write('wheelhook off\n'); islandHelper.stdin.write('taskbar show\n'); } }
 // With the taskbar hidden the tray icon is hidden too, so the Dock's right-click menu carries the same switches.
 function dockMenu() {
   return Menu.buildFromTemplate([
@@ -827,6 +870,7 @@ function dockMenu() {
     { label: 'Approvals', click: () => { win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = 'approvals'`); } },
     { type: 'separator' },
     { label: 'Show Coco Island', type: 'checkbox', checked: islandSettings().enabled, click: (i) => setIslandEnabled(i.checked) },
+    { label: 'Auto-hide Dock (turn the mouse wheel at the bottom edge to show it)', type: 'checkbox', checked: dockAutoHide(), click: (i) => setDockAutoHide(i.checked) },
     { label: 'Turn off Coco Dock (Windows taskbar back)', click: () => { const s = islandSettings(); s.dock = false; saveIsland(s); removeDock(); } },
     { label: 'Task Manager', click: () => shell.openPath('taskmgr.exe') },
     { label: 'Taskbar settings', click: () => shell.openExternal('ms-settings:taskbar') },
@@ -865,22 +909,59 @@ ipcMain.on('dock-appmenu', (_e, a) => {
   if (hwnds.length) items.push({ type: 'separator' }, { label: hwnds.length > 1 ? `Close ${hwnds.length} windows` : 'Close window', click: () => hwnds.forEach((h) => say('closehwnd ' + h)) });
   if (items.length) Menu.buildFromTemplate(items).popup({ window: dock });
 });
+// Chromium stops painting a window that is fully covered, so a capture of it is black (measured: 85% pure-black pixels for a covered Chrome window,
+// 0% for a visible Brave or VS Code window). Such a capture is flagged so the Dock says so instead of showing a black box.
+function mostlyBlack(img) {
+  try { const { width, height } = img.getSize(), b = img.toBitmap(); let dark = 0, n = 0; for (let y = 0; y < height; y += 4) for (let x = 0; x < width; x += 4) { const i = (y * width + x) * 4; n++; if (b[i] + b[i + 1] + b[i + 2] < 12) dark++; } return n > 0 && dark / n >= 0.7; } catch { return false; }
+}
 ipcMain.handle('dock-preview', async (_e, hwnds) => {
   const want = new Set((hwnds || []).slice(0, 8).map((h) => `window:${Math.trunc(h)}:0`));
   try {
     const { desktopCapturer } = require('electron');
     const src = await desktopCapturer.getSources({ types: ['window'], thumbnailSize: { width: 376, height: 236 } });
-    return src.filter((s) => want.has(s.id)).map((s) => ({ hwnd: Number(s.id.split(':')[1]), thumb: s.thumbnail.isEmpty() ? '' : s.thumbnail.toDataURL() }));
+    return src.filter((s) => want.has(s.id)).map((s) => ({ hwnd: Number(s.id.split(':')[1]), thumb: s.thumbnail.isEmpty() || mostlyBlack(s.thumbnail) ? '' : s.thumbnail.toDataURL(), blank: s.thumbnail.isEmpty() || mostlyBlack(s.thumbnail) }));
   } catch { return []; }
 });
 let dockHot = false;
-setInterval(() => {   // clicks reach the Dock only on the bar and the open preview; everywhere else they pass through
-  if (!dock || !dock.isVisible()) return;
-  const { screen } = require('electron'); const p = screen.getCursorScreenPoint(), b = dock.getBounds();
+// ---- Dock auto-hide (Boss, 2026-11-04): the Dock hides when the mouse is not on it; it comes back when the pointer rests on the bottom edge of the
+// screen for 120 ms, or the moment the mouse wheel is turned there (the helper reports only that, see wheelhook). Switch it off in the Dock menu. ----
+const DOCK_EDGE_PX = 3, DOCK_DWELL_MS = 120, DOCK_HIDE_MS = 700, DOCK_PAD = 14;
+const dockAutoHide = () => islandSettings().dockAutoHide !== false;
+const dockAH = { shown: true, edgeSince: 0, awaySince: 0, wheelAt: 0 };
+// Pure decision (tested in dock.test.js): the new "shown" flag. p = pointer, d = the display, rects = bar + open preview (window px), b = the Dock window.
+function dockNext(st, now, p, d, rects, b, auto) {
+  if (!auto) { st.shown = true; st.awaySince = st.edgeSince = 0; return true; }
   const x = p.x - b.x, y = p.y - b.y;
-  const hot = dockRects.some((r) => x >= r.x - 4 && x <= r.x + r.w + 4 && y >= r.y - 4 && y <= r.y + r.h + 4);
+  const onBar = rects.some((r) => x >= r.x - DOCK_PAD && x <= r.x + r.w + DOCK_PAD && y >= r.y - DOCK_PAD && y <= r.y + r.h + DOCK_PAD);
+  const atEdge = p.x >= d.x && p.x <= d.x + d.width && p.y >= d.y + d.height - DOCK_EDGE_PX && p.y <= d.y + d.height;
+  if (st.shown) {
+    if (onBar || atEdge) st.awaySince = 0;
+    else if (!st.awaySince) st.awaySince = now;
+    else if (now - st.awaySince >= DOCK_HIDE_MS) { st.shown = false; st.edgeSince = 0; st.awaySince = 0; }
+  } else {
+    st.edgeSince = atEdge ? (st.edgeSince || now) : 0;
+    const wheel = atEdge && st.wheelAt && now - st.wheelAt < 500;   // a wheel turn at the bottom edge shows it at once
+    if (wheel || (st.edgeSince && now - st.edgeSince >= DOCK_DWELL_MS)) { st.shown = true; st.awaySince = 0; st.wheelAt = 0; }
+  }
+  return st.shown;
+}
+let dockSentShown = null;
+function dockPointer() {   // clicks reach the Dock only on the bar and the open preview; everywhere else they pass through. Returns "near".
+  if (!dock || !dock.isVisible()) return false;
+  const { screen } = require('electron'); const p = screen.getCursorScreenPoint(), b = dock.getBounds(), d = screen.getPrimaryDisplay().bounds, now = Date.now();
+  const auto = dockAutoHide(), shown = dockNext(dockAH, now, p, d, dockRects, b, auto);
+  if (shown !== dockSentShown) { dockSentShown = shown; dock.webContents.send('dock-visible', shown); if (!shown) dockRects = []; }
+  const x = p.x - b.x, y = p.y - b.y;
+  const hot = shown && dockRects.some((r) => x >= r.x - 4 && x <= r.x + r.w + 4 && y >= r.y - 4 && y <= r.y + r.h + 4);
   if (hot !== dockHot) { dockHot = hot; dock.setIgnoreMouseEvents(!hot, { forward: true }); }
-}, 40);
+  return hot || !!dockAH.awaySince || !!dockAH.edgeSince || p.y >= d.y + d.height - 120;   // fast rate only near the bottom of the screen
+}
+function setDockAutoHide(on) {
+  const s = islandSettings(); s.dockAutoHide = !!on; saveIsland(s);
+  dockAH.shown = true; dockAH.awaySince = dockAH.edgeSince = dockAH.wheelAt = 0; dockSentShown = null;
+  say(on ? 'wheelhook on' : 'wheelhook off');
+  if (dock) dockPointer();
+}
 ipcMain.on('island-blur', () => { if (island) island.blur(); });
 ipcMain.on('island-open', (_e, page) => { if (!/^[a-z]+$/.test(page) || !win) return; win.show(); win.focus(); win.webContents.executeJavaScript(`location.hash = '${page}'`); });
 ipcMain.on('island-settings', (_e, uri) => { if (/^ms-settings:[a-z-]+$/.test(uri)) shell.openExternal(uri); });
@@ -904,12 +985,20 @@ ipcMain.handle('island-act', (_e, { action, args }) => {
   // with its signed-in Supabase client — the exact same path as the Approvals page buttons.
   if (action === 'module') { const k = String(args && args.k); if (!['coco', 'music', 'control', 'focus'].includes(k)) return 'bad'; const s = islandSettings(); s.modules = { ...s.modules, [k]: !!args.on }; saveIsland(s); sendModules(true); if (tray && trayMenu) tray.setContextMenu(trayMenu()); return 'ok'; }
   if (action === 'hide') { setIslandEnabled(false); return 'ok'; }
+  if (action === 'sysinfo') return sysInfo();
+  if (action === 'pref') {   // theme / side / screen, checked against a fixed list before it is saved
+    const k = String(args && args.k), v = args && args.v, { screen } = require('electron');
+    const ok = (k === 'theme' && ['coco', 'mafia'].includes(v)) || (k === 'align' && ['left', 'center', 'right'].includes(v)) || (k === 'screen' && screen.getAllDisplays().some((d) => d.id === v));
+    if (!ok) return 'bad';
+    const s = islandSettings(); s.prefs = { ...(s.prefs || {}), [k]: v }; saveIsland(s); placeIsland(); sendPrefs(); if (dock) dock.webContents.send('dock-theme', islandPrefs().theme); return 'ok';
+  }
   if (action === 'approve') { const id = String((args && args.id) || ''); if (!id || !win) return 'bad'; win.webContents.send('island-approve', { id, yes: !!(args && args.yes) }); return 'ok'; }
   if (action === 'bright') { const n = Math.round(Number(args && args.level)); if (islandHelper && n >= 0 && n <= 100) islandHelper.stdin.write('bright ' + n + '\n'); return 'ok'; }
   return ['media', 'volume', 'notify'].includes(action) ? runAction(action, args || {}) : 'not allowed';
 });
 setInterval(islandVisible, 30000);   // home/office switch
 // Quitting: the helper brings the taskbar back when its input closes, then exits by itself.
+app.on('will-quit', () => { try { require('electron').globalShortcut.unregisterAll(); } catch {} });
 app.on('before-quit', () => { quitting = true; try { if (islandHelper) { if (dock) islandHelper.stdin.write('taskbar show\n'); islandHelper.stdin.end(); } } catch {} });
 
 // ---------- always connected (Boss, 2026-10-23) ----------
@@ -949,6 +1038,9 @@ app.on('second-instance', () => { if (win) { win.show(); win.focus(); } });   //
 app.whenReady().then(() => {
   app.setLoginItemSettings(loginArgs(true)); // always rewrite, so an old broken entry gets fixed
   createWindow(); createTray(); createIsland(); createDock();
+  // Ctrl+Alt+I opens the island pinned (or closes it) from anywhere; the island takes focus so Esc and a click elsewhere close it.
+  const { globalShortcut } = require('electron');
+  if (!globalShortcut.register('Control+Alt+I', () => { if (!islandSettings().enabled) setIslandEnabled(true); if (island && island.isVisible()) { island.focus(); island.webContents.send('island-key', 'toggle'); } })) logLine('Ctrl+Alt+I is taken by another app');
   setTimeout(selfUpdate, 60 * 1000); setInterval(selfUpdate, 30 * 60 * 1000);
 });
 

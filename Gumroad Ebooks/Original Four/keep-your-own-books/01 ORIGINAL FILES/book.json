@@ -1,0 +1,81 @@
+{
+ "slug": "keep-your-own-books",
+ "title": "Keep Your Own Books",
+ "subtitle": "A bookkeeping routine for freelancers and sole traders, from the first invoice to a month you can close in an hour",
+ "author": "The Velvet Foundry Editorial Team",
+ "language": "en",
+ "publisher": "The Velvet Foundry",
+ "modified": "2026-10-29T00:00:00Z",
+ "template": "ebook-howto",
+ "team": "ebooks",
+ "subteam": "ebooks/business-micro-skills",
+ "category": "ebooks/business-micro-skills/small-business-finance",
+ "gumroad_category": "business-and-money/accounting",
+ "product_id": "TVF-BIZ-0001",
+ "version": "1.0.0",
+ "price_usd": 9.99,
+ "price_by_platform": {
+  "gumroad": 29,
+  "kdp": 9.99
+ },
+ "description": "You started working for yourself, somebody said \"keep your books\", and nobody explained what that meant. You now have a business bank account, a folder of receipts, a spreadsheet you abandoned, and a quiet worry that you are doing it wrong.\n\nThis book teaches one system: the same double-entry method every accountant uses, which has five moving parts and can be learned in an afternoon by anyone who can add. Not software. The system underneath the software, so you stop being at its mercy.\n\nWHAT YOU WILL BE ABLE TO DO: record any transaction your business can produce; prove your records against your bank statement; close a month in about an hour; and read your own profit and loss and balance sheet without anyone translating them for you.\n\nWHAT IS INSIDE: 21 chapters across the five kinds of account, double entry without the jargon, a working chart of accounts you can copy, recording money in and out, cash basis against accrual, the bank reconciliation, drawings and owner's money, untangling mixed personal spending, a one-hour month-end routine, reading both statements, a full month worked end to end from opening balance to closing statements, what records to keep, what your accountant actually wants, and when to stop doing this yourself. Every chapter ends with the ways it goes wrong and a checklist.\n\nWHAT MAKES IT DIFFERENT: it contains no tax rates, thresholds, deadlines or filing rules. That is deliberate. Those are specific to your country and they change, so a book stating them would be wrong for most readers on the day it shipped, and wrong in a way that looked authoritative. This book teaches the part that is the same everywhere and does not expire: how to record what happened. It names the three questions only a local professional can answer, and tells you to go and ask them.\n\nWHO IT IS FOR: sole traders, freelancers, independent contractors and single-owner businesses doing their own books, with no accounting background assumed.\n\nWHO SHOULD NOT BUY IT: if you employ people and need payroll, if you run an incorporated company with filing obligations, or if you want to be told your tax rates and deadlines, this is the wrong book and it says so in chapter 2.\n\nFORMAT: reflowable EPUB, about 15,000 words, readable on a phone. No worksheets to print or write into.\n\nGeneral educational material about bookkeeping method. Not accounting, tax, legal or financial advice.",
+ "keywords": [
+  "bookkeeping for freelancers",
+  "sole trader bookkeeping",
+  "double entry bookkeeping basics",
+  "small business bookkeeping",
+  "self employed accounts",
+  "bank reconciliation guide",
+  "month end close small business"
+ ],
+ "categories": [
+  "Business & Money > Accounting > Bookkeeping",
+  "Business & Money > Small Business & Entrepreneurship > Accounting",
+  "Business & Money > Accounting > Financial"
+ ],
+ "note": "Scope is deliberately mechanics only: how to record, prove and summarise transactions. It contains no tax rates, thresholds, deadlines, filing instructions or jurisdiction-specific rules, by design, because The Velvet Foundry has no licensed tax professional on staff and those rules differ by country and change. Every point where a jurisdiction rule is needed is flagged in the text and routed to the reader's own tax authority or a local professional, and the three such questions are collected in the closing chapter. Payroll, sales tax and VAT mechanics, and incorporated-company accounts are all explicitly out of scope and named as such in chapter 2. No source is cited with a page reference or a figure: organisations are named instead, because a stale citation is worse than none. Chosen on 2026-10-29 from the measured evidence in company/publishing/ebooks/GUMROAD-ENGINE.md: business-and-money/accounting holds only 432 competitors, the second-lowest node measured, with 34.3 percent of its products listed above 29 dollars and a 50 dollar comparable holding 21 ratings at 5.0. Gumroad tags are kept separately from the KDP keywords: Gumroad refuses any tag of 20 characters or more, while KDP keywords are search phrases up to 35 characters.",
+ "tags_by_platform": {
+  "gumroad": [
+   "bookkeeping",
+   "freelancer",
+   "sole trader",
+   "small business",
+   "double entry",
+   "self employed",
+   "accounting basics",
+   "month end close",
+   "business finance"
+  ]
+ },
+ "cover": {
+  "lines": [
+   "KEEP",
+   "YOUR OWN",
+   "BOOKS"
+  ],
+  "disclaimer": [
+   "No tax rates, thresholds or filing rules, by design.",
+   "Not accounting, tax or legal advice."
+  ],
+  "marks": 12,
+  "phases": [
+   [
+    1,
+    3
+   ],
+   [
+    4,
+    6
+   ],
+   [
+    7,
+    9
+   ],
+   [
+    10,
+    12
+   ]
+  ],
+  "note": "The motif is the book's own cycle: one mark per monthly close across a year, banded into four quarters, because the quarterly review in chapter 13 adds to the monthly routine. The three display lines are what must stay legible at 160 px, so they are set here rather than guessed from the title. The disclaimer is part of the artwork because the absence of tax rules is a deliberate feature of this book rather than a gap to hide."
+ }
+}

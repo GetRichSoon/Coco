@@ -123,15 +123,6 @@ static partial class Program
     [StructLayout(LayoutKind.Sequential)] struct APPBARDATA { public int cbSize; public IntPtr hWnd; public uint cb; public uint edge; public RECT rc; public IntPtr lParam; }
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string cls, string title);
 
-    static string lastProcs = "";
-    static void Procs()
-    {
-        var names = new System.Collections.Generic.SortedSet<string>();
-        foreach (Process p in Process.GetProcesses()) { try { if (p.MainWindowHandle != IntPtr.Zero) names.Add(p.ProcessName.ToLowerInvariant()); } catch (Exception) { } }
-        string line = "{\"t\":\"procs\",\"names\":[" + string.Join(",", System.Linq.Enumerable.Select(names, J)) + "]}";
-        if (line != lastProcs) { lastProcs = line; Emit(line); }
-    }
-
     // Windows only lets the app in front hand over focus; a tap of Alt first is the documented way around that for a user click.
     static void Focus(string name)
     {
@@ -176,22 +167,74 @@ static partial class Program
         return r.T <= mi.work.T + 2 && r.L <= mi.work.L + 10 && r.R >= mi.work.R - 10;
     }
 
+    static readonly System.Collections.Generic.Dictionary<uint, string> pidName = new System.Collections.Generic.Dictionary<uint, string>();
+    static string NameOf(uint pid)
+    {
+        string n; if (pidName.TryGetValue(pid, out n)) return n;
+        if (pidName.Count > 64) pidName.Clear();
+        try { n = Process.GetProcessById((int)pid).ProcessName; } catch (Exception) { n = ""; }
+        pidName[pid] = n; return n;
+    }
+
+    // Measured 41 ms per call before (a Process object per call); now the cheap tests come first and the name is cached.
     static bool Fullscreen()
     {
         IntPtr h = GetForegroundWindow();
         if (h == IntPtr.Zero) return false;
+        if ((GetWindowLong(h, -16) & 0x00C00000) == 0x00C00000) return false;   // has a title bar: a normal window (almost every call ends here)
+        if (IsZoomed(h)) return false;   // maximised (VS Code, Chrome draw their own title bar), not full screen
+        RECT r; if (!GetWindowRect(h, out r)) return false;
+        MONITORINFO mi = new MONITORINFO(); mi.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
+        if (!GetMonitorInfo(MonitorFromWindow(h, 2), ref mi)) return false;
+        if (!(r.L <= mi.mon.L && r.T <= mi.mon.T && r.R >= mi.mon.R && r.B >= mi.mon.B)) return false;   // does not fill the monitor
         StringBuilder c = new StringBuilder(64); GetClassName(h, c, 64);
         string cls = c.ToString();
         if (cls == "Progman" || cls == "WorkerW" || cls == "Shell_TrayWnd") return false;   // the desktop itself
         // Explorer's own screen-sized layers (XamlExplorerHostIslandWindow, Start, Task View) are not full-screen apps.
         uint pid; GetWindowThreadProcessId(h, out pid);
-        try { if (Process.GetProcessById((int)pid).ProcessName.Equals("explorer", StringComparison.OrdinalIgnoreCase)) return false; } catch (Exception) { }
-        if ((GetWindowLong(h, -16) & 0x00C00000) == 0x00C00000) return false;   // has a title bar: a normal window
-        if (IsZoomed(h)) return false;   // maximised (VS Code, Chrome draw their own title bar), not full screen
-        RECT r; if (!GetWindowRect(h, out r)) return false;
-        MONITORINFO mi = new MONITORINFO(); mi.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
-        if (!GetMonitorInfo(MonitorFromWindow(h, 2), ref mi)) return false;
-        return r.L <= mi.mon.L && r.T <= mi.mon.T && r.R >= mi.mon.R && r.B >= mi.mon.B;
+        return !NameOf(pid).Equals("explorer", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // ---- mouse wheel at the bottom edge of a screen (Dock auto-hide reveal). A low-level mouse hook sees every wheel turn; the only thing it
+    // ever does with one is, when the pointer is within 3 px of a screen's bottom edge, to print a bare {"t":"wheel"} line (at most 8 a second).
+    // No position, window, application or count is read out, kept or sent. It exists only while Coco sends "wheelhook on". ----
+    delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll", SetLastError = true)] static extern IntPtr SetWindowsHookEx(int id, HookProc fn, IntPtr mod, uint thread);
+    [DllImport("user32.dll")] static extern bool UnhookWindowsHookEx(IntPtr hook);
+    [DllImport("user32.dll")] static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr wParam, IntPtr lParam);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern IntPtr GetModuleHandle(string name);
+    [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")] static extern int GetMessage(out HookMsg m, IntPtr hwnd, uint min, uint max);
+    [DllImport("user32.dll")] static extern bool PostThreadMessage(uint thread, uint msg, IntPtr w, IntPtr l);
+    [DllImport("user32.dll")] static extern IntPtr MonitorFromPoint(HookPt p, uint flags);
+    [StructLayout(LayoutKind.Sequential)] struct HookPt { public int x, y; }
+    [StructLayout(LayoutKind.Sequential)] struct HookMsg { public IntPtr hwnd; public uint message; public IntPtr w, l; public uint time; public HookPt pt; }
+    [StructLayout(LayoutKind.Sequential)] struct MouseLL { public HookPt pt; public uint data, flags, time; public IntPtr extra; }
+    static HookProc wheelProc; static IntPtr wheelHook; static uint wheelThread; static int wheelLast;
+    static IntPtr OnMouse(int code, IntPtr w, IntPtr l)
+    {
+        if (code >= 0 && w.ToInt32() == 0x020A)   // WM_MOUSEWHEEL; every other mouse message is passed on untouched
+        {
+            MouseLL s = (MouseLL)Marshal.PtrToStructure(l, typeof(MouseLL));
+            MONITORINFO mi = new MONITORINFO(); mi.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
+            if (GetMonitorInfo(MonitorFromPoint(s.pt, 2), ref mi) && s.pt.y >= mi.mon.B - 3)
+            { int t = Environment.TickCount; if (t - wheelLast > 120) { wheelLast = t; Emit("{\"t\":\"wheel\"}"); } }
+        }
+        return CallNextHookEx(wheelHook, code, w, l);
+    }
+    static void WheelHook(bool on)
+    {
+        if (!on) { if (wheelThread != 0) PostThreadMessage(wheelThread, 0x12, IntPtr.Zero, IntPtr.Zero); return; }   // WM_QUIT ends its message loop, which removes the hook
+        if (wheelThread != 0) return;
+        new Thread(() =>
+        {
+            wheelThread = GetCurrentThreadId(); wheelProc = OnMouse;
+            wheelHook = SetWindowsHookEx(14, wheelProc, GetModuleHandle(null), 0);   // WH_MOUSE_LL
+            if (wheelHook == IntPtr.Zero) Emit("{\"t\":\"error\",\"what\":\"wheel hook failed: " + Marshal.GetLastWin32Error() + "\"}");
+            else Emit("{\"t\":\"wheelhook\",\"on\":true}");   // the hook is in place (nothing is read until a wheel turn at a bottom edge)
+            if (wheelHook != IntPtr.Zero) { HookMsg m; while (GetMessage(out m, IntPtr.Zero, 0, 0) > 0) { } UnhookWindowsHookEx(wheelHook); }
+            wheelHook = IntPtr.Zero; wheelThread = 0;
+        }) { IsBackground = true }.Start();
     }
 
     static int Main()
@@ -235,6 +278,7 @@ static partial class Program
                     if (cmd.StartsWith("wifi connect ")) { string id = cmd.Substring(13); new Thread(() => WifiConnect(id, null)) { IsBackground = true }.Start(); }
                     if (cmd.StartsWith("wifi join ") && cmd.IndexOf('	') > 10) { string id = cmd.Substring(10, cmd.IndexOf('	') - 10), pw = cmd.Substring(cmd.IndexOf('	') + 1); new Thread(() => WifiConnect(id, pw)) { IsBackground = true }.Start(); }
                     if (cmd.StartsWith("wifi pass ")) { string id = cmd.Substring(10); new Thread(() => WifiPassword(id)) { IsBackground = true }.Start(); }
+                    if (cmd == "wheelhook on" || cmd == "wheelhook off") WheelHook(cmd.EndsWith("on"));
                     if (cmd == "taskbar hide") { hideBar = true; AutoHide(true); Bars(false); }
                     if (cmd == "taskbar show") { hideBar = false; Bars(true); AutoHide(false); }
                 }
@@ -248,21 +292,24 @@ static partial class Program
         Emit("{\"t\":\"max\",\"on\":false}");
         int tick = 0;
         Emit("{\"t\":\"full\",\"on\":false}");
+        // Slow system queries: Net() starts netsh (about 1.8 s a call, measured) and Bright() is a WMI query. They run on one background
+        // thread every 30 s, so the 500 ms loop below is never blocked by them.
+        new Thread(() => { while (true) { try { Net(); Bright(); } catch (Exception) { } Thread.Sleep(30000); } }) { IsBackground = true }.Start();
         while (true)
         {
-            // WinRT events need SDK files this PC lacks, and Windows has no "went full screen" event, so both are looked at
-            // once a second; a line is written only when something changed.
-            if (mgr != null) Media();
+            // WinRT events need SDK files this PC lacks, and Windows has no "went full screen" event, so these are looked at
+            // on a timer; a line is written only when something changed. Costs measured with a stopwatch build (ms per call):
+            // fullscreen 41 -> cheap-first, procs 195 -> removed (derived from Wins), media 17 -> every second.
+            if (mgr != null && tick % 2 == 0) Media();
             bool f = Fullscreen();
             if (f != full) { full = f; Emit("{\"t\":\"full\",\"on\":" + (f ? "true" : "false") + "}"); }
             bool mx = !f && Maximised();
             if (mx != max) { max = mx; Emit("{\"t\":\"max\",\"on\":" + (mx ? "true" : "false") + "}"); }
             if (hideBar) Bars(false);
-            if (tick % 4 == 0) Procs();
-            if (tick % 2 == 0) Wins();
-            if (tick % 2 == 0) Vol();
+            if (tick % 2 == 0) Wins();     // also emits the "procs" line, so the process list is no longer enumerated separately
+            if (tick % 4 == 0) Vol();
             if (tick % 8 == 0) Radios();
-            if (tick++ % 20 == 0) { Net(); Bright(); }   // Wi-Fi and brightness change rarely: every 10 s
+            tick++;
             Thread.Sleep(500);
         }
     }
