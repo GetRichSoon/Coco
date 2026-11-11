@@ -11,8 +11,8 @@ android {
         applicationId = "com.goodspace.cocolounge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 21
-        versionName = "2.10.0"
+        versionCode = 22
+        versionName = "2.11.0"
     }
     // The release key (Boss, 2026-10-29). It lives in Coco Vault on the laptop and in GitHub as
     // ANDROID_KEYSTORE_BASE64, so the cloud can sign a release with every PC switched off. Without the
@@ -45,6 +45,8 @@ android {
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
+    // The one navigation contract, shared with the web Lounge: packed into assets at build time (NavContract.load reads it).
+    sourceSets { getByName("main") { assets.srcDir("../../Lounge/contract") } }
     lint { abortOnError = false }
     testOptions { unitTests.isReturnDefaultValues = true }
 }

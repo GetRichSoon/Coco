@@ -15,6 +15,7 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -373,29 +374,33 @@ ok('every verdict the cloud can return has words for it', () => {
 // The bug this guards against: below 780px the rail is display:none and the bottom bar held five
 // ids, so fifteen pages - Integrations among them - could not be reached at all on a phone. A
 // perfect Connect button is worth nothing if the screen holding it is unreachable.
-function renderNav({ current = 'connections' } = {}) {
+function renderNav({ current = 'connections', arg = '' } = {}) {
+  // the real navigation code, lifted out of the page, run against the real navigation contract
   const navSrc = lift(/\nfunction nav\(\) \{/, '\n}', 'nav()');
+  const sectionSrc = lift(/const sectionOfPage = /, '\n', 'sectionOfPage');
+  const tileSrc = lift(/const htile = /, '\n', 'htile');
+  const houseSrc = lift(/const houseOf = /, '\n', 'houseOf');
+  const labelSrc = lift(/const pageLabel = \(\) => \{/, '\n};', 'pageLabel');
   const pagesSrc = lift(/const PAGES = \[/, '];', 'PAGES');
-  const bottomSrc = lift(/const BOTTOM = \[/, '];', 'BOTTOM');
+  const contract = JSON.parse(fs.readFileSync(path.join(__dirname, 'contract', 'nav-contract.json'), 'utf8'));
+  const kit = {}; vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'ui-kit.js'), 'utf8'), { window: kit, Intl, Math, Number, String, Date, Set, Map, Array, Object, JSON, isFinite });
   const out = {};
-  const $$ = (sel) => ({ sel, onclick: null, textContent: '' });
+  const els = {};
+  const $$ = (sel) => (els[sel] ||= { sel, hidden: true, onclick: null, textContent: '', title: '', classList: { toggle() {} } });
   const morph = (node, html) => { out[node.sel] = html; };
-  const fn = new Function(
-    'D', 'page', 'esc', 'morph', '$', 'founder', 'me', 'deviceName', 'deviceId', 'sb', 'show', 'out',
-    pagesSrc + '\n' + bottomSrc + '\n' + navSrc + '\nnav();\nreturn out;');
-  return fn({ approvals: [] }, current, (s) => String(s == null ? '' : s), morph, $$,
+  const fn = new Function('D', 'page', 'ARG', 'NAV', 'UK', 'esc', 'morph', '$', 'founder', 'me', 'deviceName', 'deviceId', 'sb', 'show', 'devLabel', 'online', 'notifications', 'bellHtml', 'ASK', 'out',
+    pagesSrc + '\n' + houseSrc + '\n' + tileSrc + '\n' + sectionSrc + '\n' + labelSrc + '\n' + navSrc + '\nnav();\nreturn out;');
+  return fn({ approvals: [], devices: [] }, current, arg, contract, kit.CocoUI, (s) => String(s == null ? '' : s), morph, $$,
     { name: 'Boss', call_me: 'Boss' }, { email: 'x@y.z' }, () => 'This PC', 'dev1',
-    { auth: { signOut: async () => {} } }, () => {}, out);
+    { auth: { signOut: async () => {} } }, () => {}, (d) => d.name, () => true, () => [], () => '', { open: false }, out);
 }
 
-ok('every page is reachable from the bottom bar, directly or through the sheet', () => {
+const reachableFrom = (out, keys) => { const set = new Set(); for (const key of keys) for (const m of String(out[key] || '').matchAll(/href="#([a-z-]+)/g)) set.add(m[1]); return set; };
+
+ok('every page is reachable on a phone: the More sheet lists every page of every section', () => {
   const pagesSrc = lift(/const PAGES = \[/, '];', 'PAGES');
   const ids = new Function(pagesSrc + '\nreturn PAGES.map((p) => p[0]);')();
-  const out = renderNav();
-  const reachable = new Set();
-  for (const key of ['#bottom', '#moreNav']) {
-    for (const m of String(out[key] || '').matchAll(/href="#([a-z-]+)"/g)) reachable.add(m[1]);
-  }
+  const reachable = reachableFrom(renderNav(), ['#bottom', '#moreNav', '#subnav', '#nav']);
   const missing = ids.filter((id) => !reachable.has(id));
   assert.deepEqual(missing, [], 'unreachable on a phone: ' + missing.join(', '));
 });
@@ -403,21 +408,41 @@ ok('every page is reachable from the bottom bar, directly or through the sheet',
 ok('Integrations specifically is reachable, and it is the page Connect lives on', () => {
   const out = renderNav();
   assert.match(String(out['#moreNav']), /href="#connections"/);
-  assert.match(String(out['#moreNav']), /Integrations/);
+  assert.match(String(out['#moreNav']), /Integration Hub/);
 });
 
 ok('the bottom bar offers a way into the rest, and says where you are', () => {
   const out = renderNav({ current: 'connections' });
   assert.match(String(out['#bottom']), /data-more="1"/, 'no way to reach the hidden pages');
-  // when the current page is one the bar cannot show, the control names it rather than saying More
-  assert.match(String(out['#bottom']), /Integrations/,
-    'the bar should name the current page when it is one of the hidden ones');
+  // when the current page is in a section the bar cannot show, the control names that section rather than saying More
+  assert.match(String(out['#bottom']), /Connections/, 'the bar should name the current section when it is one of the hidden ones');
 });
 
 ok('on a page the bar does show, the control reads More and is not lit', () => {
   const bar = String(renderNav({ current: 'home' })['#bottom']);
   assert.match(bar, /data-more="1"/);
   assert.match(bar, />More</);
+});
+
+ok('the bar is Home, Houses, Work and More, and Ask COCO plus Remote Control are in the sheet', () => {
+  const out = renderNav({ current: 'home' });
+  const bar = String(out['#bottom']);
+  assert.ok(bar.indexOf('>Home<') < bar.indexOf('>Houses<') && bar.indexOf('>Houses<') < bar.indexOf('>Work<') && bar.indexOf('>Work<') < bar.indexOf('>More<'), 'order must be Home, Houses, Work, More');
+  assert.match(String(out['#moreNav']), /href="#chat"[^>]*>.*Ask COCO/s); assert.match(String(out['#moreNav']), /href="#remote"/);
+});
+
+ok('a House is one tap from the sidebar and from the sheet', () => {
+  const out = renderNav({ current: 'house', arg: 'gigi' });
+  for (const h of ['gigi', 'lulu', 'poppy', 'mochi', 'fifi', 'zaza', 'tilly']) {
+    assert.match(String(out['#nav']), new RegExp('href="#house:' + h + '"'), h + ' is missing from the sidebar');
+    assert.match(String(out['#moreNav']), new RegExp('href="#house:' + h + '"'), h + ' is missing from the sheet');
+  }
+  assert.match(String(out['#nav']), /class="hl on"/, 'the open House must be lit');
+});
+
+ok('a section shows its own pages as tabs; a single-page section shows none', () => {
+  assert.match(String(renderNav({ current: 'board' })['#subnav']), /href="#approvals"/);
+  assert.equal(String(renderNav({ current: 'connections' })['#subnav']), '');
 });
 
 // ------------------------------------------------- the rail has to be able to REACH its own links

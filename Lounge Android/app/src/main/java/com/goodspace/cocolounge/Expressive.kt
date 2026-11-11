@@ -15,7 +15,9 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -74,7 +76,8 @@ private fun shiftShape(src: MutableInteractionSource): RoundedCornerShape {
 @Composable
 fun MuButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, colors: ButtonColors = ButtonDefaults.buttonColors(), content: @Composable RowScope.() -> Unit) {
     val src = remember { MutableInteractionSource() }
-    Button(onClick, modifier, enabled, shape = shiftShape(src), colors = colors, interactionSource = src, content = content)
+    val edge = LocalCocoRoles.current.ctaEdge
+    Button(onClick, modifier, enabled, shape = shiftShape(src), colors = colors, border = if (edge.alpha > 0f) BorderStroke(1.dp, edge) else null, interactionSource = src, content = content)
 }
 
 @Composable
@@ -86,7 +89,7 @@ fun MuTonal(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean
 @Composable
 fun MuOutlined(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, content: @Composable RowScope.() -> Unit) {
     val src = remember { MutableInteractionSource() }
-    OutlinedButton(onClick, modifier, enabled, shape = shiftShape(src), interactionSource = src, content = content)
+    OutlinedButton(onClick, modifier, enabled, shape = shiftShape(src), colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalCocoRoles.current.link), interactionSource = src, content = content)
 }
 
 /** Click that gives a little under the finger (scale spring), for whole cards and tiles. */
@@ -102,30 +105,32 @@ fun Modifier.bounceClick(onClick: () -> Unit): Modifier = composed {
  * Fits any phone width because the parts share the row by weight.
  */
 @Composable
-fun FloatingNav(current: Tab, badge: Int, onPick: (Tab) -> Unit, modifier: Modifier = Modifier, backdrop: Backdrop? = null) {
-    val cs = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(36.dp)
-    Box(
-        modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp).fillMaxWidth()
-            .shadow(14.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.35f), spotColor = Color.Black.copy(alpha = 0.35f))
-            .then(if (backdrop != null) Modifier.glass(backdrop, shape, cs.surfaceContainerHighest.copy(alpha = 0.62f)) else Modifier.background(cs.surfaceContainerHighest, shape)),
-    ) {
-        Row(Modifier.padding(6.dp).height(56.dp), verticalAlignment = Alignment.CenterVertically) {
-            Tab.entries.forEach { t ->
-                val sel = t == current
-                val weight by animateFloatAsState(if (sel) 2.3f else 1f, MuMotion.spatial(), label = "nav-weight")
-                val bg by animateColorAsState(if (sel) cs.primary else Color.Transparent, MuMotion.effects(), label = "nav-bg")
-                val fg by animateColorAsState(if (sel) cs.onPrimary else cs.onSurfaceVariant, MuMotion.effects(), label = "nav-fg")
-                Box(
-                    Modifier.weight(weight).fillMaxHeight().clip(RoundedCornerShape(28.dp)).background(bg)
-                        .clickable { onPick(t) }
-                        .semantics { contentDescription = t.label; role = Role.Tab; selected = sel },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        BadgedBox(badge = { if (t == Tab.More && badge > 0) Badge { Text("$badge") } }) { Icon(t.icon, null, tint = fg) }
-                        AnimatedVisibility(sel, enter = fadeIn(MuMotion.effects()) + expandHorizontally(MuMotion.spatial()), exit = fadeOut(tween(90)) + shrinkHorizontally(MuMotion.spatial())) {
-                            Text(t.label, Modifier.padding(start = 8.dp), color = fg, style = MaterialTheme.typography.labelLarge, maxLines = 1, softWrap = false)
+fun FloatingNav(current: Tab, badge: Int, onPick: (Tab) -> Unit, modifier: Modifier = Modifier, backdrop: Backdrop? = null, labels: (Tab) -> String = { it.label }) {
+    CocoPanel {
+        val cs = MaterialTheme.colorScheme; val r = LocalCocoRoles.current
+        val shape = RoundedCornerShape(36.dp)
+        Box(
+            modifier.navigationBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp).fillMaxWidth()
+                .shadow(14.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.35f), spotColor = Color.Black.copy(alpha = 0.35f))
+                .then(if (backdrop != null) Modifier.glass(backdrop, shape, r.cardSurface.copy(alpha = 0.62f)) else Modifier.background(r.cardSurface, shape).border(1.dp, cs.outlineVariant, shape)),
+        ) {
+            Row(Modifier.padding(6.dp).height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+                Tab.entries.forEach { t ->
+                    val sel = t == current
+                    val weight by animateFloatAsState(if (sel) 2.3f else 1f, MuMotion.spatial(), label = "nav-weight")
+                    val bg by animateColorAsState(if (sel) cs.primaryContainer else Color.Transparent, MuMotion.effects(), label = "nav-bg")
+                    val fg by animateColorAsState(if (sel) cs.onPrimaryContainer else cs.onSurfaceVariant, MuMotion.effects(), label = "nav-fg")
+                    Box(
+                        Modifier.weight(weight).fillMaxHeight().clip(RoundedCornerShape(28.dp)).background(bg)
+                            .clickable { onPick(t) }
+                            .semantics { contentDescription = labels(t); role = Role.Tab; selected = sel },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            BadgedBox(badge = { if (t == Tab.Work && badge > 0) Badge { Text("$badge") } }) { Icon(t.icon, null, tint = fg) }
+                            AnimatedVisibility(sel, enter = fadeIn(MuMotion.effects()) + expandHorizontally(MuMotion.spatial()), exit = fadeOut(tween(90)) + shrinkHorizontally(MuMotion.spatial())) {
+                                Text(labels(t), Modifier.padding(start = 8.dp), color = fg, style = MaterialTheme.typography.labelLarge, maxLines = 1, softWrap = false)
+                            }
                         }
                     }
                 }

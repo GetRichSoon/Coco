@@ -4,12 +4,15 @@
   "type": "module",
   "description": "Coco Lounge web + Nova, the control API the apps talk to (api/).",
   "scripts": {
-    "test": "node brains.render.test.js && node nova.test.js && node nova.upstream.test.js && node live-loop.test.js && node refresh.test.js && node chat.test.js && node chat-cloud.test.js"
+    "test": "node brains.render.test.js && node nova.test.js && node nova.upstream.test.js && node live-loop.test.js && node refresh.test.js && node chat.test.js && node chat-cloud.test.js && node ui-kit.test.js && node theme-engine.test.js && node theme-schemes.test.js && node nav-contract.test.js && node morph.test.js",
+    "test:browser": "node ui-browser.test.mjs && node theme-browser.test.mjs",
+    "themes:build": "node contract/build-themes.mjs && node contract/build-vectors.mjs && node contract/build.mjs"
   },
   "dependencies": {
     "pg": "8.13.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.15"
+    "@electric-sql/pglite": "^0.5.15",
+    "@material/material-color-utilities": "^0.4.0"
   }
 }

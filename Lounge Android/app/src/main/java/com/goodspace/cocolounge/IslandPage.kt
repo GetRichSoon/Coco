@@ -92,7 +92,7 @@ private fun IslandPage() {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (oldHalo) Card(color = MaterialTheme.colorScheme.errorContainer) {
+        if (oldHalo) Card(alert = true) {
             Eyebrow("Two islands", MaterialTheme.colorScheme.onErrorContainer)
             Text("The old Coco Halo app is still on this phone", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onErrorContainer)
             Text("The island now lives inside Coco. Remove the old app so only one island shows.", color = MaterialTheme.colorScheme.onErrorContainer)
@@ -100,13 +100,13 @@ private fun IslandPage() {
         }
 
         // Hero with a living preview of the pill
-        Surface(shape = RoundedCornerShape(32.dp), color = Mu.ink, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
+        PanelSurface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(32.dp)) {
             Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 IslandPreview()
-                Text("Coco Island", style = MaterialTheme.typography.displaySmall, color = Mu.cream)
-                Text("Music, calls, timers, maps, meetings, earbuds, torch and Coco's own YES pills, right at the camera.", style = MaterialTheme.typography.bodyLarge, color = Mu.cream.copy(alpha = 0.85f))
+                Text("Coco Island", style = MaterialTheme.typography.displaySmall)
+                Text("Music, calls, timers, maps, meetings, earbuds, torch and Coco's own YES pills, right at the camera.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(if (on) "Island is on" else "Island is off", style = MaterialTheme.typography.titleMedium, color = Mu.cream, modifier = Modifier.weight(1f))
+                    Text(if (on) "Island is on" else "Island is off", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     Switch(on, { v ->
                         if (v && !overlayOk) { android.widget.Toast.makeText(ctx, "Allow \"Display over other apps\" first", android.widget.Toast.LENGTH_SHORT).show(); return@Switch }
                         Island.setOn(ctx, v); on = v
@@ -151,7 +151,7 @@ private fun IslandPage() {
             Eyebrow("Size")
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 IslandRuntime.SIZE_NAMES.forEachIndexed { i, name ->
-                    SegmentedButton(step == i, { step = i; IslandRuntime.setSizeStep(ctx, i) }, SegmentedButtonDefaults.itemShape(i, IslandRuntime.SIZE_NAMES.size)) { Text(name, maxLines = 1) }
+                    SegmentedButton(step == i, { step = i; IslandRuntime.setSizeStep(ctx, i) }, SegmentedButtonDefaults.itemShape(i, IslandRuntime.SIZE_NAMES.size), colors = segmentedColors()) { Text(name, maxLines = 1) }
                 }
             }
             PrefRow("Material You colours", "A deep tonal colour from your wallpaper. Off = the classic black iPhone pill", IslandRuntime.KEY_MATERIAL_YOU, false)
@@ -250,7 +250,7 @@ private fun IslandPreview() {
 private fun Step(title: String, sub: String, done: Boolean, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(if (done) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
-            tint = if (done) LocalLux.current.good else MaterialTheme.colorScheme.outline)
+            tint = if (done) LocalCocoRoles.current.success else MaterialTheme.colorScheme.outline)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) { Text(title, style = MaterialTheme.typography.titleMedium); Muted(sub) }
         if (!done) MuTonal(onClick) { Text("Allow") }

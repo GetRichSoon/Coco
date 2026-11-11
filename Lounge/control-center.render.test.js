@@ -21,7 +21,7 @@ const between = (startRe, endRe) => {
   assert.ok(a > 0 && b > a, `could not find ${startRe} … ${endRe} in index.html`);
   return src.slice(a, b);
 };
-const pagesSrc = between(/\n {2}\/\/ -+ Control: one screen, whole company\n/, /\n {2}home\(\) \{/);
+const pagesSrc = between(/\n {2}\/\/ -+ Control: one screen, whole company\n/, /\n {2}\/\/ Notes \(Boss 12:50 PM/);
 const grab = (name) => {
   const start = src.indexOf(`function ${name}(`);
   assert.ok(start > 0, `${name} not found`);

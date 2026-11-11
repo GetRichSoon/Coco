@@ -157,20 +157,21 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
     val t = rememberInfiniteTransition(label = "hq")
     val flow by t.animateFloat(0f, 1f, infiniteRepeatable(tween(1800, easing = LinearEasing)), label = "flow")
     val pulse by t.animateFloat(0f, 1f, infiniteRepeatable(tween(2600, easing = LinearEasing)), label = "pulse")
-    val lux = LocalLux.current
 
-    Surface(shape = RoundedCornerShape(32.dp), color = Mu.ink, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
+    PanelSurface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(32.dp)) {
+        val cs = MaterialTheme.colorScheme; val r = LocalCocoRoles.current
+        val ink = cs.onSurface; val soft = cs.onSurfaceVariant
         Column(Modifier.padding(top = 18.dp, bottom = 16.dp)) {
             Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("COCO HQ", style = MaterialTheme.typography.labelMedium, color = Mu.bubblegum, modifier = Modifier.weight(1f))
-                Box(Modifier.size(8.dp).background(if (vm.live) Color(0xFF34D399) else Mu.cream.copy(alpha = 0.4f), CircleShape))
+                Text("COCO HQ", style = MaterialTheme.typography.labelMedium, color = r.link, modifier = Modifier.weight(1f))
+                Box(Modifier.size(8.dp).background(if (vm.live) r.success else cs.outline, CircleShape))
                 Spacer(Modifier.width(6.dp))
-                Text(if (vm.live) "live" else "offline", style = MaterialTheme.typography.labelSmall, color = Mu.cream.copy(alpha = 0.8f))
+                Text(if (vm.live) "live" else "offline", style = MaterialTheme.typography.labelSmall, color = soft)
             }
             // Coco speaks: the line cross-fades when the situation changes.
             AnimatedContent(HqRules.cocoLine(crew, queued, waitingYes, d.paused, vm.callMe), label = "coco-line",
                 transitionSpec = { (fadeIn(MuMotion.effects()) + slideInVertically(MuMotion.spatial()) { it / 3 }) togetherWith fadeOut(tween(120)) }) { line ->
-                Text(line, style = MaterialTheme.typography.titleLarge, color = Mu.cream, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
+                Text(line, style = MaterialTheme.typography.titleLarge, color = ink, modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
             }
 
             BoxWithConstraints(Modifier.fillMaxWidth().height(318.dp)) {
@@ -197,8 +198,8 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
                 Canvas(Modifier.matchParentSize()) {
                     val c = Offset(size.width / 2, size.height / 2)
                     if (working > 0 && !calm) {
-                        val r = 50.dp.toPx() + 34.dp.toPx() * pulse
-                        drawCircle(Mu.bubblegum.copy(alpha = 0.28f * (1f - pulse)), r, c, style = Stroke(3.dp.toPx()))
+                        val rad = 50.dp.toPx() + 34.dp.toPx() * pulse
+                        drawCircle(r.accent.copy(alpha = 0.28f * (1f - pulse)), rad, c, style = Stroke(3.dp.toPx()))
                     }
                     crew.forEachIndexed { i, m ->
                         val (px, py) = pos(i)
@@ -210,13 +211,13 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
                                 drawLine(col.copy(alpha = 0.55f), c, p, 3.dp.toPx(), cap = StrokeCap.Round)
                                 if (!calm) for (k in 0..2) {
                                     val f = (flow + k / 3f) % 1f
-                                    drawCircle(Mu.cream, 3.5.dp.toPx(), Offset(c.x + (p.x - c.x) * f, c.y + (p.y - c.y) * f), alpha = 1f - f * 0.5f)
+                                    drawCircle(ink, 3.5.dp.toPx(), Offset(c.x + (p.x - c.x) * f, c.y + (p.y - c.y) * f), alpha = 1f - f * 0.5f)
                                 }
                             }
-                            CrewState.NeedsYes -> drawLine(lux.gold.copy(alpha = if (calm) 0.7f else 0.35f + 0.5f * (1f - pulse)), c, p, 3.dp.toPx(),
+                            CrewState.NeedsYes -> drawLine(r.warning.copy(alpha = if (calm) 0.7f else 0.35f + 0.5f * (1f - pulse)), c, p, 3.dp.toPx(),
                                 cap = StrokeCap.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10.dp.toPx(), 8.dp.toPx())))
-                            CrewState.Queued -> drawLine(Mu.cream.copy(alpha = 0.22f), c, p, 2.dp.toPx(), cap = StrokeCap.Round)
-                            CrewState.Resting -> drawLine(Mu.cream.copy(alpha = 0.08f), c, p, 1.5.dp.toPx(), cap = StrokeCap.Round,
+                            CrewState.Queued -> drawLine(ink.copy(alpha = 0.22f), c, p, 2.dp.toPx(), cap = StrokeCap.Round)
+                            CrewState.Resting -> drawLine(ink.copy(alpha = 0.12f), c, p, 1.5.dp.toPx(), cap = StrokeCap.Round,
                                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 7.dp.toPx())))
                         }
                     }
@@ -226,7 +227,7 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
                     LivingMark(Marks.coco, 96.dp)
                 }
                 // The queue Coco holds, as a count on her corner (it no longer covers the line to the member below).
-                if (queued > 0) Surface(Modifier.offset(w / 2 + 22.dp, h / 2 + 20.dp).size(28.dp), shape = CircleShape, color = Mu.butter, contentColor = Mu.cocoa, shadowElevation = 3.dp) {
+                if (queued > 0) Surface(Modifier.offset(w / 2 + 22.dp, h / 2 + 20.dp).size(28.dp), shape = CircleShape, color = r.highlight, contentColor = r.onHighlight, shadowElevation = 3.dp) {
                     Box(contentAlignment = Alignment.Center) { Text("$queued", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, maxLines = 1) }
                 }
                 // The team around her.
@@ -242,17 +243,17 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
                             // Only people who work move; resting members keep still.
                             CompositionLocalProvider(LocalCalm provides (calm || m.state == CrewState.Resting)) { LivingMark(mark, 46.dp) }
                             when (m.state) {
-                                CrewState.Working -> Surface(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp), shape = RoundedCornerShape(50), color = Mu.cream) {
-                                    TypingDots(Mu.cocoa, Modifier.padding(horizontal = 5.dp, vertical = 4.dp))
+                                CrewState.Working -> Surface(Modifier.align(Alignment.TopEnd).offset(x = 12.dp, y = (-8).dp), shape = RoundedCornerShape(50), color = cs.surfaceContainerHighest) {
+                                    TypingDots(cs.onSurface, Modifier.padding(horizontal = 5.dp, vertical = 4.dp))
                                 }
-                                CrewState.NeedsYes -> Surface(Modifier.align(Alignment.TopEnd).offset(x = 14.dp, y = (-10).dp), shape = RoundedCornerShape(50), color = lux.gold) {
-                                    Text("YES?", Modifier.padding(horizontal = 6.dp, vertical = 1.dp), style = MaterialTheme.typography.labelSmall, color = Mu.cream, fontWeight = FontWeight.Bold)
+                                CrewState.NeedsYes -> Surface(Modifier.align(Alignment.TopEnd).offset(x = 14.dp, y = (-10).dp), shape = RoundedCornerShape(50), color = r.warning) {
+                                    Text("YES?", Modifier.padding(horizontal = 6.dp, vertical = 1.dp), style = MaterialTheme.typography.labelSmall, color = r.onWarning, fontWeight = FontWeight.Bold)
                                 }
-                                CrewState.Queued -> Box(Modifier.align(Alignment.TopEnd).size(12.dp).background(Mu.butter, CircleShape))
+                                CrewState.Queued -> Box(Modifier.align(Alignment.TopEnd).size(12.dp).background(r.highlight, CircleShape))
                                 CrewState.Resting -> Unit
                             }
                         }
-                        Text(m.name, style = MaterialTheme.typography.labelSmall, color = if (m.state == CrewState.Resting) Mu.cream.copy(alpha = 0.6f) else Mu.cream,
+                        Text(m.name, style = MaterialTheme.typography.labelSmall, color = if (m.state == CrewState.Resting) soft else ink,
                             maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                     }
                 }
@@ -263,14 +264,14 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
             if (busy.isNotEmpty()) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 busy.take(4).forEach { m ->
                     val mark = Marks.members[m.id] ?: Marks.coco
-                    Surface(shape = RoundedCornerShape(20.dp), color = Mu.cream.copy(alpha = 0.08f), modifier = Modifier.fillMaxWidth().bounceClick { onMember(m.id) }) {
+                    Surface(shape = RoundedCornerShape(20.dp), color = r.fieldSurface, modifier = Modifier.fillMaxWidth().bounceClick { onMember(m.id) }) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             CompositionLocalProvider(LocalCalm provides true) { LivingMark(mark, 34.dp) }
                             Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(m.name + when (m.state) { CrewState.NeedsYes -> " · needs your YES"; CrewState.Queued -> " · next"; else -> "" },
-                                    style = MaterialTheme.typography.titleMedium, color = Mu.cream)
-                                Text(m.line, style = MaterialTheme.typography.bodyMedium, color = Mu.cream.copy(alpha = 0.75f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                    style = MaterialTheme.typography.titleMedium, color = ink)
+                                Text(m.line, style = MaterialTheme.typography.bodyMedium, color = soft, maxLines = 2, overflow = TextOverflow.Ellipsis)
                                 if (m.state == CrewState.Working) WavyLine(mark.bg, Modifier.padding(top = 6.dp).fillMaxWidth(0.6f))
                             }
                         }
@@ -278,9 +279,9 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
                 }
             }
             Row(Modifier.padding(horizontal = 20.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HqChip("$working working", Color(0xFF34D399))
-                HqChip("$queued queued", Mu.butter)
-                HqChip("$waitingYes need YES", lux.gold)
+                HqChip("$working working", r.success)
+                HqChip("$queued queued", r.highlight)
+                HqChip("$waitingYes need YES", r.warning)
             }
         }
     }
@@ -288,7 +289,7 @@ fun CocoHQ(vm: Lounge, onMember: (String) -> Unit) {
 
 @Composable
 private fun HqChip(text: String, dot: Color) {
-    Surface(shape = RoundedCornerShape(50), color = Mu.cream.copy(alpha = 0.1f), contentColor = Mu.cream) {
+    Surface(shape = RoundedCornerShape(50), color = LocalCocoRoles.current.fieldSurface, contentColor = MaterialTheme.colorScheme.onSurface) {
         Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(7.dp).background(dot, CircleShape))
             Spacer(Modifier.width(6.dp))
@@ -309,7 +310,7 @@ fun MemberSheet(vm: Lounge, id: String, onClose: () -> Unit) {
     val tools = d.memberTools.filter { it.str("member_id") == id }.mapNotNull { mt -> d.tools.firstOrNull { it.str("id") == mt.str("tool_id") }?.str("name") }
     val tasks = d.tasks.filter { it.str("member_id") == id }.take(6)
     var ask by remember { mutableStateOf("") }
-    ModalBottomSheet(onDismissRequest = onClose, containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
+    CocoPanel { ModalBottomSheet(onDismissRequest = onClose, containerColor = MaterialTheme.colorScheme.surface) {
         Column(Modifier.padding(horizontal = 22.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LivingMark(mark, 76.dp)
@@ -322,10 +323,10 @@ fun MemberSheet(vm: Lounge, id: String, onClose: () -> Unit) {
             StatusChip(when (crew.state) { CrewState.Working -> "working"; CrewState.NeedsYes -> "needs_yes"; CrewState.Queued -> "queued"; CrewState.Resting -> "resting" },
                 if (crew.state == CrewState.Resting) "Resting" else null)
             Card { Eyebrow("Job"); Text(m.str("job"), style = MaterialTheme.typography.bodyLarge) }
-            if (crew.state != CrewState.Resting) Card(color = MaterialTheme.colorScheme.primaryContainer) {
-                Eyebrow("Now", MaterialTheme.colorScheme.onPrimaryContainer)
-                Text(crew.line, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                if (crew.state == CrewState.Working) WavyLine(MaterialTheme.colorScheme.primary, Modifier.fillMaxWidth(0.5f))
+            if (crew.state != CrewState.Resting) Card(highlight = true) {
+                Eyebrow("Now")
+                Text(crew.line, style = MaterialTheme.typography.bodyLarge)
+                if (crew.state == CrewState.Working) WavyLine(LocalCocoRoles.current.link, Modifier.fillMaxWidth(0.5f))
             }
             if (houses.isNotEmpty()) {
                 Eyebrow("Houses")
@@ -357,7 +358,7 @@ fun MemberSheet(vm: Lounge, id: String, onClose: () -> Unit) {
                 }
             }, enabled = ask.isNotBlank(), modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Send to Coco") }
         }
-    }
+    } }
 }
 
 // ---------- live feed ----------
@@ -417,7 +418,7 @@ fun TalkRow(vm: Lounge, t: Talk) {
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(t.from, style = MaterialTheme.typography.titleSmall, color = cs.primary)
+                    Text(t.from, style = MaterialTheme.typography.titleSmall, color = LocalCocoRoles.current.link)
                     if (t.to != null) {
                         Text("  →  ", style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)
                         Text(t.to, style = MaterialTheme.typography.titleSmall, color = cs.onSurfaceVariant)

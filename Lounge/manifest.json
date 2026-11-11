@@ -3,7 +3,14 @@
   "short_name": "Coco",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fdf7f4",
-  "theme_color": "#7b4f6b",
-  "icons": [{ "src": "coco.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "background_color": "#24152E",
+  "theme_color": "#151313",
+  "icons": [
+    {
+      "src": "coco.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }

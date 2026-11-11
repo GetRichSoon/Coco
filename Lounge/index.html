@@ -4,38 +4,111 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#b83a12">
+<meta name="theme-color" content="#151313">
 <title>Coco Lounge</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="coco.svg">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..900,100,1&family=Figtree:wght@400;600;800&family=Bagel+Fat+One&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=swap">
+<script src="contract/theme-contract.js"></script>
+<script src="theme-engine.js"></script>
+<script src="theme-mock.js"></script>
+<script>if (window.CocoTheme) window.CocoTheme.boot();   /* the saved theme is on screen before the first paint */</script>
 <style>
-/* Coco Lounge: the private app of Good Space. House theme: Material You Design Theme v1 (cream, tomato, plum; Fraunces WONK, Figtree, Bagel Fat One). */
+/* Space Grotesk, vendored (SIL Open Font License, fonts/OFL Space Grotesk.txt): the typeface of the whole app, with no network needed. */
+@font-face { font-family: 'Space Grotesk'; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/SpaceGrotesk-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Space Grotesk'; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/SpaceGrotesk-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+20C8, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Space Grotesk'; font-style: normal; font-weight: 300 700; font-display: swap; src: url(fonts/SpaceGrotesk-vietnamese.woff2) format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+/* Coco Lounge: the private app of Good Space. ONE theme controls the whole app (Material You / Material 3 Expressive). Colours are not written here:
+   the six themes live in contract/themes.json, their tonal palettes are generated into contract/theme-schemes.json, and theme-engine.js sets every
+   variable below on <html> (smoothly, with a view transition) from the saved theme before the first paint. Only shape, space, type and motion are
+   defined in this file. The block between the THEME markers is generated (Original Signature, the fallback before scripts run); do not edit it. */
 :root {
-  --primary: #b83a12; --on-primary: #fff4e6; --primary-c: #ffd9c8; --on-primary-c: #3d1000;
-  --gold: #c21d5f; --gold-soft: #ffc2e2; --sage: #ffe79a; --on-sage: #2b1712;
-  --surface: #fff4e6; --surface-1: #ffefdf; --surface-2: #fbe8d6; --surface-3: #f5e1ce;
-  --on-surface: #2b1712; --muted: #5a4136; --outline: #dfc3b5;
-  --good: #1f5a3a; --good-c: #d4edd9; --warn: #7a5200; --warn-c: #ffe79a; --bad: #ba1a1a; --bad-c: #ffdad6;
-  --display: "Fraunces", Georgia, serif; --body: "Figtree", "Segoe UI", system-ui, sans-serif; --fun: "Bagel Fat One", "Fraunces", serif;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .07), 0 1px 3px rgb(0 0 0 / .08); --shadow-2: 0 6px 18px rgb(0 0 0 / .16);
+  --r-card: 24px; --r-ctl: 14px; --gutter: 16px;
+  --display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif; --body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif; --fun: var(--display);
+  /* a spring: it overshoots a little and settles. The cubic-bezier is the fallback where linear() easing is not supported. */
+  --spring: cubic-bezier(.34, 1.56, .64, 1);
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --primary: #ffa383; --on-primary: #5a1a00; --primary-c: #8a2a08; --on-primary-c: #ffdbcf;
-  --gold: #ffb0cf; --gold-soft: #7e2a4c; --sage: #5c4300; --on-sage: #ffe79a;
-  --surface: #1e0f14; --surface-1: #26141a; --surface-2: #2c181f; --surface-3: #37222a;
-  --on-surface: #f6e3da; --muted: #dcc0c8; --outline: #54363f;
-  --good: #a6d9b4; --good-c: #1f5a3a; --warn: #ffe79a; --warn-c: #5c4300; --bad: #ffb4ab; --bad-c: #93000a; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --primary: #ffa383; --on-primary: #5a1a00; --primary-c: #8a2a08; --on-primary-c: #ffdbcf;
-  --gold: #ffb0cf; --gold-soft: #7e2a4c; --sage: #5c4300; --on-sage: #ffe79a;
-  --surface: #1e0f14; --surface-1: #26141a; --surface-2: #2c181f; --surface-3: #37222a;
-  --on-surface: #f6e3da; --muted: #dcc0c8; --outline: #54363f;
-  --good: #a6d9b4; --good-c: #1f5a3a; --warn: #ffe79a; --warn-c: #5c4300; --bad: #ffb4ab; --bad-c: #93000a; color-scheme: dark; }
+@supports (transition-timing-function: linear(0, 1)) { :root { --spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1 100%); } }
+/* THEME-FALLBACK-START (generated by contract/build.mjs from the Original Signature tables; edit themes.json, never this block) */
+:root { --primary: #FF39A8; --on-primary: #151313; --primary-c: #FFD8E6; --on-primary-c: #3D0024; --link: #B60073; --secondary: #8540A4; --on-secondary: #FFFFFF; --secondary-c: #F7D8FF; --on-secondary-c: #320047; --tertiary: #FFE52E; --on-tertiary: #151313; --tertiary-c: #FDE32C; --on-tertiary-c: #201C00; --surface: #F0EAF7; --surface-1: #151313; --surface-2: #ECE6F3; --surface-3: #E0DAE7; --on-surface: #151313; --muted: #484554; --outline: #CAC3D7; --outline-strong: #797586; --good: #1D6D26; --on-good: #FFFFFF; --good-c: #A4F69E; --on-good-c: #002204; --warn: #7F5600; --on-warn: #FFFFFF; --warn-c: #FFDEAE; --on-warn-c: #281900; --bad: #BA1A1A; --on-bad: #FFFFFF; --bad-c: #FFDAD6; --on-bad-c: #410002; --sel: #FF39A8; --on-sel: #151313; --cta: #FFE52E; --on-cta: #151313; --cta-edge: #151313; --hl: #FFE52E; --on-hl: #151313; --chart-1: #FF39A8; --chart-2: #FFE52E; --chart-3: #D98EF8; --inverse: #151313; --on-inverse: #F0EAF7; --scrim: #000000; --gold: #8540A4; --gold-soft: #F7D8FF; --sage: #FDE32C; --on-sage: #201C00; --p-primary: #FF39A8; --p-on-primary: #151313; --p-primary-c: #8C0057; --p-on-primary-c: #FFD8E6; --p-link: #FF39A8; --p-secondary: #EAB2FF; --p-on-secondary: #510271; --p-secondary-c: #6A258A; --p-on-secondary-c: #F7D8FF; --p-tertiary: #FFE52E; --p-on-tertiary: #151313; --p-tertiary-c: #514700; --p-on-tertiary-c: #FDE32C; --p-surface: #151313; --p-surface-1: #151313; --p-surface-2: #221E21; --p-surface-3: #2A2529; --p-on-surface: #F6F0F9; --p-muted: #CDBFD7; --p-outline: #3E3640; --p-outline-strong: #8E8398; --p-good: #88D984; --p-on-good: #00390A; --p-good-c: #005313; --p-on-good-c: #A4F69E; --p-warn: #FFBA3E; --p-on-warn: #432C00; --p-warn-c: #604100; --p-on-warn-c: #FFDEAE; --p-bad: #FFB4AB; --p-on-bad: #690005; --p-bad-c: #93000A; --p-on-bad-c: #FFDAD6; --p-sel: #FF39A8; --p-on-sel: #151313; --p-cta: #FFE52E; --p-on-cta: #151313; --p-cta-edge: transparent; --p-hl: #FFE52E; --p-on-hl: #151313; --p-chart-1: #FF39A8; --p-chart-2: #FFE52E; --p-chart-3: #D98EF8; --p-inverse: #F0EAF7; --p-on-inverse: #151313; --p-scrim: #000000; --p-gold: #EAB2FF; --p-gold-soft: #6A258A; --p-sage: #514700; --p-on-sage: #FDE32C; --scheme: light; --p-scheme: dark; --d-bg: #151313; --d-field: #221E21; --d-field2: #2A2529; --d-on: #F6F0F9; --d-muted: #CDBFD7; --d-link: #FF39A8; --d-accent: #FF39A8; --d-good: #88D984; --d-warn: #FFBA3E; --d-bad: #FFB4AB; --d-good-c: #005313; --d-on-good-c: #A4F69E; --d-warn-c: #604100; --d-on-warn-c: #FFDEAE; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --primary: #FF39A8; --on-primary: #151313; --primary-c: #8C0057; --on-primary-c: #FFD8E6; --link: #FF39A8; --secondary: #EAB2FF; --on-secondary: #510271; --secondary-c: #6A258A; --on-secondary-c: #F7D8FF; --tertiary: #FFE52E; --on-tertiary: #151313; --tertiary-c: #514700; --on-tertiary-c: #FDE32C; --surface: #24152E; --surface-1: #151313; --surface-2: #291933; --surface-3: #2F2039; --on-surface: #F4EAF8; --muted: #D8BDE6; --outline: #543F61; --outline-strong: #A188AE; --good: #88D984; --on-good: #00390A; --good-c: #005313; --on-good-c: #A4F69E; --warn: #FFBA3E; --on-warn: #432C00; --warn-c: #604100; --on-warn-c: #FFDEAE; --bad: #FFB4AB; --on-bad: #690005; --bad-c: #93000A; --on-bad-c: #FFDAD6; --sel: #FF39A8; --on-sel: #151313; --cta: #FFE52E; --on-cta: #151313; --cta-edge: transparent; --hl: #FFE52E; --on-hl: #151313; --chart-1: #FF39A8; --chart-2: #FFE52E; --chart-3: #D98EF8; --inverse: #F0EAF7; --on-inverse: #151313; --scrim: #000000; --gold: #EAB2FF; --gold-soft: #6A258A; --sage: #514700; --on-sage: #FDE32C; --p-primary: #FF39A8; --p-on-primary: #151313; --p-primary-c: #8C0057; --p-on-primary-c: #FFD8E6; --p-link: #FF39A8; --p-secondary: #EAB2FF; --p-on-secondary: #510271; --p-secondary-c: #6A258A; --p-on-secondary-c: #F7D8FF; --p-tertiary: #FFE52E; --p-on-tertiary: #151313; --p-tertiary-c: #514700; --p-on-tertiary-c: #FDE32C; --p-surface: #151313; --p-surface-1: #151313; --p-surface-2: #221E21; --p-surface-3: #2A2529; --p-on-surface: #F6F0F9; --p-muted: #CDBFD7; --p-outline: #3E3640; --p-outline-strong: #8E8398; --p-good: #88D984; --p-on-good: #00390A; --p-good-c: #005313; --p-on-good-c: #A4F69E; --p-warn: #FFBA3E; --p-on-warn: #432C00; --p-warn-c: #604100; --p-on-warn-c: #FFDEAE; --p-bad: #FFB4AB; --p-on-bad: #690005; --p-bad-c: #93000A; --p-on-bad-c: #FFDAD6; --p-sel: #FF39A8; --p-on-sel: #151313; --p-cta: #FFE52E; --p-on-cta: #151313; --p-cta-edge: transparent; --p-hl: #FFE52E; --p-on-hl: #151313; --p-chart-1: #FF39A8; --p-chart-2: #FFE52E; --p-chart-3: #D98EF8; --p-inverse: #F0EAF7; --p-on-inverse: #151313; --p-scrim: #000000; --p-gold: #EAB2FF; --p-gold-soft: #6A258A; --p-sage: #514700; --p-on-sage: #FDE32C; --scheme: dark; --p-scheme: dark; --d-bg: #151313; --d-field: #221E21; --d-field2: #2A2529; --d-on: #F6F0F9; --d-muted: #CDBFD7; --d-link: #FF39A8; --d-accent: #FF39A8; --d-good: #88D984; --d-warn: #FFBA3E; --d-bad: #FFB4AB; --d-good-c: #005313; --d-on-good-c: #A4F69E; --d-warn-c: #604100; --d-on-warn-c: #FFDEAE; color-scheme: dark; } }
+:root[data-theme="dark"] { --primary: #FF39A8; --on-primary: #151313; --primary-c: #8C0057; --on-primary-c: #FFD8E6; --link: #FF39A8; --secondary: #EAB2FF; --on-secondary: #510271; --secondary-c: #6A258A; --on-secondary-c: #F7D8FF; --tertiary: #FFE52E; --on-tertiary: #151313; --tertiary-c: #514700; --on-tertiary-c: #FDE32C; --surface: #24152E; --surface-1: #151313; --surface-2: #291933; --surface-3: #2F2039; --on-surface: #F4EAF8; --muted: #D8BDE6; --outline: #543F61; --outline-strong: #A188AE; --good: #88D984; --on-good: #00390A; --good-c: #005313; --on-good-c: #A4F69E; --warn: #FFBA3E; --on-warn: #432C00; --warn-c: #604100; --on-warn-c: #FFDEAE; --bad: #FFB4AB; --on-bad: #690005; --bad-c: #93000A; --on-bad-c: #FFDAD6; --sel: #FF39A8; --on-sel: #151313; --cta: #FFE52E; --on-cta: #151313; --cta-edge: transparent; --hl: #FFE52E; --on-hl: #151313; --chart-1: #FF39A8; --chart-2: #FFE52E; --chart-3: #D98EF8; --inverse: #F0EAF7; --on-inverse: #151313; --scrim: #000000; --gold: #EAB2FF; --gold-soft: #6A258A; --sage: #514700; --on-sage: #FDE32C; --p-primary: #FF39A8; --p-on-primary: #151313; --p-primary-c: #8C0057; --p-on-primary-c: #FFD8E6; --p-link: #FF39A8; --p-secondary: #EAB2FF; --p-on-secondary: #510271; --p-secondary-c: #6A258A; --p-on-secondary-c: #F7D8FF; --p-tertiary: #FFE52E; --p-on-tertiary: #151313; --p-tertiary-c: #514700; --p-on-tertiary-c: #FDE32C; --p-surface: #151313; --p-surface-1: #151313; --p-surface-2: #221E21; --p-surface-3: #2A2529; --p-on-surface: #F6F0F9; --p-muted: #CDBFD7; --p-outline: #3E3640; --p-outline-strong: #8E8398; --p-good: #88D984; --p-on-good: #00390A; --p-good-c: #005313; --p-on-good-c: #A4F69E; --p-warn: #FFBA3E; --p-on-warn: #432C00; --p-warn-c: #604100; --p-on-warn-c: #FFDEAE; --p-bad: #FFB4AB; --p-on-bad: #690005; --p-bad-c: #93000A; --p-on-bad-c: #FFDAD6; --p-sel: #FF39A8; --p-on-sel: #151313; --p-cta: #FFE52E; --p-on-cta: #151313; --p-cta-edge: transparent; --p-hl: #FFE52E; --p-on-hl: #151313; --p-chart-1: #FF39A8; --p-chart-2: #FFE52E; --p-chart-3: #D98EF8; --p-inverse: #F0EAF7; --p-on-inverse: #151313; --p-scrim: #000000; --p-gold: #EAB2FF; --p-gold-soft: #6A258A; --p-sage: #514700; --p-on-sage: #FDE32C; --scheme: dark; --p-scheme: dark; --d-bg: #151313; --d-field: #221E21; --d-field2: #2A2529; --d-on: #F6F0F9; --d-muted: #CDBFD7; --d-link: #FF39A8; --d-accent: #FF39A8; --d-good: #88D984; --d-warn: #FFBA3E; --d-bad: #FFB4AB; --d-good-c: #005313; --d-on-good-c: #A4F69E; --d-warn-c: #604100; --d-on-warn-c: #FFDEAE; color-scheme: dark; }
+/* THEME-FALLBACK-END */
 * { box-sizing: border-box; }
+/* THEME-PANELS-START (generated) */
+.card2,
+.kpi,
+.fwrap,
+.rail,
+.topbar,
+.bottom,
+.panel,
+.results,
+.askdrawer,
+.sheet-card,
+.menu-p,
+dialog,
+.form,
+.gate .card,
+.th-card,
+.thbar {
+  --primary: var(--p-primary);
+  --on-primary: var(--p-on-primary);
+  --primary-c: var(--p-primary-c);
+  --on-primary-c: var(--p-on-primary-c);
+  --link: var(--p-link);
+  --secondary: var(--p-secondary);
+  --on-secondary: var(--p-on-secondary);
+  --secondary-c: var(--p-secondary-c);
+  --on-secondary-c: var(--p-on-secondary-c);
+  --tertiary: var(--p-tertiary);
+  --on-tertiary: var(--p-on-tertiary);
+  --tertiary-c: var(--p-tertiary-c);
+  --on-tertiary-c: var(--p-on-tertiary-c);
+  --surface-1: var(--p-surface-1);
+  --surface-2: var(--p-surface-2);
+  --surface-3: var(--p-surface-3);
+  --on-surface: var(--p-on-surface);
+  --muted: var(--p-muted);
+  --outline: var(--p-outline);
+  --outline-strong: var(--p-outline-strong);
+  --good: var(--p-good);
+  --on-good: var(--p-on-good);
+  --good-c: var(--p-good-c);
+  --on-good-c: var(--p-on-good-c);
+  --warn: var(--p-warn);
+  --on-warn: var(--p-on-warn);
+  --warn-c: var(--p-warn-c);
+  --on-warn-c: var(--p-on-warn-c);
+  --bad: var(--p-bad);
+  --on-bad: var(--p-on-bad);
+  --bad-c: var(--p-bad-c);
+  --on-bad-c: var(--p-on-bad-c);
+  --sel: var(--p-sel);
+  --on-sel: var(--p-on-sel);
+  --cta: var(--p-cta);
+  --on-cta: var(--p-on-cta);
+  --cta-edge: var(--p-cta-edge);
+  --hl: var(--p-hl);
+  --on-hl: var(--p-on-hl);
+  --chart-1: var(--p-chart-1);
+  --chart-2: var(--p-chart-2);
+  --chart-3: var(--p-chart-3);
+  --inverse: var(--p-inverse);
+  --on-inverse: var(--p-on-inverse);
+  --scrim: var(--p-scrim);
+  --gold: var(--p-gold);
+  --gold-soft: var(--p-gold-soft);
+  --sage: var(--p-sage);
+  --on-sage: var(--p-on-sage);
+  color: var(--on-surface); color-scheme: var(--p-scheme, light);   /* inherited text colour and native controls follow the panel, not the page */
+}
+/* THEME-PANELS-END */
 [hidden] { display: none !important; }
 html, body { margin: 0; background: var(--surface); color: var(--on-surface); font: 15px/1.5 var(--body); }
-.ms { font-family: "Material Symbols Rounded"; font-size: 22px; line-height: 1; font-weight: normal; font-style: normal; font-feature-settings: "liga"; }
-h1, h2, h3 { font-family: var(--display); font-variation-settings: "SOFT" 100, "WONK" 1; font-weight: 900; margin: 0; text-wrap: balance; }
+.ms { font-family: "Material Symbols Outlined"; font-size: 22px; line-height: 1; font-weight: normal; font-style: normal; font-feature-settings: "liga"; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.015em; margin: 0; text-wrap: balance; }
 .gate { min-height: 100vh; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-left)) ; }
 .gate .card { width: min(420px, 100%); background: var(--surface-1); border-radius: 32px; padding: 28px; display: grid; gap: 14px; box-shadow: inset 0 0 0 1px var(--gold-soft); }
 .brand { display: flex; align-items: center; gap: 12px; }
@@ -43,14 +116,14 @@ h1, h2, h3 { font-family: var(--display); font-variation-settings: "SOFT" 100, "
 .brand h1 { font-size: 28px; }
 .brand small { display: block; color: var(--gold); font: 800 11px var(--body); letter-spacing: .14em; text-transform: uppercase; }
 label { font-size: 13px; font-weight: 700; color: var(--muted); display: grid; gap: 6px; }
-input, select, textarea { font: 600 15px var(--body); color: var(--on-surface); background: var(--surface-2); border: 1px solid var(--outline); border-radius: 14px; padding: 12px 14px; width: 100%; }
+input, select, textarea { font: 600 15px var(--body); color: var(--on-surface); background: var(--surface-2); border: 1px solid var(--outline-strong); border-radius: 14px; padding: 12px 14px; width: 100%; }
 textarea { min-height: 70px; resize: vertical; }
 .btn { border: 0; border-radius: 999px; padding: 11px 20px; font: 800 15px var(--body); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.filled { background: var(--primary); color: var(--on-primary); }
+.filled { background: var(--cta); color: var(--on-cta); box-shadow: inset 0 0 0 1.5px var(--cta-edge); }
 .tonal { background: var(--primary-c); color: var(--on-primary-c); }
-.text { background: transparent; color: var(--primary); }
+.text { background: transparent; color: var(--link); }
 .gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
-.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .nav a:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .nav a:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
 .note { font-size: 13px; color: var(--muted); }
 .err { color: var(--bad); font-weight: 700; font-size: 14px; }
 /* app shell */
@@ -68,7 +141,7 @@ textarea { min-height: 70px; resize: vertical; }
 .rail .nav::-webkit-scrollbar-track { background: transparent; }
 .rail .me { flex: none; }
 .nav a { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 999px; color: var(--on-surface); text-decoration: none; font-weight: 700; position: relative; }
-.nav a.on { background: var(--primary-c); color: var(--on-primary-c); }
+.nav a.on { background: var(--sel); color: var(--on-sel); }
 .badge { margin-left: auto; background: var(--primary); color: var(--on-primary); border-radius: 999px; font-size: 11px; padding: 0 7px; font-weight: 800; }
 .me { margin-top: auto; padding: 12px; border-radius: 18px; background: var(--surface-2); font-size: 13px; display: grid; gap: 6px; }
 main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 1100px; }
@@ -77,22 +150,23 @@ main { flex: 1; min-width: 0; padding: 24px max(16px, 3vw) 100px; max-width: 110
 .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
 .live { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); display: inline-block; }
-.dot.on { background: #3fb46a; box-shadow: 0 0 0 4px color-mix(in srgb, #3fb46a 25%, transparent); }
+.dot.on { background: var(--good); box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 25%, transparent); }
 button.orgcard { text-align: left; border: 0; color: inherit; font: inherit; cursor: pointer; transition: background .2s, transform .2s; }
 button.orgcard:hover { background: var(--surface-2); transform: translateY(-2px); }
-button.orgcard:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+button.orgcard:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
 .card2 { background: var(--surface-1); border-radius: 26px; padding: 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
 .hero { background: linear-gradient(135deg, var(--primary-c), color-mix(in srgb, var(--gold-soft) 60%, var(--surface-1))); color: var(--on-primary-c); border-radius: 30px; padding: 22px; display: grid; gap: 12px; margin-bottom: 16px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-.stat { background: color-mix(in srgb, var(--surface) 70%, transparent); border-radius: 18px; padding: 10px 14px; }
+.stat { background: var(--surface-2); color: var(--on-surface); border-radius: 18px; padding: 10px 14px; }
+.hero .stat { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--on-primary-c); }
 .stat b { display: block; font: 700 26px var(--display); }
 .stat span { font-size: 12px; color: var(--muted); }
 .row { display: flex; gap: 10px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--outline); }
 .row:first-child { border-top: 0; }
 .row .grow { flex: 1; min-width: 0; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 3px 10px; font-size: 12px; font-weight: 800; background: var(--surface-3); white-space: nowrap; }
-.chip.good { background: var(--good-c); color: var(--good); } .chip.warn { background: var(--warn-c); color: var(--warn); } .chip.bad { background: var(--bad-c); color: var(--bad); } .chip.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
+.chip.good { background: var(--good-c); color: var(--on-good-c); } .chip.warn { background: var(--warn-c); color: var(--on-warn-c); } .chip.bad { background: var(--bad-c); color: var(--on-bad-c); } .chip.gold { background: transparent; color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); }
 /* The approved logo, bigger and alive. The art itself is untouched: the identity's own silhouette
    in its own colour with its own symbol. Everything below is presentation - scale, float, breath,
    the mark's own spin slowed to a drift, a slow sheen and a little parallax between the symbol and
@@ -100,11 +174,11 @@ button.orgcard:focus-visible { outline: 2px solid var(--primary); outline-offset
    static logo. */
 .mk { position: relative; display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; user-select: none; }
 .mk .mk-art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-  filter: drop-shadow(0 2px 5px rgb(61 31 18 / .20)); }
+  filter: drop-shadow(0 2px 5px rgb(0 0 0 / .20)); }
 .mk i.ms { position: relative; font-size: 19px; line-height: 1; }
 .mk.s { width: 28px; height: 28px; } .mk.s i.ms { font-size: 12px; }
 .mk.l { width: 64px; height: 64px; } .mk.l i.ms { font-size: 27px; }
-.mk.l .mk-art { filter: drop-shadow(0 4px 12px rgb(61 31 18 / .24)); }
+.mk.l .mk-art { filter: drop-shadow(0 4px 12px rgb(0 0 0 / .24)); }
 .mk-sheen { pointer-events: none; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -155,7 +229,7 @@ button.orgcard:focus-visible { outline: 2px solid var(--primary); outline-offset
 /* who Coco is talking to: the path, each level a way back up, and the one way down */
 .scopebar { display: flex; flex-wrap: wrap; gap: 4px 2px; align-items: center; padding: 10px 12px; border-radius: 18px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--outline); margin-bottom: 10px; }
 .scopebar .crumb { font: 600 14px var(--body); color: var(--muted); background: none; border: 0; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
-.scopebar .crumb:hover { color: var(--primary); background: var(--surface-2); }
+.scopebar .crumb:hover { color: var(--link); background: var(--surface-2); }
 .scopebar .crumb.on { color: var(--on-surface); }
 .scopebar .crumb small { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .scopebar .sep { color: var(--muted); }
@@ -175,7 +249,7 @@ button.orgcard:focus-visible { outline: 2px solid var(--primary); outline-offset
 /* row actions stay quiet until wanted: a hundred rows of red Rename/Archive reads as a hundred
    warnings, and nothing here is a warning */
 .trow .btn.text { color: var(--muted); padding: 6px 10px; }
-.trow .btn.text:hover { color: var(--primary); background: var(--surface-2); }
+.trow .btn.text:hover { color: var(--link); background: var(--surface-2); }
 .relnotes { margin: 6px 0 2px; padding-left: 20px; display: grid; gap: 4px; }
 .relnotes li { color: var(--muted); }
 .tkind { font: 800 10px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
@@ -188,43 +262,43 @@ button.orgcard:focus-visible { outline: 2px solid var(--primary); outline-offset
 .muted { color: var(--muted); font-size: 13px; }
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 .tabs button { border: 1px solid var(--outline); background: transparent; color: var(--on-surface); border-radius: 10px; padding: 6px 14px; font: 700 14px var(--body); cursor: pointer; }
-.tabs button.on { background: var(--primary-c); color: var(--on-primary-c); border-color: transparent; }
+.tabs button.on { background: var(--sel); color: var(--on-sel); border-color: transparent; }
 .form { display: grid; gap: 10px; background: var(--surface-1); border-radius: 26px; padding: 18px; margin-bottom: 16px; }
 .form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 dialog { border: 0; border-radius: 28px; padding: 22px; background: var(--surface-2); color: var(--on-surface); width: min(480px, 92vw); }
-dialog::backdrop { background: rgba(20, 10, 16, .45); }
+dialog::backdrop { background: color-mix(in srgb, var(--scrim) 45%, transparent); }
 /* In-app Dynamic Island strip (Boss, 2026-10-26): the island lives inside the Coco app too — same
    approvals, same YES/NO cloud path as the desktop pill, Ignore hides on this device only. */
-#islandStrip { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 60; background: #0b0b0d; color: #fff; border-radius: 0 0 22px 22px; box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 8px 14px; display: grid; gap: 6px; width: min(560px, 92vw); animation: isdrop .45s cubic-bezier(.34,1.32,.5,1); }
+#islandStrip { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 60; background: var(--d-bg); color: var(--d-on); border-radius: 0 0 22px 22px; box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 8px 14px; display: grid; gap: 6px; width: min(560px, 92vw); animation: isdrop .45s cubic-bezier(.34,1.32,.5,1); }
 @keyframes isdrop { from { transform: translate(-50%, -100%); } }
 .isrow { display: flex; align-items: center; gap: 10px; }
-.isdot { width: 8px; height: 8px; border-radius: 50%; background: #ff9f0a; animation: ispulse 1.6s ease-in-out infinite; flex: none; }
+.isdot { width: 8px; height: 8px; border-radius: 50%; background: var(--d-warn); animation: ispulse 1.6s ease-in-out infinite; flex: none; }
 @keyframes ispulse { 50% { opacity: .35; } }
 .isg { flex: 1; min-width: 0; } .isg b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.isg small { display: block; color: rgba(255,255,255,.62); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.isbtn { flex: none; border: 0; border-radius: 10px; padding: 5px 10px; font: 800 11px var(--body); cursor: pointer; background: #2c2c2e; color: #fff; transition: transform .15s cubic-bezier(.34,1.32,.5,1), filter .15s; }
+.isg small { display: block; color: var(--d-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.isbtn { flex: none; border: 0; border-radius: 10px; padding: 5px 10px; font: 800 11px var(--body); cursor: pointer; background: var(--d-field2); color: var(--d-on); transition: transform .15s cubic-bezier(.34,1.32,.5,1), filter .15s; }
 /* the brain capsule: the company's live operating state, from the brains' own records */
-.bisland { margin: 0 auto 14px; width: min(760px, 100%); background: #0b0b0d; color: #f5f5f7; border-radius: 26px; box-shadow: 0 6px 24px rgba(0,0,0,.28); overflow: hidden; transition: border-radius .3s cubic-bezier(.34,1.32,.5,1); }
+.bisland { margin: 0 auto 14px; width: min(760px, 100%); background: var(--d-bg); color: var(--d-on); border-radius: 26px; box-shadow: 0 6px 24px rgba(0,0,0,.28); overflow: hidden; transition: border-radius .3s cubic-bezier(.34,1.32,.5,1); }
 .bisland.open { border-radius: 22px; }
 .bisland button.bihead { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; cursor: pointer; }
-.bisland button.bihead:focus-visible { outline: 2px solid #4FE3F2; outline-offset: -2px; border-radius: 26px; }
-.bisland .bidot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: #30d158; animation: ispulse 1.6s ease-in-out infinite; }
-.bisland .bidot.warn { background: #ff9f0a; } .bisland .bidot.idle { background: #8e8e93; animation: none; }
+.bisland button.bihead:focus-visible { outline: 2px solid var(--d-link); outline-offset: -2px; border-radius: 26px; }
+.bisland .bidot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--d-good); animation: ispulse 1.6s ease-in-out infinite; }
+.bisland .bidot.warn { background: var(--d-warn); } .bisland .bidot.idle { background: var(--d-muted); animation: none; }
 .bisland .bimain { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.bisland .bimain b { font: 800 13px var(--body); } .bisland small { color: #c7c7cc; font: 500 12px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bisland .bistat { display: flex; gap: 6px; flex-wrap: wrap; } .bisland .bipill { background: #2c2c2e; border-radius: 999px; padding: 2px 8px; font: 700 11px var(--body); white-space: nowrap; }
-.bisland .bipill.warn { background: #5c4300; color: #ffe79a; } .bisland .bipill.good { background: #1f5a3a; color: #d4edd9; }
+.bisland .bimain b { font: 800 13px var(--body); } .bisland small { color: var(--d-muted); font: 500 12px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bisland .bistat { display: flex; gap: 6px; flex-wrap: wrap; } .bisland .bipill { background: var(--d-field2); border-radius: 999px; padding: 2px 8px; font: 700 11px var(--body); white-space: nowrap; }
+.bisland .bipill.warn { background: var(--d-warn-c); color: var(--d-on-warn-c); } .bisland .bipill.good { background: var(--d-good-c); color: var(--d-on-good-c); }
 .bisland .bibody { padding: 0 16px 14px; display: grid; gap: 10px; font: 500 13px var(--body); }
-.bisland .bisec { background: #1c1c1e; border-radius: 14px; padding: 10px 12px; display: grid; gap: 6px; }
-.bisland .bisec h4 { margin: 0; font: 800 12px var(--body); color: #c7c7cc; text-transform: uppercase; letter-spacing: .04em; }
+.bisland .bisec { background: var(--d-field); border-radius: 14px; padding: 10px 12px; display: grid; gap: 6px; }
+.bisland .bisec h4 { margin: 0; font: 800 12px var(--body); color: var(--d-muted); text-transform: uppercase; letter-spacing: .04em; }
 .bisland .birow { all: unset; box-sizing: border-box; display: flex; gap: 8px; align-items: baseline; width: 100%; }
-.bisland button.birow { cursor: pointer; border-radius: 8px; } .bisland button.birow:hover, .bisland button.birow:focus-visible { background: #2c2c2e; outline: none; }
-.bisland .birow .grow { flex: 1; min-width: 0; } .bisland .birow em, .bisland em { font-style: normal; color: #c7c7cc; font-size: 12px; }
-.bisland .bilink { all: unset; cursor: pointer; color: #4FE3F2; font: 700 12px var(--body); } .bisland .bilink:focus-visible { outline: 2px solid #4FE3F2; }
+.bisland button.birow { cursor: pointer; border-radius: 8px; } .bisland button.birow:hover, .bisland button.birow:focus-visible { background: var(--d-field2); outline: none; }
+.bisland .birow .grow { flex: 1; min-width: 0; } .bisland .birow em, .bisland em { font-style: normal; color: var(--d-muted); font-size: 12px; }
+.bisland .bilink { all: unset; cursor: pointer; color: var(--d-link); font: 700 12px var(--body); } .bisland .bilink:focus-visible { outline: 2px solid var(--d-link); }
 @media (max-width: 600px) { .bisland .bistat { display: none; } }
-.isbtn.yes { background: #30d158; color: #000; } .isbtn.no { background: #ff453a; }
+.isbtn.yes { background: var(--d-good); color: var(--d-bg); } .isbtn.no { background: var(--d-bad); color: var(--d-bg); }
 .isbtn:hover, .isbtn:focus-visible { filter: brightness(1.2); transform: scale(1.08); outline: none; } .isbtn:active { transform: scale(.94); }
-#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom)); background: var(--on-surface); color: var(--surface); padding: 10px 18px; border-radius: 12px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(90px + env(safe-area-inset-bottom)); background: var(--inverse); color: var(--on-inverse); padding: 10px 18px; border-radius: 12px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; }
 #toast.show { opacity: 1; }
 /* The update offer. Quiet, out of the way, and it never takes the screen from under you. */
 /* left:0/right:0 + auto margins, not left:50%: with left:50% the bar can only ever be half the
@@ -244,12 +318,12 @@ dialog::backdrop { background: rgba(20, 10, 16, .45); }
   .bottom a { flex: 1; display: grid; justify-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); text-decoration: none; padding: 4px 0; position: relative; }
   .bottom a .pill { width: 54px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
   .bottom a.on { color: var(--on-surface); }
-  .bottom a.on .pill { background: var(--primary-c); color: var(--on-primary-c); }
+  .bottom a.on .pill { background: var(--sel); color: var(--on-sel); }
   .bottom .badge { position: absolute; top: 0; right: 18%; font-size: 10px; }
   /* the sheet only exists where the rail is hidden */
   .sheet[hidden] { display: none; }
   .sheet { position: fixed; inset: 0; z-index: 40; display: grid; align-items: end; }
-  .sheet-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, .38); }
+  .sheet-scrim { position: absolute; inset: 0; background: color-mix(in srgb, var(--scrim) 38%, transparent); }
   .sheet-card { position: relative; background: var(--surface-2); border-radius: 28px 28px 0 0;
     padding: 12px 18px calc(18px + env(safe-area-inset-bottom)); max-height: 76vh; overflow: auto; }
   .sheet-grip { width: 34px; height: 4px; border-radius: 999px; background: var(--muted);
@@ -257,7 +331,7 @@ dialog::backdrop { background: rgba(20, 10, 16, .45); }
   .sheet-nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
   .sheet-nav a { display: grid; justify-items: center; gap: 4px; padding: 12px 6px; border-radius: 18px;
     color: var(--on-surface); text-decoration: none; font-size: 12px; font-weight: 700; text-align: center; }
-  .sheet-nav a.on { background: var(--primary-c); color: var(--on-primary-c); }
+  .sheet-nav a.on { background: var(--sel); color: var(--on-sel); }
 }
 @keyframes fadeThrough { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -271,11 +345,11 @@ dialog::backdrop { background: rgba(20, 10, 16, .45); }
 #view.enter .grid > :nth-child(4), #view.enter > :nth-child(4) { animation-delay: .16s; }
 #view.enter .grid > :nth-child(n+5), #view.enter > :nth-child(n+5) { animation-delay: .2s; }
 .dot.on { position: relative; }
-.dot.on::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: #3fb46a; animation: breathe 1.4s ease-out infinite; }
+.dot.on::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--good); animation: breathe 1.4s ease-out infinite; }
 .hero { background-size: 220% 220%; animation: drift 9s ease-in-out infinite alternate; }
 .btn, .card2, .nav a, .bottom a .pill { transition: transform .18s cubic-bezier(.2,0,0,1), background-color .2s, box-shadow .2s; }
 .btn:active { transform: scale(.97); }
-@media (hover: hover) { .card2:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(60, 20, 40, .08); } }
+@media (hover: hover) { .card2:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgb(0 0 0 / .1); } }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
 .switch { appearance: none; width: 52px; height: 32px; border-radius: 999px; background: var(--surface-3); box-shadow: inset 0 0 0 2px var(--outline); position: relative; cursor: pointer; flex: none; transition: background .2s; }
 .switch::after { content: ""; position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform .2s cubic-bezier(.2,0,0,1), width .2s, height .2s; }
@@ -285,17 +359,17 @@ dialog::backdrop { background: rgba(20, 10, 16, .45); }
    too: one track per setting, the live option filled. It needed to wrap, because "Claude allowed /
    On demand / Claude off" does not fit a phone on one line. */
 .seg { display: inline-flex; flex-wrap: wrap; max-width: 100%; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; box-shadow: inset 0 0 0 1px var(--outline); }
-.seg button { border: 0; background: transparent; color: var(--muted); font: 700 14px var(--body); padding: 8px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: background .18s ease, color .18s ease; }
+.seg button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--muted); font: 700 14px var(--body); padding: 8px 16px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: background .18s ease, color .18s ease; }
 .seg button:hover { background: var(--surface-3); color: var(--on-surface); }
 .seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
-.seg button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.seg button:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
 body.calm *, body.calm *::after { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }/* Automation (Universal Automation Templates): the same rules serve the desktop app and the phone, so nothing here is device specific */
 .aut-cols { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 860px) { .aut-cols { grid-template-columns: minmax(0, 1fr); } }
 .aut-cols > div { display: grid; gap: 14px; min-width: 0; }
 .aut-item { display: grid; gap: 4px; text-align: left; width: 100%; border: 0; border-radius: 16px; background: var(--surface-2); color: var(--on-surface); padding: 10px 14px; font: 700 14px var(--body); cursor: pointer; margin-top: 6px; }
-.aut-item.on { background: var(--primary-c); color: var(--on-primary-c); }
+.aut-item.on { background: var(--sel); color: var(--on-sel); }
 .aut-item span { font-weight: 600; }
 .aut-new { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: center; }
 .aut-h { margin: 14px 0 4px; font: 800 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
@@ -315,8 +389,8 @@ body.calm *, body.calm *::after { animation: none !important; transition: none !
 .aut-vars .chip { border: 0; cursor: pointer; color: var(--on-surface); font-family: ui-monospace, Consolas, monospace; }
 .aut-pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border-radius: 14px; padding: 12px; font: 12.5px/1.5 ui-monospace, Consolas, monospace; max-height: 420px; overflow: auto; }
 .aut-diff { margin: 4px 0 10px; padding: 8px; background: var(--surface-2); border-radius: 12px; font: 12.5px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
-.aut-diff .add { display: block; background: var(--good-c); color: var(--good); }
-.aut-diff .del { display: block; background: var(--bad-c); color: var(--bad); }
+.aut-diff .add { display: block; background: var(--good-c); color: var(--on-good-c); }
+.aut-diff .del { display: block; background: var(--bad-c); color: var(--on-bad-c); }
 .aut-err { box-shadow: inset 0 0 0 2px var(--bad); }
 .aut-err ul { margin: 4px 0 0 18px; padding: 0; }
 .aut-warn { box-shadow: inset 0 0 0 1px var(--warn); }
@@ -326,15 +400,15 @@ body.calm *, body.calm *::after { animation: none !important; transition: none !
 .aut-steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
 .aut-steps button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--outline); background: transparent; color: var(--on-surface); border-radius: 999px; padding: 5px 12px 5px 6px; font: 700 13px var(--body); cursor: pointer; }
 .aut-steps button span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-3); font-size: 12px; }
-.aut-steps button.on { background: var(--primary-c); color: var(--on-primary-c); border-color: transparent; }
+.aut-steps button.on { background: var(--sel); color: var(--on-sel); border-color: transparent; }
 .aut-steps button.done span { background: var(--good-c); color: var(--good); }
 @media (max-width: 560px) { .aut-steps button { font-size: 0; gap: 0; padding: 4px; } .aut-steps button span { font-size: 13px; } }
 .aut-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .aut-card { position: relative; display: grid; gap: 4px; padding: 14px; border-radius: 18px; background: var(--surface-2); cursor: pointer; box-shadow: inset 0 0 0 1px var(--outline); color: var(--on-surface); font-size: 15px; }
-.aut-card.on { box-shadow: inset 0 0 0 2px var(--primary); background: var(--primary-c); color: var(--on-primary-c); }
+.aut-card.on { box-shadow: inset 0 0 0 2px var(--link); background: var(--sel); color: var(--on-sel); }
 .aut-card .muted { color: inherit; opacity: .8; }
 .aut-card input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.aut-card:focus-within { outline: 3px solid var(--primary); outline-offset: 2px; }
+.aut-card:focus-within { outline: 3px solid var(--link); outline-offset: 2px; }
 .aut-learn { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
 .aut-learn b { flex: 1 1 100%; font-size: 13px; color: var(--muted); }
 .aut-file { cursor: pointer; }
@@ -342,6 +416,183 @@ body.calm *, body.calm *::after { animation: none !important; transition: none !
 .aut-back { margin-bottom: 8px; }
 .aut-item .chip { margin-right: 4px; }
 details > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+
+/* ================================================================ Unified shell and components (Coco 2.11)
+   Desktop, phone and Android share these tokens and this layout. Cards, tabs, filters, KPI tiles, charts and empty states are written once. */
+body { background: var(--surface); }
+.card2 { border-radius: var(--r-card); box-shadow: var(--shadow-1); grid-template-columns: minmax(0, 1fr); }   /* minmax(0,1fr): a wide child (a table, a long word) scrolls or wraps instead of stretching the whole card past a phone screen */
+.form, dialog { border-radius: var(--r-card); } .hero { border-radius: 22px; } .gate .card { border-radius: 24px; }
+aside.rail { width: 256px; border-right: 1px solid var(--outline); transition: width .22s cubic-bezier(.2,0,0,1); }
+.nav a { gap: 12px; padding: 10px 14px; border-radius: 12px; font-weight: 600; font-size: 14px; }
+.nav a:hover { background: var(--surface-2); } .nav a.on { background: var(--sel); color: var(--on-sel); }
+.nav a i.ms { font-size: 22px; flex: none; }
+.nav .grp { font: 700 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 16px 14px 6px; }
+.nav .badge { margin-left: auto; }
+.htile { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--hc); flex: none; }
+.htile .ms { font-size: 22px; color: #fff; }
+.htile.s { width: 26px; height: 26px; border-radius: 8px; } .htile.s .ms { font-size: 16px; }
+.htile.l { width: 56px; height: 56px; border-radius: 16px; } .htile.l .ms { font-size: 30px; }
+aside.rail.collapsed { width: 72px; padding-inline: 10px; }
+aside.rail.collapsed .lbl, aside.rail.collapsed .me { display: none; }
+aside.rail.collapsed .nav a { justify-content: center; padding: 10px; }
+aside.rail.collapsed .nav .badge { position: absolute; top: 0; right: 4px; }
+.shell { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+main { width: 100%; max-width: 1320px; margin: 0 auto; }
+.topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 10px max(16px, 3vw); background: color-mix(in srgb, var(--surface-1) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--outline); }
+.topbar .grow, .top .grow { flex: 1; min-width: 0; }
+.iconbtn { border: 0; background: transparent; color: var(--on-surface); width: 40px; height: 40px; border-radius: 50%; display: inline-grid; place-items: center; cursor: pointer; position: relative; flex: none; }
+.iconbtn:hover { background: var(--surface-2); } .iconbtn:focus-visible, .avatar:focus-visible, .chipbtn:focus-visible, .fab:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+.search { position: relative; flex: 0 1 460px; display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 999px; padding: 0 14px; }
+.search input { border: 0; background: transparent; padding: 10px 0; border-radius: 0; } .search input:focus-visible { outline: none; } .search:focus-within { box-shadow: 0 0 0 2px var(--primary); }
+.results, .panel { background: var(--surface-1); border: 1px solid var(--outline); border-radius: 18px; box-shadow: var(--shadow-2); padding: 6px; z-index: 40; max-height: 65vh; overflow: auto; }
+.results { position: absolute; top: calc(100% + 6px); left: 0; right: 0; }
+.results a, .nrow { display: flex; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 12px; color: inherit; text-decoration: none; }
+.results a:hover, .results a:focus-visible, .nrow:hover { background: var(--surface-2); }
+.results small, .nrow small { display: block; color: var(--muted); font-size: 12px; }
+.chipbtn { display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; padding: 7px 14px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--outline); color: var(--on-surface); text-decoration: none; font: 600 13px var(--body); white-space: nowrap; }
+.chipbtn:hover { background: var(--surface-2); }
+.dots { display: inline-flex; gap: 4px; } .sdot { width: 9px; height: 9px; border-radius: 50%; background: var(--outline); display: inline-block; } .sdot.ok { background: var(--good); }
+.askbtn.on { box-shadow: inset 0 0 0 2px var(--primary); }
+.nbadge { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: var(--on-bad); font: 800 11px/18px var(--body); text-align: center; }
+.bellwrap { position: relative; } .panel { position: absolute; right: 0; top: calc(100% + 8px); width: min(380px, 92vw); }
+.panel-h { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; }
+.nrow.bad .ms { color: var(--bad); } .nrow.warn .ms { color: var(--warn); } .nrow { align-items: flex-start; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--primary); color: var(--on-primary); font: 800 15px var(--body); cursor: pointer; flex: none; }
+.top .eyebrow { display: none; }
+.crumbs { display: flex; align-items: center; gap: 2px; font: 600 12px var(--body); color: var(--muted); } .crumbs .ms { font-size: 16px; }
+.subnav { display: flex; gap: 6px; overflow-x: auto; margin: -4px 0 16px; padding: 2px 2px 4px; scrollbar-width: thin; } .subnav:empty { display: none; }
+.subnav a { white-space: nowrap; padding: 8px 16px; border-radius: 999px; color: var(--on-surface); text-decoration: none; font: 600 14px var(--body); box-shadow: inset 0 0 0 1px var(--outline); }
+.subnav a:hover { background: var(--surface-2); } .subnav a.on { background: var(--sel); color: var(--on-sel); box-shadow: none; } .subnav a:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+.homehead { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; } .greet { font-size: 26px; } .homehead p { margin: 4px 0 0; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; background: var(--surface-1); border-radius: var(--r-card); box-shadow: var(--shadow-1); padding: 10px 12px; margin-bottom: 14px; }
+.fsel { display: grid; gap: 3px; font-size: 11px; font-weight: 700; color: var(--muted); min-width: 108px; flex: 1 1 108px; max-width: 190px; }
+.fsel select, .fsel input { padding: 6px 8px; border-radius: 10px; font-size: 13px; } .fsel select:disabled { opacity: .55; }
+.fwrap { background: var(--surface-1); border-radius: var(--r-card); box-shadow: var(--shadow-1); margin-bottom: 14px; } .fwrap > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px; } .fwrap > summary::-webkit-details-marker { display: none; } .fwrap > summary .ms { color: var(--muted); } .fwrap > summary:focus-visible { outline: 3px solid var(--link); outline-offset: -3px; border-radius: var(--r-card); } .fsum { color: var(--muted); font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fwrap .filters { box-shadow: none; margin: 0; padding: 0 12px 12px; background: transparent; }
+.fnote { flex: 1 1 100%; font-size: 11px; color: var(--muted); } .filters .btn { padding: 6px 12px; font-size: 13px; }
+.kpis { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 16px; }
+.kpi.wide { grid-column: span 2; }
+.kpi { background: var(--surface-1); border-radius: var(--r-card); box-shadow: var(--shadow-1); padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.kpi.revenue { grid-column: span 2; background: linear-gradient(135deg, var(--primary-c), var(--surface-1) 72%); }
+.kpi header { display: flex; gap: 8px; align-items: center; font: 700 13px var(--body); color: var(--muted); flex-wrap: wrap; } .kpi.revenue header { color: var(--on-primary-c); } .kpi header .chip { margin-left: auto; }
+.kv { font: 800 30px/1.1 var(--display); letter-spacing: -.02em; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; } .kpi.revenue .kv { font-size: 40px; } .kv.na { font-size: 24px; color: var(--muted); font-weight: 700; } .kvn { white-space: nowrap; }
+.kl { font-size: 13px; color: var(--muted); } .kpi.revenue .kl { color: var(--on-surface); opacity: .85; }
+.kpi footer { font-size: 12px; color: var(--muted); border-top: 1px solid var(--outline); padding-top: 8px; } .kpi.revenue footer { color: var(--on-surface); opacity: .8; }
+.charts { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 8px; } .chartcard h3 { font-size: 16px; }
+.chart { width: 100%; height: auto; max-height: 240px; display: block; } .cunit { font: 700 12px var(--body); color: var(--muted); margin: 8px 0 2px; }
+.bars { display: grid; gap: 8px; margin-top: 6px; } .barrow, .tgtrow { display: grid; grid-template-columns: minmax(70px, 120px) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.barlabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .bartrack { display: block; height: 10px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.barfill { display: block; height: 100%; border-radius: 6px; transition: width .4s cubic-bezier(.2,0,0,1); } .tgtbars { display: grid; gap: 3px; }
+.barval { font-weight: 700; white-space: nowrap; } .barval small { display: block; font-weight: 500; color: var(--muted); }
+.legend { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.empty { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 14px; padding: 14px; border-radius: 14px; background: var(--surface-2); margin-top: 8px; } .empty .ms { font-size: 24px; flex: none; } .empty.setup { box-shadow: inset 0 0 0 1px var(--warn); }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--warn-c); color: var(--warn); margin-bottom: 14px; font-size: 14px; }
+.sech { margin: 24px 0 10px; font-size: 18px; }
+.housegrid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.housecard { gap: 12px; } .housecard header { display: flex; gap: 12px; align-items: center; } .housecard header .grow { flex: 1; min-width: 0; } .housecard header h3 { font-size: 17px; }
+.hrev { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; } .hrev span { color: var(--muted); font-size: 13px; } .hrev b { font-size: 20px; } .hrev b.na { font-size: 16px; color: var(--muted); }
+.hms { display: flex; gap: 6px 14px; flex-wrap: wrap; } .hm { font-size: 13px; color: var(--muted); text-transform: capitalize; } .hm b { color: var(--on-surface); margin-left: 4px; }
+.hstats, .hstat2 { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; } .hstats b { color: var(--on-surface); font-size: 16px; }
+.opsgrid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.ops.bad { box-shadow: inset 0 0 0 1px var(--bad), var(--shadow-1); } .ops.warn { box-shadow: inset 0 0 0 1px var(--warn), var(--shadow-1); }
+.count { background: var(--surface-3); border-radius: 999px; padding: 1px 9px; font-size: 13px; margin-left: 6px; }
+.hcard-h { display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap; } .hcard-h h3 { font-size: 17px; }
+.rlink { color: inherit; text-decoration: none; } .rlink:hover b { text-decoration: underline; }
+.subh { margin: 14px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.househead { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; } .househead .grow { flex: 1; min-width: 0; } .househead h2 { font-size: 28px; }
+.htabs { display: flex; flex-wrap: wrap; gap: 2px 4px; border-bottom: 1px solid var(--outline); margin-bottom: 16px; }
+@media (max-width: 780px) { .htabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; } }
+.htabs button { border: 0; background: transparent; padding: 10px 14px; font: 600 14px var(--body); color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+.htabs button.on { color: var(--link); border-bottom-color: var(--primary); } .htabs button:hover { color: var(--on-surface); } .htabs button:focus-visible { outline: 3px solid var(--link); outline-offset: -3px; }
+.hbody { display: grid; gap: 14px; } .hperiod { display: flex; }
+.menu { position: relative; } .menu > summary { list-style: none; cursor: pointer; } .menu > summary::-webkit-details-marker { display: none; }
+.menu-p { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface-1); border: 1px solid var(--outline); border-radius: 14px; box-shadow: var(--shadow-2); padding: 6px; z-index: 20; min-width: 220px; display: grid; }
+.menu-p button { display: flex; gap: 10px; align-items: center; border: 0; background: transparent; padding: 9px 12px; border-radius: 10px; font: 600 14px var(--body); color: var(--on-surface); cursor: pointer; text-align: left; } .menu-p button:hover { background: var(--surface-2); } .menu-p small { margin-left: auto; color: var(--muted); font-weight: 500; }
+.bsplit { display: grid; gap: 14px; grid-template-columns: minmax(280px, 1fr) minmax(0, 1.2fr); align-items: start; }
+.bnode { all: unset; box-sizing: border-box; display: flex; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; border-radius: 12px; cursor: pointer; } .bnode:hover { background: var(--surface-2); } .bnode.on { background: var(--sel); color: var(--on-sel); } .bnode:focus-visible { outline: 2px solid var(--link); }
+.bnode small { display: block; color: var(--muted); font-size: 12px; } .bnode.on small { color: inherit; opacity: .8; } .bnode .grow { flex: 1; min-width: 0; }
+.btree > summary { list-style: none; } .btree > summary::-webkit-details-marker { display: none; } .bkids { margin-left: 18px; border-left: 2px solid var(--outline); padding-left: 8px; }
+.tscroll { overflow-x: auto; } .dt { width: 100%; border-collapse: collapse; font-size: 14px; } .dt th { text-align: left; color: var(--muted); font-weight: 700; padding: 8px 10px; border-bottom: 1px solid var(--outline); white-space: nowrap; } .dt td { padding: 10px; border-bottom: 1px solid var(--outline); vertical-align: top; }
+.hname { display: inline-flex; gap: 8px; align-items: center; font-weight: 700; }
+.askdrawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); z-index: 55; background: var(--surface-1); border-left: 1px solid var(--outline); box-shadow: var(--shadow-2); display: flex; flex-direction: column; animation: slidein .22s cubic-bezier(.2,0,0,1); }
+.askdrawer[hidden] { display: none; } .askdrawer > header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--outline); } .askdrawer .grow { flex: 1; }
+#askBody { flex: 1; overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; } #askBody .chatlog { max-height: none; flex: 1; }
+@keyframes slidein { from { transform: translateX(24px); opacity: 0; } }
+@media (min-width: 1200px) { body.ask-open .shell { margin-right: 440px; } }
+/* the approvals strip used to hang from the very top edge; the topbar now lives there, so it sits just under it instead of covering Ask COCO and the bell */
+#islandStrip { position: relative; top: auto; left: auto; transform: none; margin: 10px auto 0; border-radius: 22px; width: min(560px, calc(100% - 32px)); z-index: 25; animation: isdrop2 .35s cubic-bezier(.2,0,0,1); }
+#islandStrip[hidden] { display: none; }
+@keyframes isdrop2 { from { transform: translateY(-10px); opacity: 0; } }
+.fab { display: none; }
+.sheet-nav { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.sheet-nav .mtiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sheet-nav .mtiles a { display: flex; flex-direction: row; gap: 10px; align-items: center; padding: 14px; border-radius: 16px; background: var(--primary-c); color: var(--on-primary-c); text-decoration: none; font-weight: 700; font-size: 14px; }
+.sheet-nav .msec b { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.sheet-nav .mlinks { display: flex; flex-wrap: wrap; gap: 6px; }
+.sheet-nav .mlinks a { display: inline-flex; padding: 8px 14px; border-radius: 999px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--outline); color: var(--on-surface); text-decoration: none; font-weight: 600; font-size: 14px; }
+.sheet-nav .mlinks a.on { background: var(--sel); color: var(--on-sel); box-shadow: none; }
+@media (max-width: 1100px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .charts, .bsplit { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 780px) {
+  .search, #railToggle, .rc-t, .askbtn span { display: none; }
+  .topbar { padding: 8px 12px; } .askbtn { padding: 10px 12px; } #islandStrip { margin-top: 8px; }
+  main { padding-inline: 16px; }
+  .fab { display: grid; place-items: center; position: fixed; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 18px; border: 0; background: var(--cta); color: var(--on-cta); box-shadow: var(--shadow-2), inset 0 0 0 1.5px var(--cta-edge); z-index: 25; cursor: pointer; }
+  body.ask-open .fab { display: none; }
+  .askdrawer { width: 100vw; }
+  .greet { font-size: 22px; } .househead h2 { font-size: 24px; }
+  .dt thead { display: none; } .dt, .dt tbody, .dt tr, .dt td { display: block; width: 100%; } .dt tr { padding: 10px 0; border-bottom: 1px solid var(--outline); } .dt td { border: 0; padding: 3px 0; } .dt td.first { font-weight: 700; padding-bottom: 6px; }
+}
+@media (max-width: 560px) { .kpis { grid-template-columns: minmax(0, 1fr); } .kpi.revenue, .kpi.wide { grid-column: auto; } .kpi.revenue .kv { font-size: 34px; } .barrow, .tgtrow { grid-template-columns: minmax(60px, 90px) 1fr auto; } .fsel { max-width: none; flex: 1 1 calc(50% - 12px); } }
+
+/* ================================================================ Themes: motion, the Appearance page, the quick switch, the preview bar */
+/* a theme change cross-fades the whole page in one step (a view transition); nothing is animated per element, so it costs no layout work */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .5s; animation-timing-function: cubic-bezier(.2, 0, 0, 1); }
+/* expressive, spring-like selection: indicators and controls settle with a small overshoot */
+.nav a, .subnav a, .htabs button, .seg button, .btn, .chipbtn, .iconbtn, .th-q { transition: background-color .25s, color .25s, box-shadow .25s, transform .55s var(--spring); }
+.btn:active, .iconbtn:active, .seg button:active, .th-q:active { transform: scale(.94); }
+.nav a:active, .subnav a:active { transform: scale(.975); }
+.nav a.on, .subnav a.on, .seg button[aria-pressed="true"], .bottom a.on .pill { animation: selpop .55s var(--spring); }
+@keyframes selpop { from { transform: scale(.9); } to { transform: scale(1); } }
+.th-card, .kpi, .housecard { transition: transform .5s var(--spring), box-shadow .25s, border-color .25s; }
+.themed-in { animation: selpop .55s var(--spring); }
+
+.th-page { display: grid; gap: 16px; }
+.th-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 22px; align-items: center; padding: 22px; }
+.th-hero-l { display: grid; gap: 10px; align-content: start; min-width: 0; } .th-hero h2 { font-size: 30px; line-height: 1.1; }
+.th-swatches { display: flex; gap: 6px; flex-wrap: wrap; } .th-swatches i { width: 30px; height: 30px; border-radius: 11px; box-shadow: inset 0 0 0 1px var(--outline-strong); }
+.th-facts { display: grid; gap: 8px; margin: 4px 0 0; } .th-facts div { display: grid; grid-template-columns: minmax(110px, 160px) minmax(0, 1fr); gap: 10px; } .th-facts dt { color: var(--muted); font-size: 13px; } .th-facts dd { margin: 0; font-weight: 600; }
+.th-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); }
+.th-card { position: relative; display: grid; gap: 12px; padding: 14px; border-radius: 28px; border: 2px solid transparent; background: var(--surface-1); box-shadow: var(--shadow-1); align-content: start; }
+.th-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+.th-card.cur { border-color: var(--link); } .th-card.nxt:not(.cur) { border: 2px dashed var(--outline-strong); }
+.th-mocks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .th-mocks .cm { min-height: 196px; border-radius: 18px; }
+.th-meta { display: flex; gap: 12px; align-items: center; } .th-meta .num { width: 34px; height: 34px; border-radius: 12px; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-weight: 700; flex: none; }
+.th-meta b { font-size: 17px; } .th-meta small { display: block; color: var(--muted); font-size: 13px; line-height: 1.35; }
+.th-badges { display: flex; gap: 6px; flex-wrap: wrap; } .chip.seed { gap: 5px; font-weight: 700; } .chip.seed i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px var(--outline-strong); }
+.th-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .th-actions .th-flip { display: none; margin-left: auto; padding: 8px 12px; }
+.th-actions .btn:disabled { opacity: .65; cursor: default; }
+.th-rot.off .th-opts { opacity: .55; }
+.th-opts { display: grid; gap: 14px; margin-top: 8px; } .th-opts .eyebrow { display: block; margin-bottom: 6px; }
+.th-when { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; } .th-when .fsel { max-width: 220px; }
+.th-next { display: flex; gap: 8px; flex-wrap: wrap; } .th-pill { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px 6px 8px; border-radius: 999px; background: var(--surface-2); font-size: 14px; }
+.th-dots { display: inline-flex; gap: 3px; } .th-dots i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px var(--outline-strong); }
+.th-acts { display: flex; gap: 14px 20px; flex-wrap: wrap; align-items: center; margin-top: 10px; } .th-lock { display: flex; gap: 12px; align-items: center; cursor: pointer; }
+.th-q { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: transparent; color: var(--on-surface); padding: 9px 10px; border-radius: 12px; font: 600 14px var(--body); cursor: pointer; text-align: left; text-decoration: none; } .th-q:hover { background: var(--surface-2); } .th-q.on { background: var(--sel); color: var(--on-sel); } .th-q span:nth-child(2) { flex: 1; } .th-q.more { color: var(--link); }
+.thbar { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 80; display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; border-radius: 999px; background: var(--surface-1); box-shadow: var(--shadow-2), inset 0 0 0 1px var(--outline-strong); max-width: calc(100vw - 24px); animation: selpop .5s var(--spring); }
+.thbar[hidden] { display: none; } .thb-t { display: inline-flex; gap: 8px; align-items: center; }
+@media (max-width: 900px) { .th-hero { grid-template-columns: 1fr; } }
+@media (max-width: 560px) {
+  .th-mocks { grid-template-columns: 1fr; } .th-card[data-show="light"] .dk, .th-card[data-show="dark"] .lt { display: none; } .th-actions .th-flip { display: inline-flex; }
+  .th-facts div { grid-template-columns: 1fr; gap: 0; } .thbar { bottom: calc(80px + env(safe-area-inset-bottom)); border-radius: 22px; flex-wrap: wrap; }
+}
+
+/* colour balance: the secondary and tertiary families appear in the structure of every screen (icons, section markers), not only in charts and chips */
+.kpi header .ms { color: var(--link); } .kpi:nth-child(2) header .ms, .kpi:nth-child(5) header .ms { color: var(--secondary); } .kpi:nth-child(3) header .ms, .kpi:nth-child(6) header .ms { color: var(--tertiary); }
+.kpi.revenue header .ms { color: var(--on-primary-c); }
+.sech::before { content: ""; display: inline-block; width: 6px; height: 18px; border-radius: 3px; background: var(--secondary); margin-right: 10px; vertical-align: -3px; }
+.hcard-h h3::before { content: ""; display: inline-block; width: 5px; height: 16px; border-radius: 3px; background: var(--tertiary); margin-right: 9px; vertical-align: -2px; }
+.eyebrow { color: var(--gold); }
 </style>
 </head>
 <body>
@@ -368,26 +619,43 @@ details > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
 </section>
 <!-- 3. the lounge -->
 <div class="app" id="app" hidden>
-  <div id="islandStrip" hidden></div>
-  <aside class="rail">
-    <div class="brand"><img src="coco.svg" alt=""><div><small>Good Space</small><h1 style="font-size:22px">Coco Lounge</h1></div></div>
-    <nav class="nav" id="nav"></nav>
+  <aside class="rail" id="rail">
+    <div class="brand"><img src="coco.svg" alt=""><div class="lbl"><small>Good Space</small><h1 style="font-size:22px">Coco</h1></div></div>
+    <nav class="nav" id="nav" aria-label="Main navigation"></nav>
     <div class="me" id="me"></div>
   </aside>
-  <main>
-    <div id="brainIsland" class="bisland" hidden></div>
-    <div class="top"><div><span class="eyebrow" id="who"></span><h2 id="title">Home</h2></div><span class="live"><i class="dot" id="liveDot"></i><span id="liveText">connecting</span></span></div>
-    <section id="view" aria-live="polite"></section>
-  </main>
+  <div class="shell">
+    <header class="topbar">
+      <button class="iconbtn" id="railToggle" aria-label="Collapse or expand the sidebar" title="Collapse or expand the sidebar"><i class="ms">menu</i></button>
+      <div class="search" id="searchBox" role="search"><i class="ms">search</i><input id="q" type="search" placeholder="Search pages, Houses, tasks, channels  ( / )" autocomplete="off" aria-label="Search"><div class="results" id="searchResults" hidden></div></div>
+      <span class="grow"></span>
+      <a class="chipbtn" id="remoteChip" href="#remote" aria-label="Remote Control: paired devices"></a>
+      <button class="btn filled askbtn" id="askBtn" aria-haspopup="dialog"><i class="ms">forum</i><span>Ask COCO</span></button>
+      <div class="bellwrap"><button class="iconbtn" id="themeBtn" aria-label="Theme" aria-haspopup="true" title="Theme"><i class="ms">palette</i></button><div class="panel" id="themePanel" hidden></div></div>
+      <div class="bellwrap"><button class="iconbtn" id="bellBtn" aria-label="Notifications" aria-haspopup="true"><i class="ms">notifications</i><span class="nbadge" id="bellN" hidden></span></button><div class="panel" id="bellPanel" hidden></div></div>
+      <button class="avatar" id="meBtn" aria-label="Founder profile and settings"></button>
+    </header>
+    <div id="islandStrip" hidden></div>
+    <main>
+      <div id="brainIsland" class="bisland" hidden></div>
+      <div class="top"><div class="grow"><nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav><span class="eyebrow" id="who"></span><h2 id="title">Home</h2></div><span class="live"><i class="dot" id="liveDot"></i><span id="liveText">connecting</span></span></div>
+      <nav class="subnav" id="subnav" aria-label="Pages in this section"></nav>
+      <section id="view" aria-live="polite"></section>
+    </main>
+  </div>
   <nav class="bottom" id="bottom"></nav>
-  <!-- Everything the bottom bar has no room for. On a phone the rail is display:none, so without
-       this sheet fifteen of the twenty pages - Integrations among them - could not be reached at
-       all. Closed by default, and it is the same hash links as the rail. -->
+  <div class="thbar" id="themeBar" hidden></div>
+  <button class="fab" id="askFab" aria-label="Ask COCO"><i class="ms">forum</i></button>
+  <aside class="askdrawer" id="askDrawer" role="dialog" aria-label="Ask COCO" hidden>
+    <header><b>Ask COCO</b><span class="grow"></span><a class="btn text" href="#chat">Full page</a><button class="iconbtn" data-askclose="1" aria-label="Close Ask COCO"><i class="ms">close</i></button></header>
+    <div id="askBody"></div>
+  </aside>
+  <!-- Everything the phone's bottom bar has no room for: every section and page, Ask COCO, Remote Control and the seven Houses. -->
   <div class="sheet" id="moreSheet" hidden>
     <div class="sheet-scrim" data-moreclose="1"></div>
-    <div class="sheet-card" role="dialog" aria-modal="true" aria-label="All pages">
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-label="Everything in Coco">
       <div class="sheet-grip"></div>
-      <h3 style="margin:0 0 10px">All pages</h3>
+      <h3 style="margin:0 0 10px">Everything in Coco</h3>
       <nav class="sheet-nav" id="moreNav"></nav>
     </div>
   </div>
@@ -400,6 +668,8 @@ details > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
 <!-- shown only when the desktop app has already fetched a newer Coco and is waiting to restart -->
 <div id="updateBar" role="status" hidden><span id="updateWhat"></span><button class="btn filled" id="updateNow">Restart now</button><button class="btn text" id="updateLater">Later</button></div>
 
+<script src="contract/nav-contract.js"></script>
+<script src="ui-kit.js"></script>
 <script src="heal.js"></script>
 <script src="device-sync.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -446,14 +716,14 @@ const syncPanel = () => {
   if (!a) return `<div style="margin-top:14px">${eb}<div class="muted" style="margin-top:4px">${SYNC_AUDIT_ERR ? 'Audit storage is not set up yet, so no sync cycle has been recorded.' : 'No sync cycle has been recorded yet.'}</div></div>`;
   const h = C ? C.health(a.state, Date.now()) : { ok: true }, devs = Array.isArray(a.devices) ? a.devices : [], bad = devs.filter((x) => x.status === 'ERROR').length, rec = devs.reduce((n, x) => n + (x.fails || 0), 0);
   const cell = 'padding:4px 8px 4px 0;white-space:nowrap';
-  const rows = devs.map((x) => `<tr style="border-top:1px solid rgba(128,128,128,.22)"><td style="${cell}">${esc(x.label)}</td><td style="${cell}"><b>${esc(x.status)}</b></td><td style="${cell}" class="muted">${esc(x.local || '?')} \u2192 ${esc(x.server || '?')}</td>
+  const rows = devs.map((x) => `<tr style="border-top:1px solid var(--outline)"><td style="${cell}">${esc(x.label)}</td><td style="${cell}"><b>${esc(x.status)}</b></td><td style="${cell}" class="muted">${esc(x.local || '?')} \u2192 ${esc(x.server || '?')}</td>
     <td style="${cell}" class="muted">${x.lastSync ? ago(new Date(x.lastSync).toISOString()) : 'never verified'}</td><td style="${cell}" class="muted">${x.nextTry ? 'retry ' + ago(new Date(x.nextTry).toISOString()).replace(' ago', '') : ''}</td></tr>${x.lastError ? `<tr><td colspan="5" class="muted" style="font-size:12px;padding:0 0 4px">${esc(x.lastError)}</td></tr>` : ''}`).join('');
   return `<div style="margin-top:14px">${eb}
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 6px"><span><b>${a.current_count}/${a.total}</b> devices verified current</span>
       <span class="${a.budget_ok ? '' : 'muted'}"><b>${a.calls_total}</b> of ${C ? C.BUDGET.max : 7} calls last cycle \u00b7 ${a.budget_ok ? 'within budget' : 'OVER BUDGET'}</span>
       <span class="muted">last check ${ago(a.at)} \u00b7 next ${new Date(a.next_check_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
     <div class="muted" style="margin-bottom:6px">Scheduler: ${h.ok ? 'healthy' : esc(h.why)} \u00b7 failed updates: ${bad} \u00b7 retry attempts so far: ${rec}${a.stale ? ' \u00b7 release moved during the last check, re-checking sooner' : ''}</div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px"><tbody>${rows}</tbody></table></div>`;
+    <div class="tscroll"><table style="width:100%;border-collapse:collapse;font-size:13px"><tbody>${rows}</tbody></table></div></div>`;
 };
 const releaseDevices = () => {
   syncAuditMaybe();
@@ -479,7 +749,7 @@ const releaseDevices = () => {
   const cell = 'padding:5px 8px 5px 0;white-space:nowrap';
   const row = (d) => {
     const st = stateOf(d), v = devVersion(d), ok = st === 'UPDATED';
-    return `<tr style="border-top:1px solid rgba(128,128,128,.22)">
+    return `<tr style="border-top:1px solid var(--outline)">
       <td style="${cell};white-space:normal">${esc(devLabel(d))}</td>
       <td style="${cell}" class="muted">${esc(d.platform || (d.kind === 'pc' ? 'Windows' : 'Android'))}</td>
       <td style="${cell}"><b>${esc(v)}</b></td>
@@ -502,10 +772,10 @@ const releaseDevices = () => {
     <div style="display:flex;align-items:baseline;gap:10px;margin:4px 0 2px">
       <b style="font-size:19px">${latest ? 'Coco ' + esc(latest) : 'No release'}</b>
       <span class="${on === ds.length && ds.length ? '' : 'muted'}">${latest ? on + '/' + ds.length + ' devices updated' : 'nothing to compare against'}</span></div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr class="muted" style="text-align:left">
+    <div class="tscroll"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr class="muted" style="text-align:left">
       <th style="${cell}">Device</th><th style="${cell}">Platform</th><th style="${cell}">Installed</th>
       <th style="${cell}">Latest</th><th style="${cell}">Status</th><th style="${cell}">Last seen</th></tr></thead>
-      <tbody>${ds.map(row).join('')}</tbody></table>
+      <tbody>${ds.map(row).join('')}</tbody></table></div>
     ${syncPanel()}
     <div class="muted" style="margin-top:8px">${r ? 'cloud release ' + esc(r.release_id) + ', ' + esc(r.status) + '<br>' + approval + (r.published_at ? ' \u00b7 published ' + ago(r.published_at) : '') : 'no cloud release row yet, showing the file'}</div></div>`;
 };
@@ -561,7 +831,7 @@ document.addEventListener('click', async (e) => {
   };
   rec.start(250);
 });
-let me = null, founder = null, deviceId = store.get('gs-device-id'), page = location.hash.slice(1) || 'home', D = {}, sub = 'houses';
+let me = null, founder = null, deviceId = store.get('gs-device-id'), page = routeOf().page, ARG = routeOf().arg, PENDING_SUB = null, D = {}, sub = 'houses';
 // which kind the Structure form is making, and the parents chosen so far - kept outside render so
 // the choice survives a refresh landing mid-form.
 let newKind = 'subteam', newParent = {}, renaming = null, connAssign = null, connAdd = null;
@@ -575,7 +845,7 @@ let connConnecting = null, connConnectingAt = 0;
 let CHAT_ROWS = [], CHAT_LOCAL = [], chatFeedOpen = false, chatScopeApplied = '', chatSig = '';
 let CHAT_KEY = store.get('gs-chat-scope') || 'coco';
 // Four, not five: the fifth slot in the bottom bar opens the sheet that reaches every other page.
-const BOTTOM = ['home', 'control', 'board', 'approvals'];
+// the phone bar is Home, Houses, Work and More; it comes from the navigation contract (nav-contract.json -> phone_bottom)
 // CP = the control plane snapshot (nova-hq/scripts/coco-control-snapshot.mjs -> control-plane.json).
 // It is generated by the cloud, holds no secrets, and is simply absent until the first cycle runs.
 let BRAINS = null, BI_OPEN = false, BI_FOCUS = 'company';   // the growth brains' records and the capsule's view state
@@ -623,7 +893,9 @@ async function loadControlPlane() {
   return null;
 }
 
-const PAGES = [['home', 'Home', 'home'], ['structure', 'Structure', 'schema'], ['automation', 'Automation', 'auto_mode'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
+// A route is #page or #page:argument (#house:gigi). Plain page names are exactly the routes the app always had.
+function routeOf() { const h = location.hash.slice(1), i = h.indexOf(':'); let arg = ''; try { arg = i < 0 ? '' : decodeURIComponent(h.slice(i + 1)); } catch {} return { page: (i < 0 ? h : h.slice(0, i)) || 'home', arg }; }
+const PAGES = [['home', 'Home', 'home'], ['houses', 'Houses', 'apartment'], ['house', 'House', 'apartment'], ['hierarchy', 'Hierarchy', 'account_tree'], ['insights', 'Insights', 'monitoring'], ['structure', 'Structure', 'schema'], ['automation', 'Automation', 'auto_mode'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['themes', 'Appearance', 'palette'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   if (!NOVA) { try { const r = await fetch('nova.json', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); if (j && j.url) { NOVA = String(j.url).replace(/\/$/, ''); store.set('gs-nova-url', NOVA); sb = makeClient(store.get('gs-device-key')); } } } catch {} }
@@ -877,7 +1149,7 @@ async function loadOrg() {
     if (!r[0].error && (r[0].data || []).length) {
       // pipeline definitions are version-controlled files, not cloud tables: they come from the generated file until a cloud copy exists
       let pipelines = []; try { const f = await novaFetch('/api/ops/company-structure'); if (f.ok) pipelines = (await f.json()).pipelines || []; } catch {}
-      return { source: 'cloud', pipelines, ...Object.fromEntries(T.map((t, i) => [t.slice(4), r[i].data || []])) };
+      return { source: 'cloud', pipelines, metrics_error: r[6] && r[6].error ? String(r[6].error.message || r[6].error.code || 'unreadable') : null, ...Object.fromEntries(T.map((t, i) => [t.slice(4), r[i].data || []])) };
     }
   } catch {}
   try { const f = await novaFetch('/api/ops/company-structure'); if (f.ok) { const j = await f.json(); return { ...empty, ...j, source: 'dev' }; } } catch {}
@@ -1123,7 +1395,7 @@ function cloudComputeTab() {
   const H = K.history || [], maxS = Math.max(60, ...H.map((h) => h.seconds || 0)), bw2 = 34;
   const chart = H.length ? `<svg viewBox="0 0 ${H.length * (bw2 + 10) + 10} 130" style="width:100%;max-width:${H.length * 44 + 20}px;height:150px" role="img" aria-label="Session length per Kaggle session">
       ${H.map((h, i) => { const ht = Math.max(2, Math.round((h.seconds || 0) / maxS * 100)), x = 10 + i * (bw2 + 10);
-        return `<rect x="${x}" y="${110 - ht}" width="${bw2}" height="${ht}" rx="6" fill="${h.gpu_count ? 'var(--primary)' : '#9aa0a6'}" ${h.mismatch ? 'stroke="var(--bad, #c0392b)" stroke-width="2"' : ''}><title>${esc(h.kernel)} v${esc(String(h.version))} · ${Math.round((h.seconds || 0) / 60 * 10) / 10} min · ${h.gpu_count ? h.gpu_count + ' GPU' : 'CPU only'}</title></rect>
+        return `<rect x="${x}" y="${110 - ht}" width="${bw2}" height="${ht}" rx="6" fill="${h.gpu_count ? 'var(--primary)' : 'var(--outline-strong)'}" ${h.mismatch ? 'stroke="var(--bad, #c0392b)" stroke-width="2"' : ''}><title>${esc(h.kernel)} v${esc(String(h.version))} · ${Math.round((h.seconds || 0) / 60 * 10) / 10} min · ${h.gpu_count ? h.gpu_count + ' GPU' : 'CPU only'}</title></rect>
           <text x="${x + bw2 / 2}" y="124" font-size="9" text-anchor="middle" fill="currentColor">${esc(new Date(h.started).toISOString().slice(11, 16))}</text>`; }).join('')}
     </svg><div class="muted">Each bar is one real Kaggle session (minutes). Accent colour: GPU. Grey: CPU only. Red edge: a GPU was asked for and not given.</div>` : na('No sessions recorded yet.');
   const hist = sec('Historical performance', chart);
@@ -1308,7 +1580,7 @@ async function loadAllNow() {
   // where a release is written. If the cloud has a row, it is the one that counts.
   try { const rr = await sb.from('releases').select('*').order('created_at', { ascending: false }).limit(1); if (rr.data && rr.data.length) CLOUD_RELEASE = rr.data[0]; } catch {}
   try {
-    const [rn, ev, ac, bi, po, co, st, cn, cl, ou] = await Promise.all([
+    const [rn, ev, ac, bi, po, co, st, cn, cl, ou, jb] = await Promise.all([
       sb.from('runs').select('*').order('opened_at', { ascending: false }).limit(60),
       sb.from('run_events').select('*').order('at', { ascending: true }).limit(600),
       sb.from('ai_calls').select('*').order('at', { ascending: false }).limit(200),
@@ -1322,6 +1594,7 @@ async function loadAllNow() {
       sb.from('integration_accounts').select('*').order('provider', { ascending: true }),
       sb.from('integration_links').select('*'),
       sb.from('outputs').select('*').order('at', { ascending: false }).limit(300),
+      sb.from('jobs').select('id,type,team_id,subteam_id,category_id,channel_id,status,attempt,max_attempts,created_at,updated_at').order('created_at', { ascending: false }).limit(500),
     ]);
     POLICIES = po.data || [];
     CONTROL_OPS = co.data || [];
@@ -1343,6 +1616,8 @@ async function loadAllNow() {
       connConnecting = null; connConnectingAt = 0;
     }
     OUTPUTS = ou.data || [];
+    thCloudPull();   // the person's theme choice, shared between their own devices (the existing controls table)
+    JOBS_ERR = !!jb.error; JOBS = jb.error ? [] : jb.data || [];
     LIVE = (rn.data || ev.data || ac.data || bi.data) ? { runs: rn.data || [], events: ev.data || [], calls: ac.data || [], brain: bi.data || [] } : null;
     if (LIVE) CP = cpMerge(CP, LIVE);
   } catch { LIVE = null; }
@@ -1471,8 +1746,8 @@ function renderStrip() {
   const w = (D.approvals || []).filter((a) => a.state === 'waiting' && !igLocal.has(String(a.id)));
   const quiet = window.cocoDesktop && window.cocoDesktop.atOffice && window.cocoDesktop.atOffice();   // office: approvals only
   const f = quiet ? [] : teamTalk(D).slice(0, 5), fi = f.length ? Math.floor(Date.now() / 4000) % f.length : 0;
-  el.hidden = !w.length && !f.length;
-  const tick = f.length ? `<div class="isrow" aria-live="off"><span class="isdot" style="background:#4FE3F2"></span><div class="isg"><small><b>${esc(f[fi].from)}</b> ${esc(f[fi].text.slice(0, 110))}</small></div></div>` : '';
+  el.hidden = (!w.length && !f.length) || ['home', 'approvals'].includes(page);   // Home and Approvals already show them, with YES and No
+  const tick = f.length ? `<div class="isrow" aria-live="off"><span class="isdot" style="background:var(--d-link)"></span><div class="isg"><small><b>${esc(f[fi].from)}</b> ${esc(f[fi].text.slice(0, 110))}</small></div></div>` : '';
   el.innerHTML = tick + w.slice(0, 2).map((a) => `<div class="isrow"><span class="isdot"></span><div class="isg"><b>${esc(a.code)} · ${esc(a.team)}</b><small>${esc(String(a.what || '').slice(0, 110))}</small></div><button class="isbtn yes" data-yes="${esc(a.id)}">YES</button><button class="isbtn no" data-no="${esc(a.id)}">NO</button><button class="isbtn" data-ig="${esc(a.id)}">Ignore</button></div>`).join('');
 }
 // Island switch in Settings follows the island's own Hide chip / tray (registered once, not per render).
@@ -1610,7 +1885,8 @@ async function heartbeat() {
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
   if (res.error || !res.data || !res.data.length) { if (!NOVA) { try { await sb.auth.refreshSession(); } catch {} } res = await tryBeat(); }
-  if (!res.error && res.data && res.data.length && window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat();
+  // Only the desktop has a watchdog to tell; the web and the phone browser used to log a failure here after every SUCCESSFUL beat.
+  if (!res.error && res.data && res.data.length) { if (window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat(); }
   else console.error('heartbeat failed:', res.error ? (res.error.message || res.error) : 'no row updated (signed out or device key rejected)', 'device', deviceId);
 }
 const deviceName = (id) => (D.devices.find(d => d.id === id) || {}).name || id || '';
@@ -4168,26 +4444,6 @@ function cpChain(chain) {
 }
 
 
-function nav() {
-  const wait = D.approvals.filter(a => a.state === 'waiting').length;
-  const link = ([id, name, ic]) => `<a href="#${id}" class="${id === page ? 'on' : ''}"><span class="pill"><i class="ms">${ic}</i></span><span>${name}</span>${id === 'approvals' && wait ? `<span class="badge">${wait}</span>` : ''}</a>`;
-  // morph, not innerHTML: the sidebar only ever changes which link is lit and what the badge says,
-  // so rebuilding it on every data refresh was flicker for nothing.
-  morph($('#nav'), PAGES.map(p => link(p).replace('<span class="pill">', '').replace('</i></span>', '</i>')).join(''));
-  // The bottom bar has room for four, and the rail it replaces is display:none below 780px. So the
-  // fifth slot opens a sheet holding every page: without it, fifteen pages including Integrations
-  // were unreachable on a phone. It lights up when the current page is one of the hidden ones, so
-  // "where am I" still has an answer.
-  const hiddenPage = !BOTTOM.includes(page);
-  morph($('#bottom'),
-    BOTTOM.map(id => PAGES.find(p => p[0] === id)).filter(Boolean).map(link).join('')
-    + `<a href="#" data-more="1" class="${hiddenPage ? 'on' : ''}"><span class="pill"><i class="ms">apps</i></span>`
-    + `<span>${hiddenPage ? esc((PAGES.find(p => p[0] === page) || [, 'More'])[1]) : 'More'}</span></a>`);
-  morph($('#moreNav'), PAGES.map(([id, name, ic]) =>
-    `<a href="#${id}" class="${id === page ? 'on' : ''}" data-morego="1"><i class="ms">${ic}</i><span>${esc(name)}</span></a>`).join(''));
-  morph($('#me'), `<b>${esc(founder ? `${founder.name} · ${founder.call_me}` : me.email)}</b><span class="muted">${esc(deviceName(deviceId))}</span><button class="btn text" style="justify-self:start;padding:4px 0" id="signOut2">Sign out</button>`);
-  $('#signOut2').onclick = async () => { await sb.auth.signOut(); show('signin'); };
-}
 
 const V = {
   // ---------------------------------------------------------------- Control: one screen, whole company
@@ -4438,16 +4694,6 @@ const V = {
       <div class="card2" style="margin-top:12px"><h3>Plan</h3><div>${esc(sys.plan || 'not set')}</div><div class="muted">${esc(cpStatus(CP).label)}</div></div>`;
   },
 
-  home() {
-    const live = D.offerings.filter(o => o.status === 'live').length, running = D.tasks.filter(t => ['running', 'working'].includes(t.status)).length, wait = D.approvals.filter(a => a.state === 'waiting').length;
-    return `<div class="hero"><h3 style="font-size:24px">Hello ${esc(founder ? founder.call_me : '')}</h3>
-      <div>${wait ? `${wait} things wait for your YES.` : 'Nothing waits for you.'} ${running ? `${running} tasks are running now.` : ''}</div>
-      <div class="stats"><div class="stat"><b>${D.houses.filter(h => h.state === 'working').length}</b><span>Houses working</span></div><div class="stat"><b>${running}</b><span>tasks running</span></div><div class="stat"><b>${D.offerings.length}</b><span>channels and products</span></div><div class="stat"><b>${D.devices.filter(online).length}/${D.devices.length}</b><span>devices online</span></div></div></div>
-      <div class="grid">${D.houses.map(h => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(h.name)}</h3>${chip(h.state)}</div><span class="muted">${esc(h.role)}</span><div>${esc(h.doing || '')}</div><span class="muted">Next: ${esc(h.next || '')}</span></div>`).join('')}</div>
-      ${D.ytLatest ? `<h3 style="margin:22px 0 8px">YouTube analytics</h3><div class="card2"><div class="row"><div class="grow"><b>The Flow</b>${D.ytLatest.channel ? ` · ${Number(D.ytLatest.channel.views || 0).toLocaleString()} views · ${Number(D.ytLatest.channel.subscribers || 0).toLocaleString()} subscribers` : ''}<div class="muted">${D.ytLatest.collected_at ? `Last collected ${new Date(D.ytLatest.collected_at).toLocaleString()}` : 'Not collected yet'}</div></div>${D.ytLatest.stale ? `<span class="chip bad">${esc(D.ytLatest.label || 'Stale')}</span>` : `<span class="chip good">${esc(D.ytLatest.label || 'Fresh')}</span>`}</div></div>` : ''}
-      <h3 style="margin:22px 0 8px">Connections</h3><div class="card2">${(D.integrations || []).map(c => `<div class="row">${serviceLogo(c.id, c.platform, 'm')}<div class="grow"><b>${esc(c.platform)}</b>${c.account ? ' · ' + esc(c.account) : ''}<div class="muted">${esc(c.error || c.next_action || (c.capabilities || []).join(', '))}${c.last_ok_at ? ' · checked ' + ago(c.last_ok_at) : ''}</div></div>${chip(c.state)}</div>`).join('') || '<span class="muted">No connections listed yet.</span>'}</div>
-      <h3 style="margin:22px 0 8px">Latest activity</h3><div class="card2">${D.activity.map(a => `<div class="row"><div class="grow"><b>${esc(a.action)}</b> · ${esc(a.detail || '')}<div class="muted">${esc(a.actor)} ${a.device_id ? '· ' + esc(deviceName(a.device_id)) : ''} · ${ago(a.at)}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;
-  },
   // Notes (Boss 12:50 PM, 2026-10-26): one tab = notepad + idea inbox + planner. Paste any link (reel, pin,
   // YouTube) and it is kept as kind=link; the analyzer (nova-hq/scripts/notes_analyze.mjs) studies status=new
   // cards and Coco's checks deepen them. Same cloud path as every other page (decideApproval-style sb calls).
@@ -4458,7 +4704,7 @@ const V = {
       <div style="display:flex;gap:8px;align-items:center"><i class="ms" style="color:var(--gold)">${icon[n.kind] || 'sticky_note_2'}</i>${chip(n.status)}<span class="muted" style="margin-left:auto">${ago(n.created_at)}</span></div>
       ${n.title ? `<h3 style="font-size:17px">${esc(n.title)}</h3>` : ''}
       <div style="white-space:pre-wrap;word-break:break-word">${esc(n.text || '')}</div>
-      ${n.source_url ? `<a href="${esc(n.source_url)}" target="_blank" rel="noreferrer" style="color:var(--primary);font-weight:700;font-size:13px;word-break:break-all">${esc(n.source_url)}</a>` : ''}
+      ${n.source_url ? `<a href="${esc(n.source_url)}" target="_blank" rel="noreferrer" style="color: var(--link);font-weight:700;font-size:13px;word-break:break-all">${esc(n.source_url)}</a>` : ''}
       ${n.analysis ? `<div style="background:var(--surface-2);border-radius:14px;padding:10px 12px;white-space:pre-wrap;font-size:13px">${esc(n.analysis)}</div>` : ''}
       <div class="actions">${n.status === 'analyzed' ? `<button class="btn filled" data-nplan="${esc(n.id)}"><i class="ms">map</i> Make it a plan</button>` : ''}
         <button class="btn text" data-npin="${esc(n.id)}"><i class="ms">keep</i> ${n.pinned ? 'Unpin' : 'Pin'}</button>
@@ -4797,7 +5043,7 @@ const V = {
   settings() {
     const me_ = D.devices.find(d => d.id === deviceId) || {};
     const kinds = [['approvals', 'Approvals waiting for YES'], ['done', 'Tasks finished'], ['merged', 'Coco merged a task'], ['tasks', 'Tasks from the other founder'], ['rules', 'New rules']];
-    const theme = store.get('gs-theme') || 'system', calm = store.get('gs-calm') === '1';
+    const theme = window.CocoTheme ? window.CocoTheme.get().appearance : 'system', calm = store.get('gs-calm') === '1';
     return `<div class="grid">
       <div class="card2"><span class="eyebrow">Account</span><h3>${esc(founder ? `${founder.name} · ${founder.call_me}` : '')}</h3><span class="muted">${esc(me.email)}</span><button class="btn gold" data-set="signout" style="justify-self:start">Sign out</button></div>
       <div class="card2"><span class="eyebrow">This device</span><h3>${esc(me_.name || 'This device')}</h3><span class="muted">Paired ${ago(me_.paired_at)} · one of the four Good Space devices. Lost it? Switch it off from another device.</span>
@@ -4806,7 +5052,7 @@ const V = {
         <button class="btn tonal" data-set="refresh" style="justify-self:start">Refresh now</button></div>
       <div class="card2"><span class="eyebrow">Integrations &amp; Connections</span><h3>Accounts, credentials and cloud providers</h3><span class="muted">Connect, reauthorise or disconnect accounts, see what each one may do and when its authorization expires, revoke a credential, and approve or roll back a cloud provider switch.</span><a class="btn tonal" href="#connections" style="justify-self:start">Open</a></div>
       <div class="card2"><span class="eyebrow">Notifications</span>${kinds.map(([k, l]) => `<div class="settings-row"><span>${l}</span><input type="checkbox" class="switch" data-notify="${k}" ${store.get('gs-n-' + k) === '0' ? '' : 'checked'} aria-label="${l}"></div>`).join('')}</div>
-      <div class="card2"><span class="eyebrow">Appearance</span><div class="seg" role="group" aria-label="Theme">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button type="button" data-theme-set="${v}" aria-pressed="${theme === v}">${l}</button>`).join('')}</div>
+      <div class="card2"><span class="eyebrow">Appearance</span>${window.CocoTheme ? `<h3>${esc(window.CocoThemeCore.byId(window.CocoTheme.get().themeId).name)}</h3><a class="btn tonal" href="#themes" style="justify-self:start"><i class="ms">palette</i>Themes and automatic switching</a>` : ''}<div class="seg" role="group" aria-label="Theme">${[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => `<button type="button" data-theme-set="${v}" aria-pressed="${theme === v}">${l}</button>`).join('')}</div>
         <div class="settings-row"><span>Calm motion<br><span class="muted">Fewer animations, everything else the same</span></span><input type="checkbox" class="switch" id="calm" ${calm ? 'checked' : ''} aria-label="Calm motion"></div></div>
       <div class="card2"><span class="eyebrow">About</span><h3>Coco Lounge ${RELEASE ? esc(RELEASE.version) : ''} · ${window.cocoDesktop ? 'Windows' : 'Web'}</h3><span class="muted">Good Space, managed by Coco. Follows the Lounge Standard: the same screens, look and rules on all four devices. Private: founder login plus this device's key; keys and personal documents never pass through the app.</span></div>
     </div>`;
@@ -4907,6 +5153,15 @@ function morphNode(have, want) {
   for (const { name } of Array.from(have.attributes)) {
     if (!want.hasAttribute(name) && !skip.includes(name)) have.removeAttribute(name);
   }
+  if (have.tagName === 'SELECT') {
+    // A <select>'s option list is DATA, not a draft: choosing a House changes which teams, categories and channels exist, so the list has to
+    // follow the server. A list the person has open (focused) is never touched, which also keeps an open dropdown from snapping shut.
+    if (have === document.activeElement) return;
+    morphChildren(have, want);
+    const chosen = want.querySelector('option[selected]');
+    if (chosen) have.value = chosen.hasAttribute('value') ? chosen.getAttribute('value') : chosen.textContent;
+    return;
+  }
   if (FIELD[have.tagName]) {
     // What the person is typing outranks what the server says, and so does a draft they typed and
     // then clicked away from: the field adopts the server's value only when the server's own value
@@ -4948,7 +5203,7 @@ async function chatLoad() {
   const sig = key + ':' + data.length + ':' + ((data[0] || {}).id || 0);
   if (sig === chatSig) return;
   chatSig = sig; CHAT_ROWS = data.slice().reverse();
-  if (page === 'chat' && !document.hidden) { render(); chatScroll(); }
+  if ((page === 'chat' || ASK.open) && !document.hidden) { render(); chatScroll(); }
 }
 function chatGo(key) {
   CHAT_KEY = key; store.set('gs-chat-scope', key);
@@ -5602,12 +5857,13 @@ function autWire() {
 autWire();
 // ---------------------------------------------------------------- AUTOMATION UI (end)
 
+
 function render() {
   if (!V[page]) page = 'home';
   if (page === 'chat') chatSync($('#view').dataset.page !== 'chat');
   ensureShapeDefs();
   nav();
-  $('#title').textContent = PAGES.find(p => p[0] === page)[1];
+  $('#title').textContent = pageLabel();
   $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;
   const view = $('#view'); const changed = view.dataset.page !== page;
   if (changed) view.innerHTML = V[page]();      // a different page IS a new screen: build it outright
@@ -5616,6 +5872,8 @@ function render() {
   if (changed) { view.classList.remove('enter'); void view.offsetWidth; view.classList.add('enter'); }
   renderStrip();
   renderBrainIsland();
+  renderAsk();
+  renderThemeUi();
   wireSettings();
   once($('#newTask'), 'submit', addTask);
   once($('#newRule'), 'submit', addRule);
@@ -5660,13 +5918,663 @@ function render() {
     if (name) await structureOp('edit', f.dataset.rename, null, { p_name: name });
   }));
 }
+// ================================================================ UNIFIED UI (2.11): one shell, eight sections, seven Houses
+// Navigation comes from contract/nav-contract.js - the same contract file Android reads. The numbers come from ui-kit.js (pure, tested).
+// Nothing here invents data: a figure is read from a cloud table or it is "Unavailable", and the page says which.
+const NAV = window.COCO_NAV, UK = window.CocoUI;
+const houseOf = (id) => UK.houseById(NAV, id);
+const sectionOfPage = () => (page === 'house' ? NAV.sections.find((s) => s.id === 'houses') : UK.sectionOf(NAV, page));
+const htile = (h, cls = '') => `<span class="htile ${cls}" style="--hc:${esc(h.color)}" aria-hidden="true"><i class="ms">${esc(h.icon)}</i></span>`;
+const pageLabel = () => {
+  if (page === 'home') return 'GoodSpace overview';
+  if (page === 'house') { const h = houseOf(ARG); return h ? h.label : 'House'; }
+  const g = NAV.global.find((x) => x.id === page); if (g) return g.label;
+  for (const s of NAV.sections) { const p = s.pages.find((x) => x.id === page); if (p) return p.label; }
+  return (PAGES.find((p) => p[0] === page) || [, 'Home'])[1];
+};
+const TASK_OPEN = ['queued', 'planned', 'running', 'working', 'verifying', 'need_approval', 'needs_yes', 'waiting_pc', 'blocked'];
+const orgUnits = () => (ORG && ORG.units) || [];
+const orgProducts = () => (ORG && ORG.products) || [];
+const cloudOrg = () => !!(ORG && ORG.source === 'cloud');
+const orgMetrics = () => (cloudOrg() ? ORG.metrics || [] : []);        // the development structure never carries numbers
+const unitName = (id) => { const u = orgUnits().find((x) => x.id === id); return u ? u.short_name || u.display_name : id; };
+const houseIdOfUnit = (id) => { const U = orgUnits(); let u = U.find((x) => x.id === id), n = 0; while (u && n++ < 12) { if (u.kind === 'house') return u.house_id || u.id; u = U.find((x) => x.id === u.parent_id); } return null; };
+const taggedIn = (names, r) => !names || [r.team_id, r.subteam_id, r.category_id, r.channel_id].some((v) => v && names.has(String(v)));
+const hrow = (main, sub, right = '', href = '') => `<div class="row">${href ? `<a class="grow rlink" href="${esc(href)}"><b>${esc(main)}</b>${sub ? `<div class="muted">${sub}</div>` : ''}</a>` : `<div class="grow"><b>${esc(main)}</b>${sub ? `<div class="muted">${sub}</div>` : ''}</div>`}${right}</div>`;
+const hcard = (title, body, actions = '', cls = '') => `<div class="card2 hcard ${cls}"><div class="hcard-h"><h3>${esc(title)}</h3>${actions}</div>${body}</div>`;
+const hnone = (msg, ic = 'inbox') => `<div class="empty"><i class="ms">${ic}</i><span>${esc(msg)}</span></div>`;
+const setup = (what, dep) => `<div class="empty setup"><i class="ms">build_circle</i><span><b>${esc(what)}</b><br>${esc(dep)}</span></div>`;
+const metricsUnread = () => (cloudOrg() && ORG.metrics_error ? ORG.metrics_error : null);
+const UNREAD_LINE = (why) => `The records cannot be read from here yet (${esc(why)}). That does not mean there are none.`;
+const orgBanner = () => (metricsUnread() ? `<div class="banner"><i class="ms">cloud_off</i><span><b>The metrics cannot be read yet.</b> ${esc(metricsUnread())}. Revenue, views, sales and audience stay Unavailable until Coco Cloud lets this app read them; nothing is estimated or shown as zero.</span></div>` : '') + (ORG && ORG.source === 'dev' ? `<div class="banner"><i class="ms">science</i><span><b>Planned structure.</b> Coco Cloud does not hold the company structure yet, so this shows the planned tree. No numbers exist for it.</span></div>` : ORG && ORG.source === 'none' ? `<div class="banner"><i class="ms">cloud_off</i><span><b>Structure not loaded.</b> Only the seven Houses are known; their teams, channels and numbers appear once the company structure loads.</span></div>` : '');
+
+// ---------------------------------------------------------------- the shell: sidebar, phone bar, section tabs, breadcrumb, device chip, bell
+function nav() {
+  const wait = D.approvals.filter((a) => a.state === 'waiting').length, sec = sectionOfPage();
+  const badge = (n) => (n ? `<span class="badge">${n}</span>` : '');
+  const secLink = (s) => `<a href="#${s.pages[0].id}" class="${sec && sec.id === s.id && page !== 'house' ? 'on' : ''}" title="${esc(s.label)}"><i class="ms">${esc(s.icon)}</i><span class="lbl">${esc(s.label)}</span>${s.id === 'work' ? badge(wait) : ''}</a>`;
+  const hLink = (h) => `<a href="#house:${h.id}" class="hl ${page === 'house' && ARG === h.id ? 'on' : ''}" title="${esc(h.label)}">${htile(h, 's')}<span class="lbl">${esc(h.label)}</span></a>`;
+  morph($('#nav'), NAV.sections.map(secLink).join('') + `<div class="grp lbl">Houses</div>` + NAV.houses.map(hLink).join(''));
+  // phone: Home, Houses, Work, More. More opens a sheet that reaches every section, every page, Ask COCO, Remote Control and the Houses.
+  const sectionById = (id) => NAV.sections.find((s) => s.id === id);
+  const inBar = NAV.phone_bottom.filter((x) => x !== 'more');
+  const bItem = (id) => { const s = sectionById(id); return `<a href="#${s.pages[0].id}" class="${sec && sec.id === id ? 'on' : ''}"><span class="pill"><i class="ms">${esc(s.icon)}</i></span><span>${esc(s.label)}</span>${id === 'work' ? badge(wait) : ''}</a>`; };
+  const hiddenPage = !(sec && inBar.includes(sec.id));
+  morph($('#bottom'), inBar.map(bItem).join('') + `<a href="#" data-more="1" class="${hiddenPage ? 'on' : ''}"><span class="pill"><i class="ms">apps</i></span><span>${hiddenPage ? esc(sec ? sec.label : pageLabel()) : 'More'}</span></a>`);
+  morph($('#moreNav'), `<div class="mtiles"><a href="#chat" data-morego="1" class="${page === 'chat' ? 'on' : ''}"><i class="ms">forum</i><span>Ask COCO</span></a><a href="#remote" data-morego="1" class="${page === 'remote' ? 'on' : ''}"><i class="ms">settings_remote</i><span>Remote Control</span></a></div>`
+    + NAV.sections.map((s) => `<div class="msec"><b><i class="ms">${esc(s.icon)}</i>${esc(s.label)}</b><div class="mlinks">${s.pages.map((p) => `<a href="#${p.id}" data-morego="1" class="${p.id === page ? 'on' : ''}"><span>${esc(p.label)}</span></a>`).join('')}</div></div>`).join('')
+    + `<div class="msec"><b><i class="ms">apartment</i>Houses</b><div class="mlinks">${NAV.houses.map((h) => `<a href="#house:${h.id}" data-morego="1" class="${page === 'house' && ARG === h.id ? 'on' : ''}"><span>${esc(h.label)}</span></a>`).join('')}</div></div>`);
+  morph($('#subnav'), page !== 'house' && sec && sec.pages.length > 1 ? sec.pages.map((p) => `<a href="#${p.id}" class="${p.id === page ? 'on' : ''}">${esc(p.label)}</a>`).join('') : '');
+  morph($('#crumbs'), ['COCO', page === 'house' ? 'Houses' : sec ? sec.label : 'Global'].concat(page === 'house' && houseOf(ARG) ? [houseOf(ARG).label] : []).map(esc).join(' <i class="ms">chevron_right</i> '));
+  $('#title').hidden = page === 'house';   // the House header below says it, with the House's own mark
+  morph($('#me'), `<b>${esc(founder ? `${founder.name} · ${founder.call_me}` : me.email)}</b><span class="muted">${esc(deviceName(deviceId))}</span><button class="btn text" style="justify-self:start;padding:4px 0" id="signOut2">Sign out</button>`);
+  $('#signOut2').onclick = async () => { await sb.auth.signOut(); show('signin'); };
+  // topbar: the device chip is Remote Control's front door; the bell lists what needs the founder
+  const devs = D.devices || [], on = devs.filter(online);
+  morph($('#remoteChip'), `<span class="dots">${devs.map((d) => `<i class="sdot ${online(d) ? 'ok' : ''}" title="${esc(devLabel(d))}: ${online(d) ? 'online' : 'offline'}"></i>`).join('')}</span><span class="rc-t">Remote · ${on.length}/${devs.length} online</span>`);
+  const ns = notifications(), bn = $('#bellN'); bn.textContent = ns.length > 9 ? '9+' : String(ns.length); bn.hidden = !ns.length;
+  if (!$('#bellPanel').hidden) morph($('#bellPanel'), bellHtml(ns));
+  const av = $('#meBtn'); av.textContent = ((founder && (founder.call_me || founder.name)) || (me && me.email) || '?').trim().charAt(0).toUpperCase(); av.title = founder ? `${founder.name} · ${deviceName(deviceId)}` : '';
+  $('#askBtn').classList.toggle('on', ASK.open && page !== 'chat' || page === 'chat');
+}
+function notifications() {
+  const out = [], now = Date.now();
+  if (CP && CP.system && CP.system.stopped) out.push({ tone: 'bad', ic: 'report', t: 'Everything is stopped', s: CP.system.stopped.reason || '', href: '#system' });
+  (D.approvals || []).filter((a) => a.state === 'waiting').slice(0, 8).forEach((a) => out.push({ tone: 'warn', ic: 'verified', t: `${a.code}: ${a.what}`, s: 'Waiting for your YES', href: '#approvals' }));
+  (JOBS || []).filter((j) => ['failed', 'blocked'].includes(j.status) && now - new Date(j.updated_at || j.created_at) < 3 * 864e5).slice(0, 6).forEach((j) => out.push({ tone: 'bad', ic: 'error', t: `Job ${j.status}: ${j.type}`, s: `${j.team_id || ''} · ${ago(j.updated_at || j.created_at)}`, href: '#cloud' }));
+  (D.devices || []).filter((d) => d.active !== false && !online(d)).forEach((d) => out.push({ tone: '', ic: 'devices_off', t: `${devLabel(d)} is offline`, s: d.last_seen ? `last seen ${ago(d.last_seen)}` : 'never seen', href: '#remote' }));
+  (CONNS || []).filter((c) => ['error', 'partial'].includes(c.state)).slice(0, 5).forEach((c) => out.push({ tone: 'warn', ic: 'link_off', t: `${c.provider}: ${c.external_name || c.connection_id} needs attention`, s: c.state === 'error' ? 'Connection error' : 'Partly connected', href: '#connections' }));
+  return out;
+}
+const bellHtml = (ns) => `<div class="panel-h"><b>Notifications</b><span class="muted">${ns.length ? ns.length + ' need you' : 'All clear'}</span></div>${ns.map((n) => `<a class="nrow ${n.tone}" href="${esc(n.href)}"><i class="ms">${esc(n.ic)}</i><span><b>${esc(n.t)}</b><small>${esc(n.s)}</small></span></a>`).join('') || hnone('Nothing needs you right now.', 'task_alt')}`;
+
+// ---------------------------------------------------------------- Ask COCO: one assistant on every screen
+// The drawer renders the very same chat view and uses the very same send path as the Ask COCO page; on that page the drawer steps aside
+// (two forms with one id would be a bug), so there is only ever one chat on screen.
+const ASK = { open: false };
+function askOpen(open) {
+  if (open && page === 'chat') { ASK.open = false; return; }
+  ASK.open = open; if (open) chatSync(true);
+  render();
+  if (open) setTimeout(() => { const i = document.querySelector('#askBody input[name=q]'); if (i) i.focus(); }, 80);
+}
+function renderAsk() {
+  if (page === 'chat') ASK.open = false;
+  const el = $('#askDrawer'), show = ASK.open;
+  el.hidden = !show; document.body.classList.toggle('ask-open', show);
+  if (show) morph($('#askBody'), V.chat()); else if ($('#askBody').firstChild) $('#askBody').innerHTML = '';   // a hidden copy of the chat would be a second #chatForm
+}
+
+// ---------------------------------------------------------------- search: pages, Houses, tasks, channels, agents - from what is loaded, nothing else
+function searchItems() {
+  const it = [];
+  NAV.sections.forEach((s) => s.pages.forEach((p) => it.push({ t: p.label, s: s.label, href: '#' + p.id, ic: p.icon })));
+  NAV.global.forEach((g) => it.push({ t: g.label, s: 'Global', href: '#' + g.id, ic: g.icon }));
+  NAV.houses.forEach((h) => it.push({ t: h.label, s: 'House', href: '#house:' + h.id, ic: h.icon }));
+  (D.tasks || []).slice(0, 250).forEach((t) => it.push({ t: t.title, s: 'Task · ' + t.status, href: '#board', ic: 'task_alt' }));
+  (D.approvals || []).filter((a) => a.state === 'waiting').forEach((a) => it.push({ t: `${a.code} ${a.what}`, s: 'Approval', href: '#approvals', ic: 'verified' }));
+  orgProducts().forEach((p) => { const h = houseIdOfUnit(p.unit_id); it.push({ t: p.name, s: 'Channel or product', href: h ? '#house:' + h : '#structure', ic: 'tag' }); });
+  ((ORG && ORG.agents) || []).filter((a) => a.status !== 'placeholder').slice(0, 300).forEach((a) => it.push({ t: a.name, s: 'Agent', href: '#hierarchy', ic: 'smart_toy' }));
+  return it;
+}
+function searchRun(v) {
+  const q = String(v || '').trim().toLowerCase(), box = $('#searchResults');
+  if (!q) { box.hidden = true; box.innerHTML = ''; return; }
+  const score = (i) => (i.t.toLowerCase().startsWith(q) ? 0 : i.t.toLowerCase().includes(q) ? 1 : 2);
+  const hits = searchItems().filter((i) => i.t.toLowerCase().includes(q) || i.s.toLowerCase().includes(q)).sort((a, b) => score(a) - score(b)).slice(0, 9);
+  box.innerHTML = hits.length ? hits.map((i) => `<a href="${esc(i.href)}" data-searchgo="1"><i class="ms">${esc(i.ic)}</i><span><b>${esc(i.t)}</b><small>${esc(i.s)}</small></span></a>`).join('') : `<div class="muted" style="padding:12px">Nothing matches “${esc(v)}”.</div>`;
+  box.hidden = false;
+}
+
+// ---------------------------------------------------------------- Home filters
+const HDEF = { house: 'all', team: '', category: '', channel: '', platform: '', account: '', period: '28d', from: '', to: '', currency: 'all' };
+const HF = { ...HDEF };
+try { Object.assign(HF, JSON.parse(store.get('gs-home-filters') || '{}')); } catch {}
+const hfSave = () => store.set('gs-home-filters', JSON.stringify(HF));
+const HF_CASCADE = { house: ['team', 'category', 'channel'], team: ['category', 'channel'], category: ['channel'], platform: ['account'] };
+function hfSet(k, v) {
+  HF[k] = v; (HF_CASCADE[k] || []).forEach((d) => { HF[d] = ''; });
+  if (k === 'period' && v !== 'custom') { HF.from = ''; HF.to = ''; }
+  if ((k === 'from' || k === 'to') && HF.from && HF.to) HF.period = 'custom';
+  hfSave(); render();
+}
+const hfActive = () => ['house', 'team', 'category', 'channel', 'platform', 'account'].some((k) => HF[k] && HF[k] !== 'all') || HF.currency !== 'all' || HF.period !== '28d';
+const hfRange = () => UK.periodRange(HF.period, new Date(), { from: HF.from, to: HF.to });
+function hfScope() {
+  const U = orgUnits(), units = UK.scopeUnits(U, HF);
+  let productIds = null;
+  if (HF.channel) productIds = new Set([HF.channel]);
+  else if (HF.platform || HF.account) {
+    const acc = HF.account ? (CONNS || []).find((c) => c.connection_id === HF.account) : null;
+    productIds = new Set(orgProducts().filter((p) => (!HF.platform || String(p.platform_id || '').toLowerCase() === HF.platform.toLowerCase())
+      && (!acc || (acc.external_id && p.external_ref === acc.external_id))).map((p) => p.id));
+  }
+  return { units, productIds, names: UK.scopeNames(U, units) };
+}
+function hfOptions() {
+  const U = orgUnits(), P = orgProducts(), hu = HF.house !== 'all' ? UK.houseUnit(U, HF.house) : null;
+  const within = (root) => (root ? UK.descendants(U, root) : null);
+  const inHouse = within(hu && hu.id), inTeam = within(HF.team || null), inCat = within(HF.category || null);
+  const teams = U.filter((u) => ['team', 'subteam'].includes(u.kind) && (!inHouse || inHouse.has(u.id)));
+  const cats = U.filter((u) => u.kind === 'category' && (inTeam ? inTeam.has(u.id) : !inHouse || inHouse.has(u.id)));
+  const scope = inCat || inTeam || inHouse;
+  const prods = P.filter((p) => (!scope || scope.has(p.unit_id)));
+  const plats = [...new Map([...(D.platforms || []).map((p) => [String(p.id).toLowerCase(), p.name || p.id]), ...(CONNS || []).map((c) => [String(c.provider).toLowerCase(), c.provider])]).entries()];
+  const accts = (CONNS || []).filter((c) => !HF.platform || String(c.provider).toLowerCase() === HF.platform.toLowerCase());
+  const cur = [...new Set(orgMetrics().map((m) => String(m.unit)).filter((u) => /^[A-Z]{3}$/.test(u)))].sort();
+  return { teams, cats, prods, plats, accts, cur };
+}
+function filterBar() {
+  const wide = typeof innerWidth === 'number' ? innerWidth > 780 : true;   // the person's own open/closed choice survives refreshes (the patcher leaves it alone)
+  const o = hfOptions(), opt = (v, l, cur) => `<option value="${esc(v)}"${String(cur) === String(v) ? ' selected' : ''}>${esc(l)}</option>`;
+  const sel = (key, label, all, items, extra = '') => `<label class="fsel"><span>${esc(label)}</span><select data-hf="${key}" aria-label="${esc(label)}"${extra}>${opt(key === 'house' ? 'all' : '', all, HF[key] || (key === 'house' ? 'all' : ''))}${items}</select></label>`;
+  const range = hfRange(), houseName = HF.house === 'all' ? 'All Houses' : (houseOf(HF.house) || { label: HF.house }).label;
+  return `<details class="fwrap"${wide ? ' open' : ''}><summary><i class="ms">tune</i><b>Filters</b><span class="fsum">${esc(houseName)} \u00b7 ${esc(range.label)}</span>${hfActive() ? chipTxt('', 'active') : ''}</summary><div class="filters" role="group" aria-label="Filters">
+    ${sel('house', 'House', 'All Houses', NAV.houses.map((h) => opt(h.id, h.label, HF.house)).join(''))}
+    ${sel('team', 'Team', 'All Teams', o.teams.map((u) => opt(u.id, u.short_name || u.display_name, HF.team)).join(''), o.teams.length ? '' : ' disabled')}
+    ${sel('category', 'Category', 'All Categories', o.cats.map((u) => opt(u.id, u.short_name || u.display_name, HF.category)).join(''), o.cats.length ? '' : ' disabled')}
+    ${sel('channel', 'Channel / product', 'All', o.prods.map((p) => opt(p.id, p.name, HF.channel)).join(''), o.prods.length ? '' : ' disabled')}
+    ${sel('platform', 'Platform', 'All platforms', o.plats.map(([id, n]) => opt(id, n, HF.platform)).join(''))}
+    ${sel('account', 'Account', 'All accounts', o.accts.map((c) => opt(c.connection_id, `${c.provider}: ${c.external_name || c.connection_id}`, HF.account)).join(''), o.accts.length ? '' : ' disabled')}
+    <label class="fsel"><span>Period</span><select data-hf="period" aria-label="Period">${UK.PERIODS.map(([k, l]) => opt(k, l, HF.period)).join('')}</select></label>
+    ${HF.period === 'custom' ? `<label class="fsel"><span>From</span><input type="date" data-hf="from" value="${esc(HF.from)}"></label><label class="fsel"><span>To</span><input type="date" data-hf="to" value="${esc(HF.to)}"></label>` : ''}
+    <label class="fsel"><span>Currency</span><select data-hf="currency" aria-label="Reporting currency">${opt('all', 'All currencies', HF.currency)}${o.cur.map((c) => opt(c, c, HF.currency)).join('')}</select></label>
+    <button class="btn text" data-hf-reset="1"${hfActive() ? '' : ' disabled'}><i class="ms">restart_alt</i>Reset filters</button>
+    <span class="fnote">${esc(range.label)} (${esc(range.from)} to ${esc(range.to)}) · compared with ${esc(range.prevFrom)} to ${esc(range.prevTo)} · currencies are never converted or added together</span>
+  </div></details>`;
+}
+
+// ---------------------------------------------------------------- Home: the founder's business overview, revenue first
+let JOBS = [], JOBS_ERR = false;       // jobs table, read with the rest in loadAllNow
+const PROD = {};                       // production target vs actual from /api/automation/stats, per scope
+const REV_PLATFORMS = ['gumroad', 'shopify', 'kdp', 'google_books', 'apple_books', 'udemy', 'skillshare', 'coursera', 'roblox', 'razorpay', 'paypal', 'stripe'];
+const chipTxt = (tone, t) => `<span class="chip ${tone}">${esc(t)}</span>`;
+const BASIS = { actual: ['good', 'Actual'], estimated: ['warn', 'Estimated'], mixed: ['warn', 'Actual + estimated'], unavailable: ['', 'Unavailable'], none_in_period: ['', 'No records in period'] };
+const basisChip = (st) => chipTxt(...(BASIS[st] || ['', st]));
+const metricValue = (h, fmt) => h.totals.map((t) => `<span class="kvn">${esc(fmt(t))}</span>`).join('');
+const deltaLine = (h, range) => (h.delta && h.delta.length ? h.delta.map((d) => `<span class="chip ${d.pct >= 0 ? 'good' : 'warn'}">${esc(UK.fmtPct(d.pct))}</span> <span class="muted">vs ${esc(range.prevFrom)} to ${esc(range.prevTo)}${h.delta.length > 1 ? ' (' + esc(d.unit) + ')' : ''}</span>`).join('<br>') : `<span class="muted">No comparable earlier period</span>`);
+const srcFoot = (h) => (h.sources && h.sources.length ? `Source: ${esc(h.sources.join(', '))} · latest record ${esc(UK.ago(h.latest))} · ${h.coverage} record${h.coverage === 1 ? '' : 's'}` : '');
+const kpi = ({ icon, label, value, na = false, lines = [], chips = '', foot = '', cls = '' }) => `<section class="kpi ${cls}" aria-label="${esc(label)}"><header><i class="ms">${icon}</i><span>${esc(label)}</span>${chips}</header><div class="kv${na ? ' na' : ''}">${value}</div>${lines.map((l) => `<div class="kl">${l}</div>`).join('')}${foot ? `<footer>${foot}</footer>` : ''}</section>`;
+function revenueCoverage() {
+  const accts = (CONNS || []).filter((c) => REV_PLATFORMS.includes(String(c.provider).toLowerCase())), ok = accts.filter((c) => c.state === 'connected');
+  const expected = [...new Set(NAV.houses.flatMap((h) => h.platforms).filter((p) => REV_PLATFORMS.includes(p)))];
+  const have = new Set(accts.map((c) => String(c.provider).toLowerCase())), missing = expected.filter((p) => !have.has(p));
+  return { accts, ok, missing };
+}
+function revenueFoot(h) {
+  const c = revenueCoverage();
+  const parts = [c.accts.length ? `Revenue accounts: ${c.ok.length} of ${c.accts.length} connected (${esc([...new Set(c.accts.map((a) => a.provider))].join(', '))})` : 'No revenue account is connected yet'];
+  if (c.missing.length) parts.push(`No account yet for: ${esc(c.missing.join(', '))}`);
+  return (h.state === 'unavailable' || h.state === 'none_in_period' ? '' : srcFoot(h) + '<br>') + parts.join('<br>');
+}
+function homeKpis(range, sc) {
+  const M = orgMetrics(), base = { units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency };
+  const rev = UK.headline(M, 'revenue', range, base), vw = UK.headline(M, 'views', range, base), sl = UK.headline(M, 'sales', range, base), gr = UK.growth(M.filter((m) => !HF.currency || HF.currency === 'all' || m.unit === HF.currency || !/^[A-Z]{3}$/.test(String(m.unit))), range, { units: sc.units });
+  const revCard = kpi({ cls: 'revenue', icon: 'payments', label: 'Total revenue', chips: basisChip(rev.state),
+    value: rev.totals.length ? metricValue(rev, (t) => UK.fmtMoney(t.total, t.unit)) : rev.state === 'none_in_period' ? 'No records' : 'Unavailable', na: !rev.totals.length,
+    lines: [rev.totals.length ? deltaLine(rev, range) : metricsUnread() ? UNREAD_LINE(metricsUnread()) : rev.state === 'none_in_period' ? `Earlier records exist from ${esc(rev.sources.join(', '))}, none in this period. This is not a confirmed zero.` : 'Coco holds no revenue records for this selection. This is not a confirmed zero.',
+      rev.state === 'mixed' ? `Estimates are kept out of this total: ${esc(rev.totals.filter((x) => x.estimated).map((x) => UK.fmtMoney(x.estimated, x.unit)).join(' \u00b7 '))} estimated, listed separately in Insights.` : ''].filter(Boolean), foot: revenueFoot(rev) });
+  const yt = D.ytLatest && D.ytLatest.channel && ['all', 'gigi'].includes(HF.house) && !HF.team && !HF.category && !HF.channel && !HF.platform && !HF.account ? D.ytLatest : null;
+  const ytLine = yt ? `YouTube ${esc(yt.channel.title || 'channel')}, lifetime: ${esc(UK.fmtNum(yt.channel.views))} views · ${esc(UK.fmtNum(yt.channel.subscribers))} subscribers · collected ${esc(UK.ago(yt.collected_at))}${yt.stale ? ' (stale)' : ''}` : '';
+  const viewsCard = kpi({ icon: 'visibility', label: 'Total views', chips: basisChip(vw.state), value: vw.totals.length ? metricValue(vw, (t) => UK.fmtNum(t.total)) : vw.state === 'none_in_period' ? 'No records' : 'Unavailable', na: !vw.totals.length,
+    lines: [vw.totals.length ? deltaLine(vw, range) : '', ytLine].filter(Boolean), foot: srcFoot(vw) });
+  const salesCard = kpi({ icon: 'shopping_bag', label: 'Total sales', chips: basisChip(sl.state), value: sl.totals.length ? metricValue(sl, (t) => UK.fmtNum(t.total)) : sl.state === 'none_in_period' ? 'No records' : 'Unavailable', na: !sl.totals.length,
+    lines: [sl.totals.length ? deltaLine(sl, range) : metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'Sales, orders and purchases recorded in Coco. None exist for this selection.'], foot: srcFoot(sl) });
+  const grCard = kpi({ icon: 'trending_up', label: 'Audience growth', chips: gr.state === 'delta' ? chipTxt('good', 'Actual') : chipTxt('', gr.state === 'single' ? 'One record' : 'Unavailable'),
+    value: gr.state === 'delta' ? `<span class="kvn">${gr.value >= 0 ? '+' : '−'}${esc(UK.fmtNum(Math.abs(gr.value)))}</span>` : gr.state === 'single' ? `<span class="kvn">${esc(UK.fmtNum(gr.value))}</span>` : 'Unavailable', na: gr.state === 'unavailable',
+    lines: [gr.state === 'delta' ? `Net change of subscribers, followers and players across ${gr.series} channel${gr.series === 1 ? '' : 's'}` : gr.state === 'single' ? 'Only one record in the period, so no growth can be stated' : metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'No audience records for this selection'], foot: gr.source ? `Source: ${esc(gr.source)}` : '' });
+  const outs = (OUTPUTS || []).filter((o) => taggedIn(sc.names, o) && UK.within(o.at, range.from, range.to)), pub = outs.filter((o) => o.status === 'published');
+  const outCard = kpi({ icon: 'publish', label: 'Published outputs', chips: chipTxt('good', 'Actual'), value: `<span class="kvn">${pub.length}</span>`, na: false,
+    lines: [`${outs.length} created in the period · ${outs.filter((o) => o.status === 'scheduled').length} scheduled · ${outs.filter((o) => o.status === 'failed').length} failed`], foot: `Source: Coco outputs log (latest 300), matched to the selection by team name${sc.productIds ? '. Not narrowed by channel or platform.' : ''}` });
+  const jb = JOBS.filter((j) => taggedIn(sc.names, j)), run = jb.filter((j) => j.status === 'running').length, q = jb.filter((j) => j.status === 'queued').length;
+  const bad = jb.filter((j) => ['failed', 'blocked'].includes(j.status) && UK.within(j.updated_at || j.created_at, range.from, range.to)).length;
+  const jobCard = JOBS_ERR ? kpi({ cls: 'wide', icon: 'memory', label: 'Active jobs', value: 'Unavailable', na: true, chips: chipTxt('', 'Unavailable'), lines: ['The job queue could not be read from Coco Cloud.'] })
+    : kpi({ cls: 'wide', icon: 'memory', label: 'Active jobs', chips: bad ? chipTxt('bad', bad + ' failed or blocked') : chipTxt('good', 'Actual'), value: `<span class="kvn">${run + q}</span>`, lines: [`${run} running · ${q} queued`], foot: 'Source: job queue (latest 500)' });
+  return `<div class="kpis">${revCard}${viewsCard}${salesCard}${grCard}${outCard}${jobCard}</div>`;
+}
+function chartsHtml(range, sc) {
+  const M = orgMetrics(), sel = (kind, extra = {}) => UK.selectMetrics(M, { kind, units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency, from: range.from, to: range.to, ...extra });
+  const card = (title, sub, body) => `<div class="card2 chartcard"><h3>${esc(title)}</h3><div class="muted">${esc(sub)}</div>${body}</div>`;
+  const revRows = sel('revenue'), cur = [...new Set(revRows.map((m) => String(m.unit)))].slice(0, 2);
+  const c1 = cur.length ? cur.map((u) => `<div class="cunit">${esc(u)}</div>${UK.lineChart(UK.seriesByDay(revRows, range, u), { label: 'Revenue over time in ' + u, fmt: (v) => UK.fmtMoney(v, u), color: cur.indexOf(u) === 0 ? 'var(--chart-1)' : 'var(--chart-2)' })}`).join('') : hnone('No revenue records to chart. Nothing is drawn, because an empty line would look like zero.', 'show_chart');
+  const per = NAV.houses.map((h) => { const hu = UK.houseUnit(orgUnits(), h.id); const set = hu ? UK.descendants(orgUnits(), hu.id) : null;
+    const hd = set ? UK.headline(M, 'revenue', range, { units: set, currency: HF.currency }) : { totals: [] }; return { h, hd }; }).filter((x) => x.hd.totals.length);
+  const curs = [...new Set(per.flatMap((x) => x.hd.totals.map((t) => t.unit)))];
+  const c2 = per.length ? curs.slice(0, 2).map((u) => `<div class="cunit">${esc(u)}</div>${UK.barChart(per.map((x) => ({ label: x.h.label, value: (x.hd.totals.find((t) => t.unit === u) || {}).total, color: x.h.color })), { label: 'Revenue by House in ' + u, fmt: (v) => UK.fmtMoney(v, u) })}`).join('') + (curs.length > 2 ? `<div class="muted">${curs.length - 2} more currencies are in Insights.</div>` : '') : hnone('No House has revenue records in this period.', 'bar_chart');
+  const vRows = sel('views'), vUnit = (vRows[0] || {}).unit, aRows = UK.selectMetrics(M, { kind: 'audience', units: sc.units, productIds: sc.productIds, productId: HF.channel || null }), aUnit = (UK.selectMetrics(aRows, { from: range.from, to: range.to })[0] || {}).unit;
+  const vs = vRows.length ? UK.lineChart(UK.seriesByDay(vRows, range, String(vUnit)), { label: 'Views over time', color: 'var(--chart-1)' }) : '', as = aUnit ? UK.lineChart(UK.audienceSeries(aRows, range, String(aUnit)), { label: 'Audience over time', color: 'var(--chart-2)' }) : '';
+  const c3 = vs || as ? (vs ? `<div class="cunit">Views per day</div>${vs}` : '') + (as ? `<div class="cunit">Audience (latest reported count per channel, summed)</div>${as}` : '') : hnone('No views or audience records to chart.', 'timeline');
+  const unit = (HF.category || HF.team || (HF.house !== 'all' ? (UK.houseUnit(orgUnits(), HF.house) || {}).id : null) || 'coco');
+  const key = `${HF.channel ? 'p:' + HF.channel : 'u:' + unit}|${range.key}|${range.from}|${range.to}`, ps = PROD[key];
+  if (NOVA && (!ps || (!ps.loading && Date.now() - ps.at > 60000))) prodLoad(key, range, unit);
+  let c4;
+  if (!ps || ps.loading) c4 = `<p class="muted">Reading the production schedule…</p>`;
+  else if (!ps.ok) c4 = setup('Production targets are not readable yet', ps.err || 'The automation schedule is not set up in Coco Cloud.');
+  else { const rows = ((ps.data.production || {}).rows || []).map((r) => ({ label: r.deliverable, planned: r.planned, actual: r.created })); c4 = rows.length ? UK.targetChart(rows, { label: 'Production target against actual' }) + `<div class="muted">Source: COCO planned work. Target = planned slots in the period; actual = slots that produced an output.</div>` : hnone('No production is planned in this period. Targets come from automation schedules; none exist for this selection.', 'event_busy'); }
+  return `<div class="charts">${card('Revenue over time', 'Provider-reported and estimated revenue are never blended into one line', c1)}${card('Revenue by House', 'Contribution in the selected period and currency', c2)}${card('Views and audience growth', 'From recorded platform metrics', c3)}${card('Production: target and actual', 'Planned against created, from automation schedules', c4)}</div>`;
+}
+async function prodLoad(key, range, unit) {
+  PROD[key] = { at: Date.now(), loading: true };
+  try {
+    const query = HF.channel ? { product_id: HF.channel, range: range.key } : { unit_id: unit, range: range.key };
+    if (range.key === 'custom') { query.from = range.from; query.to = range.to; }
+    PROD[key] = { at: Date.now(), ok: true, data: await autApi('/stats', { query }) };
+  } catch (e) { PROD[key] = { at: Date.now(), ok: false, err: e.message }; }
+  if (['home', 'insights', 'house'].includes(page)) render();
+}
+// one House as a card: only the metrics that mean something for that House (Social: views and followers; Software: installs; ...)
+function houseCard(h, range) {
+  const hu = UK.houseUnit(orgUnits(), h.id), set = hu ? UK.descendants(orgUnits(), hu.id) : null, names = set ? UK.scopeNames(orgUnits(), set) : new Set([h.id]);
+  const M = orgMetrics(), rev = set ? UK.headline(M, 'revenue', range, { units: set, currency: HF.currency }) : { state: 'unavailable', totals: [] };
+  const rel = h.metrics.map((name) => { const kinds = { views: 'views', subscribers: 'audience', followers: 'audience', engagement: null, installs: 'installs', users: 'audience', purchases: 'sales', subscriptions: null, sales: 'sales', downloads: 'sales', revenue: null, episodes: null, audience: 'audience', enrollments: null, completions: null, players: 'audience', orders: 'sales' };
+    const x = set ? UK.headline(M, null, range, { units: set, names: [name], currency: 'all' }) : { totals: [] };
+    return x.totals.length ? `<div class="hm"><span>${esc(name)}</span><b>${esc(x.totals.map((t) => UK.fmtNum(t.total)).join(' · '))}</b></div>` : ''; }).join('');
+  const noMetrics = h.metrics.filter((n) => !(set && UK.headline(M, null, range, { units: set, names: [n] }).totals.length));
+  const prods = set ? orgProducts().filter((p) => set.has(p.unit_id)) : [], outs = (OUTPUTS || []).filter((o) => taggedIn(names, o) && o.status === 'published' && UK.within(o.at, range.from, range.to)).length;
+  const jb = JOBS.filter((j) => taggedIn(names, j) && ['running', 'queued'].includes(j.status)).length;
+  const brain = brainOfUnit(hu && hu.id), links = (CONN_LINKS || []).filter((l) => l.enabled && names && names.has(String(l.team_id))).length;
+  const live = D.houses.find((x) => x.id === h.id);
+  return `<article class="card2 housecard"><header>${htile(h)}<div class="grow"><h3>${esc(h.label)}</h3><span class="muted">${esc(h.domain)}</span></div>${live ? chip(live.state) : ''}</header>
+    <div class="hrev"><span>Revenue</span>${rev.totals.length ? `<b>${esc(rev.totals.map((t) => UK.fmtMoney(t.total, t.unit)).join(' · '))}</b> ${basisChip(rev.state)}` : `<b class="na">${rev.state === 'none_in_period' ? 'No records' : 'Unavailable'}</b>`}</div>
+    <div class="hms">${rel || `<span class="muted">No ${esc(h.metrics.slice(0, 3).join(', '))} records yet</span>`}</div>
+    ${rel && noMetrics.length ? `<div class="muted" style="font-size:12px">Not tracked yet: ${esc(noMetrics.join(', '))}</div>` : ''}
+    <div class="hstats"><span><b>${prods.length}</b> ${h.id === 'lulu' ? 'products' : 'channels / products'}</span><span><b>${outs}</b> published</span><span><b>${jb}</b> active jobs</span></div>
+    <div class="hstat2"><span>Brain ${brain ? chipTxt(brain.health === 'ok' ? 'good' : ['degraded', 'failed'].includes(brain.health) ? 'bad' : '', brain.health) : chipTxt('', 'not set up')}</span><span>Connections ${links ? chipTxt('good', links + ' linked') : chipTxt('', 'none linked')}</span></div>
+    <a class="btn tonal" href="#house:${h.id}">Open House<i class="ms">arrow_forward</i></a></article>`;
+}
+function liveOps() {
+  const run = JOBS.filter((j) => j.status === 'running'), fail = JOBS.filter((j) => j.status === 'failed' && Date.now() - new Date(j.updated_at || j.created_at) < 3 * 864e5), blk = JOBS.filter((j) => j.status === 'blocked');
+  const waiting = D.approvals.filter((a) => a.state === 'waiting'), tasks = D.tasks.filter((t) => TASK_OPEN.includes(t.status));
+  const worker = (D.devices || []).find((d) => /cloud-worker/.test(d.id)), bad = (CONNS || []).filter((c) => ['error', 'partial'].includes(c.state));
+  const jrow = (j) => hrow(j.type, `${esc(j.team_id || '')}${j.channel_id ? ' · ' + esc(j.channel_id) : ''} · attempt ${j.attempt}/${j.max_attempts} · ${esc(ago(j.updated_at || j.created_at))}`, chip(j.status), '#cloud');
+  const sec = (title, n, body, href, cls = '') => `<div class="card2 ops ${cls}"><div class="hcard-h"><h3>${esc(title)} <span class="count">${n}</span></h3>${href ? `<a class="btn text" href="${href}">Open</a>` : ''}</div>${body}</div>`;
+  return `<div class="opsgrid">
+    ${sec('Waiting for your YES', waiting.length, waiting.slice(0, 4).map((a) => `<div class="row"><div class="grow"><b>${esc(a.code)}</b> <span class="muted">${esc(a.team || '')}</span><div>${esc(a.what)}</div></div><span class="actions"><button class="btn filled" data-yes="${a.id}">YES</button><button class="btn text" data-no="${a.id}">No</button></span></div>`).join('') || hnone('Nothing waits for you.', 'task_alt'), '#approvals', waiting.length ? 'warn' : '')}
+    ${sec('Running jobs', run.length, JOBS_ERR ? hnone('The job queue could not be read.', 'cloud_off') : run.slice(0, 4).map(jrow).join('') || hnone('No job is running.', 'hourglass_empty'), '#cloud')}
+    ${sec('Pending tasks', tasks.length, tasks.slice(0, 4).map((t) => hrow(t.title, esc(t.status), chip(t.status), '#board')).join('') || hnone('No open tasks.', 'task_alt'), '#board')}
+    ${sec('Failed jobs', fail.length, fail.slice(0, 4).map(jrow).join('') || hnone(JOBS_ERR ? 'Unavailable.' : 'No failures in the last 3 days.', 'check_circle'), '#cloud', fail.length ? 'bad' : '')}
+    ${sec('Blocked jobs', blk.length, blk.slice(0, 4).map(jrow).join('') || hnone(JOBS_ERR ? 'Unavailable.' : 'Nothing is blocked.', 'check_circle'), '#cloud', blk.length ? 'warn' : '')}
+    ${sec('Cloud worker', worker ? (online(worker) ? 1 : 0) : 0, worker ? hrow(devLabel(worker), `last seen ${esc(ago(worker.last_seen))} · version ${esc(devVersion(worker))}`, online(worker) ? chipTxt('good', 'Online') : chipTxt('bad', 'Offline'), '#cloud') : hnone('No cloud worker device is paired.', 'cloud_off'), '#cloud', worker && !online(worker) ? 'bad' : '')}
+    ${sec('Integration problems', bad.length, bad.slice(0, 4).map((c) => hrow(`${c.provider}: ${c.external_name || c.connection_id}`, c.state === 'error' ? 'Connection error' : 'Partly connected', chip(c.state), '#connections')).join('') || hnone('No connection reports a problem.', 'link'), '#connections', bad.length ? 'bad' : '')}
+  </div>`;
+}
+// ---------------------------------------------------------------- Brains, loaded on demand (org_brains: level, state, health, objectives)
+let BR = null, brAt = 0, brBusy = false;
+async function brLoad(force) {
+  if (brBusy || (!force && BR && Date.now() - brAt < 60000)) return;
+  brBusy = true;
+  try { const r = await sb.from('org_brains').select('id,level,unit_id,product_id,parent_brain_id,state,health,last_activity_at,objectives,kpis,tools,policies').limit(3000); BR = r.error ? { err: r.error.message || 'unreadable' } : { rows: r.data || [] }; } catch (e) { BR = { err: String(e.message || e) }; }
+  brAt = Date.now(); brBusy = false; if (['home', 'house', 'hierarchy', 'houses'].includes(page)) render();
+}
+const brainOfUnit = (unitId) => (BR && BR.rows && unitId ? BR.rows.find((b) => b.unit_id === unitId) || null : null);
+function homeView() {
+  brLoad();
+  const range = hfRange(), sc = hfScope();
+  return `${orgBanner()}${filterBar()}${homeKpis(range, sc)}${chartsHtml(range, sc)}
+    <h3 class="sech">House performance</h3><div class="housegrid">${NAV.houses.filter((h) => HF.house === 'all' || HF.house === h.id).map((h) => houseCard(h, range)).join('')}</div>
+    <h3 class="sech">Live operations</h3>${liveOps()}`;
+}
+
+// ---------------------------------------------------------------- Houses and the House workspace
+const HTABS = NAV.house_tabs;
+let HTAB = store.get('gs-htab') || 'overview';
+const HX = { templates: null, prompts: null, err: null, loading: false };
+async function hxLoad() {
+  if (HX.loading || HX.templates || !NOVA) return;
+  HX.loading = true;
+  try { const [t, p] = await Promise.all([autApi('/templates'), autApi('/prompts')]); HX.templates = t.templates || []; HX.prompts = p.prompts || []; } catch (e) { HX.err = e.message; } finally { HX.loading = false; if (page === 'house') render(); }
+}
+function houseCtx(hid) {
+  const U = orgUnits(), hu = UK.houseUnit(U, hid), set = hu ? UK.descendants(U, hu.id) : new Set([hid]);
+  return { id: hid, h: houseOf(hid), unit: hu, set, names: UK.scopeNames(U, set) || new Set([hid]), subs: U.filter((u) => ['team', 'subteam'].includes(u.kind) && set.has(u.id)), cats: U.filter((u) => u.kind === 'category' && set.has(u.id)),
+    prods: orgProducts().filter((p) => set.has(p.unit_id)), agents: ((ORG && ORG.agents) || []).filter((a) => set.has(a.unit_id)), metrics: orgMetrics().filter((m) => set.has(m.unit_id)), live: D.houses.find((x) => x.id === hid) || null };
+}
+const createMenu = (unit) => `<details class="menu"><summary class="btn filled"><i class="ms">add</i>Create</summary><div class="menu-p">
+  ${[['team', 'Team', 'groups'], ['subteam', 'Subteam', 'account_tree'], ['category', 'Category', 'category'], ['channel', 'Channel', 'tag'], ['product', 'Product', 'inventory_2'], ['automation', 'Automation', 'auto_mode']].map(([k, l, ic]) => `<button data-create="${k}" data-unit="${esc(unit || '')}"><i class="ms">${ic}</i>${l}</button>`).join('')}
+  <button data-create="house"><i class="ms">apartment</i>House<small>fixed in the registry</small></button></div></details>`;
+function createFlow(kind, unit) {
+  if (kind === 'house') return toast('Houses are fixed in the registry. Adding one needs a registry change and a founder YES, so nothing was created.');
+  if (!NOVA) return toast('Pair this device with Nova first');
+  if (kind === 'automation') { AUT.tab = 'templates'; location.hash = '#automation'; if (page === 'automation') render(); return; }
+  autWizStart({ unit });     // the creation wizard: destination, template or preset, Brain, agents, prompt, account (separate from creating the record), review
+}
+function houseTabBody(c, tab, range) {
+  const { h } = c, M = orgMetrics();
+  if (tab === 'overview') {
+    const hd = c.set.size ? UK.headline(M, 'revenue', range, { units: c.set, currency: HF.currency }) : { state: 'unavailable', totals: [] };
+    const waiting = D.approvals.filter((a) => a.state === 'waiting' && taggedIn(c.names, { team_id: a.team })).length, tasks = D.tasks.filter((t) => TASK_OPEN.includes(t.status) && (t.house_id === c.id || c.names.has(String(t.team_id || '')))).length;
+    return hcard('Overview', `<p>${esc((c.unit && (c.unit.purpose || c.unit.focus)) || (c.live && c.live.role) || h.domain)}</p>${c.live ? `<div class="muted">${esc(c.live.doing || '')}${c.live.next ? ' · Next: ' + esc(c.live.next) : ''}</div>` : ''}
+      <div class="stats" style="margin-top:12px">${[[c.subs.length, 'teams and subteams'], [c.cats.length, 'categories'], [c.prods.length, 'channels and products'], [c.agents.filter((a) => a.status !== 'placeholder').length, 'agents'], [tasks, 'open tasks'], [waiting, 'waiting for YES']].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('')}</div>`)
+      + hcard('Revenue', hd.totals.length ? `<div class="kv"><span class="kvn">${esc(hd.totals.map((t) => UK.fmtMoney(t.total, t.unit)).join(' · '))}</span></div> ${basisChip(hd.state)}<div class="muted">${srcFoot(hd)}</div>` : hnone(hd.state === 'none_in_period' ? 'No revenue records in this period. Not a confirmed zero.' : 'Revenue is unavailable: Coco holds no revenue records for this House.', 'payments'));
+  }
+  if (tab === 'organization') {
+    const depth = (u) => { let n = 0, x = u; while (x && x.parent_id && x.id !== (c.unit || {}).id && n < 8) { n++; x = orgUnits().find((y) => y.id === x.parent_id); } return n; };
+    const rows = orgUnits().filter((u) => c.set.has(u.id)).sort((a, b) => a.id.localeCompare(b.id));
+    return hcard('Organization', rows.length ? rows.map((u) => `<div class="trow" style="--depth:${depth(u)}"><div class="grow"><b>${esc(u.short_name || u.display_name)}</b><span class="tkind">${esc(u.kind)}</span></div>${chip(u.state === 'active' ? 'working' : u.state)}<a class="btn text" href="#structure" data-subgo="org:${esc(u.id)}">Open</a></div>`).join('') : hnone(cloudOrg() ? 'Nothing is registered under this House yet.' : 'The structure is not loaded.', 'account_tree'), createMenu(c.unit && c.unit.id));
+  }
+  if (tab === 'teams') return hcard('Teams and subteams', c.subs.length ? c.subs.map((u) => { const pl = ((ORG && ORG.pipelines) || []).find((p) => p.unit_id === u.id), ag = c.agents.filter((a) => a.unit_id === u.id), head = ag.find((a) => a.role === 'head');
+      return hrow(u.short_name || u.display_name, `${esc(u.kind)} · ${head ? esc(head.name) : 'no head'} · ${ag.filter((a) => a.status !== 'placeholder').length} agents`, chipTxt(pl && ['LIVE', 'TESTING'].includes(pl.status) ? 'good' : '', pl ? pl.status : 'no pipeline'), '#structure'); }).join('') : hnone('No teams or subteams are registered.', 'groups'), createMenu(c.unit && c.unit.id));
+  if (tab === 'categories') return hcard('Categories', c.cats.length ? c.cats.map((u) => hrow(u.short_name || u.display_name, `under ${esc(unitName(u.parent_id))} · ${c.prods.filter((p) => p.unit_id === u.id).length} channels or products`, chip(u.state === 'active' ? 'working' : u.state), '#structure')).join('') : hnone('No categories are registered.', 'category'), createMenu(c.unit && c.unit.id));
+  if (tab === 'channels') {
+    const legacy = (D.offerings || []).filter((o) => o.house_id === c.id), plat = (id) => ((D.platforms || []).find((p) => p.id === id) || {}).name || id || '';
+    return hcard('Channels and products', (c.prods.length ? c.prods.map((p) => hrow(p.name, `${esc(p.kind)} · ${esc(plat(p.platform_id))} · ${esc(unitName(p.unit_id))}`, `${chip(p.status)} <button class="btn text" data-aut="opendash" data-a="${esc(p.id)}">Dashboard</button>`)).join('') : '')
+      + (legacy.length ? `<h4 class="subh">Earlier offerings list (${legacy.length})</h4>` + legacy.slice(0, 40).map((o) => hrow(o.name, `${esc(plat(o.platform_id))}`, chip(o.status))).join('') : '') || hnone('No channels or products yet.', 'tag'), createMenu(c.unit && c.unit.id));
+  }
+  if (tab === 'brains') {
+    brLoad();
+    if (!BR) return hcard('Brains', '<p class="muted">Reading the Brains…</p>');
+    if (BR.err) return hcard('Brains', setup('Brains are not readable yet', 'The organisation Brain records are not set up in Coco Cloud yet. They wait for a verified backup and a founder YES. ' + BR.err));
+    const mine = BR.rows.filter((b) => (b.unit_id && c.set.has(b.unit_id)) || (b.product_id && c.prods.some((p) => p.id === b.product_id)));
+    return hcard('Brains', mine.length ? mine.map((b) => hrow(b.unit_id ? unitName(b.unit_id) : (c.prods.find((p) => p.id === b.product_id) || {}).name || b.id, `${esc(b.level)} brain · ${(b.objectives || []).length} objective${(b.objectives || []).length === 1 ? '' : 's'} · last activity ${esc(ago(b.last_activity_at))}`, chipTxt(b.state === 'active' ? 'good' : '', b.state) + ' ' + chipTxt(b.health === 'ok' ? 'good' : ['degraded', 'failed'].includes(b.health) ? 'bad' : '', b.health), '#hierarchy')).join('') : hnone('No Brain is set up under this House yet.', 'psychology'), '<a class="btn text" href="#hierarchy">Open hierarchy</a>');
+  }
+  if (tab === 'agents') return hcard('Agents', c.agents.length ? c.agents.map((a) => hrow(a.name, `${esc(unitName(a.unit_id))} · ${esc(a.role || 'agent')}${a.registry_agent ? ' · ' + esc(a.registry_agent) : ''}`, chipTxt(a.status === 'placeholder' ? 'warn' : a.status === 'active' ? 'good' : '', a.status), '#agents')).join('') : hnone('No agents are assigned under this House.', 'smart_toy'), '<a class="btn text" href="#agents">Open agent controls</a>');
+  if (tab === 'automation') {
+    const wf = ((ORG && ORG.workflows) || []).filter((w) => c.set.has(w.unit_id)), pls = ((ORG && ORG.pipelines) || []).filter((p) => c.set.has(p.unit_id) && p.designed);
+    return hcard('Automation', (pls.length ? `<h4 class="subh">Pipelines</h4>` + pls.map((p) => hrow(p.name, `${(p.stages || []).length} stages · v${esc(p.version)}`, chipTxt(['LIVE', 'TESTING'].includes(p.status) ? 'good' : '', p.status), '#structure')).join('') : '')
+      + (wf.length ? `<h4 class="subh">Workflows</h4>` + wf.map((w) => hrow(w.file, `${esc(w.repo)} · ${esc(w.schedule || 'no schedule')}`, chip(w.state))).join('') : '') || hnone('No pipeline or workflow is registered for this House.', 'auto_mode'),
+      `<a class="btn tonal" href="#automation">Open Automation</a>`);
+  }
+  if (tab === 'templates' || tab === 'prompts') {
+    hxLoad();
+    if (!NOVA) return hcard(tab === 'prompts' ? 'Prompt instructions' : 'Templates', hnone('Pair this device with Nova to read templates.', 'link_off'));
+    if (HX.err) return hcard(tab === 'prompts' ? 'Prompt instructions' : 'Templates', setup('Automation templates are not readable', HX.err + ' (the automation templates may not be set up yet).'));
+    if (!HX.templates) return hcard(tab === 'prompts' ? 'Prompt instructions' : 'Templates', '<p class="muted">Reading…</p>');
+    const mine = HX.templates.filter((t) => (t.owner_unit_id && c.set.has(t.owner_unit_id)) || (t.owner_product_id && c.prods.some((p) => p.id === t.owner_product_id)));
+    if (tab === 'templates') return hcard('Templates', mine.length ? mine.map((t) => hrow(t.name, `${esc(t.kind)} · v${t.current_version} · ${t.assignments} assignment${t.assignments === 1 ? '' : 's'}`, chip(t.status), '#automation')).join('') : hnone('No template is owned by this House. Library templates are in Automation.', 'description'), `<a class="btn tonal" href="#automation">Open Automation</a>`);
+    const ids = new Set(mine.map((t) => t.id)), ps = (HX.prompts || []).filter((p) => ids.has(p.template_id));
+    return hcard('Prompt instructions', ps.length ? ps.map((p) => hrow(p.name, `${esc(p.kind)} · version ${p.active_version || 'none active'} of ${p.current_version}`, chip(p.status), '#automation')).join('') : hnone('No prompt belongs to this House’s templates yet.', 'edit_note'), `<button class="btn tonal" data-aut="open-tab" data-a="prompts">Edit prompts</button>`);
+  }
+  if (tab === 'connections') {
+    const links = (CONN_LINKS || []).filter((l) => l.enabled && c.names.has(String(l.team_id))), provs = new Set(links.map((l) => String(l.integration_id).toLowerCase()));
+    return hcard('Connections', h.platforms.map((p) => { const accts = (CONNS || []).filter((a) => String(a.provider).toLowerCase() === p), ok = accts.filter((a) => a.state === 'connected');
+      return hrow(p, accts.length ? `${ok.length} of ${accts.length} account${accts.length === 1 ? '' : 's'} connected${provs.has(p) ? ' · linked to this House' : ''}` : 'No account added yet', ok.length ? chipTxt('good', 'Connected') : accts.length ? chipTxt('warn', 'Not connected') : chipTxt('', 'No account'), '#connections'); }).join(''), '<a class="btn tonal" href="#connections">Open Integration Hub</a>');
+  }
+  if (tab === 'references') { const refs = ((ORG && ORG.refs) || []).filter((r) => c.set.has(r.unit_id)); return hcard('Reference assets', refs.length ? refs.slice(0, 60).map((r) => hrow(r.title || r.name || r.id, esc(r.kind || r.ref_kind || ''), '', '')).join('') : hnone('No reference is recorded for this House. Template references are in Automation.', 'folder_open'), '<a class="btn text" href="#automation">Automation references</a>'); }
+  if (tab === 'production') {
+    const jb = JOBS.filter((j) => taggedIn(c.names, j)), tk = D.tasks.filter((t) => TASK_OPEN.includes(t.status) && (t.house_id === c.id));
+    const key = `u:${c.unit ? c.unit.id : c.id}|${range.key}|${range.from}|${range.to}`, ps = PROD[key]; if (NOVA && c.unit && (!ps || (!ps.loading && Date.now() - ps.at > 60000))) prodLoad(key, range, c.unit.id);
+    const tgt = !c.unit ? '' : !ps || ps.loading ? '<p class="muted">Reading targets…</p>' : !ps.ok ? setup('Targets are not readable', ps.err) : UK.targetChart(((ps.data.production || {}).rows || []).map((r) => ({ label: r.deliverable, planned: r.planned, actual: r.created })), { label: 'Target and actual' }) || hnone('No production is planned in this period.', 'event_busy');
+    return hcard('Production', `<div class="stats"><div class="stat"><b>${jb.filter((j) => j.status === 'running').length}</b><span>running</span></div><div class="stat"><b>${jb.filter((j) => j.status === 'queued').length}</b><span>queued</span></div><div class="stat"><b>${jb.filter((j) => ['failed', 'blocked'].includes(j.status)).length}</b><span>failed or blocked</span></div><div class="stat"><b>${tk.length}</b><span>open tasks</span></div></div>${tgt}`
+      + (jb.slice(0, 12).map((j) => hrow(j.type, `${esc(j.team_id)} · attempt ${j.attempt}/${j.max_attempts} · ${esc(ago(j.updated_at || j.created_at))}`, chip(j.status), '#cloud')).join('') || (JOBS_ERR ? hnone('The job queue could not be read.', 'cloud_off') : '')));
+  }
+  if (tab === 'outputs') { const o = (OUTPUTS || []).filter((x) => taggedIn(c.names, x)); return hcard('Outputs', o.length ? o.slice(0, 50).map((x) => hrow(x.title || x.id, `${esc(x.kind)} · ${esc(ago(x.at))}${x.url ? ` · <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">open</a>` : ''}`, chip(x.status))).join('') : hnone('No output has been logged for this House.', 'inventory_2')); }
+  if (tab === 'scheduler') { const wf = ((ORG && ORG.workflows) || []).filter((w) => c.set.has(w.unit_id) && w.schedule); return hcard('Scheduler', (wf.length ? wf.map((w) => hrow(w.file, `${esc(w.repo)}`, `<code>${esc(w.schedule)}</code>`)).join('') : hnone('No scheduled workflow is registered for this House.', 'schedule')) + '<p class="muted">Per-channel production schedules (planned slots) are in Automation, under Schedule and statistics.</p>', '<a class="btn tonal" href="#automation">Open Automation</a>'); }
+  if (tab === 'approvals') { const a = D.approvals.filter((x) => taggedIn(c.names, { team_id: x.team })); return hcard('Approvals', a.length ? a.slice(0, 40).map((x) => `<div class="row"><div class="grow"><b>${esc(x.code)}</b> ${chip(x.state)}<div>${esc(x.what)}</div><div class="muted">${esc(x.raised_on || '')}</div></div>${x.state === 'waiting' ? `<span class="actions"><button class="btn filled" data-yes="${x.id}">YES</button><button class="btn text" data-no="${x.id}">No</button></span>` : ''}</div>`).join('') : hnone('No approval is tagged to this House.', 'verified'), '<a class="btn text" href="#approvals">All approvals</a>'); }
+  if (tab === 'analytics') {
+    const rows = h.metrics.map((name) => { const x = UK.headline(M, null, range, { units: c.set, names: [name] }); return hrow(name, x.totals.length ? srcFoot(x) : 'No records in Coco', x.totals.length ? `<b>${esc(x.totals.map((t) => UK.fmtNum(t.total)).join(' · '))}</b>` : chipTxt('', 'Unavailable')); }).join('');
+    const yt = c.id === 'gigi' && D.ytLatest && D.ytLatest.channel ? hrow('YouTube channel (lifetime)', `collected ${esc(ago(D.ytLatest.collected_at))}`, `<b>${esc(UK.fmtNum(D.ytLatest.channel.views))} views · ${esc(UK.fmtNum(D.ytLatest.channel.subscribers))} subscribers</b>`) : '';
+    return hcard(`Analytics · ${range.label}`, rows + yt + `<div class="muted" style="margin-top:8px">Only the measures that mean something for ${esc(h.domain)} are listed.</div>`);
+  }
+  if (tab === 'revenue') {
+    const hd = UK.headline(M, 'revenue', range, { units: c.set, currency: HF.currency }), rr = UK.selectMetrics(M, { kind: 'revenue', units: c.set, currency: HF.currency, from: range.from, to: range.to });
+    const by = new Map(); rr.forEach((m) => { const k = `${m.source}|${m.unit}|${UK.isEstimate(m) ? 'estimated' : 'actual'}`; by.set(k, (by.get(k) || 0) + Number(m.value)); });
+    return hcard(`Revenue · ${range.label}`, `<div class="kv${hd.totals.length ? '' : ' na'}">${hd.totals.length ? metricValue(hd, (t) => UK.fmtMoney(t.total, t.unit)) : hd.state === 'none_in_period' ? 'No records' : 'Unavailable'}</div> ${basisChip(hd.state)}
+      ${hd.totals.length ? deltaLine(hd, range) : `<p class="muted">${metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'Coco holds no revenue records for this House in this period. That is not a confirmed zero.'}</p>`}
+      ${[...by.entries()].map(([k, v]) => { const [src, unit, basis] = k.split('|'); return hrow(src, basis, `<b>${esc(UK.fmtMoney(v, unit))}</b>`); }).join('')}
+      ${UK.lineChart(UK.seriesByDay(rr, range, (hd.totals[0] || {}).unit), { label: 'Revenue over time', fmt: (v) => UK.fmtMoney(v, (hd.totals[0] || {}).unit) })}<div class="muted">${revenueFoot(hd)}</div>`);
+  }
+  if (tab === 'activity') { const re = new RegExp('\\b(' + [h.id, h.label, ...c.names].filter(Boolean).map((s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'i'); const a = (D.activity || []).filter((x) => re.test(`${x.action} ${x.detail || ''}`)); return hcard('Activity history', a.length ? a.slice(0, 40).map((x) => hrow(x.action, `${esc(x.detail || '')} · ${esc(x.actor || '')} · ${esc(ago(x.at))}`)).join('') : hnone('No recent activity mentions this House.', 'history'), '', '') + `<div class="muted">Matched by House and team name in the latest 100 activity entries.</div>`; }
+  if (tab === 'settings') {
+    const cpTeam = CP && (CP.teams || []).find((t) => t.id === c.id);
+    return hcard('Settings', hrow('Identity', `${esc(h.label)} · id ${esc(h.id)} · ${esc(h.domain)}`, htile(h)) + hrow('Tracked measures', esc(h.metrics.join(', '))) + hrow('Expected platforms', esc(h.platforms.join(', ')))
+      + (cpTeam ? hrow('State and Claude', `state ${esc(cpTeam.state || 'on')} · Claude ${esc(cpTeam.claude || 'on demand')}`, '', '#teams') : hrow('Controls', 'State, Claude and budget controls for each team are in Teams.', '', '#teams')), '<a class="btn text" href="#teams">Open team controls</a>');
+  }
+  return hnone('Unknown tab');
+}
+function houseView() {
+  const h = houseOf(ARG);
+  if (!h) return hcard('House not found', hnone('That House is not in the navigation contract.', 'error')) + `<a class="btn tonal" href="#houses">All Houses</a>`;
+  const c = houseCtx(h.id), range = hfRange(), tab = HTABS.some((t) => t[0] === HTAB) ? HTAB : 'overview';
+  return `<div class="househead">${htile(h, 'l')}<div class="grow"><span class="eyebrow">${esc(h.domain)} House</span><h2>${esc(h.label)}</h2><span class="muted">${esc((c.unit && c.unit.focus) || '')}</span></div>${c.live ? chip(c.live.state) : ''}${createMenu(c.unit && c.unit.id)}</div>
+    ${orgBanner()}<div class="htabs" role="tablist" aria-label="${esc(h.label)} workspace">${HTABS.map(([k, l]) => `<button role="tab" aria-selected="${k === tab}" class="${k === tab ? 'on' : ''}" data-htab="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="hbody">${['analytics', 'revenue', 'production', 'overview'].includes(tab) ? `<div class="hperiod"><label class="fsel"><span>Period</span><select data-hf="period" aria-label="Period">${UK.PERIODS.map(([k, l]) => `<option value="${k}"${HF.period === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>` : ''}${houseTabBody(c, tab, range)}</div>`;
+}
+function housesView() {
+  brLoad();
+  const range = hfRange(), core = UK.houseUnit(orgUnits(), 'core');
+  return `${orgBanner()}<p class="muted" style="margin:0 0 12px">Seven business Houses. Each opens its own operating workspace.</p>
+    <div class="housegrid">${NAV.houses.map((h) => houseCard(h, range)).join('')}</div>
+    <h3 class="sech">Central system</h3><div class="card2">${hrow('Core House', 'Central operations: the registry, shared infrastructure and the Brains. It is the system layer, not a business House.', chipTxt('', core ? core.state : 'planned'), '#company')}</div>`;
+}
+
+// ---------------------------------------------------------------- Brains & Agents: the hierarchy
+let BSEL = null;
+function hierarchyView() {
+  brLoad();
+  if (!BR) return '<p class="muted">Reading the Brains…</p>';
+  if (BR.err) return setup('The Brain hierarchy is not readable yet', 'The organisation Brain records are not set up in Coco Cloud yet; they wait for a verified backup and a founder YES. ' + BR.err) + `<div class="card2"><h3>Brain records</h3><p class="muted">The growth Brain records and the agent controls that do exist are under Brain records and Agents.</p><a class="btn tonal" href="#brain">Open Brain records</a></div>`;
+  const rows = BR.rows, byParent = new Map(); rows.forEach((b) => { const k = b.parent_brain_id || ''; (byParent.get(k) || byParent.set(k, []).get(k)).push(b); });
+  const nameOf = (b) => b.unit_id ? unitName(b.unit_id) : (orgProducts().find((p) => p.id === b.product_id) || {}).name || b.id;
+  const LV = { global: 'public', house: 'apartment', team: 'groups', subteam: 'account_tree', category: 'category', product: 'tag', channel: 'tag', agent: 'smart_toy' };
+  const tone = (b) => (b.health === 'ok' ? 'good' : ['degraded', 'failed'].includes(b.health) ? 'bad' : '');
+  const node = (b, d) => { const kids = (byParent.get(b.id) || []).sort((x, y) => nameOf(x).localeCompare(nameOf(y))), selA = BSEL === b.id;
+    const head = `<button class="bnode ${selA ? 'on' : ''}" data-bnode="${esc(b.id)}"><i class="ms">${LV[b.level] || 'psychology'}</i><span class="grow"><b>${esc(nameOf(b))}</b><small>${esc(b.level)}${kids.length ? ' · ' + kids.length + ' below' : ''}</small></span>${chipTxt(b.state === 'active' ? 'good' : b.state === 'paused' ? 'warn' : '', b.state)} ${chipTxt(tone(b), b.health)}</button>`;
+    return kids.length ? `<details class="btree"${d < 2 ? ' open' : ''}><summary>${head}</summary><div class="bkids">${kids.map((k) => node(k, d + 1)).join('')}</div></details>` : `<div class="bleaf">${head}</div>`; };
+  const roots = (byParent.get('') || []).filter((b) => b.level === 'global').concat((byParent.get('') || []).filter((b) => b.level !== 'global'));
+  const sel = BSEL && rows.find((b) => b.id === BSEL);
+  let detail = hnone('Select a Brain to see its objectives, memory scope, agents and recent failures.', 'psychology');
+  if (sel) {
+    const names = sel.unit_id ? UK.scopeNames(orgUnits(), UK.descendants(orgUnits(), sel.unit_id)) : new Set([sel.product_id]);
+    const ag = ((ORG && ORG.agents) || []).filter((a) => a.unit_id === sel.unit_id), parent = rows.find((b) => b.id === sel.parent_brain_id), fails = JOBS.filter((j) => ['failed', 'blocked'].includes(j.status) && taggedIn(names, j)).slice(0, 5);
+    detail = `<h3>${esc(nameOf(sel))}</h3><div class="muted">${esc(sel.level)} Brain · ${esc(sel.id)}</div><p>${chipTxt(sel.state === 'active' ? 'good' : '', sel.state)} ${chipTxt(tone(sel), 'health ' + sel.health)}</p>
+      ${hrow('Parent (delegates up to)', parent ? esc(nameOf(parent)) : 'none: this is the top Brain')}${hrow('Memory scope', `its own ${esc(sel.level)} and everything below it. Siblings and other Houses are isolated.`)}
+      ${hrow('Last activity', esc(ago(sel.last_activity_at)))}
+      <h4 class="subh">Objectives (${(sel.objectives || []).length})</h4>${(sel.objectives || []).map((o) => `<div class="row"><div class="grow">${esc(typeof o === 'string' ? o : o.title || o.text || JSON.stringify(o))}</div></div>`).join('') || '<div class="muted">No objective is set.</div>'}
+      <h4 class="subh">Agents (${ag.filter((a) => a.status !== 'placeholder').length})</h4>${ag.map((a) => hrow(a.name, esc(a.role || ''), chipTxt(a.status === 'placeholder' ? 'warn' : 'good', a.status))).join('') || '<div class="muted">No agent is assigned at this level.</div>'}
+      <h4 class="subh">Failures and escalations</h4>${fails.map((j) => hrow(j.type, `${esc(j.status)} · ${esc(ago(j.updated_at || j.created_at))}`, chip(j.status), '#cloud')).join('') || '<div class="muted">No failed or blocked job at this level.</div>'}
+      <p class="muted" style="margin-top:10px">Brain actions stay held: this view reads state only and starts nothing.</p>`;
+  }
+  return `<div class="bsplit"><div class="card2 btreewrap"><div class="hcard-h"><h3>Brain hierarchy</h3><span class="muted">${rows.length} Brains</span></div>${roots.map((b) => node(b, 0)).join('') || hnone('No Brain is registered yet.', 'psychology')}</div><div class="card2 bdetail">${detail}</div></div>`;
+}
+
+// ---------------------------------------------------------------- Insights: revenue, statistics, AI usage, platform performance
+function insightsView() {
+  const range = hfRange(), sc = hfScope(), M = orgMetrics();
+  const rr = UK.selectMetrics(M, { kind: 'revenue', units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency, from: range.from, to: range.to });
+  const by = new Map(); rr.forEach((m) => { const k = `${m.source}\u0001${m.unit}\u0001${UK.isEstimate(m) ? 'estimated' : 'actual'}`; const e = by.get(k) || { v: 0, n: 0, latest: null }; e.v += Number(m.value); e.n++; const at = m.recorded_at || m.period; if (!e.latest || at > e.latest) e.latest = at; by.set(k, e); });
+  const rev = UK.headline(M, 'revenue', range, { units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency });
+  const table = (rows, head) => rows.length ? `<div class="tscroll"><table class="dt"><thead><tr>${head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((x, i) => `<td${i === 0 ? ' class="first"' : ''}>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+  const perHouse = NAV.houses.map((h) => { const hu = UK.houseUnit(orgUnits(), h.id), set = hu ? UK.descendants(orgUnits(), hu.id) : null; const cells = h.metrics.map((n) => { const x = set ? UK.headline(M, null, range, { units: set, names: [n] }) : { totals: [] }; return x.totals.length ? `${esc(n)} <b>${esc(x.totals.map((t) => UK.fmtNum(t.total)).join(' · '))}</b>` : ''; }).filter(Boolean); return [`<span class="hname">${htile(h, 's')}${esc(h.label)}</span>`, cells.length ? cells.join('<br>') : '<span class="muted">No records</span>']; });
+  const ai = CP && CP.ai ? CP.ai : null, day = ai && ai.usage ? ai.usage.day || {} : {};
+  return `${orgBanner()}<div class="homehead"><div><h2 class="greet">Insights</h2><p class="muted">Revenue, statistics, AI usage and platform performance. Every number names its source and how fresh it is.</p></div></div>${filterBar()}
+    ${hcard('Revenue', `<div class="kv${rev.totals.length ? '' : ' na'}">${rev.totals.length ? metricValue(rev, (t) => UK.fmtMoney(t.total, t.unit)) : rev.state === 'none_in_period' ? 'No records' : 'Unavailable'}</div> ${basisChip(rev.state)}
+      <p class="muted">${rev.totals.length ? `Actual and estimated amounts are listed separately below and never added together.` : metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'No revenue is recorded in Coco for this selection. Nothing is estimated or shown as zero.'}</p>
+      ${table([...by.entries()].map(([k, e]) => { const [src, unit, basis] = k.split('\u0001'); return [esc(src), basis === 'estimated' ? chipTxt('warn', 'Estimated') : chipTxt('good', 'Actual'), esc(UK.fmtMoney(e.v, unit)), String(e.n), esc(UK.ago(e.latest))]; }), ['Source', 'Basis', 'Amount', 'Records', 'Latest'])}
+      <div class="muted">${revenueFoot(rev)}</div>`)}
+    ${hcard('Performance by House', table(perHouse, ['House', `Measures recorded in ${range.label.toLowerCase()}`]) + '<div class="muted">Each House shows only the measures that apply to it.</div>')}
+    ${hcard('AI usage and budget', ai ? `<div class="stats"><div class="stat"><b>${num(day.tokens)}</b><span>Claude tokens today</span></div><div class="stat"><b>${money(day.cost)}</b><span>cost today</span></div><div class="stat"><b>${num(((ai.split || {}).claude_steps))}</b><span>Claude steps</span></div><div class="stat"><b>${num(((ai.split || {}).cloud_steps))}</b><span>cloud steps</span></div></div><p class="muted">Snapshot ${esc(CP.generated_at ? ago(CP.generated_at) : 'age unknown')}.</p>` : hnone('The control snapshot is not loaded, so budgets cannot be shown.', 'bolt'), '<a class="btn tonal" href="#ai">Open AI usage</a>')}
+    ${hcard('Platform performance', D.ytLatest && D.ytLatest.channel ? hrow('YouTube', `lifetime totals · collected ${esc(ago(D.ytLatest.collected_at))}`, `<b>${esc(UK.fmtNum(D.ytLatest.channel.views))} views · ${esc(UK.fmtNum(D.ytLatest.channel.subscribers))} subscribers</b> ${D.ytLatest.stale ? chipTxt('warn', 'Stale') : chipTxt('good', 'Fresh')}`) + '<div class="muted">Per-channel statistics are in each channel’s dashboard in Automation.</div>' : hnone('No platform statistics have been collected yet.', 'analytics'))}
+    ${hcard('Reports', hnone('No stored report can be opened from the app yet. The daily summary job is built but not enabled in the cloud.', 'description'))}`;
+}
+Object.assign(V, { home: homeView, houses: housesView, house: houseView, hierarchy: hierarchyView, insights: insightsView });
+
+// ---------------------------------------------------------------- wiring (installed once)
+(function wireUnified() {
+  document.addEventListener('click', (e) => {
+    const t = e.target; if (!t || !t.closest) return;
+    if (t.closest('[data-askopen]')) { e.preventDefault(); $('#moreSheet').hidden = true; askOpen(true); return; }
+    if (t.closest('[data-askclose]')) { askOpen(false); return; }
+    if (t.closest('#askBtn') || t.closest('#askFab')) { askOpen(page === 'chat' ? false : !ASK.open); return; }
+    if (t.closest('#bellBtn')) { const p = $('#bellPanel'); p.hidden = !p.hidden; if (!p.hidden) morph(p, bellHtml(notifications())); return; }
+    if (!t.closest('#bellPanel')) $('#bellPanel').hidden = true;
+    if (!t.closest('#searchBox')) $('#searchResults').hidden = true;
+    if (t.closest('[data-searchgo]')) { $('#searchResults').hidden = true; $('#q').value = ''; return; }
+    if (t.closest('#railToggle')) { const r = $('#rail'); r.classList.toggle('collapsed'); store.set('gs-rail', r.classList.contains('collapsed') ? '1' : '0'); return; }
+    if (t.closest('#meBtn')) { location.hash = '#settings'; return; }
+    const sg = t.closest('[data-subgo]'); if (sg) PENDING_SUB = sg.dataset.subgo;     // the href does the navigating
+    if (t.closest('[data-hf-reset]')) { Object.assign(HF, HDEF); hfSave(); render(); return; }
+    const ht = t.closest('[data-htab]'); if (ht) { HTAB = ht.dataset.htab; store.set('gs-htab', HTAB); render(); return; }
+    const cr = t.closest('[data-create]'); if (cr) { const d = cr.closest('details'); if (d) d.open = false; createFlow(cr.dataset.create, cr.dataset.unit || ''); return; }
+    const bn = t.closest('[data-bnode]'); if (bn) { BSEL = bn.dataset.bnode; render(); return; }
+  });
+  document.addEventListener('change', (e) => { const el = e.target.closest && e.target.closest('[data-hf]'); if (el) hfSet(el.dataset.hf, el.value); });
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'q') searchRun(e.target.value); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { if (ASK.open) askOpen(false); $('#bellPanel').hidden = true; $('#searchResults').hidden = true; }
+    if (e.key === 'Enter' && e.target && e.target.id === 'q') { const a = document.querySelector('#searchResults a'); if (a) { location.hash = a.getAttribute('href'); $('#searchResults').hidden = true; e.target.value = ''; e.target.blur(); } }
+    if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '') && !(e.target && e.target.isContentEditable)) { e.preventDefault(); const q = $('#q'); if (q) q.focus(); }
+  });
+  if (store.get('gs-rail') === '1') $('#rail').classList.add('collapsed');
+})();
+
+// ================================================================ THEMES (Material You, six themes, automatic rotation)
+// The engine (theme-engine.js) decides colours and when to rotate; this section is the Appearance page, the quick switch in the top bar, the
+// preview bar, and the sync of the person's choice between their own devices. One theme controls the whole app: nothing below sets a colour.
+const TH = window.CocoTheme, THE = window.CocoThemeCore, MOCK = window.CocoThemeMock;
+if (MOCK && THE && !document.getElementById('mockcss')) { const st = document.createElement('style'); st.id = 'mockcss'; st.textContent = MOCK.css(THE); document.head.appendChild(st); }
+const TH_REASON = { manual: 'you chose it', launch: 'when COCO opened', schedule: 'automatic switch', next: 'you pressed Apply next', reset: 'reset to default', default: 'the default theme', settings: 'settings changed', appearance: 'appearance changed', locked: 'locked', unlocked: 'unlocked' };
+const TH_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const thShow = {};                      // phones show one preview per card; which one (light or dark) is remembered per card
+const thName = (id) => (THE && THE.byId(id) ? THE.byId(id).name : id);
+const thDevTz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch { return ''; } };
+const thWhen = (t, tz) => { try { return new Date(t).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: tz || undefined }); } catch { return new Date(t).toLocaleString(); } };
+function thStatus() {
+  const snap = TH.snapshot(), p = snap.prefs, now = Date.now(), f = THE.frequencies.find((x) => x.id === p.rotation.frequency) || {}, pv = THE.preview(p), due = THE.nextDueAt(p, now);
+  const lastTxt = p.lastSwitchedAt ? `${thWhen(p.lastSwitchedAt, p.rotation.tz)}, ${ago(p.lastSwitchedAt)} (${TH_REASON[p.reason] || p.reason})` : 'Not switched yet';
+  let nextTxt, nextId = null, nextNote = '';
+  if (pv.kind === 'none') nextTxt = p.locked ? 'Never: this theme is locked' : !p.rotation.enabled ? 'Never: automatic switching is off' : 'Never: manual only';
+  else if (f.kind === 'launch') { nextTxt = 'The next time COCO opens'; nextId = pv.themeId; if (pv.kind === 'random') nextNote = `a different theme each time, one of ${pv.candidates.length} (never the one in use)`; }
+  else { nextTxt = thWhen(due, p.rotation.tz) + (due <= now ? ' (due now: applied as soon as COCO is open)' : ''); nextId = pv.themeId; }
+  return { lastTxt, nextTxt, nextId, nextNote, kind: pv.kind, candidates: pv.candidates || [] };
+}
+function themesView() {
+  if (!TH || !THE) return '<div class="card2"><h3>Appearance</h3><span class="muted">The theme engine did not load.</span></div>';
+  const snap = TH.snapshot(), p = snap.prefs, st = thStatus(), cur = THE.byId(p.themeId), mode = snap.mode, rot = p.rotation, fq = THE.frequencies.find((x) => x.id === rot.frequency) || {};
+  const seg = (attr, items, current, label) => `<div class="seg" role="group" aria-label="${esc(label)}">${items.map(([v, l, ic]) => `<button type="button" ${attr}="${esc(v)}" aria-pressed="${String(current) === String(v)}">${ic ? `<i class="ms">${ic}</i>` : ''}${esc(l)}</button>`).join('')}</div>`;
+  const dotsOf = (id, m) => { const r = THE.rolesOf(id, m, 'page'); return [r.accent, r.cta, r.selected, r.secondary, r.highlight, r.background, r.cardSurface].map((c) => `<i style="background:${c}"></i>`).join(''); };
+  const card = (t) => {
+    const isCur = t.id === p.themeId, isNext = st.nextId === t.id, show = thShow[t.id] || mode;
+    return `<article class="th-card${isCur ? ' cur' : ''}${isNext ? ' nxt' : ''}" data-theme-card="${t.id}" data-show="${show}">
+      <div class="th-mocks"><div class="lt">${MOCK.html(THE, t.id, 'light')}</div><div class="dk">${MOCK.html(THE, t.id, 'dark')}</div></div>
+      <div class="th-meta"><span class="num">${t.number}</span><div><b>${esc(t.name)}</b>${t.locked ? ' <span class="chip">Original, locked</span>' : ''}<small>${esc(t.tagline)}</small></div></div>
+      <div class="th-badges">${isCur ? '<span class="chip good">Current</span>' : ''}${isNext ? '<span class="chip warn">Next</span>' : ''}${Object.values(t.seeds).map((v) => `<span class="chip seed"><i style="background:${v}"></i>${esc(v)}</span>`).join('')}</div>
+      <div class="th-actions"><button class="btn tonal" data-th="preview" data-id="${t.id}"><i class="ms">visibility</i>Preview</button><button class="btn filled" data-th="apply" data-id="${t.id}"${isCur ? ' disabled' : ''}>${isCur ? 'In use' : 'Apply'}</button><button class="btn text th-flip" data-th="mode" data-id="${t.id}" aria-label="Show the ${show === 'dark' ? 'light' : 'dark'} preview"><i class="ms">${show === 'dark' ? 'dark_mode' : 'light_mode'}</i></button></div>
+    </article>`;
+  };
+  const timeRow = ['daily', 'weekly', 'monthly'].includes(fq.kind) ? `<div class="th-when">
+      <label class="fsel"><span>Switch at</span><input id="thTime" type="time" value="${esc(rot.time)}"></label>
+      ${fq.kind === 'weekly' ? `<label class="fsel"><span>Weekday</span><select id="thWeekday">${TH_DAYS.map((d, i) => `<option value="${i}"${rot.weekday === i ? ' selected' : ''}>${d}</option>`).join('')}</select></label>` : ''}
+      ${fq.kind === 'monthly' ? `<label class="fsel"><span>Day of the month</span><select id="thDom">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}"${rot.dayOfMonth === i + 1 ? ' selected' : ''}>${i + 1}${i + 1 > 28 ? ' (last day in shorter months)' : ''}</option>`).join('')}</select></label>` : ''}
+      <span class="fnote">Local time zone: <b>${esc(rot.tz || thDevTz() || 'this device')}</b>${rot.tz && rot.tz !== thDevTz() ? ` <button class="btn text" data-th="tz">Use this device's</button>` : ''}</span></div>` : '';
+  const nextCard = st.kind === 'random' ? `<div class="th-next">${st.candidates.map((id) => `<span class="th-pill" title="${esc(thName(id))}"><span class="th-dots">${dotsOf(id, mode)}</span>${esc(thName(id))}</span>`).join('')}</div>` : st.nextId ? `<div class="th-next"><span class="th-pill"><span class="th-dots">${dotsOf(st.nextId, mode)}</span><b>${esc(thName(st.nextId))}</b></span></div>` : '';
+  return `<div class="th-page">
+    <section class="card2 th-hero"><div class="th-hero-l">
+        <span class="eyebrow">Current theme</span><h2>${cur.number}. ${esc(cur.name)}</h2><p class="muted" style="margin:0">${esc(cur.tagline)}</p>
+        <div class="th-swatches" aria-label="Colours of this theme">${dotsOf(cur.id, mode)}</div>
+        <dl class="th-facts">
+          <div><dt>Appearance</dt><dd>${p.appearance === 'system' ? 'Follows the system' : p.appearance === 'light' ? 'Light' : 'Dark'} (now ${mode})</dd></div>
+          <div><dt>Last switched</dt><dd>${esc(st.lastTxt)}</dd></div>
+          ${p.previousThemeId ? `<div><dt>Previous theme</dt><dd>${esc(thName(p.previousThemeId))}</dd></div>` : ''}
+          <div><dt>Next scheduled switch</dt><dd>${esc(st.nextTxt)}${st.nextId ? ` to <b>${esc(thName(st.nextId))}</b>` : ''}${st.nextNote ? `<br><span class="muted">${esc(st.nextNote)}</span>` : ''}</dd></div>
+          <div><dt>Rotation</dt><dd>${p.locked ? 'Locked on this theme' : rot.enabled ? esc(fq.short || fq.id) + ' \u00b7 ' + (rot.order === 'random' ? 'random' : 'sequential') : 'Off'}</dd></div>
+        </dl></div><div class="th-hero-r">${MOCK.html(THE, cur.id, mode, { big: true })}</div></section>
+    <section class="card2"><div class="hcard-h"><h3>Appearance</h3></div><span class="muted">Light, dark, or follow this device. Every theme has both.</span>
+      ${seg('data-th-appear', [['system', 'System', 'brightness_auto'], ['light', 'Light', 'light_mode'], ['dark', 'Dark', 'dark_mode']], p.appearance, 'Appearance')}</section>
+    <section><h3 class="sech" style="margin-top:6px">Themes</h3><p class="muted" style="margin:0 0 12px">Every preview shows the real colours in light and dark. Preview paints the whole app so you can look around before you apply.</p><div class="th-grid">${THE.themes.map(card).join('')}</div></section>
+    <section class="card2 th-rot${rot.enabled && !p.locked ? '' : ' off'}"><div class="hcard-h"><h3>Automatic theme rotation</h3></div>
+      <div class="settings-row"><span><b>Switch themes automatically</b><br><span class="muted">COCO changes theme on the schedule below. Browsing and focusing the app never switches it.</span></span><input type="checkbox" class="switch" id="thRotOn" ${rot.enabled ? 'checked' : ''} aria-label="Switch themes automatically"></div>
+      <div class="th-opts"><div><span class="eyebrow">How often</span>${seg('data-th-freq', THE.frequencies.map((x) => [x.id, x.label]), rot.frequency, 'How often to switch')}</div>
+        <div><span class="eyebrow">In what order</span>${seg('data-th-order', THE.orders.map((x) => [x.id, x.label]), rot.order, 'Order')}</div>${timeRow}
+        <div><span class="eyebrow">Next theme</span>${nextCard || '<span class="muted">Nothing is scheduled.</span>'}</div></div>
+      <div class="th-acts"><button class="btn tonal" data-th="next"><i class="ms">skip_next</i>Apply next theme now</button>
+        <label class="th-lock"><input type="checkbox" class="switch" id="thLock" ${p.locked ? 'checked' : ''} aria-label="Lock this theme"><span><b>Lock this theme</b><br><span class="muted">Keeps ${esc(cur.name)} even while rotation is on</span></span></label>
+        <button class="btn text" data-th="reset"><i class="ms">restart_alt</i>Reset to default</button></div></section>
+    <section class="card2"><h3>How switching works</h3><ul class="relnotes"><li>Every time COCO opens: a new theme each time you open the app (a reload of the page is not opening it).</li><li>Every 5 or 7 hours: counted from the last switch. Daily, weekly and monthly: at the time you set, in your local time zone.</li><li>If COCO was closed when a switch was due, one switch is applied when you open it, however long it was closed.</li><li>Random never gives you the theme you are on, nor the one before it. Sequential goes 1 to 6 and starts again.</li><li>Your choice is saved on this device and, when it is paired, shared with your other devices.</li></ul></section></div>`;
+}
+V.themes = themesView;
+
+// ---------------------------------------------------------------- the quick switch (top bar) and the preview bar
+function renderThemeUi() {
+  if (!TH || !THE) return;
+  const snap = TH.snapshot(), pv = snap.previewing, bar = $('#themeBar');
+  if (bar) { bar.hidden = !pv; if (pv) morph(bar, `<span class="thb-t"><i class="ms">visibility</i>Previewing <b>${esc(thName(pv))}</b>. Nothing is saved yet.</span><button class="btn filled" data-th="commit">Apply</button><button class="btn text" data-th="cancel">Cancel</button>`); }
+  const panel = $('#themePanel');
+  if (panel && !panel.hidden) morph(panel, `<div class="panel-h"><b>Theme</b><span class="muted">${esc(thName(snap.prefs.themeId))}${snap.prefs.locked ? ' \u00b7 locked' : ''}</span></div>${THE.themes.map((t) => `<button class="th-q${t.id === snap.prefs.themeId ? ' on' : ''}" data-th="apply" data-id="${t.id}"><span class="th-dots">${Object.values(t.seeds).map((c) => `<i style="background:${c}"></i>`).join('')}</span><span>${t.number}. ${esc(t.name)}</span>${t.id === snap.prefs.themeId ? '<i class="ms">check</i>' : ''}</button>`).join('')}<a class="th-q more" href="#themes"><i class="ms">tune</i><span>Appearance and automatic switching</span></a>`);
+}
+
+// ---------------------------------------------------------------- keeping the choice on every device of the same person
+// The preference is one small JSON document in the existing `controls` table (id ui_theme.<email>), read and written through the same Nova door as
+// every other setting. No new table. Writes are compare-and-set on the row's updated_at, so two devices cannot overwrite each other blindly; the
+// document's own updatedAt decides which copy is newer. A "launch" switch is a device-local event and is never shared. If the table cannot be read
+// or written, the app keeps working from this device and says nothing.
+const thRowId = () => 'ui_theme.' + String((me && me.email) || '').toLowerCase();
+let thRow = null, thPushTimer = null, thPushBusy = false, thDirty = false, thSynced = false;
+async function thCloudPull() {
+  if (!TH || !NOVA || !me || !me.email) return;
+  TH.setDevice(deviceId);
+  try {
+    const r = await sb.from('controls').select('id,value,updated_at').eq('id', thRowId());
+    if (r.error || !Array.isArray(r.data)) return;                         // not readable here: stay local
+    thRow = r.data[0] || null;
+    const local = TH.get();
+    if (thRow && thRow.value) { TH.adopt(thRow.value); if (!thSynced) { thSynced = true; const after = TH.get(); if (local.updatedAt && (Date.parse(local.updatedAt) || 0) > (Date.parse((thRow.value || {}).updatedAt) || 0) && after.reason !== 'launch') thPushSoon(); } }
+    else if (!thSynced) { thSynced = true; if (local.updatedAt && local.reason !== 'launch') thPushSoon(); }   // first device to share: publish what is here
+  } catch { /* offline or not allowed */ }
+}
+function thPushSoon() { thDirty = true; clearTimeout(thPushTimer); thPushTimer = setTimeout(thCloudPush, 700); }
+async function thCloudPush(retry = true) {
+  if (!TH || !NOVA || !me || !me.email || thPushBusy || !thDirty) return;
+  thPushBusy = true; thDirty = false;
+  try {
+    const doc = TH.get(), id = thRowId(), now = new Date().toISOString();
+    if (thRow) {
+      const r = await sb.from('controls').update({ value: doc, updated_by: deviceId, updated_at: now }).eq('id', id).eq('updated_at', thRow.updated_at).select('id,value,updated_at');
+      if (r.error) throw r.error;
+      if (r.data && r.data.length) thRow = r.data[0];
+      else { await thCloudPull(); if (retry && (Date.parse(TH.get().updatedAt) || 0) > (Date.parse(((thRow || {}).value || {}).updatedAt) || 0)) { thPushBusy = false; thDirty = true; return thCloudPush(false); } }   // somebody else wrote first: adopt it, or write again once
+    } else {
+      const r = await sb.from('controls').insert({ id, value: doc, updated_by: deviceId }).select('id,value,updated_at');
+      if (r.error) await thCloudPull(); else thRow = (r.data || [])[0] || null;
+    }
+  } catch { /* the local copy is the truth; the next change tries again */ }
+  thPushBusy = false;
+}
+if (TH) TH.onChange((snap, meta) => {
+  if (meta && (meta.origin === 'local' || (meta.origin === 'rotation' && meta.rotated !== 'launch'))) thPushSoon();
+  if (page === 'themes' || (!$('#themePanel').hidden) || snap.previewing !== undefined) { try { render(); } catch { /* the page is not ready yet */ } }
+});
+
+// ---------------------------------------------------------------- wiring (installed once)
+(function wireThemes() {
+  if (!TH) return;
+  document.addEventListener('click', (e) => {
+    const t = e.target; if (!t || !t.closest) return;
+    if (t.closest('#themeBtn')) { const p = $('#themePanel'); p.hidden = !p.hidden; if (!p.hidden) { $('#bellPanel').hidden = true; renderThemeUi(); } return; }
+    if (!t.closest('#themePanel')) { const p = $('#themePanel'); if (p && !p.hidden) p.hidden = true; }
+    const b = t.closest('[data-th]'); if (b) {
+      const a = b.dataset.th, id = b.dataset.id;
+      if (a === 'apply') { TH.apply(id); const p = $('#themePanel'); if (p) p.hidden = true; toast(`${thName(id)} applied`); }
+      else if (a === 'preview') { TH.preview(id); toast(`Previewing ${thName(id)}. Apply or Cancel at the bottom.`); }
+      else if (a === 'commit') { const id2 = TH.isPreviewing(); if (id2) { TH.commitPreview(); toast(`${thName(id2)} applied`); } }
+      else if (a === 'cancel') { TH.cancelPreview(); }
+      else if (a === 'mode') { const card = b.closest('.th-card'); thShow[id] = (card && card.dataset.show === 'dark') ? 'light' : 'dark'; render(); }
+      else if (a === 'next') { TH.next(); toast(`${thName(TH.get().themeId)} applied`); }
+      else if (a === 'tz') { TH.setRotation({ tz: thDevTz() }); }
+      else if (a === 'reset') { if (confirm('Reset to the default theme (Original Signature), follow the system, rotation off and unlocked?')) { TH.reset(); toast('Reset to Original Signature'); } }
+      return;
+    }
+    const ap = t.closest('[data-th-appear]'); if (ap) { TH.setAppearance(ap.dataset.thAppear); return; }
+    const fr = t.closest('[data-th-freq]'); if (fr) { TH.setRotation({ frequency: fr.dataset.thFreq }); return; }
+    const od = t.closest('[data-th-order]'); if (od) { TH.setRotation({ order: od.dataset.thOrder }); return; }
+  });
+  document.addEventListener('change', (e) => {
+    const el = e.target; if (!el || !el.id) return;
+    if (el.id === 'thRotOn') TH.setRotation({ enabled: el.checked });
+    else if (el.id === 'thLock') TH.setLocked(el.checked);
+    else if (el.id === 'thTime' && /^\d\d:\d\d$/.test(el.value)) TH.setRotation({ time: el.value });
+    else if (el.id === 'thWeekday') TH.setRotation({ weekday: Number(el.value) });
+    else if (el.id === 'thDom') TH.setRotation({ dayOfMonth: Number(el.value) });
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { const p = $('#themePanel'); if (p && !p.hidden) p.hidden = true; if (TH.isPreviewing()) TH.cancelPreview(); } });
+  TH.watch();       // follows the system's light/dark, and looks at the schedule once a minute and when the app wakes up
+})();
+
 const SUB0 = { teams: 'teams', ai: 'calls', system: 'runtime', company: 'houses', structure: 'org:coco', cloud: 'autonomy' };
 // Settings the founders change live in Coco Cloud, so a reload shows what the runtime is really using.
-addEventListener('hashchange', () => { page = location.hash.slice(1) || 'home'; if (SUB0[page]) sub = SUB0[page]; if (page !== 'runs') cpRun = null; render(); scrollTo(0, 0); });
+addEventListener('hashchange', () => { const r = routeOf(); page = r.page; ARG = r.arg; if (SUB0[page]) sub = PENDING_SUB || SUB0[page]; PENDING_SUB = null; if (page !== 'runs') cpRun = null; render(); scrollTo(0, 0); });
 
 function applyLook() {
-  const th = store.get('gs-theme') || 'system';
-  if (th === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = th;
+  // colours (theme and light/dark) belong to the theme engine; only calm motion is decided here
   document.body.classList.toggle('calm', store.get('gs-calm') === '1');
 }
 function wireSettings() {
@@ -5831,7 +6739,7 @@ document.addEventListener('click', async (e) => {
     if (error) return toast(error.message);
     loadAll();
   }
-  if (ds.themeSet) { store.set('gs-theme', ds.themeSet); applyLook(); render(); }
+  if (ds.themeSet) { if (window.CocoTheme) window.CocoTheme.setAppearance(ds.themeSet); render(); }
   if (ds.set === 'refresh') { await loadAll(); toast('Up to date'); }
   if (ds.set === 'signout') { await sb.auth.signOut(); show('signin'); }
   if (ds.yes || ds.no) { await decideApproval(ds.yes || ds.no, !!ds.yes); toast(ds.yes ? 'YES saved' : 'No saved'); }

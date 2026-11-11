@@ -39,6 +39,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -61,14 +62,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-// ---------- the five tabs of the Lounge Standard v2 ----------
-enum class Tab(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Rounded.Home), Teams("Teams", Icons.Rounded.Groups), Chat("Chat", Icons.Rounded.Forum),
-    Remote("Remote", Icons.Rounded.SettingsRemote), More("More", Icons.Rounded.Menu)
-}
-enum class MorePage(val label: String, val icon: ImageVector) {
-    Approvals("Approvals", Icons.Rounded.Verified), Board("Board", Icons.Rounded.ViewKanban), Rules("Rules", Icons.Rounded.Gavel),
-    Devices("Devices", Icons.Rounded.Devices), Island("Island", Icons.Rounded.AutoAwesome), Settings("Settings", Icons.Rounded.Settings)
+// ---------- the phone's bottom bar: the contract's phone_bottom (home, houses, work, more); labels come from the contract ----------
+enum class Tab(val id: String, val label: String, val icon: ImageVector) {
+    Home("home", "Home", Icons.Rounded.Home), Houses("houses", "Houses", Icons.Rounded.Apartment), Work("work", "Work", Icons.Rounded.TaskAlt), More("more", "More", Icons.Rounded.Menu)
 }
 
 val LocalCalm = staticCompositionLocalOf { false }
@@ -92,10 +88,10 @@ fun inTime(iso: String?): String {
         else -> DateTimeFormatter.ofPattern("EEE d MMM, h:mm a").withZone(zone).format(t) }
 }
 fun online(d: JSONObject) = parse(d.optString("last_seen"))?.let { Duration.between(it, Instant.now()).seconds < 150 } ?: false
-private fun JSONObject.s(k: String) = optString(k).let { if (it == "null") "" else it }
+internal fun JSONObject.s(k: String) = optString(k).let { if (it == "null") "" else it }
 
 /** One line per account: what the platform granted, until when, how renewal went, the latest health check. Never a credential. */
-private fun accountFacts(a: JSONObject): String = listOfNotNull(
+internal fun accountFacts(a: JSONObject): String = listOfNotNull(
     a.s("state").replace('_', ' '),
     a.optJSONArray("scopes")?.length()?.takeIf { it > 0 }?.let { "$it permissions granted" },
     a.s("token_expires_at").takeIf { it.isNotBlank() }?.let { "authorization until ${it.take(10)}" },
@@ -107,12 +103,12 @@ private fun accountFacts(a: JSONObject): String = listOfNotNull(
 // ---------- small pieces ----------
 @Composable
 fun StatusChip(state: String, text: String? = null) {
-    val lux = LocalLux.current
+    val r = LocalCocoRoles.current; val cs = MaterialTheme.colorScheme
     val (bg, fg, label) = when (state) {
-        "running", "working", "done", "approved", "live", "connected", "verifying" -> Triple(lux.goodC, lux.good, text ?: state.replaceFirstChar { it.uppercase() })
-        "waiting", "needs_yes", "need_approval", "waiting_yes", "waiting_pc", "next", "planned", "queued", "late", "partial" -> Triple(lux.warnC, lux.warn, text ?: mapOf("partial" to "Partly connected", "need_approval" to "Needs YES", "waiting" to "Needs YES", "needs_yes" to "Needs YES", "waiting_yes" to "Needs YES", "waiting_pc" to "Waits for a PC", "next" to "Next", "planned" to "Planned", "queued" to "Queued", "late" to "Late")[state].orEmpty())
-        "failed", "rejected", "off", "blocked", "not_connected", "error" -> Triple(lux.badC, lux.bad, text ?: mapOf("blocked" to "Blocked", "not_connected" to "Not connected", "error" to "Error", "failed" to "Failed", "rejected" to "No", "off" to "Not connected")[state].orEmpty())
-        else -> Triple(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurface, text ?: state.replaceFirstChar { it.uppercase() })
+        "running", "working", "done", "approved", "live", "connected", "verifying" -> Triple(r.successContainer, r.onSuccessContainer, text ?: state.replaceFirstChar { it.uppercase() })
+        "waiting", "needs_yes", "need_approval", "waiting_yes", "waiting_pc", "next", "planned", "queued", "late", "partial" -> Triple(r.warningContainer, r.onWarningContainer, text ?: mapOf("partial" to "Partly connected", "need_approval" to "Needs YES", "waiting" to "Needs YES", "needs_yes" to "Needs YES", "waiting_yes" to "Needs YES", "waiting_pc" to "Waits for a PC", "next" to "Next", "planned" to "Planned", "queued" to "Queued", "late" to "Late")[state].orEmpty())
+        "failed", "rejected", "off", "blocked", "not_connected", "error" -> Triple(cs.errorContainer, cs.onErrorContainer, text ?: mapOf("blocked" to "Blocked", "not_connected" to "Not connected", "error" to "Error", "failed" to "Failed", "rejected" to "No", "off" to "Not connected")[state].orEmpty())
+        else -> Triple(cs.surfaceContainerHighest, cs.onSurface, text ?: state.replaceFirstChar { it.uppercase() })
     }
     Surface(color = bg, contentColor = fg, shape = RoundedCornerShape(50)) { Text(label, Modifier.padding(horizontal = 10.dp, vertical = 3.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, maxLines = 1) }
 }
@@ -126,13 +122,20 @@ fun Appear(index: Int, content: @Composable () -> Unit) {
     Box(Modifier.graphicsLayer { alpha = p; translationY = (1f - p) * 36f }) { content() }
 }
 
+/** A card: a panel (see CocoPanel). `alert` is the error container (an emergency stop that is on); `highlight` is the chosen one. */
 @Composable
-fun Card(modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.surfaceContainerLow, content: @Composable ColumnScope.() -> Unit) {
-    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), color = color) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp), content = content) }
+fun Card(modifier: Modifier = Modifier, alert: Boolean = false, highlight: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
+    CocoPanel {
+        val cs = MaterialTheme.colorScheme; val r = LocalCocoRoles.current
+        Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = if (alert) cs.errorContainer else r.cardSurface, contentColor = if (alert) cs.onErrorContainer else cs.onSurface,
+            border = androidx.compose.foundation.BorderStroke(if (highlight) 2.dp else 1.dp, if (highlight) r.link else cs.outlineVariant)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp), content = content)
+        }
+    }
 }
 
 @Composable fun Muted(text: String, maxLines: Int = Int.MAX_VALUE) = Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
-@Composable fun Eyebrow(text: String, color: Color = MaterialTheme.colorScheme.primary) = Text(text.uppercase(), style = MaterialTheme.typography.labelMedium, color = color)
+@Composable fun Eyebrow(text: String, color: Color = LocalCocoRoles.current.link) = Text(text.uppercase(), style = MaterialTheme.typography.labelMedium, color = color)
 @Composable fun Section(text: String) = Text(text, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 10.dp))
 
 // ---------- gates ----------
@@ -140,7 +143,7 @@ fun Card(modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme
 fun GateCard(title: String, eyebrow: String, content: @Composable ColumnScope.() -> Unit) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().imePadding().padding(20.dp), contentAlignment = Alignment.Center) {
         Appear(0) {
-            Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.widthIn(max = 440.dp)) {
+            PanelSurface(Modifier.widthIn(max = 440.dp), shape = RoundedCornerShape(32.dp)) {
                 Column(Modifier.padding(26.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         LivingMark(Marks.coco, 64.dp)
@@ -174,68 +177,118 @@ fun Pair(vm: Lounge) {
     }
 }
 
-// ---------- the Lounge ----------
+// ---------- the Lounge: the unified navigation (Lounge/contract/nav-contract.json) ----------
 @Composable
 fun LoungeApp(vm: Lounge) {
+    val ctx = LocalContext.current
+    val nav = remember { NavContract.load(ctx) }
     var tab by rememberSaveable { mutableStateOf(Tab.Home) }
-    var more by rememberSaveable { mutableStateOf<MorePage?>(null) }
-    var house by rememberSaveable { mutableStateOf("gigi") }
+    var sec by rememberSaveable { mutableStateOf<String?>(null) }       // More: the open section, or "island"
+    var pageOf by rememberSaveable { mutableStateOf("") }               // the page inside the section; "" = its first
+    var house by rememberSaveable { mutableStateOf<String?>(null) }     // Houses: an open House workspace
+    var houseTab by rememberSaveable { mutableStateOf("overview") }
+    var teamHouse by rememberSaveable { mutableStateOf("gigi") }
+    var global by rememberSaveable { mutableStateOf<String?>(null) }    // Ask COCO / Remote Control, over everything
     var member by rememberSaveable { mutableStateOf<String?>(null) }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(vm.message) { vm.message?.let { snack.showSnackbar(it); vm.message = null } }
+    LaunchedEffect(Unit) { vm.loadExtra() }
     val waiting = vm.data.approvals.count { it.s("state") == "waiting" }
-    val go: (Tab, MorePage?, String?) -> Unit = { t, m, h -> tab = t; more = m; h?.let { house = it } }
+    val sectionId = when (tab) { Tab.More -> sec; else -> tab.id }
+    val section = sectionId?.let(nav::section)
+    val page = section?.pages?.firstOrNull { it.id == pageOf } ?: section?.pages?.firstOrNull()
+
+    /** Any page id the web Lounge uses (the contract's legacy_pages) opens its Android destination. */
+    fun go(id: String) {
+        val (s, p) = nav.resolve(id) ?: return
+        if (s == "global") { global = p; return }
+        global = null; house = null
+        tab = Tab.entries.firstOrNull { it.id == s } ?: Tab.More
+        sec = if (tab == Tab.More) s else null
+        pageOf = p
+    }
+    val openHouse: (String) -> Unit = { global = null; tab = Tab.Houses; house = it; houseTab = "overview" }
+    androidx.activity.compose.BackHandler(global != null || house != null || (tab == Tab.More && sec != null) || tab != Tab.Home) {
+        when { global != null -> global = null; house != null -> house = null; tab == Tab.More && sec != null -> sec = null; else -> tab = Tab.Home }
+    }
+    val title = when {
+        global != null -> nav.globalLabel(global!!)
+        house != null -> nav.house(house!!)?.label ?: house!!
+        tab == Tab.More && sec == null -> "More"
+        tab == Tab.More && sec == "island" -> "Coco Island"
+        else -> section?.label ?: tab.label
+    }
+    val pcOnline = vm.data.devices.any { it.s("id") != vm.cloud.deviceId && it.optBoolean("active", true) && online(it) }
+    var paletteMenu by remember { mutableStateOf(false) }
+    // a theme being previewed goes back the moment the Appearance screen is left
+    val onAppearance = global == null && house == null && tab == Tab.More && sec == "system" && page?.id == "themes"
+    LaunchedEffect(onAppearance) { if (!onAppearance) vm.themes.cancelPreview() }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
         topBar = {
-            TopAppBar(
-                navigationIcon = { if (tab == Tab.More && more != null) IconButton({ more = null }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
+            CocoPanel { TopAppBar(
+                navigationIcon = { if (global != null || house != null || (tab == Tab.More && sec != null)) IconButton({ when { global != null -> global = null; house != null -> house = null; else -> sec = null } }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 title = {
                     Column {
-                        Text("Good Space · ${vm.callMe}".uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                        AnimatedContent(if (tab == Tab.More && more != null) more!!.label else tab.label, label = "title", transitionSpec = {
-                            (slideInVertically(MuMotion.spatial()) { it / 2 } + fadeIn(MuMotion.effects())) togetherWith (slideOutVertically(MuMotion.spatial()) { -it / 2 } + fadeOut(tween(90)))
-                        }) { title -> Text(title, style = MaterialTheme.typography.headlineMedium) }
+                        Text("Good Space · ${if (vm.data.paused) "paused" else if (vm.live) "live" else "reconnecting"}".uppercase(), style = MaterialTheme.typography.labelMedium, color = if (vm.data.paused) MaterialTheme.colorScheme.error else LocalCocoRoles.current.link)
+                        Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 },
                 actions = {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 12.dp)) {
-                        Box(Modifier.size(9.dp).background(if (vm.live) Color(0xFF2E9E57) else MaterialTheme.colorScheme.outline, CircleShape))
-                        Spacer(Modifier.width(6.dp)); Muted(if (vm.data.paused) "paused" else if (vm.live) "live" else "reconnecting")
+                    // the palette: a quick switch between the six COCO themes
+                    Box {
+                        IconButton({ paletteMenu = true }) { Icon(sym("palette"), "Appearance") }
+                        ThemeQuickMenu(vm.themes, paletteMenu, { paletteMenu = false }) { global = null; house = null; tab = Tab.More; sec = "system"; pageOf = "themes" }
                     }
+                    // Remote Control: the dot says whether a PC or the other phone is online to take a command
+                    IconButton({ global = "remote" }) {
+                        BadgedBox(badge = { Box(Modifier.size(8.dp).background(if (pcOnline) LocalCocoRoles.current.success else MaterialTheme.colorScheme.outline, CircleShape)) }) { Icon(sym("settings_remote"), nav.globalLabel("remote")) }
+                    }
+                    IconButton({ global = "chat" }) { Icon(sym("forum"), nav.globalLabel("chat")) }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-            )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) }
         },
-        bottomBar = { FloatingNav(tab, waiting, { t -> tab = t; if (t == Tab.More) more = null }) },
+        bottomBar = { FloatingNav(tab, waiting, { t -> global = null; house = null; tab = t; pageOf = ""; if (t == Tab.More) sec = null },
+            labels = { t -> nav.section(t.id)?.label ?: t.label }) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { pad ->
-        AnimatedContent(tab to more, Modifier.padding(pad).consumeWindowInsets(pad), transitionSpec = {
-            // Shared-axis spring: screens to the right slide in from the right, going back slides from the left.
-            val dir = (targetState.first.ordinal - initialState.first.ordinal).let { if (it == 0) (if (targetState.second != null) 1 else -1) else Integer.signum(it) }
-            (slideInHorizontally(MuMotion.spatial()) { w -> dir * w / 5 } + fadeIn(tween(220, delayMillis = 60))) togetherWith
-                (slideOutHorizontally(MuMotion.spatial()) { w -> -dir * w / 5 } + fadeOut(tween(120)))
-        }, label = "screens") { (t, m) ->
-            if (t == Tab.Chat) ChatScreen(vm)
-            else LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                when (t) {
-                    Tab.Home -> home(vm, go) { member = it }
-                    Tab.Teams -> teams(vm, house) { house = it }
-                    Tab.Remote -> remote(vm)
-                    Tab.More -> when (m) {
-                        null -> moreMenu(vm) { more = it }
-                        MorePage.Approvals -> approvals(vm)
-                        MorePage.Board -> board(vm)
-                        MorePage.Rules -> rules(vm)
-                        MorePage.Devices -> devices(vm)
-                        MorePage.Island -> islandPage()
-                        MorePage.Settings -> settings(vm)
+      Box(Modifier.fillMaxSize()) {
+        val key = listOf(global, house, tab.name, sec).joinToString("/")
+        AnimatedContent(key, Modifier.padding(pad).consumeWindowInsets(pad), transitionSpec = {
+            if (vm.calm) fadeIn(tween(0)) togetherWith fadeOut(tween(0)) else fadeIn(tween(200, delayMillis = 40)) togetherWith fadeOut(tween(90))
+        }, label = "screens") { _ ->
+            when {
+                global == "chat" -> ChatScreen(vm)
+                global == "remote" -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { remote(vm) }
+                house != null -> Column(Modifier.fillMaxSize()) { NotReadBanner(vm); nav.house(house!!)?.let { HouseWorkspace(vm, nav, it, houseTab) { t -> houseTab = t } } }
+                else -> Column(Modifier.fillMaxSize()) {
+                    if (!(tab == Tab.More && sec == null)) NotReadBanner(vm)
+                    val pages = section?.pages.orEmpty()
+                    if (pages.size > 1 && page != null) CocoPanel {
+                        // the section's own navigation: a panel strip, the selected page in the accessible accent
+                        val link = LocalCocoRoles.current.link; val cs = MaterialTheme.colorScheme
+                        ScrollableTabRow(pages.indexOf(page), edgePadding = 16.dp, containerColor = cs.surface, contentColor = link,
+                            indicator = { positions -> TabRowDefaults.SecondaryIndicator(Modifier.tabIndicatorOffset(positions[pages.indexOf(page)]), color = link) }) {
+                            pages.forEach { p -> androidx.compose.material3.Tab(p == page, { pageOf = p.id }, text = { Text(p.label, maxLines = 1) }, icon = { Icon(sym(p.icon), null, Modifier.size(20.dp)) },
+                                selectedContentColor = link, unselectedContentColor = cs.onSurfaceVariant) }
+                        }
                     }
-                    Tab.Chat -> {}
+                    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 12.dp, 16.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        when {
+                            tab == Tab.More && sec == null -> moreMenu(vm, nav, { s -> sec = s; pageOf = "" }, { g -> global = g })
+                            tab == Tab.More && sec == "island" -> islandPage()
+                            page?.id == "themes" -> appearance(vm)
+                            page != null -> page(vm, nav, page.id, ::go, openHouse, teamHouse, { teamHouse = it }) { member = it }
+                        }
+                    }
                 }
             }
         }
+        // while a theme is being previewed the whole app wears it; this bar keeps or drops it
+        PreviewBar(vm.themes, Modifier.align(Alignment.BottomCenter).padding(pad).padding(bottom = 8.dp))
+      }
     }
     member?.let { MemberSheet(vm, it) { member = null } }
     Dialogs(vm)
@@ -243,139 +296,6 @@ fun LoungeApp(vm: Lounge) {
 
 /** Bottom room every screen keeps free for the floating nav (it floats over the content). */
 val NavRoom = 96.dp
-
-// ---------- HOME: the dashboard ----------
-fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit, onMember: (String) -> Unit = {}) {
-    val d = vm.data
-    item(key = "hero") {
-        Appear(0) {
-            Surface(shape = RoundedCornerShape(32.dp), color = Mu.plum, contentColor = Mu.bubblegum, modifier = Modifier.fillMaxWidth()) {
-                Box {
-                    DriftBlobs(listOf(Mu.wine, Mu.cherry, Mu.tomato), Modifier.matchParentSize())
-                    LivingMark(Marks.coco.copy(bg = Mu.wine), 150.dp, Modifier.align(Alignment.TopEnd).offset(x = 40.dp, y = (-30).dp))
-                    Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Coco", fontFamily = Fun, fontSize = 22.sp, color = Mu.bubblegum)
-                        val hour = remember(rememberTicker(60_000L)) { java.time.LocalTime.now().hour }
-                        Text(greeting(hour, vm.callMe), style = MaterialTheme.typography.displaySmall, color = Mu.cream)
-                        val w = d.approvals.count { it.s("state") == "waiting" }
-                        Text(if (d.paused) "Coco is paused. Nothing new starts until you resume." else if (w > 0) "$w things need your YES." else "Everything is moving. Nothing needs you.", style = MaterialTheme.typography.bodyLarge, color = Mu.cream)
-                    }
-                }
-            }
-        }
-    }
-    // Coco HQ: the team at work, live, with Coco coordinating in the middle
-    item(key = "hq") { Appear(1) { CocoHQ(vm, onMember) } }
-    // Quick command to your own PC (online one first), right on Home
-    val myPc = d.devices.filter { it.s("kind") == "pc" && it.s("id") != vm.cloud.deviceId && it.optBoolean("active", true) }
-        .sortedWith(compareBy({ !online(it) }, { !it.s("id").startsWith(vm.cloud.deviceId?.substringBefore('-') ?: "~") }))
-        .firstOrNull()
-    if (myPc != null) item(key = "quick") { Appear(1) { CommandBar(vm, myPc, "Tell ${myPc.s("name")}") } }
-    item(key = "tiles") {
-        Appear(1) {
-            val waiting by animateIntAsState(d.approvals.count { it.s("state") == "waiting" }, tween(600), label = "w")
-            val running by animateIntAsState(d.tasks.count { it.s("status") in setOf("running", "working") }, tween(600), label = "r")
-            val chan = d.offerings.filter { it.s("kind") == "channel" }
-            val conn by animateIntAsState(chan.count { it.optBoolean("connected") }, tween(600), label = "c")
-            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Tile("$waiting", "need YES", Mu.tomato, Mu.cream, Modifier.weight(1f)) { go(Tab.More, MorePage.Approvals, null) }
-                Tile("$running", "running", Mu.cobalt, Mu.sky, Modifier.weight(1f)) { go(Tab.More, MorePage.Board, null) }
-                Tile("$conn/${chan.size}", "channels on", Mu.forest, Mu.butter, Modifier.weight(1f)) { go(Tab.Teams, null, "gigi") }
-            }
-        }
-    }
-    val upcoming = d.events.filter { it.s("status") in setOf("planned", "waiting_yes", "late") }.sortedBy { parse(it.s("due_at")) ?: Instant.MAX }
-    item(key = "nexth") { Section("Next up") }
-    if (upcoming.isEmpty()) item(key = "nexte") { Muted("Nothing planned yet.") }
-    items(upcoming.take(5), key = { "ev-" + it.s("id") }) { e -> Box(Modifier.animateItem()) { EventRow(vm, e) } }
-    val talk = TalkRules.talk(d.agentMessages, d.activity, d.members)
-    item(key = "talkh") { Section("Team talk") }
-    if (talk.isEmpty()) item(key = "talke") { Muted("Quiet right now. The team's messages to each other show here, live, as they work.") }
-    items(talk.take(14), key = { "talk-" + it.atIso + "-" + it.from }) { t -> Box(Modifier.animateItem()) { TalkRow(vm, t) } }
-    item(key = "housesh") { Section("Houses") }
-    item(key = "houses") {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp), maxItemsInEachRow = 2) {
-            d.houses.forEach { h ->
-                val id = h.s("id"); val mark = Marks.houses[id] ?: Marks.coco
-                val mine = d.offerings.filter { it.s("house_id") == id }
-                Surface(Modifier.weight(1f).clip(RoundedCornerShape(24.dp)).bounceClick { go(Tab.Teams, null, id) }, shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) { LivingMark(mark, 52.dp); Spacer(Modifier.width(8.dp)); Column { Text(h.s("name"), style = MaterialTheme.typography.titleLarge); Muted(h.s("role"), 1) } }
-                        StatusChip(h.s("state"), when (h.s("state")) { "working" -> "Working"; "next" -> "Next"; "later" -> "Later"; else -> null })
-                        Muted("${mine.size} ${if (id == "gigi") "channels" else "products"} · ${mine.count { it.optBoolean("connected") }} connected", 1)
-                    }
-                }
-            }
-        }
-    }
-    item(key = "connh") { Section("Connections") }
-    item(key = "conn") {
-        Card {
-            if (d.integrations.isEmpty()) Muted("No connections listed yet.")
-            d.integrations.forEach { c ->
-                Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    NetLogo(LOGO_DOMAINS[c.s("id")], 30.dp); Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) { Text(c.s("platform"), style = MaterialTheme.typography.titleSmall); Muted(c.s("next_action").ifBlank { c.s("account") }, 2) }
-                    StatusChip(c.s("state"))
-                }
-                d.accounts.filter { it.s("provider") == c.s("id") }.forEach { a ->
-                    Column(Modifier.padding(start = 40.dp, bottom = 6.dp)) {
-                        Text(a.s("external_name"), style = MaterialTheme.typography.bodyMedium)
-                        Muted(accountFacts(a), 3)
-                        if (a.s("reconnect_steps").isNotBlank()) Muted("To reconnect: ${a.s("reconnect_steps")}", 2)
-                    }
-                }
-            }
-        }
-    }
-    item(key = "provh") { Section("Cloud providers") }
-    item(key = "prov") {
-        var armed by remember { mutableStateOf("") }   // approve / roll back need a second tap
-        Card {
-            if (d.cloudProviders.isEmpty()) Muted("No cloud providers are registered yet.")
-            d.cloudProviders.forEach { p ->
-                Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text(p.s("label"), style = MaterialTheme.typography.titleSmall); Muted("${p.s("capability")} · ${p.s("role")}", 1) }
-                    StatusChip(p.s("state"))
-                }
-            }
-            d.switches.forEach { s ->
-                val id = s.s("id"); val st = s.s("state")
-                Column(Modifier.padding(top = 8.dp)) {
-                    Text("${s.s("capability")}: ${s.s("from_provider").ifBlank { "none" }} → ${s.s("to_provider")}", style = MaterialTheme.typography.titleSmall)
-                    Muted("${st.replace('_', ' ')} · backup ${if (s.optBoolean("backup_verified")) "verified" else "NOT verified"}", 2)
-                    Row {
-                        if (st == "validated" && s.optBoolean("backup_verified"))
-                            TextButton({ if (armed == "approve:$id") { armed = ""; vm.providerSwitch("approve", id) } else armed = "approve:$id" }) {
-                                Text(if (armed == "approve:$id") "Tap again to approve" else "Approve cut-over") }
-                        if (st in listOf("planned", "exported", "imported", "validated", "approved", "cut_over"))
-                            TextButton({ if (armed == "rollback:$id") { armed = ""; vm.providerSwitch("rollback", id) } else armed = "rollback:$id" }) {
-                                Text(if (armed == "rollback:$id") "Tap again to roll back" else "Roll back") }
-                    }
-                }
-            }
-        }
-    }
-    item(key = "pause") {
-        Card {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text("Coco is ${if (vm.data.paused) "paused" else "working"}", style = MaterialTheme.typography.titleMedium); Muted("Emergency switch for every device and the cloud") }
-                Switch(!vm.data.paused, { vm.setPaused(!it) })
-            }
-        }
-    }
-}
-
-@Composable
-fun Tile(value: String, label: String, bg: Color, fg: Color, modifier: Modifier, onClick: () -> Unit) {
-    Surface(modifier.fillMaxHeight().clip(RoundedCornerShape(24.dp)).bounceClick(onClick), shape = RoundedCornerShape(24.dp), color = bg, contentColor = fg) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
-            // "13/15" used to break into two lines: long values get a smaller size and never wrap.
-            Text(value, style = if (value.length > 3) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium, color = fg, maxLines = 1, softWrap = false)
-            Text(label, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 2)
-        }
-    }
-}
 
 @Composable
 fun EventRow(vm: Lounge, e: JSONObject) {
@@ -456,7 +376,7 @@ fun OfferingCard(o: JSONObject) {
             Box(Modifier.weight(1f)) { Muted("Last: $it · ${ago(o.s("last_post_at"))}", 1) }
             o.s("last_post_url").takeIf { u -> u.isNotBlank() }?.let { u -> TextButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u))) }) { Text("Watch") } }
         } }
-        o.s("next_post_title").takeIf { it.isNotBlank() }?.let { Text("Next: $it · ${inTime(o.s("next_post_at"))}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) }
+        o.s("next_post_title").takeIf { it.isNotBlank() }?.let { Text("Next: $it · ${inTime(o.s("next_post_at"))}", style = MaterialTheme.typography.bodyMedium, color = LocalCocoRoles.current.link, fontWeight = FontWeight.Bold) }
     }
 }
 
@@ -467,6 +387,7 @@ private val phoneApps = listOf("youtube" to "YouTube", "ytmusic" to "YT Music", 
 fun LazyListScope.remote(vm: Lounge) {
     val targets = vm.data.devices.filter { it.s("id") != vm.cloud.deviceId && it.optBoolean("active", true) }.sortedBy { if (it.s("kind") == "pc") 0 else 1 }
     item(key = "rnote") { Muted("Pick a device and control it: play YouTube songs, music keys, volume, open apps, lock, restart. The device's Coco Lounge app runs it and reports back here.") }
+    if (targets.isEmpty()) item(key = "rnone") { Card { Muted(if (vm.dataAt == 0L) "Devices have not been read from Coco Cloud yet, so there is nothing to control." else "No other paired device is switched on.") } }
     item(key = "rpick") {
         var sel by rememberSaveable { mutableStateOf(targets.firstOrNull()?.s("id").orEmpty()) }
         val dev = targets.firstOrNull { it.s("id") == sel } ?: targets.firstOrNull()
@@ -566,22 +487,22 @@ fun CommandBar(vm: Lounge, dev: JSONObject, title: String = "Tell ${dev.optStrin
             else -> { live = true; startOnce() }
         }
     }
-    Surface(shape = RoundedCornerShape(28.dp), color = Mu.plum, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
+    PanelSurface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp)) {
+        val cs = MaterialTheme.colorScheme
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(title, style = MaterialTheme.typography.titleLarge, color = Mu.cream)
-                    Text(if (live) (hearing.ifBlank { "Listening… keep talking. Say \"bas\" to stop." }) else "Tap the mic once: it keeps listening and does each thing you say.", style = MaterialTheme.typography.bodyMedium, color = Mu.bubblegum)
+                    Text(title, style = MaterialTheme.typography.titleLarge)
+                    Text(if (live) (hearing.ifBlank { "Listening… keep talking. Say \"bas\" to stop." }) else "Tap the mic once: it keeps listening and does each thing you say.", style = MaterialTheme.typography.bodyMedium, color = cs.onSurfaceVariant)
                 }
                 Spacer(Modifier.width(10.dp))
-                FilledIconButton({ listen() }, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (live) Mu.bubblegum else Mu.tomato, contentColor = if (live) Mu.plum else Mu.cream)) { Icon(if (live) Icons.Rounded.GraphicEq else Icons.Rounded.Mic, if (live) "Stop listening" else "Speak", Modifier.size(32.dp)) }
+                FilledIconButton({ listen() }, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (live) cs.primaryContainer else cs.primary, contentColor = if (live) cs.onPrimaryContainer else cs.onPrimary)) { Icon(if (live) Icons.Rounded.GraphicEq else Icons.Rounded.Mic, if (live) "Stop listening" else "Speak", Modifier.size(32.dp)) }
             }
-            if (live && heardLog.isNotEmpty()) heardLog.forEach { Text("✓ $it", style = MaterialTheme.typography.bodySmall, color = Mu.cream.copy(alpha = 0.85f)) }
-            OutlinedTextField(say, { say = it }, placeholder = { Text(if (pc) "play kesariya · open vs code · lock" else "play kesariya · open whatsapp · ring", color = Mu.cream.copy(alpha = 0.7f)) },
+            if (live && heardLog.isNotEmpty()) heardLog.forEach { Text("✓ $it", style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant) }
+            OutlinedTextField(say, { say = it }, placeholder = { Text(if (pc) "play kesariya · open vs code · lock" else "play kesariya · open whatsapp · ring") },
                 singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { send(say) }),
-                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Mu.cream, unfocusedTextColor = Mu.cream, focusedBorderColor = Mu.bubblegum, unfocusedBorderColor = Mu.cream.copy(alpha = 0.6f), cursorColor = Mu.cream),
-                trailingIcon = { IconButton({ send(say) }) { Icon(Icons.AutoMirrored.Rounded.Send, "Do it", tint = Mu.bubblegum) } })
+                trailingIcon = { IconButton({ send(say) }) { Icon(Icons.AutoMirrored.Rounded.Send, "Do it", tint = LocalCocoRoles.current.link) } })
         }
     }
 }
@@ -598,24 +519,24 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
         CommandBar(vm, dev)
         Card {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(if (pc) Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, Modifier.size(30.dp), tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
+                Icon(if (pc) Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, Modifier.size(30.dp), tint = LocalCocoRoles.current.link); Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) { Text(dev.s("name"), style = MaterialTheme.typography.titleLarge); Muted(if (online(dev)) "online · Coco Lounge connected" else if (dev.s("key_hash").isBlank()) "not paired yet" else "offline · seen ${ago(dev.s("last_seen"))} · runs if back within 10 min"); dev.optJSONObject("info")?.optString("summary")?.takeIf { it.isNotBlank() }?.let { Muted("$it · ${ago(dev.optJSONObject("info")?.optString("at"))}") } }
                 StatusChip(if (online(dev)) "live" else "off", if (online(dev)) "Online" else "Offline")
             }
             TextButton({ send("status", JSONObject()) }) { Icon(Icons.Rounded.MonitorHeart, null); Spacer(Modifier.width(6.dp)); Text("Check status") }
         }
         // Music and YouTube
-        Surface(shape = RoundedCornerShape(28.dp), color = Mu.tomato, contentColor = Mu.cream, modifier = Modifier.fillMaxWidth()) {
+        PanelSurface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp)) {
+            val cs = MaterialTheme.colorScheme
             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) { PlatformMark("youtube", 28.dp); Spacer(Modifier.width(8.dp)); Text("Play on YouTube", style = MaterialTheme.typography.titleLarge, color = Mu.cream) }
-                OutlinedTextField(song, { song = it }, placeholder = { Text("Song, singer or video", color = Mu.cream.copy(alpha = 0.7f)) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+                Row(verticalAlignment = Alignment.CenterVertically) { PlatformMark("youtube", 28.dp); Spacer(Modifier.width(8.dp)); Text("Play on YouTube", style = MaterialTheme.typography.titleLarge) }
+                OutlinedTextField(song, { song = it }, placeholder = { Text("Song, singer or video") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go), keyboardActions = KeyboardActions(onGo = { play() }),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Mu.cream, unfocusedTextColor = Mu.cream, focusedBorderColor = Mu.cream, unfocusedBorderColor = Mu.cream.copy(alpha = 0.6f), cursorColor = Mu.cream),
-                    trailingIcon = { IconButton(play) { Icon(Icons.Rounded.PlayArrow, "Play", tint = Mu.cream) } })
+                    trailingIcon = { IconButton(play) { Icon(Icons.Rounded.PlayArrow, "Play", tint = LocalCocoRoles.current.link) } })
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     listOf(Triple("media", "prev", Icons.Rounded.SkipPrevious), Triple("media", "playpause", Icons.Rounded.PlayCircle), Triple("media", "next", Icons.Rounded.SkipNext),
                         Triple("volume", "down", Icons.AutoMirrored.Rounded.VolumeDown), Triple("volume", "up", Icons.AutoMirrored.Rounded.VolumeUp), Triple("volume", "mute", Icons.AutoMirrored.Rounded.VolumeOff)).forEach { (a, k, icon) ->
-                        FilledIconButton({ send(a, JSONObject().put("key", k)) }, colors = IconButtonDefaults.filledIconButtonColors(containerColor = Mu.cream, contentColor = Mu.tomatoDeep), modifier = Modifier.size(46.dp)) { Icon(icon, k) }
+                        FilledIconButton({ send(a, JSONObject().put("key", k)) }, colors = IconButtonDefaults.filledIconButtonColors(containerColor = cs.surfaceContainerHighest, contentColor = cs.onSurface), modifier = Modifier.size(46.dp)) { Icon(icon, k) }
                     }
                 }
             }
@@ -679,20 +600,6 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
         dismissButton = { TextButton({ confirm = null }) { Text("Keep it on") } }) }
 }
 
-// ---------- MORE ----------
-fun LazyListScope.moreMenu(vm: Lounge, open: (MorePage) -> Unit) {
-    val waiting = vm.data.approvals.count { it.s("state") == "waiting" }
-    items(MorePage.entries, key = { "more-" + it.name }) { p ->
-        Surface(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).bounceClick { open(p) }, shape = RoundedCornerShape(22.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(p.icon, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(14.dp))
-                Text(p.label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                if (p == MorePage.Approvals && waiting > 0) Badge { Text("$waiting") }
-            }
-        }
-    }
-}
-
 fun LazyListScope.approvals(vm: Lounge) {
     item(key = "anote") { Muted("Your YES is recorded with your name and device. Nothing goes public, costs money or gets deleted without it.") }
     val w = vm.data.approvals.filter { it.s("state") == "waiting" }; val r = vm.data.approvals.filter { it.s("state") != "waiting" }
@@ -728,7 +635,7 @@ fun LazyListScope.board(vm: Lounge) {
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 vm.data.houses.forEach { h -> FilterChip(house == h.s("id"), { house = h.s("id") }, { Text(h.s("name")) }, leadingIcon = { LivingMark(Marks.houses[h.s("id")] ?: Marks.coco, 22.dp) }) }
             }
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) { listOf("any" to "Anywhere", "cloud" to "Cloud", "pc" to "PC").forEachIndexed { i, (v, l) -> SegmentedButton(needs == v, { needs = v }, SegmentedButtonDefaults.itemShape(i, 3)) { Text(l) } } }
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) { listOf("any" to "Anywhere", "cloud" to "Cloud", "pc" to "PC").forEachIndexed { i, (v, l) -> SegmentedButton(needs == v, { needs = v }, SegmentedButtonDefaults.itemShape(i, 3), colors = segmentedColors()) { Text(l) } } }
             MuButton({ if (title.isNotBlank()) { vm.submitTask(title.trim(), null, house, needs); title = "" } }, enabled = title.isNotBlank()) { Text("Send to Coco") }
         }
     }
@@ -750,7 +657,7 @@ fun TaskCard(vm: Lounge, t: JSONObject) {
         }
         Muted("${vm.houseName(t.s("house_id"))} · by ${t.s("created_by")} · ${ago(t.s("created_at"))}${t.s("claimed_by_device").takeIf { it.isNotBlank() }?.let { " · working on " + vm.deviceName(it) } ?: ""}")
         vm.data.notes.filter { it.s("task_id") == id }.forEach { Muted("+ ${it.s("note")} (${it.s("by_email")})") }
-        t.s("result").takeIf { it.isNotBlank() }?.let { Text("Result: $it", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold) }
+        t.s("result").takeIf { it.isNotBlank() }?.let { Text("Result: $it", color = LocalCocoRoles.current.link, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold) }
         if (t.s("status") in setOf("queued", "running", "waiting_pc", "needs_yes")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MuTonal({ vm.dialog = Lounge.Dialog.AddPoints(id, t.s("title")) }) { Text("Add points") }; TextButton({ vm.stopTask(id, t.s("title")) }) { Text("Stop") }
         }
@@ -776,20 +683,20 @@ fun LazyListScope.devices(vm: Lounge) {
         val id = d.s("id"); val mine = id == vm.cloud.deviceId
         Card {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(if (d.s("kind") == "pc") Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp))
+                Icon(if (d.s("kind") == "pc") Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, tint = LocalCocoRoles.current.link); Spacer(Modifier.width(10.dp))
                 Text(d.s("name"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f)); StatusChip(if (online(d) || mine) "live" else "off", if (online(d) || mine) "Online" else "Offline")
             }
             Muted("${if (d.s("key_hash").isNotBlank()) "paired ${ago(d.s("paired_at"))}" else "not paired yet"} · seen ${ago(d.s("last_seen"))}")
-            if (mine) Text("This device", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+            if (mine) Text("This device", color = LocalCocoRoles.current.link, style = MaterialTheme.typography.labelLarge)
             else if (d.optBoolean("active", true)) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { MuTonal({ vm.makePairingCode(id) }) { Text("Make pairing code") }; var ask by remember { mutableStateOf(false) }; TextButton({ ask = true }) { Text("Switch off") }
                 if (ask) AlertDialog(onDismissRequest = { ask = false }, title = { Text("Switch off ${d.s("name")}?") }, text = { Text("It will stop opening Good Space and stop taking commands until you switch it on again.") },
                     confirmButton = { TextButton({ vm.switchOff(id); ask = false }) { Text("Switch off") } }, dismissButton = { MuButton({ ask = false }) { Text("Keep it on") } }) }
-            else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { Text("Switched off", color = LocalLux.current.bad, style = MaterialTheme.typography.labelLarge); MuTonal({ vm.switchOn(id) }) { Text("Switch on") } }
+            else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { Text("Switched off", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge); MuTonal({ vm.switchOn(id) }) { Text("Switch on") } }
         }
     }
 }
 
-fun LazyListScope.settings(vm: Lounge) {
+fun LazyListScope.settings(vm: Lounge, go: (String) -> Unit = {}) {
     item(key = "s-account") { Card { Eyebrow("Account"); Text("${vm.name} · ${vm.callMe}", style = MaterialTheme.typography.titleLarge); Muted(vm.cloud.email.orEmpty()); MuOutlined({ vm.signOut() }) { Text("Sign out") } } }
     item(key = "s-notify") { Card {
         Eyebrow("Notifications")
@@ -798,9 +705,9 @@ fun LazyListScope.settings(vm: Lounge) {
     } }
     item(key = "s-look") { Card {
         Eyebrow("Appearance")
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) { listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEachIndexed { i, (v, l) -> SegmentedButton(vm.theme == v, { vm.chooseTheme(v) }, SegmentedButtonDefaults.itemShape(i, 3)) { Text(l) } } }
-        Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Calm motion", style = MaterialTheme.typography.bodyLarge); Muted("Logos and screens keep still") }; Switch(vm.calm, { vm.chooseCalm(it) }) }
-        if (android.os.Build.VERSION.SDK_INT >= 31) Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Match my wallpaper", style = MaterialTheme.typography.bodyLarge); Muted("Material You colours from your wallpaper instead of the Good Space palette") }; Switch(vm.wallpaper, { vm.chooseWallpaper(it) }) }
+        vm.themes.contract.theme(vm.themes.prefs.themeId).let { t -> Text("${t.number}. ${t.name}", style = MaterialTheme.typography.titleLarge); Muted("Theme, light or dark, and automatic rotation") }
+        MuTonal({ go("themes") }) { Text("Open Appearance") }
+        Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Calm motion", style = MaterialTheme.typography.bodyLarge); Muted("Logos, screens and theme changes keep still") }; Switch(vm.calm, { vm.chooseCalm(it) }) }
         MuOutlined({ vm.refreshNow() }) { Text("Refresh now") }
     } }
     item(key = "s-remote") { Card {
@@ -810,7 +717,7 @@ fun LazyListScope.settings(vm: Lounge) {
         if (!android.provider.Settings.canDrawOverlays(ctx)) MuButton({ ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + ctx.packageName))) }) { Text("Allow") }
     } }
     item(key = "s-update") { Card { Eyebrow("Updates"); Text("Coco Lounge ${vm.appVersion}", style = MaterialTheme.typography.titleLarge); Muted("Updates install by themselves. Tap to check right now."); MuButton({ vm.checkUpdate() }) { Text("Check for update") } } }
-    item(key = "s-about") { Card { Eyebrow("About"); Text("Coco Lounge ${vm.appVersion} · Android", style = MaterialTheme.typography.titleLarge); Muted("Good Space, managed by Coco. House theme: Material You Design Theme v1. Private: founder login plus this device's key.") } }
+    item(key = "s-about") { Card { Eyebrow("About"); Text("Coco Lounge ${vm.appVersion} · Android", style = MaterialTheme.typography.titleLarge); Muted("Good Space, managed by Coco. Design: the unified COCO redesign (same tokens as the web Lounge). Private: founder login plus this device's key.") } }
 }
 
 @Composable
@@ -820,7 +727,7 @@ fun Dialogs(vm: Lounge) {
             text = { Text("Coco found the same work already ${d.status}${d.device?.let { " on " + vm.deviceName(it) } ?: ""}, given by ${d.by}:\n\n${d.title}\n\nYour points were added, so nothing runs twice.") },
             confirmButton = { TextButton({ vm.dialog = null }) { Text("Good") } }, dismissButton = { TextButton({ vm.stopTask(d.taskId, d.title); vm.dialog = null }) { Text("Stop that task") } })
         is Lounge.Dialog.PairCode -> AlertDialog(onDismissRequest = { vm.dialog = null }, title = { Text("Pairing code for ${d.device}") },
-            text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { Text(d.code, style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary); Muted("Valid for 10 minutes. Works once.") } },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { Text(d.code, style = MaterialTheme.typography.displaySmall, color = LocalCocoRoles.current.link); Muted("Valid for 10 minutes. Works once.") } },
             confirmButton = { TextButton({ vm.dialog = null }) { Text("Done") } })
         is Lounge.Dialog.AddPoints -> {
             var text by remember { mutableStateOf("") }

@@ -47,7 +47,8 @@ class Cloud(context: Context) {
     private fun Response.bodyOrThrow(): String {
         val text = body?.string().orEmpty()
         if (!isSuccessful) {
-            val msg = runCatching { JSONObject(text).let { it.optString("msg", it.optString("message", it.optString("error_description", it.optString("error", text)))) } }.getOrDefault(text)
+            // Nova's own routes answer { reason } or { detail }; the PostgREST ones { message }
+            val msg = runCatching { JSONObject(text).let { it.optString("msg", it.optString("message", it.optString("reason", it.optString("detail", it.optString("error_description", it.optString("error", text)))))) } }.getOrDefault(text)
             throw CloudError(msg.ifBlank { "Coco Cloud error $code" }, code)
         }
         return text

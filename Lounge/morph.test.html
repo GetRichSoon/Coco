@@ -170,6 +170,23 @@ t('twenty refreshes in a row change nothing the person can feel', () => {
   eq(box.querySelector('span').textContent, '19', 'and the new value did arrive');
 });
 
+t('a select follows the option list and choice the server sends (dependent filters)', () => {
+  const sel = () => box.querySelector('select');
+  set('<div><select id="team"><option value="">All</option><option value="a" selected>A</option><option value="b">B</option></select></div>');
+  const node = sel(); eq(node.value, 'a');
+  morph(box, '<div><select id="team"><option value="">All</option><option value="x">X</option><option value="y" selected>Y</option></select></div>');
+  eq(sel(), node, 'the select itself survives'); eq(node.options.length, 3, 'the option list was replaced'); eq(node.value, 'y', 'the server choice is adopted');
+  morph(box, '<div><select id="team"><option value="" selected>All</option></select></div>');
+  eq(node.options.length, 1, 'options that are gone are removed'); eq(node.value, '');
+});
+
+t('a select the person has open is left alone', () => {
+  set('<div><select id="pick"><option value="a" selected>A</option><option value="b">B</option></select></div>');
+  const node = box.querySelector('select'); node.focus(); node.value = 'b';
+  morph(box, '<div><select id="pick"><option value="a" selected>A</option><option value="b">B</option><option value="c">C</option></select></div>');
+  eq(node.value, 'b', 'the open choice is kept'); eq(node.options.length, 2, 'and its list is not swapped under the pointer'); node.blur();
+});
+
 box.innerHTML = '';
 log(`\n${pass}/${pass + fail} passed`);
 document.title = fail ? `morph FAIL ${fail}` : `morph ok ${pass}`;

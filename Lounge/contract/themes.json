@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "about": "The six Coco themes: ONE source for desktop, phone (PWA) and Android. Edit seeds here, run `node contract/build-themes.mjs` (needs the dev dependency @material/material-color-utilities) to regenerate theme-schemes.json, then `node contract/build.mjs`. Theme 1 is LOCKED: its five brand values below are asserted by theme-schemes.test.js and must never change.",
+  "font": { "family": "Space Grotesk", "weights": [300, 400, 500, 600, 700], "license": "SIL Open Font License 1.1" },
+  "defaults": {
+    "themeId": "signature",
+    "appearance": "system",
+    "locked": false,
+    "rotation": { "enabled": false, "frequency": "daily", "order": "sequential", "time": "09:00", "weekday": 1, "dayOfMonth": 1 }
+  },
+  "frequencies": [
+    { "id": "launch", "label": "Every time COCO opens", "short": "Every launch", "kind": "launch" },
+    { "id": "5h", "label": "Every 5 hours", "short": "5 hours", "kind": "interval", "hours": 5 },
+    { "id": "7h", "label": "Every 7 hours", "short": "7 hours", "kind": "interval", "hours": 7 },
+    { "id": "daily", "label": "Daily", "short": "Daily", "kind": "daily" },
+    { "id": "weekly", "label": "Weekly", "short": "Weekly", "kind": "weekly" },
+    { "id": "monthly", "label": "Monthly", "short": "Monthly", "kind": "monthly" },
+    { "id": "manual", "label": "Manual only (never switch automatically)", "short": "Manual only", "kind": "manual" }
+  ],
+  "orders": [
+    { "id": "sequential", "label": "Sequential (1 to 6, then round again)" },
+    { "id": "random", "label": "Random (never the theme just used)" }
+  ],
+  "themes": [
+    {
+      "id": "signature", "number": 1, "name": "Original Signature", "locked": true,
+      "tagline": "Black, hot pink and bright yellow on deep aubergine and soft lavender. The founders' own.",
+      "seeds": { "primary": "#FF39A8", "secondary": "#B76FD6", "tertiary": "#FFE52E" },
+      "brand": { "black": "#151313", "hotPink": "#FF39A8", "brightYellow": "#FFE52E", "darkBackground": "#24152E", "lightBackground": "#F0EAF7" },
+      "notes": "Black for cards and navigation, hot pink for selected states and important accents, bright yellow for highlights and calls to action."
+    },
+    {
+      "id": "cobalt", "number": 2, "name": "Electric Cobalt", "locked": false,
+      "tagline": "A vibrant blue technology theme with aqua and amber accents.",
+      "seeds": { "primary": "#3563E9", "secondary": "#35CFC9", "tertiary": "#FF9F43" }
+    },
+    {
+      "id": "violet", "number": 3, "name": "Royal Violet", "locked": false,
+      "tagline": "A premium, expressive purple with cyan and rose accents.",
+      "seeds": { "primary": "#7655D9", "secondary": "#35C6F2", "tertiary": "#FF719A" }
+    },
+    {
+      "id": "emerald", "number": 4, "name": "Emerald Energy", "locked": false,
+      "tagline": "A fresh, modern green business theme with lime and sky accents.",
+      "seeds": { "primary": "#168A5B", "secondary": "#B5DE55", "tertiary": "#55BCE8" }
+    },
+    {
+      "id": "tangerine", "number": 5, "name": "Tangerine Fusion", "locked": false,
+      "tagline": "A bold orange and blue combination with an energetic personality.",
+      "seeds": { "primary": "#E76F38", "secondary": "#477BFF", "tertiary": "#FFD166" }
+    },
+    {
+      "id": "orchid", "number": 6, "name": "Digital Orchid", "locked": false,
+      "tagline": "A colourful, sophisticated, futuristic theme with mint and gold.",
+      "seeds": { "primary": "#B43ACB", "secondary": "#43D9B2", "tertiary": "#F4C95D" }
+    }
+  ]
+}

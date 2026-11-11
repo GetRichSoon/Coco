@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -21,6 +22,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
          *  the tables with no slice of their own can never be more than a minute stale to a founder
          *  who is looking. Same number as the web Lounge. */
         const val FULL_EVERY = 60_000L
+        /** What a failed connection says on screen (an IOException's own text is a hostname and an errno). */
+        const val NO_LINK = "No connection to Coco Cloud right now"
         /** The topics a single read can answer. Anything else means the full read - deliberately,
          *  because controls, policies, events and pipelines have no slice and must still arrive. */
         val SLICES = setOf("devices", "houses", "tasks", "approvals", "decisions", "rules", "activity", "commands")
@@ -34,6 +37,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     }
 
     val cloud = Cloud(app)
+    /** The one active COCO theme (six themes, light / dark, automatic rotation, synced through Coco Cloud). */
+    val themes = ThemeController(app, cloud, viewModelScope)
 
     enum class Gate { SignIn, Pair, Open }
     var gate by mutableStateOf(if (!cloud.signedIn) Gate.SignIn else if (!cloud.paired) Gate.Pair else Gate.Open)
@@ -42,23 +47,20 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     var message by mutableStateOf<String?>(null)
     var founder by mutableStateOf<JSONObject?>(null)
     var data by mutableStateOf(Data())
+    /** When the company was last read in full (0 = never on this run). Until then every count is unknown, not zero. */
+    var dataAt by mutableStateOf(0L)
     var dialog by mutableStateOf<Dialog?>(null)
 
     // Settings (this device only), same choices as every Lounge
     private val sp = app.getSharedPreferences("coco_settings", android.content.Context.MODE_PRIVATE)
-    var theme by mutableStateOf(sp.getString("theme", "system")!!)
     var calm by mutableStateOf(sp.getBoolean("calm", false))
-    fun chooseTheme(v: String) { theme = v; sp.edit().putString("theme", v).apply() }
     fun chooseCalm(v: Boolean) { calm = v; sp.edit().putBoolean("calm", v).apply() }
-    /** Material You dynamic colour (Android 12+). Off by default: the Good Space palette is the product (THEME.md). */
-    var wallpaper by mutableStateOf(sp.getBoolean("wallpaper", false))
-    fun chooseWallpaper(v: Boolean) { wallpaper = v; sp.edit().putBoolean("wallpaper", v).apply() }
     fun notifyOn(kind: String) = sp.getBoolean("n_$kind", true)
     fun setNotify(kind: String, v: Boolean) { sp.edit().putBoolean("n_$kind", v).apply(); notifyTick++ }
     var notifyTick by mutableStateOf(0)
     fun checkUpdate() = viewModelScope.launch { message = "Checking for update…"; message = Updater.checkNow(getApplication()) }
     val appVersion: String get() = runCatching { getApplication<android.app.Application>().let { a -> a.packageManager.getPackageInfo(a.packageName, 0).versionName } }.getOrDefault("?") ?: "?"
-    fun refreshNow() = viewModelScope.launch { reload(); message = "Up to date" }
+    fun refreshNow() = viewModelScope.launch { reload(); loadExtra(force = true); message = "Up to date" }
 
     data class Data(
         val houses: List<JSONObject> = emptyList(), val categories: List<JSONObject> = emptyList(), val offerings: List<JSONObject> = emptyList(),
@@ -101,7 +103,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     fun houseName(id: String?) = data.houses.firstOrNull { it.optString("id") == id }?.optString("name") ?: "Coco"
 
     private fun JSONArray.objects() = (0 until length()).map { getJSONObject(it) }
-    private fun fail(e: Throwable) { if (e is kotlinx.coroutines.CancellationException) return; message = e.message ?: "Something went wrong" }
+    private fun fail(e: Throwable) { if (e is kotlinx.coroutines.CancellationException) return; message = if (e is java.io.IOException) NO_LINK else e.message ?: "Something went wrong" }
 
     fun pair(code: String) = viewModelScope.launch {
         busy = true
@@ -135,6 +137,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 val founders = cloud.list("founders")
                 if (founders.length() == 0) { cloud.forgetDevice(); gate = Gate.Pair; message = "This phone is not paired (or was switched off). Pair it again with a new code."; return@launch }
                 founder = founders.objects().firstOrNull { it.optString("email").equals(cloud.email, true) }
+                themes.configure()   // the founder's e-mail is known now: it names this account's theme row
                 reload()
                 stopListening?.invoke()
                 // A reconnect is reported as "*": while the socket was down anything could have
@@ -245,7 +248,10 @@ class Lounge(app: Application) : AndroidViewModel(app) {
             lastFull = System.currentTimeMillis()
             Alerts.compareAndNotify(getApplication(), data, d, name)
             data = d
+            dataAt = System.currentTimeMillis()
+            themes.adoptFromControls(d.controls)   // the controls rows are already in this read: a newer theme from another device shows at once
             runMyCommands(d.commands)
+            if (PhoneRemote.foreground) loadExtra()
         } catch (e: Exception) { fail(e) }
     }
 
@@ -392,6 +398,90 @@ class Lounge(app: Application) : AndroidViewModel(app) {
             log(if (paused) "coco paused" else "coco resumed", name); message = if (paused) "Coco paused everywhere" else "Coco is working again"; reload()
         } catch (e: Exception) { fail(e) }
     }
+
+    // ---------------------------------------------------------------- the redesigned pages (2.11)
+    /** One read for a redesigned page: its rows, or the honest reason there are none. */
+    data class Rows(val rows: List<JSONObject> = emptyList(), val error: String? = null, val missing: Boolean = false, val loaded: Boolean = false)
+    var ext by mutableStateOf<Map<String, Rows>>(emptyMap())
+    fun rows(key: String) = ext[key] ?: Rows()
+    private var extAt = 0L
+    private var extBusy = false
+    /** Tables the new pages read (same queries as the web Lounge). Read at most once a minute, and only with the app on
+     *  screen, so the company read every pulse stays as small as before. */
+    private val EXTRA = mapOf(
+        "notes" to "select=*&order=created_at.desc", "runs" to "select=*&order=opened_at.desc&limit=60", "run_events" to "select=*&order=at.asc&limit=600",
+        "ai_calls" to "select=*&order=at.desc&limit=200", "brain_items" to "select=*&retired=eq.false&order=created_at.desc&limit=200",
+        "brain_records_latest" to "select=*&order=at.desc&limit=500", "org_units" to "select=*", "org_products" to "select=*", "org_agents" to "select=*",
+        "org_brains" to "select=*", "org_refs" to "select=*", "org_metrics" to "select=*", "policies" to "select=*", "control_ops" to "select=*&order=at.desc&limit=60",
+        "releases" to "select=*&order=created_at.desc&limit=5", "jobs" to "select=id,team_id,type,status,attempt,max_attempts,created_at,run_after&order=created_at.desc&limit=500",
+        "integration_accounts" to "select=*&order=provider.asc", "integration_links" to "select=*", "outputs" to "select=*&order=at.desc&limit=300",
+    )
+    /** Nova's own read routes, kept in the same map: key to (path, array field or null for the whole object). */
+    private val NOVA_READS = mapOf("yt" to ("/api/youtube/latest" to null), "templates" to ("/api/automation/templates" to "templates"), "prompts" to ("/api/automation/prompts" to "prompts"))
+
+    private var extAgain = false
+    fun loadExtra(force: Boolean = false) {
+        if (extBusy) { if (force) extAgain = true; return }   // a write during a read: read once more after it, never lose it
+        if (!force && System.currentTimeMillis() - extAt < FULL_EVERY) return
+        extBusy = true
+        viewModelScope.launch {
+            try {
+                val got = EXTRA.map { (t, q) -> t to async { readRows { cloud.list(t, q).objects() } } } +
+                    NOVA_READS.map { (k, v) -> k to async { readRows { JSONObject(cloud.api(v.first)).let { o -> v.second?.let { f -> o.optJSONArray(f)?.objects().orEmpty() } ?: listOf(o) } } } }
+                ext = got.associate { (k, d) -> k to d.await() }
+                extAt = System.currentTimeMillis()
+            } finally { extBusy = false }
+            if (extAgain) { extAgain = false; loadExtra(force = true) }
+        }
+    }
+    private suspend fun readRows(read: suspend () -> List<JSONObject>): Rows = try { Rows(read(), loaded = true) } catch (e: Exception) {
+        if (e is kotlinx.coroutines.CancellationException) throw e
+        val code = (e as? Cloud.CloudError)?.code ?: 0
+        Rows(error = if (e is java.io.IOException) NO_LINK.replaceFirstChar { it.lowercase() } else e.message ?: "could not be read", missing = Facts.isMissing(code, e.message), loaded = true)
+    }
+
+    /** Notes tab: exactly the web insert (kind link when the text holds a link, status new, who and which device). */
+    fun addNote(text: String) = viewModelScope.launch {
+        try {
+            val url = Regex("https?://\\S+").find(text)?.value
+            cloud.insert("notes", JSONObject().put("kind", if (url != null) "link" else "note").put("source_url", url ?: JSONObject.NULL).put("text", text)
+                .put("status", "new").put("created_by", name).put("device_id", cloud.deviceId))
+            message = if (url != null) "Link kept — Coco will study it" else "Kept"; loadExtra(force = true)
+        } catch (e: Exception) { fail(e) }
+    }
+
+    /** A control change, the same call as the web's control(): the database checks founder + device and may ask for a YES. */
+    fun control(scope: String, id: String, key: String, value: Any, note: String? = null) = viewModelScope.launch {
+        try {
+            val r = cloud.rpc("coco_control", JSONObject().put("p_scope", scope).put("p_scope_id", id.ifBlank { "*" }).put("p_key", key).put("p_value", value).put("p_note", note ?: JSONObject.NULL))
+            val o = runCatching { JSONObject(r) }.getOrNull()
+            message = if (o?.optString("state") == "needs_approval") "Raised for your YES (${o.optString("approval_code")})" else "Done"
+            reload(); loadExtra(force = true)
+        } catch (e: Exception) { fail(e) }
+    }
+
+    /** Connect a platform account: Nova returns the platform's consent page, which opens in the browser. The token never
+     *  comes to this phone; it lands in Coco Cloud. Same body as the web's novaOauth('begin'). */
+    fun oauthBegin(provider: String, connection: String, open: (String) -> Unit) = viewModelScope.launch {
+        try {
+            val body = JSONObject().put("provider", provider).put("connection_id", connection)
+            if (provider == "gumroad") body.put("team", "ebooks").put("subteam", "ebooks/practical-skills")   // the web's OAUTH_PLATFORMS.gumroad
+            val url = JSONObject(cloud.api("/api/oauth/begin", body)).optString("authorize_url")
+            if (url.startsWith("https://")) open(url) else message = "Coco did not return an authorization link"
+        } catch (e: Exception) { fail(e) }
+    }
+
+    /** Verify asks the platform from the cloud (web's novaOauth('verify')); this only shows the verdict. */
+    fun oauthVerify(connection: String) = viewModelScope.launch {
+        try {
+            message = "Asking the platform…"
+            val r = JSONObject(cloud.api("/api/oauth/verify", JSONObject().put("connection_id", connection)))
+            message = "${VERIFY_SAID[r.optString("status")] ?: r.optString("status")}: ${r.optString("detail")}".take(220); loadExtra(force = true)
+        } catch (e: Exception) { fail(e) }
+    }
+    private val VERIFY_SAID = mapOf("CONNECTED_VERIFIED" to "Verified from the cloud", "NOT_ASSIGNED" to "Verified — assignment required",
+        "CONNECTED_WRONG_CHANNEL" to "Wrong channel — not safe to publish", "CONNECTED_EXPIRED" to "Authorization expired — reconnect",
+        "CONNECTED_MISSING_PERMISSION" to "Missing a permission", "NOT_CONNECTED" to "Not connected to the cloud", "CANNOT_CHECK" to "No cloud check for this platform yet")
 
     override fun onCleared() { stopListening?.invoke(); super.onCleared() }
 }

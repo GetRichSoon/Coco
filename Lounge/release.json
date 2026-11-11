@@ -2,43 +2,45 @@
   "_": "The one Coco version. Every client shows this number; nothing else is user-facing.",
   "_why": "The clients had drifted into three unrelated numbers - root package.json said 1.1.0, the desktop app said 1.0.4 and the phone said 2.8.2 - so 'is everyone on the latest Coco?' had no answer. They are one number now, and release.test.js fails the build if they come apart again.",
   "_number": "2.9.0, not 1.2.0. Two schemes existed and the phone's was the furthest along at 2.8.2; starting a unified line below that would have shown the founders a downgrade on the device they look at most. So the unified line continues from the highest user-facing number, and this release is a minor bump on it.",
-  "version": "2.10.0",
-  "name": "Coco 2.10.0",
-  "released": "2026-11-02",
-  "release_id": "coco-2.10.0",
-  "commit": "cloud-foundation",
+  "version": "2.11.0",
+  "name": "Coco 2.11.0",
+  "released": "2026-11-11",
+  "release_id": "coco-2.11.0",
+  "commit": "ui/unified-redesign (not merged, not published)",
   "notes": [
-    "Coco Chat is conversational: say hi, ask what is running, finished, stuck or waiting, why something failed, whether the APK is ready or a Short published - answered from live cloud data, never guessed.",
-    "Build the company by talking: \"create a team that researches AI tools, makes daily Shorts and publishes to The Flow\" is planned, confirmed, created with its head, sub-teams, agents and daily workflow, and verified in Coco Cloud.",
-    "Follow-ups work: \"give it a research agent\", \"make that agent run every morning\", \"start it\", \"rename it\", \"move this agent to the research sub-team\", \"delete it\" (archived after a yes).",
-    "\"Publish it\" raises a YES; \"fix it\" retries what policy allows and sends the rest as a repair task. Nothing runs on a PC."
+    "One application on desktop, phone and Android: eight sections (Home, Houses, Work, Automation, Brains & Agents, Insights, Connections, System) instead of twenty tabs, with Ask COCO and Remote Control on every screen.",
+    "A revenue-first Home with filters: revenue is never invented, an estimate is never shown as an actual, and missing data says Unavailable instead of zero.",
+    "Seven House workspaces (Gigi Social, Lulu Software, Poppy Ebooks, Mochi Comics, Fifi Courses, Zaza Games, Tilly Commerce), each with the same twenty tabs.",
+    "Six Material You themes in light and dark: Original Signature (locked), Electric Cobalt, Royal Violet, Emerald Energy, Tangerine Fusion and Digital Orchid, in Space Grotesk, switchable without a refresh.",
+    "Automatic theme rotation: every time COCO opens, every 5 or 7 hours, daily, weekly, monthly or manual only; sequential or random; lock a theme; the choice follows you across your devices.",
+    "The Android app now covers every page of the web Lounge from the same navigation contract, keeps the Coco Island and every device command, and uses the same six themes."
   ],
   "_builds": "Internal build numbers stay per platform, because each store and each installer needs its own monotonic counter. They are not shown to the founders.",
   "builds": {
-    "desktop": "1.0.5",
+    "desktop": "1.1.0",
     "android": {
-      "versionName": "2.10.0",
-      "versionCode": 21
+      "versionName": "2.11.0",
+      "versionCode": 22
     },
     "lounge": "served from main"
   },
   "_minimum": "Below this a client is too old to be trusted with today's Coco Cloud rows and must update before it is used. 2.8.0 is the first build that polls controls/apk_latest with a ready download link, so it is the oldest one that can still update itself.",
   "minimum": "2.8.0",
-  "_status": "A Coco release is only 'released' when BOTH artifacts exist. 2.9.0 is not: the desktop half reached both PCs through the repo on 2026-10-28, the phone half was never built, because versionCode 16 was already spent on 2.8.2 and the phones' own updater skips anything at or below the code they run. So 2.9.0 is a half release, and saying 'released' would have been a lie on two of the four clients.",
+  "_status": "Coco 2.11.0 is built for review only. It is not signed with the release key, not published and not announced to any device, so it is blocked until a founder approves it (the Release Center shows why).",
   "_bootstrap": "Set when a release cannot reach the phones unattended, and read by publish-update.mjs: a release carrying this goes to controls/apk_pending instead of apk_latest, so neither phone is told to install something Android will refuse. Remove it once both phones run a build signed with the release key, after which every release goes straight to apk_latest and updates by itself.",
   "bootstrap": "Install once by hand, no uninstall. 2.9.1 carries a signing certificate lineage with its rotation point at API 28, so the release key is the current signer on every Android version Coco runs on and this installs over 2.8.x and over the release-key 2.9.0 in place, keeping the session and the device key. It stays in apk_pending until one real phone has confirmed that, because a build the phones refuse would be downloaded, refused, deleted and retried every fifteen minutes. Promote to apk_latest after the first confirmed in-place install, and then drop this key.",
-  "status": "ready",
+  "status": "blocked",
   "platforms": {
     "desktop": {
-      "state": "shipped",
-      "artifact": "the repo, fast-forwarded by each desktop every 30 min",
+      "state": "pending",
+      "artifact": "the repo, once this branch is merged and fast-forwarded by each desktop",
       "sha256": null
     },
     "android": {
       "state": "pending",
-      "artifact": "B2 dist/android/19, announced by Lounge/ota/latest.json through Nova /api/apk/latest",
+      "artifact": "not built for release: needs the release keystore, which is not on this PC",
       "sha256": null,
-      "blocked_by": "one cable install of this build; the installed app asks the dead auth endpoint before it updates. Every build after this one arrives over the air."
+      "blocked_by": "the release signing key (Coco Vault / GitHub secret) and a founder YES to publish"
     }
   },
   "_signing": "Android release signing, added 2026-10-29, which is the whole reason a release no longer needs a PC. The keystore and its password are in Coco Vault on the laptop and nowhere in git; GitHub holds the same key as ANDROID_KEYSTORE_BASE64 so a cloud run can sign. Up to and including 2.8.2 the APK was signed with the laptop's debug key, and Android refuses an update signed with a different one - which is why this one costs both phones a single uninstall and reinstall, once, forever.",
@@ -166,6 +168,12 @@
       "versionCode": 21,
       "date": "2026-11-02",
       "commit": "cloud-foundation"
+    },
+    {
+      "version": "2.11.0",
+      "versionCode": 22,
+      "date": "2026-11-11",
+      "commit": "ui/unified-redesign"
     }
   ],
   "_rollback": "A bad release is undone with a normal git revert on main. Every desktop fast-forwards this repo every 30 minutes, so the revert reaches both of them within half an hour with no installer, no store and nothing to uninstall. The phones are the exception: they carry a built APK, so rolling them back needs a rebuilt APK, which is the signing work that is deliberately not done yet.",

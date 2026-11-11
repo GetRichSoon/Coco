@@ -140,10 +140,10 @@ private fun CocoPresence(thinking: Boolean, live: Boolean) {
         Column(Modifier.weight(1f)) {
             Text("Coco", style = MaterialTheme.typography.titleLarge)
             AnimatedContent(if (thinking) "Thinking…" else if (live) "Online · answers in seconds" else "Reconnecting · your message waits safely", label = "presence") { s ->
-                Text(s, style = MaterialTheme.typography.bodyMedium, color = if (thinking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(s, style = MaterialTheme.typography.bodyMedium, color = if (thinking) LocalCocoRoles.current.link else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        if (thinking) TypingDots(MaterialTheme.colorScheme.primary)
+        if (thinking) TypingDots(LocalCocoRoles.current.link)
     }
 }
 
@@ -201,7 +201,7 @@ private fun Bubble(vm: Lounge, m: JSONObject, first: Boolean, last: Boolean, mod
             }
             Surface(shape = shape, color = bg, contentColor = fg, modifier = Modifier.widthIn(max = 290.dp)
                 .combinedClickable(onClick = {}, onLongClick = { clip.setText(AnnotatedString(m.str("body"))); vm.message = "Copied" })) {
-                Text(linkify(m.str("body"), if (mine) cs.onPrimary else cs.primary), Modifier.padding(horizontal = 14.dp, vertical = 9.dp), style = MaterialTheme.typography.bodyLarge)
+                Text(linkify(m.str("body"), if (mine) cs.onPrimary else LocalCocoRoles.current.link), Modifier.padding(horizontal = 14.dp, vertical = 9.dp), style = MaterialTheme.typography.bodyLarge)
             }
         }
         if (coco) Answer(vm, m)
@@ -232,7 +232,7 @@ private fun Composer(text: String, onText: (String) -> Unit, onSend: () -> Unit,
         Surface(shape = RoundedCornerShape(28.dp), color = cs.surfaceContainerHigh, modifier = Modifier.weight(1f)) {
             Box(Modifier.padding(horizontal = 18.dp, vertical = 14.dp)) {
                 if (text.isEmpty()) Text(hint, style = MaterialTheme.typography.bodyLarge, color = cs.onSurfaceVariant)
-                BasicTextField(text, onText, textStyle = MaterialTheme.typography.bodyLarge.copy(color = cs.onSurface), cursorBrush = SolidColor(cs.primary),
+                BasicTextField(text, onText, textStyle = MaterialTheme.typography.bodyLarge.copy(color = cs.onSurface), cursorBrush = SolidColor(LocalCocoRoles.current.link),
                     maxLines = 5, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send), keyboardActions = KeyboardActions(onSend = { onSend() }),
                     modifier = Modifier.fillMaxWidth())
             }
@@ -321,7 +321,7 @@ private fun Answer(vm: Lounge, m: JSONObject) {
                     for (i in 0 until (rows?.length() ?: 0)) rows?.optJSONArray(i)?.let { r ->
                         Text(r.optString(0) + ": " + r.optString(1), style = MaterialTheme.typography.bodySmall, color = cs.onSurfaceVariant)
                     }
-                    if (act.str("status").isNotBlank()) Text(act.str("status"), style = MaterialTheme.typography.labelMedium, color = cs.primary)
+                    if (act.str("status").isNotBlank()) Text(act.str("status"), style = MaterialTheme.typography.labelMedium, color = LocalCocoRoles.current.link)
                 }
             }
         }

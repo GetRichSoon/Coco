@@ -25,7 +25,14 @@ for (const p of ['home', 'board', 'notes', 'remote', 'approvals', 'company', 'cl
 // This asserted the exact list before, which meant the sheet that fixed fifteen pages being
 // unreachable on a phone read as a regression - the intent was one tap to Approvals, not that
 // particular five ids.
-assert.ok(/const BOTTOM = \[[^\]]*'approvals'[^\]]*\]/.test(src), 'Approvals must stay one tap away in the bottom bar');
+// The phone bar is now Home, Houses, Work and More (the navigation contract). Approvals live in Work, whose first tap is the Board and whose
+// section tabs show Approvals at once; the More sheet lists every page as well. The bar itself comes from the contract.
+{
+  const nav = JSON.parse(fs.readFileSync(path.join(__dirname, 'contract', 'nav-contract.json'), 'utf8'));
+  assert.deepEqual(nav.phone_bottom, ['home', 'houses', 'work', 'more'], 'the phone bar must be Home, Houses, Work, More');
+  assert.ok(nav.sections.find((x) => x.id === 'work').pages.some((p) => p.id === 'approvals'), 'Approvals must stay inside Work, one tab away');
+  assert.ok(src.includes('phone_bottom'), 'the page must build its phone bar from the contract');
+}
 assert.ok(src.includes('data-more="1"'), 'the bottom bar needs a way into the pages it has no room for');
 assert.ok(src.includes('#moreNav'), 'the sheet that reaches every other page is missing');
 assert.ok(src.includes("fetch('control-plane.json'"), 'the dashboard loads the control plane snapshot');
