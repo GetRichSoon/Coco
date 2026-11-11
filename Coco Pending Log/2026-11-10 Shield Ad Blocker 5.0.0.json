@@ -1,0 +1,19 @@
+{
+  "activity": [
+    {
+      "action": "Shield Ad Blocker 5.0.0 release candidate ready for founder review",
+      "detail": "Mangesh347/shield-ad-blocker PR 1 (branch upgrade_v5). EasyList, EasyPrivacy and Fanboy lists compiled into 17,493 Chrome rules; honest stats from Chrome; Pro only from the shared payment server (licence keys); Material You popup, 12-page dashboard, onboarding; product page and privacy policy (not deployed). Tests: 9 unit, 53 end-to-end, all pass. Not published: needs the store item, hosted privacy policy, support inbox, payment PRs deployed and a founder YES."
+    },
+    {
+      "action": "Payment server bug found and fixed on a branch (not deployed)",
+      "detail": "A parallel replay of one payment could add two pass periods (a 30-day payment gave 60 days) for every product, including Screen Time Tracker. Fix: Mangesh347/Extension PR 2, 153/153 tests. Merging deploys to production, so it waits for a founder YES. Shield catalog entry: PR 3 (stacked on PR 2)."
+    }
+  ],
+  "decisions": [
+    {
+      "decided_on": "2026-11-10",
+      "by_name": "Coco (proposal, waiting for the founder)",
+      "text": "Shield Ad Blocker: no new backend (Nhost not adopted; the shared payment server already owns licences); Pro sold as licence keys at $2.99 per 30 days and $19.99 per 365 days (hypothesis); Peter Lowe's list and URLhaus left out on licence grounds; Google sign-in and trial wait for the store item id."
+    }
+  ]
+}

@@ -90,3 +90,10 @@
 - [Vintage oldies engine](project_vintage_oldies_engine.md) — 2026-11-09 Engine A built + 150 s test; vocals = research only; workflow not pushed
 - [Penthouse deep house 3 h](project_penthouse_deephouse_3h.md) — LIVE 2026-11-09 youtu.be/HoO7B0lF4gc; engine, backup WAV, publisher gates, unlistened audio
 - [Penthouse four video audio](project_penthouse_four_video_audio.md) — 4 verified 3 h masters in draft releases of CocoMaison 2026-11-09; stale drafts to delete on Boss's yes; C: nearly full
+- [QuickCast → Nhost](project_quickcast_nhost.md) — 2026-11-10 decision; step 1 PR #1 not live; blocked on Nhost account, Google secrets, Supabase key rotation
+- [Show video when created](feedback_show_video_when_created.md) — open every created video/animation for Boss right away, with its full path
+- [Neon + B2 target](project_neon_b2_target.md) — 2026-11-10 decision: Neon only (core/staging/dev), B2 only (3 buckets); Supabase legacy, one verified migration; setup state + blockers
+- [Test once](feedback_test_once.md) — never re-run passing tests; test once at the end, rerun only failures (max 2 fixes)
+- [Orbi 2.10 RC](project_orbi_210_rc.md) — rc-2.10 in Projects/Orbi-rc; Vercel API + Nhost (A1); prices, decisions, name stays Orbi, payments last, spend nothing
+- [The Last Star pilot](project_the_last_star.md) — 90 s film: branch studio/the-last-star (local), Kaggle kernel v6 run 2026-11-10, report.json gate, B2 waits on admin key
+- [Shield Ad Blocker 5.0](project_shield_ad_blocker.md) — RC on PR 1, not in store; payment replay bug fixed in Extension PR 2 (not deployed); founder YES list in docs/release

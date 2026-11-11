@@ -15,6 +15,7 @@ Theme for all of them: `..\Design Atelier\Material You Theme` (each extension ge
 | Tempo Controller | `Tempo Controller` | Published | 5 | Mangesh347/Tempo |
 | Tic Tac Toe — Neon Arena | `Tic Tac Toe` (code 3.2.0) | Published | 6 | Mangesh347/tictactoe-extension |
 | Coco Idea Saver | `Coco Idea Saver` (exception: tracked IN the Coco repo — private tool, never for the store) | Private — load unpacked in Brave (see its LOAD.md) | 1 (Boss) | GetRichSoon/Coco |
+| Shield Ad Blocker | `Shield Ad Blocker` (code 5.0.0 on branch `upgrade_v5`, PR 1; main is 4.1.0) | Not in the store: no item yet (2026-11-10) | — | Mangesh347/shield-ad-blocker |
 
 ## Older copies left in place (not deleted)
 `Projects\From Downloads\*` and `Projects\From C Drive\Extension\*` still hold older versions
