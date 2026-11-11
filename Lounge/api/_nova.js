@@ -13,11 +13,12 @@
 import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
+import { handleAuthed as handleOauthAuthed, callback as oauthCallback, page as oauthPage } from './_oauth.js';
 import { handleAi } from './_ai.js';
 import { handleOps } from './_ops.js';
 import { redactDeep } from './_redact.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
-export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {} };
+export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {} };
 
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
@@ -232,6 +233,15 @@ export async function handle(db, req, now = Date.now()) {
       invalidate('devices'); authCache.clear(); log(200, { rpc: 'pair_cloud_worker', device: id });
       return json(200, rows.length === 1 ? rows[0].value : rows.map((r) => r.value));
     }
+    // OAuth callbacks come from the provider through the founder's BROWSER: no device key exists there. The one-time state
+    // (created by /api/oauth/begin, ten minutes, used once, claimed by a conditional UPDATE) is the whole gate.
+    const oauthCb = req.path.match(/^\/api\/oauth\/(youtube|gumroad)\/callback$/);
+    if (oauthCb) {
+      if (req.method !== 'GET') return json(405, { message: 'the callback is GET' });
+      if (!rateOk('oauth:' + (req.headers['x-forwarded-for'] || 'unknown'), now)) { log(429, { oauth: oauthCb[1] }); return oauthPage(429, 'Too many attempts', ['Wait a minute, then start again from Coco.']); }
+      const out = await oauthCallback(db, oauthCb[1], req.query || {}, { fetch: deps.fetch, urls: deps.oauthUrls });
+      log(out.status, { oauth: oauthCb[1] }); return out;
+    }
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
@@ -260,6 +270,7 @@ export async function handle(db, req, now = Date.now()) {
     if (req.path.startsWith('/api/ops/')) return await handleOps(req, who, { json, log, read: async (name) => (await runAs(db, who, deviceKey, { sql: 'SELECT payload, collected_at FROM public.ops_snapshots WHERE name = $1', params: [name] }, req.headers['x-engine-key'] || null))[0] || null }); // authenticated internal snapshots (never static files)
     if (req.path.startsWith('/api/ai/')) return handleAi(db, req, who, { json, log, fetch: deps.fetch });
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
+    if (req.path === '/api/oauth/begin' || req.path === '/api/oauth/verify') { const out = await handleOauthAuthed(db, req, who, { json, fetch: deps.fetch, urls: deps.oauthUrls }); log(out.status, { device: who.device_id, oauth: req.path.slice(11) }); return out; }
     if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
       // The newest cloud build is the latest GitHub release of the (public) Coco repository:

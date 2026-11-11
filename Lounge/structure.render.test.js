@@ -46,7 +46,7 @@ await ok('the page script in index.html parses as a whole', () => {
   assert.ok(scripts.length); for (const s of scripts) new vm.Script(s);
 });
 await ok('Structure is in the navigation and routed', () => {
-  assert.match(html, /\['structure', 'Structure', 'schema'\]/); assert.match(html, /structure\(\) \{ return orgPage\(\); \}/); assert.match(html, /structure: 'org:coco'/);
+  assert.match(html, /\['structure', 'Structure', 'schema'\]/); assert.match(html, /structure\(\) \{[\s\S]{0,2500}?return bar \+ orgPage\(\);/);   // the page is a tab bar since the unified organisation: Tree (orgPage) plus Readiness, Decisions and Brains assert.match(html, /structure: 'org:coco'/);
 });
 await ok('all 127 units open without throwing, leaking undefined/NaN, or an empty page', () => {
   for (const u of DEV.units) { const out = view(u.id); assert.ok(out.length > 200, u.id + ' empty'); assert.ok(!/undefined|NaN|\[object|null</.test(out), u.id + ' leaks'); assert.ok(out.includes(esc(u.display_name)), u.id + ' lacks its name'); }

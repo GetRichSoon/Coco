@@ -439,6 +439,16 @@ const releaseDevices = () => {
 // No session, no realtime socket: the live link becomes a 15 s poll of /api/changes (one tiny row).
 let NOVA = store.get('gs-nova-url') || null;
 const novaFetch = (path, init = {}) => fetch(NOVA + path, { ...init, headers: { ...(init.headers || {}), 'x-device-key': store.get('gs-device-key') || '', 'content-type': 'application/json' } });
+// Nova's own connect flow (begin / verify): it answers the way the old database function and edge function did, as { data, error }.
+// The credential never comes here: the consent happens on the platform's page and the callback lands on Nova.
+async function novaOauth(op, body) {
+  try {
+    const r = await novaFetch('/api/oauth/' + op, { method: 'POST', body: JSON.stringify(body) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok) return { data: null, error: { message: (j && (j.reason || j.detail || j.message)) || `Nova answered ${r.status}` } };
+    return { data: j, error: null };
+  } catch (e) { return { data: null, error: { message: e && e.message ? e.message : String(e) } }; }
+}
 let sb = makeClient(store.get('gs-device-key'));
 function makeClient(deviceKey) {
   return supabase.createClient(NOVA || URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
@@ -1801,7 +1811,8 @@ const VERIFY_SAID = {
 };
 async function connectionVerify(connection) {
   const c = (CONNS || []).find((x) => x.connection_id === connection) || {};
-  const route = CLOUD_VERIFY[c.provider];
+  const viaNova = typeof NOVA !== 'undefined' && NOVA && typeof novaOauth === 'function';
+  const route = viaNova ? (['youtube', 'gumroad'].includes(c.provider) ? 'nova' : null) : CLOUD_VERIFY[c.provider];
   if (!route) {
     // Said plainly rather than quietly doing the old thing. A platform with no cloud check has no
     // way to be verified from here, and pretending otherwise is the bug this replaced.
@@ -1814,7 +1825,7 @@ async function connectionVerify(connection) {
   let r = null;
   let error = null;
   try {
-    ({ data: r, error } = await withTimeout(sb.functions.invoke(route, { body: { connection_id: connection } }), 'the check'));
+    ({ data: r, error } = await withTimeout(viaNova ? novaOauth('verify', { connection_id: connection }) : sb.functions.invoke(route, { body: { connection_id: connection } }), 'the check'));
   } catch (e) {
     toast(e && e.timeout ? e.message : `The check did not run: ${e && e.message ? e.message : e}`);
     return null;
@@ -1867,10 +1878,12 @@ async function oauthConnect(provider, connection = null) {
   // here" two separate decisions, both of them the founder's.
   let data = null;
   let error = null;
+  // Nova's connect flow when this app talks to Nova, the database function otherwise: the same founder + paired-device gate in both
+  const viaNova = typeof NOVA !== 'undefined' && NOVA && typeof novaOauth === 'function';
   try {
-    ({ data, error } = await withTimeout(sb.rpc('coco_oauth_begin', {
-      p_provider: provider, p_connection_id: id, p_team: p.team, p_subteam: p.subteam,
-    }), 'the connection request'));
+    ({ data, error } = await withTimeout(viaNova
+      ? novaOauth('begin', { provider, connection_id: id, team: p.team, subteam: p.subteam })
+      : sb.rpc('coco_oauth_begin', { p_provider: provider, p_connection_id: id, p_team: p.team, p_subteam: p.subteam }), 'the connection request'));
   } catch (e) {
     toast(e && e.timeout ? `${e.message}. Nothing was connected.` : `That did not go through: ${e && e.message ? e.message : e}`);
     return;

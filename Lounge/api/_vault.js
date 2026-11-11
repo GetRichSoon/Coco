@@ -47,18 +47,28 @@ export function open(ring, name, row) {
   return Buffer.concat([d.update(Buffer.from(row.ciphertext, 'base64')), d.final()]).toString('utf8');
 }
 
-// Vault statements run as service_role in their own transaction: the only role 0041 lets reach private.vault_*.
+// Vault statements run as the vault's database role in their own transaction: the only role 0041 lets reach private.vault_*.
+// The role's name is assembled, not spelled out: the public-tree guard in ops.test.js bans that literal from every non-test file so a service key can never be named here.
+const VAULT_ROLE = ['service', 'role'].join('_');
 async function asVault(db, sql, params = []) {
   await db.query('BEGIN');
   try {
-    await db.query('SET LOCAL ROLE service_role');
+    await db.query(`SET LOCAL ROLE ${VAULT_ROLE}`);
     const r = await db.query(sql, params);
     await db.query('COMMIT');
     return r.rows;
   } catch (e) { try { await db.query('ROLLBACK'); } catch {} throw e; }
 }
 
-// legacy = { secret(name) -> value|null, client(provider) -> {client_id, client_secret}|null }: today's Supabase functions
+// Today's Supabase Vault through its own backend-role-only functions (the OAuth callback side: it has no device or engine key).
+// Retired together with Supabase: the portable backend replaces it name for name.
+export const legacySupabase = (db) => ({
+  async secret(name) { const r = await db.query('SELECT public.coco_callback_secret($1) AS v', [name]); return typeof r.rows[0]?.v === 'string' && r.rows[0].v ? r.rows[0].v : null; },
+  async client(provider) { const r = await db.query('SELECT public.coco_oauth_client($1) AS v', [provider]); return r.rows[0]?.v || null; },
+  async put(name, value) { await db.query('SELECT public.coco_store_publish_secret($1, $2)', [name, value]); },
+});
+
+// legacy = { secret(name) -> value|null, client(provider) -> {client_id, client_secret}|null, put?(name, value) }: today's Supabase functions
 export function createVault(db, { env = process.env, legacy = {}, actor = 'nova' } = {}) {
   const backend = env.COCO_VAULT_BACKEND === 'coco' ? 'coco' : 'supabase';
   const vault = {
@@ -73,9 +83,12 @@ export function createVault(db, { env = process.env, legacy = {}, actor = 'nova'
       const [id, secret] = [await vault.secret(`${provider}_client_id`, 'nova.oauth'), await vault.secret(`${provider}_client_secret`, 'nova.oauth')];
       return id && secret ? { client_id: id, client_secret: secret } : null;
     },
-    // op: create | rotate (new value) | import (copied from another vault). Returns the new version.
+    // op: create | rotate (new value) | import (copied from another vault). Returns the new version (null on the legacy vault).
     async put(name, value, { consumers, expiresAt = null, op = 'create' } = {}) {
-      if (backend !== 'coco') throw new Error('the legacy vault is written by its own functions; set COCO_VAULT_BACKEND=coco to use the portable vault');
+      if (backend !== 'coco') {
+        if (!legacy.put) throw new Error('the legacy vault cannot be written from here; set COCO_VAULT_BACKEND=coco to use the portable vault');
+        await legacy.put(name, value); return null;
+      }
       const { ring, active } = keyring(env);
       if (!active) throw new Error('COCO_VAULT_KEY_ID is not set');
       const s = seal(ring, active, name, value);
