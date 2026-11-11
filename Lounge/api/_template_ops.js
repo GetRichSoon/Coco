@@ -22,6 +22,8 @@ export const PRODUCT_TYPES = {
   game: { label: 'Game', kind: 'product', prefix: 'gm', platform_id: null, preset: 'games', provider: null, needs_account: false },
   other: { label: 'Other supported unit', kind: 'product', prefix: 'ot', platform_id: null, preset: 'general_content', provider: null, needs_account: false },
 };
+// the kind of thing a record is: what the wizard recorded, else inferred for records that existed before it (a YouTube channel is a YouTube channel)
+export const typeOfProduct = (prod) => PRODUCT_TYPES[prod?.meta?.product_type] || (prod?.platform_id === 'youtube' && prod?.kind === 'channel' ? PRODUCT_TYPES.youtube_channel : null);
 // what may be created under which kind of unit: the available choice depends on where the founder is standing
 export const CREATABLE = {
   house: { units: ['team', 'subteam'], products: [] }, team: { units: ['subteam'], products: ['channel', 'product'] },
@@ -210,7 +212,7 @@ export async function readinessOf(db, productId) {
   const target = await loadTarget(db, { product_id: productId });
   if (target.type !== 'product') throw new AutError(422, 'TARGET', 'readiness is for a channel or product');
   const prod = await one(db, 'SELECT id, kind, name, platform_id, external_ref, source, status, meta FROM public.org_products WHERE id = $1', [productId]);
-  const type = PRODUCT_TYPES[prod.meta?.product_type] || null, needsAccount = !!type?.needs_account;
+  const type = typeOfProduct(prod), needsAccount = !!type?.needs_account;
   const own = await one(db, "SELECT id, name, status, current_version FROM public.automation_templates WHERE owner_product_id = $1 AND status <> 'archived' ORDER BY created_at DESC LIMIT 1", [productId]);
   const asg = own ? await one(db, "SELECT id FROM public.automation_assignments WHERE template_id = $1 AND product_id = $2 AND status = 'active'", [own.id, productId]) : null;
   const prompt = own ? await one(db, 'SELECT id, status, active_version, current_version FROM public.prompt_records WHERE template_id = $1', [own.id]) : null;
