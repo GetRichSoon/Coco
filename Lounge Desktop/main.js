@@ -1058,7 +1058,15 @@ async function selfUpdate() {
   const log = (m) => { try { fs.appendFileSync(path.join(app.getPath('userData'), 'island.log'), `${new Date().toISOString()} update: ${m}\n`); } catch {} };
   updateState = 'CHECKING';
   const pull = await new Promise((r) => execFile('git', ['-C', COCO_DIR, 'pull', '--ff-only', '--quiet'], { windowsHide: true, timeout: 90000 }, (e, so, se) => r(e ? `failed: ${(e.killed ? 'timed out after 90 s' : (se || e.message)).toString().slice(0, 160)}` : 'ok')));   // the shared exec() gives up after 15 s, too short for a pull right after wake-up
-  if (/failed/.test(pull)) { updateState = 'FAILED'; log('pull did not run: ' + pull.slice(0, 120)); }
+  let pulled = pull;
+  // A fast-forward is impossible as soon as this PC holds a commit the cloud does not (the nightly Daily Seal, a session's note). That stopped updates
+  // for good on 2026-11-11 ("Diverging branches"). So merge the cloud line in instead, and undo the merge if it cannot be done cleanly: a conflict can
+  // never leave this folder half merged, and nothing local is lost either way.
+  if (/Diverging branches|Not possible to fast-forward/i.test(pull)) {
+    pulled = await new Promise((r) => execFile('git', ['-C', COCO_DIR, 'pull', '--no-rebase', '--no-edit', '--quiet'], { windowsHide: true, timeout: 90000 }, (e, so, se) => r(e ? `failed: ${(e.killed ? 'timed out after 90 s' : (se || e.message)).toString().slice(0, 160)}` : 'ok')));
+    if (/failed/.test(pulled)) await exec('git', ['-C', COCO_DIR, 'merge', '--abort']); else log('merged the cloud line into this PC (its own commits are kept)');
+  }
+  if (/failed/.test(pulled)) { updateState = 'FAILED'; log('pull did not run: ' + pulled.slice(0, 120)); }
   const after = await exec('git', ['-C', COCO_DIR, 'rev-parse', 'HEAD']);
   if (after === startHead || !/^[0-9a-f]{40}$/.test(after)) { if (updateState === 'CHECKING') updateState = null; return; }
   updateState = 'DOWNLOADING';   // new commits are on disk; what they contain decides the rest
