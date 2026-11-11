@@ -290,7 +290,59 @@ dialog::backdrop { background: rgba(20, 10, 16, .45); }
 .seg button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
 .seg button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 body.calm *, body.calm *::after { animation: none !important; transition: none !important; }
-@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }</style>
+@media (prefers-reduced-motion: reduce) { *, *::after { animation: none !important; transition: none !important; } }/* Automation (Universal Automation Templates): the same rules serve the desktop app and the phone, so nothing here is device specific */
+.aut-cols { display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 860px) { .aut-cols { grid-template-columns: minmax(0, 1fr); } }
+.aut-cols > div { display: grid; gap: 14px; min-width: 0; }
+.aut-item { display: grid; gap: 4px; text-align: left; width: 100%; border: 0; border-radius: 16px; background: var(--surface-2); color: var(--on-surface); padding: 10px 14px; font: 700 14px var(--body); cursor: pointer; margin-top: 6px; }
+.aut-item.on { background: var(--primary-c); color: var(--on-primary-c); }
+.aut-item span { font-weight: 600; }
+.aut-new { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: center; }
+.aut-h { margin: 14px 0 4px; font: 800 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.aut-head { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.aut-head .grow { flex: 1 1 260px; min-width: 0; display: grid; gap: 6px; }
+.aut-fl { display: grid; gap: 6px; }
+.aut-fl > span { font-size: 13px; font-weight: 700; color: var(--muted); }
+.aut-chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--on-surface); }
+.aut-chk input { width: auto; flex: none; }
+.aut-field { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--outline); }
+.aut-sec > .aut-field:first-of-type { border-top: 0; }
+.aut-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+.aut-meta .btn { padding: 2px 10px; font-size: 12px; }
+.aut-days { display: flex; gap: 10px; flex-wrap: wrap; }
+.aut-big { min-height: 260px; font: 13px/1.5 ui-monospace, Consolas, monospace; }
+.aut-vars { display: flex; gap: 6px; flex-wrap: wrap; }
+.aut-vars .chip { border: 0; cursor: pointer; color: var(--on-surface); font-family: ui-monospace, Consolas, monospace; }
+.aut-pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border-radius: 14px; padding: 12px; font: 12.5px/1.5 ui-monospace, Consolas, monospace; max-height: 420px; overflow: auto; }
+.aut-diff { margin: 4px 0 10px; padding: 8px; background: var(--surface-2); border-radius: 12px; font: 12.5px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.aut-diff .add { display: block; background: var(--good-c); color: var(--good); }
+.aut-diff .del { display: block; background: var(--bad-c); color: var(--bad); }
+.aut-err { box-shadow: inset 0 0 0 2px var(--bad); }
+.aut-err ul { margin: 4px 0 0 18px; padding: 0; }
+.aut-warn { box-shadow: inset 0 0 0 1px var(--warn); }
+.aut-t { width: 100%; border-collapse: collapse; font-size: 13px; display: block; overflow-x: auto; }
+.aut-t th { text-align: left; color: var(--muted); font-weight: 800; padding: 6px 10px; white-space: nowrap; }
+.aut-t td { padding: 6px 10px; border-top: 1px solid var(--outline); }
+.aut-steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.aut-steps button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--outline); background: transparent; color: var(--on-surface); border-radius: 999px; padding: 5px 12px 5px 6px; font: 700 13px var(--body); cursor: pointer; }
+.aut-steps button span { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-3); font-size: 12px; }
+.aut-steps button.on { background: var(--primary-c); color: var(--on-primary-c); border-color: transparent; }
+.aut-steps button.done span { background: var(--good-c); color: var(--good); }
+@media (max-width: 560px) { .aut-steps button { font-size: 0; gap: 0; padding: 4px; } .aut-steps button span { font-size: 13px; } }
+.aut-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.aut-card { position: relative; display: grid; gap: 4px; padding: 14px; border-radius: 18px; background: var(--surface-2); cursor: pointer; box-shadow: inset 0 0 0 1px var(--outline); color: var(--on-surface); font-size: 15px; }
+.aut-card.on { box-shadow: inset 0 0 0 2px var(--primary); background: var(--primary-c); color: var(--on-primary-c); }
+.aut-card .muted { color: inherit; opacity: .8; }
+.aut-card input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.aut-card:focus-within { outline: 3px solid var(--primary); outline-offset: 2px; }
+.aut-learn { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.aut-learn b { flex: 1 1 100%; font-size: 13px; color: var(--muted); }
+.aut-file { cursor: pointer; }
+.aut-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; align-items: center; }
+.aut-back { margin-bottom: 8px; }
+.aut-item .chip { margin-right: 4px; }
+details > summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+</style>
 </head>
 <body>
 <!-- 1. sign in -->
@@ -546,7 +598,7 @@ async function loadControlPlane() {
   return null;
 }
 
-const PAGES = [['home', 'Home', 'home'], ['structure', 'Structure', 'schema'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
+const PAGES = [['home', 'Home', 'home'], ['structure', 'Structure', 'schema'], ['automation', 'Automation', 'auto_mode'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   if (!NOVA) { try { const r = await fetch('nova.json', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); if (j && j.url) { NOVA = String(j.url).replace(/\/$/, ''); store.set('gs-nova-url', NOVA); sb = makeClient(store.get('gs-device-key')); } } } catch {} }
@@ -908,7 +960,7 @@ function orgPage() {
       <div class="tabs" style="margin-top:8px">${PL_TABS.map(([k, l]) => `<button data-pltab="${k}" class="${k === tab ? 'on' : ''}">${esc(l)}</button>`).join('')}</div>${views[tab]()}</div>`;
   };
 
-  return banner + bar + header + (cur.kind === 'subteam' ? pipelineSec() : '') + kidsSec + (cur.kind === 'category' ? '' : agentsSec) + prodSec + queue + perfSec + refSec + techSec;
+  return banner + bar + header + (typeof autUnitSection === 'function' ? autUnitSection(cur) : '') + (cur.kind === 'subteam' ? pipelineSec() : '') + kidsSec + (cur.kind === 'category' ? '' : agentsSec) + prodSec + queue + perfSec + refSec + techSec;
 }
 // ---------------------------------------------------------------- Cloud: autonomy, security, integrations, teams
 // Every number on this page comes from a cloud table (devices, jobs, capability_uses, policies, integrations, activity) or from a
@@ -4413,6 +4465,7 @@ const V = {
     if (extra) { ouLoad(); return bar + ouPage(); }
     return bar + orgPage();
   },
+  automation() { return autView(); },
   cloud() { cloudLoad(); return cloudPage(); },
   company() {
     const tabs =`<div class="tabs">${D.houses.map(h => `<button data-sub="${h.id}" class="${sub === h.id ? 'on' : ''}">${esc(h.name)}</button>`).join('')}<button data-sub="decisions" class="${sub === 'decisions' ? 'on' : ''}">Decisions</button></div>`;
@@ -4917,6 +4970,598 @@ document.addEventListener('change', (e) => {
   const n = chatTree().find((x) => x.kind === kind && x.id === id);
   if (n) chatGo(chatScopeWith(n));
 });
+
+// ---------------------------------------------------------------- AUTOMATION UI (begin): Universal Automation Templates, desktop and phone/PWA share this code
+// State lives in AUT; every action calls Nova (/api/automation/*), then render(). Nothing here holds a credential. Text typed into an editor is
+// captured into AUT before any re-render so it can never be lost to a refresh.
+const AUT = { tab: 'templates', schema: null, org: null, list: null, curId: null, cur: null, eff: null, dirty: {}, unset: new Set(), name: null, desc: null, pr: null, prView: null, prDraft: null, prCmp: null, prev: null, test: null,
+  lib: null, libPrompts: null, refs: null, wiz: null, dash: null, dashTab: 'overview', unit: {}, rev: 0, warn: null, stats: null, schedule: null, agents: null, drafts: null, error: null, busy: false, loading: false, lastTa: null, range: '28d', previewTarget: '' };
+const AUT_TABS = [['templates', 'Templates'], ['prompts', 'Prompt Instructions'], ['library', 'Library'], ['references', 'References'], ['schedule', 'Schedule and statistics'], ['create', 'Create new'], ['channel', 'Channel dashboard']];
+const AUT_STATUS = { draft: ['', 'Draft'], active: ['good', 'Active'], paused: ['warn', 'Paused'], archived: ['bad', 'Archived'] };
+const AUT_CREATE_LABEL = { house: 'Team or Subteam', team: 'Subteam, Channel or Product', subteam: 'Category, Channel or Product', category: 'Channel or Product' };
+const autTag = (t, c = '') => `<span class="chip ${c}">${esc(t)}</span>`;
+const autGet = (o, p) => String(p).split('.').reduce((a, k) => (a == null ? undefined : a[k]), o);
+const autSet = (o, p, v) => { const ks = p.split('.'); let a = o; for (const k of ks.slice(0, -1)) a = (a[k] ??= {}); a[ks.at(-1)] = v; return o; };
+const autFamily = (s) => ({ short: 'video', long_form: 'video', image: 'image', ebook: 'text', comic: 'image', lesson: 'text', software_release: 'software', game: 'game' }[autGet(s, 'basics.content_type')] || 'other');
+
+async function autApi(path, { method = 'GET', body, query } = {}) {
+  const qs = query ? '?' + new URLSearchParams(Object.entries(query).filter(([, v]) => v != null && v !== '').map(([k, v]) => [k, String(v)])) : '';
+  const r = await novaFetch('/api/automation' + path + qs, { method, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.reason || j.message || `Nova answered ${r.status}`), { state: j.state, errors: j.errors, checks: j.checks, blockers: j.blockers, status: r.status });
+  return j;
+}
+// run an action: one at a time, errors shown (with the offending fields), then the screen refreshes
+async function autDo(fn, ok = null) {
+  if (AUT.busy) return toast('One moment: still working');
+  AUT.busy = true; AUT.error = null; autCapture();
+  try { const r = await fn(); if (ok) toast(typeof ok === 'function' ? ok(r) : ok); return r; }
+  catch (e) { AUT.error = { message: e.message, errors: e.errors || null, checks: e.checks || null, blockers: e.blockers || null }; toast(e.message.slice(0, 160)); }
+  finally { AUT.busy = false; render(); if (AUT.error) setTimeout(() => { const e = document.querySelector('.aut-err'); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 0); }
+}
+// read whatever is typed in the editors into AUT so a re-render never loses it
+function autCapture() {
+  const g = (s) => document.querySelector(s);
+  if (g('#aut-full')) AUT.prDraft = { full_text: g('#aut-full').value, sections: Object.fromEntries([...document.querySelectorAll('[data-aut-sec]')].map((t) => [t.dataset.autSec, t.value]).filter(([, v]) => v.trim())) };
+  if (g('#aut-name')) AUT.name = g('#aut-name').value; if (g('#aut-desc')) AUT.desc = g('#aut-desc').value;
+  if (AUT.wiz) autWizCapture();
+}
+
+// ---------------------------------------------------------------- loading
+async function autLoad(force = false) {
+  if (AUT.loading || !NOVA) return; if (AUT.schema && !force) return;
+  AUT.loading = true;
+  try { const [schema, org, list] = await Promise.all([autApi('/schema'), autApi('/org'), autApi('/templates')]); AUT.schema = schema; AUT.org = org; AUT.list = list.templates; }
+  catch (e) { AUT.error = { message: e.message }; } finally { AUT.loading = false; render(); }
+}
+async function autRefreshList() { AUT.list = (await autApi('/templates')).templates; }
+async function autOpen(id) {
+  AUT.curId = id; AUT.dirty = {}; AUT.unset = new Set(); AUT.name = AUT.desc = null; AUT.prDraft = null; AUT.prCmp = null; AUT.prev = null; AUT.test = null; AUT.warn = null; AUT.rev++;
+  AUT.cur = await autApi(`/templates/${id}`);
+  const a = AUT.cur.assignments.find((x) => x.status === 'active') || AUT.cur.assignments[0];
+  AUT.previewTarget = a ? (a.product_id ? `product:${a.product_id}` : `unit:${a.unit_id}`) : '';
+  AUT.eff = a ? await autApi('/effective', { query: a.product_id ? { product_id: a.product_id } : { unit_id: a.unit_id } }).catch(() => null) : null;
+  AUT.agents = a ? (await autApi('/agents', { query: a.product_id ? { product_id: a.product_id } : { unit_id: a.unit_id } }).catch(() => ({ agents: [] }))).agents : [];
+  AUT.pr = AUT.cur.prompt ? await autApi(`/prompts/${AUT.cur.prompt.id}`) : null; AUT.prView = AUT.pr ? AUT.pr.shown : null;
+}
+const autReload = async () => { await autRefreshList(); if (AUT.curId) await autOpen(AUT.curId); };
+
+// ---------------------------------------------------------------- the settings form, generated from the schema Nova serves
+// the settings the form shows: a template's own sparse settings over what it inherits, or (in the creation wizard) the previewed configuration
+const autCtx = () => (AUT.tab === 'create' && AUT.wiz ? { own: {}, eff: AUT.wiz.preview && AUT.wiz.preview.summary ? AUT.wiz.preview.summary.production : null } : { own: AUT.cur ? AUT.cur.settings : {}, eff: AUT.eff });
+const autVal = (f) => { const c = autCtx(); if (f.path in AUT.dirty) return AUT.dirty[f.path]; if (AUT.unset.has(f.path)) return c.eff ? autGet(c.eff.settings, f.path) : f.default; const own = autGet(c.own, f.path); return own !== undefined ? own : c.eff ? autGet(c.eff.settings, f.path) : f.default; };
+const autOwn = (f) => !AUT.unset.has(f.path) && (f.path in AUT.dirty || autGet(autCtx().own, f.path) !== undefined);
+function autField(f) {
+  const v = autVal(f), id = `aut-f-${f.path}`, attr = `data-aut-f="${esc(f.path)}" data-t="${f.type}"${f.numeric ? ' data-num="1"' : ''}`;
+  let input;
+  if (f.type === 'bool') input = `<label class="aut-chk"><input type="checkbox" ${attr} ${v ? 'checked' : ''}> ${esc(f.label)}</label>`;
+  else {
+    let ctl;
+    if (f.type === 'enum') ctl = `<select ${attr}>${f.options.map((o) => `<option value="${esc(o)}" ${String(o) === String(v) ? 'selected' : ''}>${esc(String(o).replace(/_/g, ' '))}</option>`).join('')}</select>`;
+    else if (f.type === 'competitors') ctl = `<select ${attr}>${[...AUT.schema.competitor_presets, 'custom'].map((o) => `<option value="${o}" ${(AUT.schema.competitor_presets.includes(v) ? String(o) === String(v) : o === 'custom') ? 'selected' : ''}>${o === 'custom' ? 'custom…' : o}</option>`).join('')}</select>${AUT.schema.competitor_presets.includes(v) ? '' : `<input type="number" min="1" max="10000" value="${esc(v)}" data-aut-f="${esc(f.path)}" data-t="competitors-custom">`}`;
+    else if (f.type === 'days') ctl = `<span class="aut-days" ${attr}>${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => `<label class="aut-chk"><input type="checkbox" data-aut-day="${f.path}|${i + 1}" ${(v || []).includes(i + 1) ? 'checked' : ''}> ${d}</label>`).join('')}</span>`;
+    else if (f.type === 'times') ctl = `<input type="text" value="${esc((v || []).join(', '))}" ${attr} placeholder="09:00, 15:00">`;
+    else if (f.type === 'int') ctl = `<input type="number" ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''} value="${v == null ? '' : esc(v)}" ${attr}>`;
+    else if (f.type === 'date') ctl = `<input type="date" value="${v == null ? '' : esc(v)}" ${attr}>`;
+    else if (f.type === 'text') ctl = `<textarea ${attr} rows="3">${esc(v ?? '')}</textarea>`;
+    else if (f.path === 'integrations.connection_id') ctl = `<select ${attr}><option value="">(none: connect an account in the Channel dashboard or Integrations)</option>${(CONNS || []).filter((c) => c.state === 'connected').map((c) => `<option value="${esc(c.connection_id)}" ${c.connection_id === v ? 'selected' : ''}>${esc(c.external_name || c.connection_id)} (${esc(c.provider)})</option>`).join('')}</select>`;
+    else ctl = `<input type="text" value="${v == null ? '' : esc(v)}" ${attr}>`;
+    input = `<label class="aut-fl"><span>${esc(f.label)}</span>${ctl}</label>`;
+  }
+  const eff = autCtx().eff, from = eff && eff.provenance[f.path], note = f.help ? `<span class="muted">${esc(f.help)}</span>` : '';
+  const src = autOwn(f) ? `${autTag('set here', 'good')} <button class="btn text" data-aut="unset" data-a="${esc(f.path)}" title="Remove this value so it is inherited again">inherit</button>` : (from ? `<span class="muted">inherited from ${esc(from)}</span>` : '<span class="muted">default</span>');
+  const refused = AUT.error && AUT.error.errors && AUT.error.errors.find((x) => x.path === f.path);
+  return `<div class="aut-field" id="${id}">${input}${refused ? `<span class="err">${esc(refused.message)}</span>` : ''}<div class="aut-meta">${src}</div>${note}</div>`;
+}
+function autSettingsForm({ sections = null, hide = () => false } = {}) {
+  const c = autCtx(), main = AUT.dirty['basics.content_type'] ?? autGet(c.own, 'basics.content_type') ?? (c.eff ? autGet(c.eff.settings, 'basics.content_type') : null) ?? 'other', fam = autFamily({ basics: { content_type: main } });
+  return AUT.schema.sections.filter((s) => !sections || sections.includes(s.id)).map((s) => {
+    const fields = s.fields.filter((f) => !hide(f) && (!f.families || f.families.includes(fam)) && (!f.deliverable || f.deliverable === main || f.deliverable === 'other' || (autVal(f) != null && autVal(f) > 0)));
+    if (!fields.length) return '';
+    return `<div class="card2 aut-sec"><h3>${esc(s.label)}</h3>${fields.map(autField).join('')}</div>`;
+  }).join('');
+}
+function autCollect(el) {
+  const p = el.dataset.autF, t = el.dataset.t; if (!p) return;
+  let v;
+  if (t === 'bool') v = el.checked; else if (t === 'int') v = el.value === '' ? null : Number(el.value); else if (t === 'times') v = el.value.split(',').map((x) => x.trim()).filter(Boolean);
+  else if (t === 'competitors') { v = Number(el.value); if (el.value === 'custom') { const cur = Number(autVal({ path: p, default: 25 })); v = AUT.schema.competitor_presets.includes(cur) ? cur + 1 : cur; } } else if (t === 'competitors-custom') v = Number(el.value);
+  else if (t === 'enum') v = el.dataset.num ? Number(el.value) : el.value; else if (t === 'date') v = el.value || null; else if (t === 'id') v = el.value || null; else v = el.value;
+  AUT.dirty[p] = v; AUT.unset.delete(p);
+}
+
+// ---------------------------------------------------------------- views
+function autErrorBox() {
+  const e = AUT.error; if (!e) return '';
+  const items = [...(e.errors || []).map((x) => `${x.path ? x.path + ': ' : ''}${x.message}`), ...(e.checks || []).map((c) => c.detail), ...(e.blockers || []).map((c) => c.detail || c.message)];
+  return `<div class="card2 aut-err"><b>${esc(e.message)}</b>${items.length ? `<ul>${items.slice(0, 12).map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</div>`;
+}
+function autTargetOptions(selected = '', { kinds = null } = {}) {
+  const O = AUT.org; if (!O) return '';
+  const U = new Map(O.units.map((u) => [u.id, u])), depth = (u) => { let d = 0; for (let x = u; x && x.parent_id; x = U.get(x.parent_id)) d++; return d; };
+  const kids = (id) => O.units.filter((u) => u.parent_id === id), prods = (id) => O.products.filter((p) => p.unit_id === id);
+  const out = []; const walk = (u) => { if (!kinds || kinds.includes(u.kind)) out.push(`<option value="unit:${esc(u.id)}" ${selected === `unit:${u.id}` ? 'selected' : ''}>${'  '.repeat(depth(u))}${esc(u.name)} (${esc(u.kind)})</option>`); if (!kinds || kinds.includes('product')) for (const p of prods(u.id)) out.push(`<option value="product:${esc(p.id)}" ${selected === `product:${p.id}` ? 'selected' : ''}>${'  '.repeat(depth(u) + 1)}↳ ${esc(p.name)} (${esc(p.kind)})</option>`); kids(u.id).forEach(walk); };
+  O.units.filter((u) => !u.parent_id).forEach(walk); return out.join('');
+}
+const autSplitTarget = (v) => { const [t, ...r] = String(v || '').split(':'); return t === 'product' ? { product_id: r.join(':') } : t === 'unit' ? { unit_id: r.join(':') } : null; };
+
+function autTemplatesView() {
+  const stTag = (s) => { const x = AUT_STATUS[s] || ['', s]; return autTag(x[1], x[0]); };
+  const list = AUT.list || [], row = (t) => `<button class="aut-item ${t.id === AUT.curId ? 'on' : ''}" data-aut="open" data-a="${esc(t.id)}"><b>${esc(t.name)}</b><span>${stTag(t.status)} <span class="muted">${esc(t.kind)}${t.assignments ? ` · ${t.assignments} assigned` : ''}</span></span></button>`;
+  const groups = [['Channel and product configurations', list.filter((t) => t.owner_product_id)], ['Library templates', list.filter((t) => t.is_library && !t.owner_product_id)], ['Other templates', list.filter((t) => !t.is_library && !t.owner_product_id)]];
+  const side = `<div class="card2"><h3>Templates</h3>
+    <div class="aut-new"><select id="aut-preset">${AUT.schema.presets.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select><input id="aut-newname" type="text" placeholder="Name of the new template"><button class="btn filled" data-aut="newtpl">Create from preset</button></div>
+    <button class="btn tonal" data-aut="wizard" data-a="">+ Create New Channel or Product</button>
+    ${groups.map(([title, rows]) => rows.length ? `<h4 class="aut-h">${esc(title)} (${rows.length})</h4>${rows.map(row).join('')}` : '').join('') || '<span class="muted">No templates yet. Create one from a preset.</span>'}</div>`;
+  return `<div class="aut-cols">${side}<div>${AUT.cur ? autBuilder() : '<div class="card2"><h3>Open a template</h3><span class="muted">Choose one on the left, or create one from a preset. A channel or product always has its own independent configuration.</span></div>'}</div></div>`;
+}
+function autBuilder() {
+  const c = AUT.cur, t = c.template, st = AUT_STATUS[t.status] || ['', t.status], owner = t.owner_product_id ? (AUT.org.products.find((p) => p.id === t.owner_product_id) || {}).name : null;
+  const actions = [t.status === 'draft' || t.status === 'paused' ? `<button class="btn filled" data-aut="status" data-a="${t.status === 'paused' ? 'resume' : 'activate'}">${t.status === 'paused' ? 'Resume' : 'Activate production'}</button>` : '', t.status === 'active' ? '<button class="btn tonal" data-aut="status" data-a="pause">Pause</button>' : '',
+    t.status !== 'archived' ? '<button class="btn text" data-aut="status" data-a="archive">Archive</button>' : '<button class="btn tonal" data-aut="status" data-a="restore">Restore from archive</button>'].join('');
+  const head = `<div class="card2"><div class="aut-head"><div class="grow"><input id="aut-name" type="text" value="${esc(AUT.name ?? t.name)}" aria-label="Template name"><input id="aut-desc" type="text" value="${esc(AUT.desc ?? t.description ?? '')}" placeholder="Description" aria-label="Description"></div>
+    <div>${autTag(st[1], st[0])} ${autTag('v' + t.current_version)}</div></div>
+    <div class="muted">${owner ? `The independent configuration of <b>${esc(owner)}</b>. ` : 'A shared template. '}${t.source_template_id ? `Copied from another template (version ${t.source_version}); it no longer follows it. ` : ''}Saving never starts production: only <b>Activate production</b> does.</div>
+    <div class="aut-actions"><button class="btn filled" data-aut="save">Save as new version</button>${actions}<button class="btn text" data-aut="duplicate">Duplicate</button>${t.is_library ? '' : '<button class="btn text" data-aut="tolibrary">Save a copy to the library</button>'}</div></div>`;
+  const asg = `<div class="card2"><h3>Assignments</h3>${c.assignments.length ? c.assignments.map((a) => `<div class="row"><div class="grow"><b>${esc(a.target_name)}</b><div class="muted">${esc(a.level)} · ${a.status}${Object.keys(a.overrides || {}).length ? ` · ${Object.keys(a.overrides).length} override section(s)` : ''}</div></div><button class="btn text" data-aut="unassign" data-a="${esc(a.id)}">Remove</button></div>`).join('') : '<span class="muted">Not assigned anywhere yet.</span>'}
+    <div class="aut-new"><select id="aut-assign-to"><option value="">Assign to…</option>${autTargetOptions()}</select><button class="btn tonal" data-aut="assign">Assign</button></div><span class="muted">A channel or product is given its own independent copy; upper levels share defaults that their channels inherit.</span></div>`;
+  const vers = `<div class="card2"><h3>Versions</h3>${c.versions.map((v) => `<div class="row"><div class="grow"><b>v${v.version}</b> <span class="muted">${esc(v.change_summary || '')} · ${esc(v.created_by)} · ${ago(v.created_at)}${v.restored_from ? ` · restored from v${v.restored_from}` : ''}</span></div>${v.version === t.current_version ? autTag('current', 'good') : `<button class="btn text" data-aut="restore" data-a="${v.version}">Restore</button>`}</div>`).join('')}</div>`;
+  const agents = `<div class="card2"><h3>Authorised agents</h3>${c.agents.length ? c.agents.map((a) => `<div class="row"><div class="grow"><b>${esc(a.name)}</b><div class="muted">${esc(a.role)} · ${esc(a.unit_id)}${a.status === 'placeholder' ? ' · placeholder (nobody assigned yet)' : ''}</div></div><button class="btn text" data-aut="rmagent" data-a="${esc(a.agent_id)}">Remove</button></div>`).join('') : '<span class="muted">None. Agents come only from this template\'s own organisation chain.</span>'}
+    ${(AUT.agents || []).length ? `<div class="aut-new"><select id="aut-agent">${AUT.agents.filter((a) => !c.agents.some((x) => x.agent_id === a.id)).map((a) => `<option value="${esc(a.id)}">${esc(a.name)} (${esc(a.role)})</option>`).join('')}</select><button class="btn tonal" data-aut="addagent">Add</button></div>` : ''}</div>`;
+  return `<div id="aut-tpl-${esc(t.id)}-${AUT.rev}">${head}${AUT.eff ? `<div class="card2"><b>Effective for ${esc(AUT.eff.target.name)}:</b> <span class="muted">${AUT.eff.templates.map((x) => `${esc(x.name)} @ ${esc(x.at.name)}`).join(' → ') || 'defaults only'}. Each value below says whether it is set here or inherited.</span></div>` : ''}${autSettingsForm()}${asg}${agents}${vers}</div>`;
+}
+
+// ---------------------------------------------------------------- Prompt Instructions
+function autPromptView() {
+  if (!AUT.cur) return `<div class="card2"><h3>Prompt Instructions</h3><span class="muted">Choose a template first. Every template has its own prompt.</span>${(AUT.list || []).map((t) => `<button class="aut-item" data-aut="openprompt" data-a="${esc(t.id)}"><b>${esc(t.name)}</b><span class="muted">${esc(t.kind)}${t.prompt_status ? ' · prompt ' + t.prompt_status : ''}</span></button>`).join('')}</div>`;
+  const pr = AUT.pr, p = pr && pr.prompt, shown = AUT.prView || { sections: {}, full_text: '', version: null }, d = AUT.prDraft;
+  if (!p) return '<div class="card2"><span class="muted">This template has no prompt.</span></div>';
+  const full = d ? d.full_text : shown.full_text, sec = d ? d.sections : shown.sections || {};
+  const st = AUT_STATUS[p.status] || ['', p.status];
+  const bar = `<div class="card2"><div class="aut-head"><div class="grow"><b>${esc(AUT.cur.template.name)}</b><div class="muted">Prompt "${esc(p.name)}" · ${p.active_version ? `active version v${p.active_version}` : 'no active version'} · newest v${p.current_version}${shown.version ? ` · showing v${shown.version}` : ''}</div></div>${autTag(st[1], st[0])}</div>
+    <div class="aut-actions"><button class="btn filled" data-aut="prsave">Save Prompt</button><button class="btn tonal" data-aut="prsave" data-a="activate">Save and activate</button>${p.status === 'active' ? '<button class="btn text" data-aut="prstatus" data-a="pause">Pause Prompt</button>' : p.status === 'paused' ? '<button class="btn text" data-aut="prstatus" data-a="resume">Resume</button>' : ''}${p.current_version !== p.active_version ? '<button class="btn text" data-aut="prstatus" data-a="activate">Activate newest</button>' : ''}
+      <button class="btn text" data-aut="prpreview">Preview Execution</button><button class="btn text" data-aut="prtest">Test Prompt</button><button class="btn text" data-aut="prtolib">Save to Library</button><label class="btn text aut-file">Import Prompt<input type="file" id="aut-import" accept=".txt,.md,.json,text/plain,application/json" hidden></label></div></div>`;
+  const vars = `<div class="aut-vars">${Object.entries(AUT.schema.variables).map(([k, d2]) => `<button class="chip" data-aut="insvar" data-a="${esc(k)}" title="${esc(d2)}">{{${esc(k)}}}</button>`).join('')}</div>`;
+  const editor = `<div class="card2" id="aut-ed-${AUT.rev}"><h3>Paste or write the prompt</h3><span class="muted">Paste a complete custom prompt here, or fill the sections below. Variables are checked when you save; unknown ones and credential-like text are refused.</span>
+    <textarea id="aut-full" class="aut-big" placeholder="Paste the whole prompt here…">${esc(full)}</textarea>
+    <div class="aut-actions"><button class="btn text" data-aut="prsplit">Split by headings into sections</button></div>${vars}
+    ${AUT.schema.prompt_sections.map((s) => `<label class="aut-fl"><span>${esc(s.label)}</span><textarea data-aut-sec="${esc(s.id)}" rows="${sec[s.id] ? 5 : 2}">${esc(sec[s.id] || '')}</textarea></label>`).join('')}</div>`;
+  const hist = `<div class="card2"><h3>Version history</h3>${pr.versions.map((v) => `<div class="row"><div class="grow"><b>v${v.version}</b> ${v.active ? autTag('active', 'good') : ''} <span class="muted">${esc(v.change_summary || '')} · ${esc(v.created_by)} · ${ago(v.created_at)}${v.restored_from ? ` · restored from v${v.restored_from}` : ''}</span></div>
+    <button class="btn text" data-aut="prview" data-a="${v.version}">View</button><button class="btn text" data-aut="prcompare" data-a="${v.version}">Compare with newest</button>${v.version !== p.current_version ? `<button class="btn text" data-aut="prrestore" data-a="${v.version}">Restore</button>` : ''}</div>`).join('')}
+    ${AUT.prCmp ? `<h4 class="aut-h">v${AUT.prCmp.a} → v${AUT.prCmp.b}</h4>${AUT.prCmp.same ? '<span class="muted">Identical.</span>' : AUT.prCmp.fields.map((f) => `<b>${esc(f.label)}</b><pre class="aut-diff">${f.lines.map((l) => `<span class="${l.t}">${l.t === 'add' ? '+ ' : l.t === 'del' ? '- ' : '  '}${esc(l.text)}</span>`).join('\n')}</pre>`).join('')}` : ''}</div>`;
+  return `${bar}${AUT.warn && AUT.warn.length ? `<div class="card2 aut-warn"><b>Saved, with notes</b>${AUT.warn.map((w) => `<div>${esc(typeof w === 'string' ? w : w.message || JSON.stringify(w))}</div>`).join('')}</div>` : ''}${editor}${autPreviewPanel()}${hist}`;
+}
+function autPreviewPanel() {
+  const pv = AUT.prev, t = AUT.test;
+  const pick = `<div class="card2"><h3>Preview and test</h3><div class="aut-new"><select id="aut-ptarget"><option value="">Choose where it would run…</option>${autTargetOptions(AUT.previewTarget)}</select><select id="aut-pdeliv">${AUT.schema.deliverables.map((x) => `<option value="${x.id}">${esc(x.label)}</option>`).join('')}</select></div><span class="muted">A preview shows exactly what would be sent and records nothing. A test runs a small sample through the AI gateway and is recorded as a test: it is never published.</span>`;
+  if (!pv) return `${pick}</div>`;
+  const chk = (c) => `<div class="row"><div class="grow"><b>${esc(c.id)}</b><div class="muted">${esc(c.detail)}</div></div>${autTag(c.ok ? 'ok' : c.severity === 'block' ? 'blocked' : 'warning', c.ok ? 'good' : c.severity === 'block' ? 'bad' : 'warn')}</div>`;
+  return `${pick}<h4 class="aut-h">${pv.ok ? autTag('Ready', 'good') : autTag('Blocked', 'bad')} ${esc(pv.template ? `${pv.template.name} v${pv.template.version}` : 'no template')} · prompt ${pv.prompt ? `v${pv.prompt.version ?? 'unsaved'}` : 'none'} · ${pv.brain ? esc(pv.brain.id) : 'no Brain'}</h4>
+    <div class="muted">Scope: ${pv.scope.map((s) => esc(s.name)).join(' › ')} · Intended output: ${esc(pv.intended_output)} · Tools: ${pv.required_tools.map(esc).join(', ')} · About ${pv.estimate.est_input_tokens} input tokens, up to ${pv.estimate.max_output_tokens} output (${esc(pv.estimate.note)})</div>
+    ${pv.variables.unresolved.length ? `<div class="aut-err card2">Missing variables: ${pv.variables.unresolved.map((v) => `{{${esc(v)}}}`).join(', ')}</div>` : ''}${pv.warnings.map((w) => `<div class="card2 aut-warn">${esc(w)}</div>`).join('')}
+    <details open><summary>Resolved instructions</summary><pre class="aut-pre">${esc(pv.instructions.system)}\n\n${esc(pv.instructions.prompt)}</pre></details>
+    <details><summary>Checks (${pv.checks.length})</summary>${pv.checks.map(chk).join('')}</details>
+    ${pv.references.length ? `<div class="muted">References: ${pv.references.map((r) => esc(r.name)).join(', ')}</div>` : ''}
+    ${t ? `<h4 class="aut-h">Test result ${t.ran ? (t.ok ? autTag('ran', 'good') : autTag('failed', 'bad')) : autTag('did not run', 'warn')}</h4>${t.output ? `<pre class="aut-pre">${esc(t.output)}</pre>` : `<span class="muted">${esc(t.error ? (t.error.reason || t.error.state) : (t.blockers || []).map((b) => b.detail).join('; '))}</span>`}` : ''}</div>`;
+}
+// ---------------------------------------------------------------- Library
+function autLibraryView() {
+  const L = AUT.lib, P = AUT.libPrompts; if (!L || !P) { autDo(async () => { AUT.lib = await autApi('/library'); AUT.libPrompts = (await autApi('/prompts', { query: { kind: 'library' } })).prompts; }); return '<p class="muted">Loading the library…</p>'; }
+  const tpls = AUT.list || [];
+  return `<div class="card2"><h3>Template library</h3><span class="muted">Presets and saved templates a new channel or product can start from. Using one always makes an independent copy.</span>
+    ${L.presets.map((p) => `<div class="row"><div class="grow"><b>${esc(p.name)}</b> ${autTag('preset')}<div class="muted">${esc(p.description)}</div></div><button class="btn tonal" data-aut="wizard-preset" data-a="${esc(p.id)}">Use for a new channel</button></div>`).join('')}
+    ${L.templates.map((t) => `<div class="row"><div class="grow"><b>${esc(t.name)}</b> ${autTag('library')}<div class="muted">${esc(t.kind)} · v${t.current_version}</div></div><button class="btn text" data-aut="open-tab" data-a="${esc(t.id)}">Open</button><button class="btn tonal" data-aut="wizard-template" data-a="${esc(t.id)}">Use for a new channel</button></div>`).join('')}</div>
+    <div class="card2"><h3>Prompt library</h3>${P.length ? P.map((p) => `<div class="row"><div class="grow"><b>${esc(p.name)}</b><div class="muted">v${p.current_version}${p.derived_from_prompt ? ' · copied from another prompt' : ''}</div></div>
+      <button class="btn text" data-aut="libdup" data-a="${esc(p.id)}">Duplicate</button><select data-aut-apply="${esc(p.id)}"><option value="">Apply to a template…</option>${tpls.filter((t) => t.status !== 'archived').map((t) => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}</select></div>`).join('') : '<span class="muted">No saved prompts yet. Use Save to Library in Prompt Instructions.</span>'}<span class="muted">Applying copies the prompt into the template as a new version; later edits to either never change the other.</span></div>`;
+}
+// ---------------------------------------------------------------- actions (stage 1): templates and prompts
+async function autClickPart1(a, id, btn) {
+  if (a === 'tab') {
+    autCapture(); AUT.tab = id; AUT.error = null;
+    if (id === 'channel' && AUT.dash) return autDo(() => autOpenDash(AUT.dash.overview.product.id));   // what changed on other tabs (prompt, account, activation) shows at once
+    if (id === 'channel') AUT.dashTab = 'overview';
+    return render();
+  }
+  if (a === 'open') return autDo(() => autOpen(id));
+  if (a === 'open-tab') { AUT.tab = 'templates'; return autDo(() => autOpen(id)); }
+  if (a === 'openprompt') { AUT.tab = 'prompts'; return autDo(() => autOpen(id)); }
+  if (a === 'newtpl') { const name = document.querySelector('#aut-newname').value.trim(), preset = document.querySelector('#aut-preset').value; return autDo(async () => { const r = await autApi('/templates', { method: 'POST', body: { name, preset } }); await autRefreshList(); await autOpen(r.template.id); }, 'Template created as a draft'); }
+  if (a === 'save') return autDo(async () => {
+    const patch = {}; for (const [p, v] of Object.entries(AUT.dirty)) autSet(patch, p, v);
+    const body = { patch, unset: [...AUT.unset], name: document.querySelector('#aut-name').value, description: document.querySelector('#aut-desc').value, change_summary: 'Edited in COCO' };
+    const r = await autApi(`/templates/${AUT.curId}/save`, { method: 'POST', body }); await autReload(); return r;
+  }, (r) => (r.unchanged ? 'Nothing changed' : `Saved as version ${r.template.current_version}${r.schedule && (r.schedule.inserted || r.schedule.cancelled) ? `: ${r.schedule.inserted} planned, ${r.schedule.cancelled} cancelled` : ''}`));
+  if (a === 'unset') { autCapture(); AUT.unset.add(id); delete AUT.dirty[id]; AUT.rev++; return render(); }
+  if (a === 'status') {
+    if (id === 'activate' && !confirm('Activate production for this template?\n\nThis starts planning work for its channel or product from its targets. Publishing still needs approval unless you separately authorise it.')) return;
+    if (id === 'archive' && !confirm('Archive this template? Planned, unstarted work is cancelled. Nothing is deleted.')) return;
+    return autDo(async () => { await autApi(`/templates/${AUT.curId}/status`, { method: 'POST', body: { action: id } }); await autReload(); }, { activate: 'Activated', resume: 'Resumed', pause: 'Paused', archive: 'Archived', restore: 'Restored' }[id]);
+  }
+  if (a === 'duplicate') { const name = prompt('Name of the copy', `${AUT.cur.template.name} copy`); if (!name) return; return autDo(async () => { const r = await autApi(`/templates/${AUT.curId}/duplicate`, { method: 'POST', body: { name } }); await autRefreshList(); await autOpen(r.template.id); }, 'Copied: no account, reference or assignment is copied'); }
+  if (a === 'tolibrary') { const name = prompt('Library name', `${AUT.cur.template.name} (library)`); if (!name) return; return autDo(async () => { await autApi(`/templates/${AUT.curId}/duplicate`, { method: 'POST', body: { name, is_library: true } }); await autRefreshList(); }, 'Saved to the library'); }
+  if (a === 'restore') { if (!confirm(`Restore version ${id}? It becomes a new version; nothing is lost.`)) return; return autDo(async () => { await autApi(`/templates/${AUT.curId}/restore`, { method: 'POST', body: { version: Number(id) } }); await autReload(); }, 'Restored as a new version'); }
+  if (a === 'assign') { const t = autSplitTarget(document.querySelector('#aut-assign-to').value); if (!t) return toast('Choose where to assign it'); return autDo(async () => { const r = await autApi(`/templates/${AUT.curId}/assign`, { method: 'POST', body: { ...t, copy: !!t.product_id } }); await autRefreshList(); await autOpen(r.template.id); }, (r) => t.product_id ? 'Assigned as the channel\'s own independent copy' : 'Assigned'); }
+  if (a === 'unassign') return autDo(async () => { await autApi(`/assignments/${id}`, { method: 'POST', body: { status: 'removed' } }); await autReload(); }, 'Assignment removed');
+  if (a === 'addagent') return autDo(async () => { await autApi(`/templates/${AUT.curId}/agents`, { method: 'POST', body: { agent_ids: [document.querySelector('#aut-agent').value] } }); await autOpen(AUT.curId); }, 'Agent added');
+  if (a === 'rmagent') return autDo(async () => { await autApi(`/templates/${AUT.curId}/agents/remove`, { method: 'POST', body: { agent_id: id } }); await autOpen(AUT.curId); }, 'Agent removed');
+  // prompts
+  const pid = AUT.cur && AUT.cur.prompt && AUT.cur.prompt.id;
+  if (a === 'prsave') return autDo(async () => { const d = AUT.prDraft || {}; const r = await autApi(`/prompts/${pid}/save`, { method: 'POST', body: { full_text: d.full_text || '', sections: d.sections || {}, change_summary: 'Edited in COCO', activate: id === 'activate' } }); AUT.prDraft = null; await autOpen(AUT.curId); AUT.warn = r.warnings; return r; }, (r) => (r.unchanged ? 'Nothing changed' : `Saved as v${r.prompt.current_version}${r.prompt.active_version === r.prompt.current_version ? ' and active' : ' (not active yet)'}`));
+  if (a === 'prstatus') return autDo(async () => { await autApi(`/prompts/${pid}/status`, { method: 'POST', body: { action: id } }); await autOpen(AUT.curId); }, { activate: 'Activated', pause: 'Paused', resume: 'Resumed' }[id]);
+  if (a === 'prview') return autDo(async () => { AUT.prView = (await autApi(`/prompts/${pid}`, { query: { version: id } })).shown; AUT.prDraft = null; AUT.rev++; });
+  if (a === 'prcompare') return autDo(async () => { AUT.prCmp = await autApi(`/prompts/${pid}/compare`, { query: { a: id, b: AUT.pr.prompt.current_version } }); });
+  if (a === 'prrestore') { if (!confirm(`Roll back to version ${id}? Its text becomes the newest version and is activated; new jobs use it, running jobs keep what they started with.`)) return; return autDo(async () => { await autApi(`/prompts/${pid}/restore`, { method: 'POST', body: { version: Number(id) } }); AUT.prDraft = null; await autOpen(AUT.curId); }, 'Rolled back'); }
+  if (a === 'prsplit') { const t = document.querySelector('#aut-full').value; return autDo(async () => { const r = await autApi('/prompts/import', { method: 'POST', body: { template_id: AUT.curId, text: t } }); AUT.prDraft = null; await autOpen(AUT.curId); }, 'Split by its headings and saved as a new version (not yet active)'); }
+  if (a === 'insvar') { const ta = AUT.lastTa && document.body.contains(AUT.lastTa) ? AUT.lastTa : document.querySelector('#aut-full'); const s = ta.selectionStart ?? ta.value.length; ta.value = ta.value.slice(0, s) + `{{${id}}}` + ta.value.slice(ta.selectionEnd ?? s); ta.focus(); ta.selectionStart = ta.selectionEnd = s + id.length + 4; return; }
+  if (a === 'prtolib') { const name = prompt('Name in the prompt library', `${AUT.cur.template.name} prompt`); if (!name) return; const d = AUT.prDraft || AUT.prView || {}; return autDo(async () => { await autApi('/prompts', { method: 'POST', body: { name, full_text: d.full_text || '', sections: d.sections || {} } }); AUT.libPrompts = null; }, 'Saved to the prompt library'); }
+  if (a === 'prpreview' || a === 'prtest') {
+    const t = autSplitTarget(document.querySelector('#aut-ptarget') && document.querySelector('#aut-ptarget').value); if (!t) return toast('Choose where it would run');
+    const body = { ...t, deliverable: document.querySelector('#aut-pdeliv').value, template_id: AUT.curId, draft_prompt: AUT.prDraft && (AUT.prDraft.full_text || Object.keys(AUT.prDraft.sections || {}).length) ? AUT.prDraft : undefined };
+    AUT.previewTarget = document.querySelector('#aut-ptarget').value;
+    return autDo(async () => { if (a === 'prpreview') { AUT.prev = await autApi('/preview', { method: 'POST', body }); AUT.test = null; } else { const r = await autApi('/test', { method: 'POST', body }); AUT.prev = r; AUT.test = r; } });
+  }
+  if (a === 'libdup') return autDo(async () => { await autApi(`/prompts/${id}/duplicate`, { method: 'POST', body: {} }); AUT.libPrompts = null; }, 'Duplicated');
+}
+// ---------------------------------------------------------------- AUTOMATION UI (stage 1 end)
+
+// ---------------------------------------------------------------- AUTOMATION UI (stage 2): references, schedule and statistics, creation wizard, channel dashboard
+const AUT_LEARN = { visual_style: 'Visual style', animation: 'Animation', expressions: 'Expressions', storytelling: 'Storytelling', editing: 'Editing', thumbnails: 'Thumbnails', pacing: 'Pacing', topic: 'Topic', niche: 'Niche', all: 'Everything relevant' };
+const learnBoxes = (name, chosen = []) => `<div class="aut-learn"><b>What should COCO learn from this reference?</b>${Object.entries(AUT_LEARN).map(([k, l]) => `<label class="aut-chk"><input type="checkbox" data-aut-learn="${name}|${k}" ${chosen.includes(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>`;
+const learnPicked = (name) => [...document.querySelectorAll(`[data-aut-learn^="${name}|"]`)].filter((c) => c.checked).map((c) => c.dataset.autLearn.split('|')[1]);
+const fmtBytes = (n) => (n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+
+// ---------------------------------------------------------------- references
+function autRefsView() {
+  if (!AUT.cur) return `<div class="card2"><h3>References</h3><span class="muted">Choose a template first; references belong to its configuration.</span>${(AUT.list || []).map((t) => `<button class="aut-item" data-aut="open-ref" data-a="${esc(t.id)}"><b>${esc(t.name)}</b></button>`).join('')}</div>`;
+  const refs = AUT.cur.references;
+  return `<div class="card2"><h3>References for ${esc(AUT.cur.template.name)}</h3><span class="muted">References guide original work. They are private: files are stored in object storage, never in the database, and COCO never copies them.</span>
+    ${refs.length ? refs.map((r) => `<div class="row"><div class="grow"><b>${esc(r.name)}</b> ${autTag(r.kind)} ${autTag(r.status, r.status === 'stored' || r.status === 'link' ? 'good' : r.status === 'failed' ? 'bad' : 'warn')}<div class="muted">${r.url ? esc(r.url) : `${esc(r.content_type || '')} · ${fmtBytes(Number(r.bytes))}`} · learn: ${esc((r.learn || []).map((l) => AUT_LEARN[l] || l).join(', '))} · analysis: ${esc(r.analysis_status)}</div></div>
+      ${r.status === 'stored' ? `<button class="btn text" data-aut="refdl" data-a="${esc(r.id)}">Download</button>` : ''}${r.status === 'pending_upload' ? `<button class="btn text" data-aut="refdone" data-a="${esc(r.id)}">Check upload</button>` : ''}<button class="btn text" data-aut="refrm" data-a="${esc(r.id)}">Remove</button></div>`).join('') : '<span class="muted">No references yet.</span>'}</div>
+    <div class="card2"><h3>Add a file</h3><input type="file" id="aut-reffile" accept="image/*,video/*,audio/*,application/pdf,text/plain,text/markdown,text/csv,application/json">${learnBoxes('file')}<input type="text" id="aut-refnotes" placeholder="Notes (optional)"><button class="btn filled" data-aut="refupload">Upload</button><span class="muted">Images up to 25 MB, audio 200 MB, PDF 100 MB, text 5 MB; videos up to 500 MB from the browser.</span></div>
+    <div class="card2"><h3>Add a link</h3><div class="aut-new"><select id="aut-linkkind"><option value="website_url">Website</option><option value="youtube_url">YouTube video</option><option value="channel_url">Channel</option><option value="product_url">Product</option></select><input type="url" id="aut-linkurl" placeholder="https://…"></div>${learnBoxes('link')}<button class="btn filled" data-aut="reflink">Add link</button></div>`;
+}
+async function autUploadFile(file, learn, notes) {
+  const kind = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : file.type === 'application/pdf' ? 'pdf' : (file.type.startsWith('text/') || file.type === 'application/json') ? 'text' : null;
+  if (!kind) throw new Error('That kind of file is not supported as a reference');
+  if (file.size > 500 * 1048576) throw new Error('Files over 500 MB cannot be checked in the browser yet; use a smaller file or a link');
+  const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const r = await autApi('/references', { method: 'POST', body: { template_id: AUT.curId, kind, name: file.name, content_type: file.type, bytes: file.size, sha256: digest, learn, notes } });
+  if (r.upload) { const put = await fetch(r.upload.url, { method: 'PUT', headers: r.upload.headers, body: file }); if (!put.ok) throw new Error(`The upload to storage did not go through (${put.status})`); }
+  if (r.reference.status !== 'stored') await autApi(`/references/${r.reference.id}/complete`, { method: 'POST' });
+  return r;
+}
+
+// ---------------------------------------------------------------- schedule and statistics
+const STATS_RANGES = [['today', 'Today'], ['7d', '7 days'], ['28d', '28 days'], ['90d', '90 days'], ['month', 'This month'], ['custom', 'Custom']];
+function autStatsHtml(st) {
+  if (!st) return '<span class="muted">Not loaded yet.</span>';
+  const rows = st.production.rows.length ? `<table class="aut-t"><tr><th>Deliverable</th><th>Planned</th><th>Created</th><th>Pending</th><th>Failed</th><th>Cancelled</th></tr>${st.production.rows.map((r) => `<tr><td>${esc(r.deliverable)}</td><td>${r.planned}</td><td>${r.created}</td><td>${r.pending}</td><td>${r.failed}</td><td>${r.cancelled}</td></tr>`).join('')}</table>` : '<span class="muted">No planned work in this range.</span>';
+  const yt = st.youtube, lab = yt ? yt.labels : {};
+  const metrics = (m) => Object.entries(m).map(([k, v]) => `<div class="row"><div class="grow">${esc(lab[k] || k)}</div><b>${esc(v)}</b></div>`).join('') || '<span class="muted">nothing reported</span>';
+  return `<div class="muted">${esc(st.range.from)} → ${esc(st.range.to)} · ${esc(st.target.name)}</div><h4 class="aut-h">Planned versus actual ${autTag('COCO', '')}</h4>${rows}
+    <div class="muted">${esc(st.production.uploaded_published_scheduled.reason)}</div>
+    ${yt ? `<h4 class="aut-h">YouTube ${autTag('provider reported', 'good')}</h4><div class="muted">${esc(yt.source)}${yt.collected ? '' : ' · nothing collected yet'}</div>${Object.entries(yt.windows).map(([w, d]) => `<b>${esc(w)}</b> <span class="muted">collected ${ago(d.collected_at)}</span>${metrics(d.metrics)}`).join('')}
+      <div class="muted">Published in this range: ${yt.videos_published_in_range.total} ${Object.entries(yt.videos_published_in_range.by_privacy).map(([p, n]) => `${esc(p)} ${n}`).join(', ')}</div>` : ''}
+    ${st.gumroad ? `<h4 class="aut-h">Gumroad ${autTag('provider reported', 'good')}</h4>${st.gumroad.available === false ? `<span class="muted">${esc(st.gumroad.reason)}</span>` : `<pre class="aut-pre">${esc(JSON.stringify(st.gumroad, null, 1).slice(0, 1500))}</pre>`}` : ''}
+    ${st.missing.length ? `<div class="aut-warn card2"><b>Not collected (never estimated):</b> ${st.missing.map((m) => esc(m.replace(/^youtube\./, ''))).join(', ')}</div>` : ''}`;
+}
+function autScheduleView() {
+  if (!AUT.cur) return `<div class="card2"><h3>Schedule and statistics</h3><span class="muted">Choose a template first.</span>${(AUT.list || []).map((t) => `<button class="aut-item" data-aut="open-sched" data-a="${esc(t.id)}"><b>${esc(t.name)}</b></button>`).join('')}</div>`;
+  const t = AUT.cur.template, sc = AUT.schedule;
+  const range = `<div class="aut-new"><select id="aut-range">${STATS_RANGES.map(([k, l]) => `<option value="${k}" ${AUT.range === k ? 'selected' : ''}>${l}</option>`).join('')}</select><input type="date" id="aut-from"><input type="date" id="aut-to"><button class="btn tonal" data-aut="schedload">Refresh</button></div>`;
+  return `<div class="card2"><h3>${esc(t.name)}: targets and planned work</h3><div class="muted">${autTag(AUT_STATUS[t.status][1], AUT_STATUS[t.status][0])} Planned work follows the targets; changing a target only changes work that has not started. It becomes a job only while the template is active and the scheduler policy is on.</div>
+    <select id="aut-stgt"><option value="">Choose a channel or unit…</option>${AUT.cur.assignments.map((a) => `<option value="${a.product_id ? 'product:' + esc(a.product_id) : 'unit:' + esc(a.unit_id)}" ${AUT.previewTarget === (a.product_id ? 'product:' + a.product_id : 'unit:' + a.unit_id) ? 'selected' : ''}>${esc(a.target_name)}</option>`).join('')}</select>${range}
+    ${sc ? `<table class="aut-t"><tr><th>Day</th><th>Deliverable</th><th>#</th><th>Status</th></tr>${sc.work.slice(0, 60).map((w) => `<tr><td>${esc(w.local_date)}</td><td>${esc(w.deliverable)}</td><td>${w.seq}</td><td>${autTag(w.status, w.status === 'done' ? 'good' : w.status === 'failed' ? 'bad' : w.status === 'cancelled' ? '' : 'warn')}</td></tr>`).join('')}</table>` : '<span class="muted">Press Refresh to load.</span>'}</div>
+    <div class="card2"><h3>Statistics</h3>${autStatsHtml(AUT.stats)}</div>`;
+}
+
+// ---------------------------------------------------------------- the creation wizard (8 steps)
+const WIZ_STEPS = ['Destination', 'Type', 'Details', 'Template', 'Brain and agents', 'Account', 'Production', 'Review'];
+function autWizStart({ unit = '', preset = '', template = '' } = {}) {
+  AUT.dirty = {}; AUT.unset = new Set(); AUT.cur = null; AUT.eff = null; AUT.tab = 'create'; AUT.error = null;
+  AUT.rev++;
+  AUT.wiz = { step: unit ? 2 : 1, max: unit ? 2 : 1, destination: unit, type: '', details: { name: '', description: '', audience: '', language: 'en', niche: '', website: '', brand_guidelines: '' }, template: { mode: template ? 'copy_template' : 'preset', template_id: template, preset }, agents: [], connection_id: '', preview: null, draftId: null, result: null, agentsList: null };
+  if (location.hash !== '#automation') location.hash = '#automation'; else render();
+}
+function autWizSet(el) {
+  const w = AUT.wiz; if (!w || !el.dataset.w) return; const p = el.dataset.w;
+  if (p === 'agents') { w.agents = [...document.querySelectorAll('[data-w="agents"]')].filter((c) => c.checked).map((c) => c.value); return; }
+  const v = el.type === 'radio' ? (el.checked ? el.value : undefined) : el.value; if (v === undefined) return;
+  autSet(w, p, v);
+}
+function autWizCapture() { document.querySelectorAll('[data-w]').forEach((el) => autWizSet(el)); }
+function autWizBody() {
+  const w = AUT.wiz, patch = {}; for (const [p, v] of Object.entries(AUT.dirty)) autSet(patch, p, v);
+  return { destination: { unit_id: w.destination }, type: w.type, details: { ...w.details }, template: { mode: w.template.mode, template_id: w.template.template_id || undefined, preset: w.template.preset || undefined, patch, unset: [...AUT.unset] }, agents: w.agents, integration: w.connection_id ? { connection_id: w.connection_id } : undefined };
+}
+async function autWizPreview() { const r = await autApi('/onboarding/preview', { method: 'POST', body: autWizBody() }); AUT.wiz.preview = r; return r; }
+const wizUnitKinds = ['house', 'team', 'subteam', 'category'];
+function autWizView() {
+  const w = AUT.wiz; if (!w) return `<div class="card2"><h3>Create a new channel or product</h3><span class="muted">Start from a unit page (+ Create New) or here.</span><button class="btn filled" data-aut="wizard" data-a="">Start</button>${autDraftsHtml()}</div>`;
+  if (w.result) return autWizDone();
+  const stepper = `<div class="aut-steps">${WIZ_STEPS.map((s, i) => `<button class="${i + 1 === w.step ? 'on' : i + 1 < w.step ? 'done' : ''}" data-aut="wizgo" data-a="${i + 1}"><span>${i + 1}</span> ${esc(s)}</button>`).join('')}</div>`;
+  const unit = AUT.org.units.find((u) => u.id === w.destination), can = unit ? AUT.schema.creatable[unit.kind] : null, types = can ? can.product_types : [];
+  let body = '';
+  if (w.step === 1) body = `<div class="card2"><h3>Where does it belong?</h3><select data-w="destination" id="aut-wdest"><option value="">Choose a House, Team, Subteam or Category…</option>${AUT.org.units.filter((u) => wizUnitKinds.includes(u.kind)).map((u) => `<option value="${esc(u.id)}" ${u.id === w.destination ? 'selected' : ''}>${esc(u.name)} (${esc(u.kind)})</option>`).join('')}</select>${unit ? `<div class="muted">${autUnitPath(unit.id)}</div>` : ''}<span class="muted">The current location is preselected when you start from a Category. Only a founder can create things here.</span></div>`;
+  if (w.step === 2) body = `<div class="card2"><h3>What are you creating?</h3>${unit ? '' : '<span class="muted">Choose a destination first.</span>'}${unit && !types.length ? `<div class="aut-warn card2">A channel or product cannot be created directly under a ${esc(unit.kind)}. Open a Subteam or a Category.${can && can.units.length ? ` You can create a ${esc(can.units.join(' or '))} here instead.` : ''}</div>` : ''}
+    <div class="aut-cards">${types.map((t) => `<label class="aut-card ${w.type === t.id ? 'on' : ''}"><input type="radio" name="wtype" data-w="type" value="${esc(t.id)}" ${w.type === t.id ? 'checked' : ''}><b>${esc(t.label)}</b><span class="muted">${t.needs_account ? 'Connects to a real account' : 'No account needed'}</span></label>`).join('')}</div>${unit && can && can.units.length ? `<hr><h4 class="aut-h">Or create an organisation unit here</h4><div class="aut-new"><select id="aut-ukind">${can.units.map((k) => `<option value="${k}">${esc(k)}</option>`).join('')}</select><input id="aut-uname" type="text" placeholder="Name"><button class="btn tonal" data-aut="mkunit">Create unit</button></div>` : ''}</div>`;
+  if (w.step === 3) body = `<div class="card2"><h3>Basic details</h3>${[['name', 'Name (required)', 'text'], ['description', 'Description', 'text'], ['audience', 'Intended audience', 'text'], ['language', 'Language (code, e.g. en, hi)', 'text'], ['niche', 'Niche or category', 'text'], ['website', 'Website or reference URL', 'url']].map(([k, l, ty]) => `<label class="aut-fl"><span>${l}</span><input type="${ty}" data-w="details.${k}" value="${esc(w.details[k])}"></label>`).join('')}<label class="aut-fl"><span>Brand guidelines</span><textarea data-w="details.brand_guidelines" rows="4">${esc(w.details.brand_guidelines)}</textarea></label></div>`;
+  if (w.step === 4) {
+    const lib = (AUT.list || []).filter((t) => t.status !== 'archived'), mode = w.template.mode;
+    body = `<div class="card2"><h3>Choose the template</h3><span class="muted">In every case the new ${esc((types.find((t) => t.id === w.type) || {}).label || 'channel')} gets its own independent copy: later changes to the template or to any other channel never reach it.</span>
+      <label class="aut-chk"><input type="radio" name="wmode" data-w="template.mode" value="copy_template" ${mode === 'copy_template' ? 'checked' : ''}> Use an existing template</label>${mode === 'copy_template' ? `<select data-w="template.template_id"><option value="">Choose…</option>${[['Library templates', lib.filter((t) => t.is_library && !t.owner_product_id)], ['Shared templates', lib.filter((t) => !t.is_library && !t.owner_product_id)], ['Other channels (settings and prompt only: no account, references, statistics or memory)', lib.filter((t) => t.owner_product_id)]].map(([title, ts]) => (ts.length ? `<optgroup label="${esc(title)}">${ts.map((t) => `<option value="${esc(t.id)}" ${t.id === w.template.template_id ? 'selected' : ''}>${esc(t.name)} (v${t.current_version})</option>`).join('')}</optgroup>` : '')).join('')}</select>` : ''}
+      <label class="aut-chk"><input type="radio" name="wmode" data-w="template.mode" value="preset" ${mode === 'preset' ? 'checked' : ''}> Create from a preset</label>${mode === 'preset' ? `<select data-w="template.preset">${AUT.schema.presets.map((p) => `<option value="${esc(p.id)}" ${(w.template.preset || (AUT.schema.product_types.find((t) => t.id === w.type) || {}).preset) === p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>` : ''}
+      <label class="aut-chk"><input type="radio" name="wmode" data-w="template.mode" value="default" ${mode === 'default' ? 'checked' : ''}> Start with default settings</label>
+      <button class="btn tonal" data-aut="wizpreview">Preview the template's settings and prompt</button>${w.preview && w.preview.summary ? `<div class="muted">Source: ${esc(w.preview.summary.template.source || '')} · Prompt: ${esc(w.preview.summary.prompt.state)}</div>${w.preview.summary.prompt.text ? `<pre class="aut-pre">${esc(w.preview.summary.prompt.text)}</pre>` : ''}` : ''}</div>`;
+  }
+  if (w.step === 5) {
+    if (!w.agentsList && w.destination) autApi('/agents', { query: { unit_id: w.destination } }).then((r) => { w.agentsList = r.agents; render(); }).catch(() => {});
+    body = `<div class="card2"><h3>Brain and agents</h3><div class="row"><div class="grow"><b>A dedicated Brain is created for it</b><div class="muted">It is connected to its parent Brain${w.preview && w.preview.summary && w.preview.summary.brain && w.preview.summary.brain.parent ? ` (${esc(w.preview.summary.brain.parent)})` : ''}. Its memory is its own: it reads what its parent knows, writes only to itself and shares nothing with sibling channels. An existing Brain is reused, never duplicated.</div></div></div>
+      <h4 class="aut-h">Authorised agents</h4><span class="muted">Only agents from this destination's organisation chain can be chosen; nobody is invented.</span>${(w.agentsList || []).map((a) => `<label class="aut-chk"><input type="checkbox" data-w="agents" value="${esc(a.id)}" ${w.agents.includes(a.id) ? 'checked' : ''}> ${esc(a.name)} <span class="muted">(${esc(a.role)}${a.status === 'placeholder' ? ', placeholder' : ''} · ${esc(a.unit_id)})</span></label>`).join('') || '<span class="muted">Loading agents…</span>'}</div>`;
+  }
+  if (w.step === 6) {
+    const t = AUT.schema.product_types.find((x) => x.id === w.type) || {}, what = (t.label || '').replace(' Channel', '').replace(' Store', '');
+    const usable = (CONNS || []).filter((c) => c.provider === t.provider && c.state === 'connected');
+    body = `<div class="card2"><h3>Account</h3>${t.needs_account ? `<div class="aut-warn card2"><b>Creating this record does not create a real ${esc(what)} account.</b> If the real one does not exist yet, create it with ${esc(what)} itself first. Connecting is a separate step with its own consent screen in Integrations, and nothing is connected or published from here.</div>
+      <label class="aut-fl"><span>Use an account that is already connected and verified</span><select data-w="connection_id"><option value="">Leave it disconnected for now</option>${usable.map((c) => `<option value="${esc(c.connection_id)}" ${c.connection_id === w.connection_id ? 'selected' : ''}>${esc(c.external_name || c.connection_id)}</option>`).join('')}</select></label>
+      ${usable.length ? '' : `<span class="muted">No connected ${esc(what)} account is available yet.</span>`}
+      <div class="aut-actions"><button class="btn tonal" data-aut="wizconnect">Open Integrations to connect an account</button><button class="btn text" data-aut="wizrefresh">Refresh the accounts</button>${w.connection_id ? '<button class="btn text" data-aut="wizverify">Verify the selected account</button>' : ''}</div>` : '<span class="muted">This kind of product needs no connected account.</span>'}</div>`;
+  }
+  if (w.step === 7) body = `<div class="card2"><h3>Production configuration</h3><span class="muted">Loaded from the template; change anything for this channel only. Creating it never switches on automatic creation, upload or publishing, or public visibility.</span><button class="btn tonal" data-aut="wizpreview">Refresh the effective values</button></div>${w.preview && w.preview.summary ? autSettingsForm({ sections: ['basics', 'targets', 'research', 'content', 'quality', 'publishing'], hide: (f) => ['publishing.auto_create', 'publishing.auto_upload', 'publishing.auto_publish', 'basics.target_audience'].includes(f.path) }) : '<div class="card2"><span class="muted">Preview the template in step 4 first.</span></div>'}`;
+  if (w.step === 8) body = autWizReview();
+  const nav = `<div class="aut-actions"><button class="btn text" data-aut="wizback" ${w.step === 1 ? 'disabled' : ''}>Back</button>${w.step < 8 ? '<button class="btn filled" data-aut="wiznext">Next</button>' : ''}<button class="btn text" data-aut="wizdraft">Save as Draft</button><button class="btn text" data-aut="wizcancel">Cancel</button></div>`;
+  return `${stepper}${autErrorBox()}<div id="aut-wiz-${w.step}-${AUT.rev}">${body}</div>${nav}`;
+}
+const autUnitPath = (id) => { const U = new Map(AUT.org.units.map((u) => [u.id, u])); const p = []; for (let u = U.get(id); u; u = U.get(u.parent_id)) p.unshift(u.name); return esc(p.join(' › ')); };
+function autWizReview() {
+  const pv = AUT.wiz.preview; if (!pv) return '<div class="card2"><span class="muted">Building the summary…</span></div>';
+  const s = pv.summary, line = (k, v) => `<div class="row"><div class="grow muted">${esc(k)}</div><div>${v}</div></div>`;
+  const errs = pv.errors.length ? `<div class="card2 aut-err"><b>Fix these first</b><ul>${pv.errors.map((e) => `<li>${esc(e.step)}: ${esc(e.message)}</li>`).join('')}</ul></div>` : '';
+  return `${errs}${s ? `<div class="card2"><h3>Review</h3>${line('Destination', esc(s.destination.path.join(' › ')))}${line('New ' + esc(s.type.label), `<b>${esc(s.details.name)}</b>${s.details.description ? ' · ' + esc(s.details.description) : ''}`)}${line('Template', `${esc(s.template.source || '')} (independent copy)`)}${line('Prompt', esc(s.prompt.state))}${line('Brain', esc(s.brain.action + (s.brain.parent ? ` under ${s.brain.parent}` : '')))}${line('Agents', s.agents.length ? s.agents.map((a) => esc(a.name)).join(', ') : 'none assigned')}${line('Account', esc(s.integration.state === 'connected' ? `connected: ${s.integration.identity.name}` : 'not connected'))}
+      ${line('Production', `targets ${esc(Object.entries(s.production.settings.targets.deliverables).filter(([, v]) => v.daily || v.weekly || v.monthly).map(([k, v]) => `${k} ${[v.daily && v.daily + '/day', v.weekly && v.weekly + '/week', v.monthly && v.monthly + '/month'].filter(Boolean).join(', ')}`).join('; ') || 'none set')} · research ${s.production.settings.research.enabled ? esc(s.production.settings.research.depth) : 'off'} · ${esc(s.production.settings.basics.timezone)}`)}
+      ${line('Publishing', `${esc(s.publishing.visibility)} · founder approval required · automatic publishing off`)}</div>
+      ${pv.missing.length ? `<div class="card2 aut-warn"><b>Still missing after creation</b><ul>${pv.missing.map((m) => `<li>${esc(m)}</li>`).join('')}</ul></div>` : ''}${pv.warnings.map((m) => `<div class="card2 aut-warn">${esc(m)}</div>`).join('')}
+      <div class="aut-actions"><button class="btn filled" data-aut="wizcreate" data-a="create" ${pv.ok ? '' : 'disabled'}>Create ${esc(s.type.label)}</button><button class="btn tonal" data-aut="wizcreate" data-a="create_open" ${pv.ok ? '' : 'disabled'}>Create and Open Settings</button></div>
+      <span class="muted">Creating the record, connecting an account and activating production are three separate actions. This only creates the record.</span>` : ''}`;
+}
+function autWizDone() {
+  const r = AUT.wiz.result;
+  return `<div class="card2"><h3>${r.draft ? 'Draft saved' : esc(r.product.name) + ' was created'}</h3>${r.draft ? '<span class="muted">Nothing was created in the organisation. Open Create new to continue it later.</span>' : `<span class="muted">It is a record only: not a real account, production is not activated and publishing needs approval.</span>
+    <div class="aut-actions"><button class="btn filled" data-aut="opendash" data-a="${esc(r.product.id)}${r.open === 'settings' ? '|production' : ''}">${r.open === 'settings' ? 'Open its settings' : 'Open its dashboard'}</button></div>`}<div class="aut-actions"><button class="btn text" data-aut="wizstart">Create another</button><button class="btn text" data-aut="wizexit">Back to Create new</button></div></div>`;
+}
+function autDraftsHtml() {
+  if (AUT.drafts === null || AUT.drafts === undefined) { autLoadDrafts(); return '<p class="muted">Looking for saved drafts…</p>'; }
+  if (!AUT.drafts.length) return '';
+  return `<h4 class="aut-h">Saved drafts</h4>${AUT.drafts.map((d) => { const p = d.payload || {}, nm = (p.details && p.details.name) || 'Untitled'; return `<div class="row"><div class="grow"><b>${esc(nm)}</b><div class="muted">${esc((p.type || 'no type chosen').replace(/_/g, ' '))} · saved ${ago(d.updated_at)} by ${esc(d.created_by)}</div></div><button class="btn tonal" data-aut="wizcont" data-a="${esc(d.id)}">Continue</button><button class="btn text" data-aut="wizdiscard" data-a="${esc(d.id)}">Discard</button></div>`; }).join('')}`;
+}
+async function autLoadDrafts() { AUT.drafts = []; try { AUT.drafts = (await autApi('/onboarding/drafts')).drafts; } catch { AUT.drafts = []; } render(); }
+
+// ---------------------------------------------------------------- channel dashboard
+const DASH_TABS = [['overview', 'Overview'], ['template', 'Automation Template'], ['prompt', 'Prompt Instructions'], ['brain', 'Brain and Agents'], ['integration', 'Integrations'], ['references', 'References'], ['production', 'Production Settings'], ['scheduler', 'Scheduler'], ['statistics', 'Statistics'], ['activity', 'Activity History']];
+const READY_CHIP = { created: 'good', assigned: 'good', ready: 'good', connected: 'good', available: 'good', not_activated: 'warn', approval_required: 'warn', needs_activation: 'warn', none: '', not_connected: 'bad', missing: 'bad', blocked: 'bad', authorized: 'good' };
+function autChannelView() {
+  const D = AUT.dash;
+  if (!D) {
+    const prods = AUT.org.products.filter((p) => p.kind === 'channel' || p.kind === 'product');
+    return `<div class="card2"><h3>Channel dashboard</h3><span class="muted">Open the dashboard of a channel or product.</span><select id="aut-dashpick"><option value="">Choose…</option>${prods.map((p) => `<option value="${esc(p.id)}">${esc(p.name)} (${esc(p.kind)})</option>`).join('')}</select><button class="btn filled" data-aut="opendash-pick">Open</button></div>`;
+  }
+  const o = D.overview, tabs = `<div class="tabs">${DASH_TABS.map(([k, l]) => `<button class="${AUT.dashTab === k ? 'on' : ''}" data-aut="dashtab" data-a="${k}">${esc(l)}</button>`).join('')}</div>`;
+  const head = `<div class="card2"><div class="aut-head"><div class="grow"><h3 style="margin:0">${esc(o.product.name)}</h3><div class="muted">${o.path.map((p) => esc(p.name)).join(' › ')}</div></div>${o.readiness.fully_ready ? autTag('Fully set up', 'good') : autTag('Not fully ready: ' + o.readiness.missing.join(', '), 'warn')}</div>
+    <div class="muted">${o.product.source === 'placeholder' ? 'This is an organisational record. It is not a real account until one is connected and verified.' : 'Linked to a real, verified account.'}</div></div>`;
+  let body = '';
+  const t = D.template && D.template.template, tid = t && t.id;
+  if (AUT.dashTab === 'overview') body = `<div class="card2"><h3>Setup readiness</h3>${o.readiness.items.map((i) => `<div class="row"><div class="grow"><b>${esc(i.label)}</b><div class="muted">${esc(i.detail || '')}</div></div>${autTag(i.state.replace(/_/g, ' '), READY_CHIP[i.state] || '')}</div>`).join('')}</div>
+    <div class="card2"><h3>Production and publishing</h3><div class="muted">Production: ${esc(o.production.state.replace(/_/g, ' '))}${o.production.blockers.length ? ' (missing: ' + o.production.blockers.join(', ') + ')' : ''}. Publishing: ${esc(o.publishing.state.replace(/_/g, ' '))}, ${esc(o.publishing.visibility)}.</div>
+    <div class="aut-actions">${t && t.status !== 'active' ? `<button class="btn filled" data-aut="dashactivate" ${o.production.can_activate ? '' : 'disabled'}>Activate production</button>` : t ? '<button class="btn tonal" data-aut="dashpause">Pause production</button>' : ''}</div>
+    ${t && !o.production.can_activate && t.status !== 'active' ? '<span class="muted">Needs an assigned template and an active prompt before it can be activated.</span>' : ''}
+    <h4 class="aut-h">Automatic public publishing</h4>${o.publishing.authorisation ? `<div class="row"><div class="grow">Authorised: ${esc(o.publishing.authorisation.visibility)}, up to ${o.publishing.authorisation.daily_limit} a day, by ${esc(o.publishing.authorisation.authorized_by)}</div><button class="btn text" data-aut="deauth" data-a="${o.publishing.authorisation.id}">Revoke</button></div>`
+      : `<div class="muted">Not authorised. It needs this explicit step for this exact channel, and the Production Settings must also turn automatic publishing on and founder approval off.</div><div class="aut-new"><select id="aut-authvis"><option value="unlisted">Unlisted</option><option value="public">Public</option></select><input type="number" id="aut-authlim" min="1" max="50" value="1"><button class="btn tonal" data-aut="auth">Authorise</button></div>`}</div>`;
+  if (AUT.dashTab === 'template') body = t ? `<div class="card2"><h3>${esc(t.name)}</h3><div class="muted">${autTag(AUT_STATUS[t.status][1], AUT_STATUS[t.status][0])} v${t.current_version} · ${t.source_template_id ? `copied from a template at version ${t.source_version}; independent since` : 'created here'}</div><div class="aut-actions"><button class="btn filled" data-aut="open-tab" data-a="${esc(tid)}">Open in the template editor</button></div></div>
+    <div class="card2"><h3>Versions</h3>${D.template.versions.map((v) => `<div class="row"><div class="grow"><b>v${v.version}</b> <span class="muted">${esc(v.change_summary)} · ${ago(v.created_at)}</span></div></div>`).join('')}</div>` : '<div class="card2"><span class="muted">No template assigned.</span></div>';
+  if (AUT.dashTab === 'prompt') body = D.prompt ? `<div class="card2"><h3>Prompt</h3><div class="muted">${esc(D.prompt.name)} · ${esc(D.prompt.status)} · active version ${D.prompt.active_version || 'none'} · newest v${D.prompt.current_version}</div><div class="aut-actions"><button class="btn filled" data-aut="openprompt" data-a="${esc(tid)}">Open Prompt Instructions</button></div></div>` : '<div class="card2"><span class="muted">No prompt.</span></div>';
+  if (AUT.dashTab === 'brain') body = `<div class="card2"><h3>Brain</h3>${D.brain ? `<div class="row"><div class="grow"><b>${esc(D.brain.id)}</b><div class="muted">${esc(D.brain.level)} · ${esc(D.brain.state)}${D.brain.parent ? ` · under ${esc(D.brain.parent.id)}` : ''}</div></div></div><div class="muted">Memory: ${esc(JSON.stringify(D.brain.policies.memory || {}))}</div>` : '<span class="muted">No Brain assigned.</span>'}</div>
+    <div class="card2"><h3>Agents</h3>${D.agents.map((a) => `<div class="row"><div class="grow"><b>${esc(a.name)}</b><div class="muted">${esc(a.role)} · ${esc(a.unit_id)}${a.status === 'placeholder' ? ' · placeholder' : ''}</div></div></div>`).join('') || '<span class="muted">No agents assigned.</span>'}</div>`;
+  if (AUT.dashTab === 'integration') { const i = D.integration, id = (D.template && D.template.effective.settings.integrations.connection_id) || ''; body = `<div class="card2"><h3>Account</h3>${i.state === 'not_connected' ? '<div class="aut-warn card2">Not connected. Creating this record did not create a real account; create it with the provider first, then connect it.</div>' : `<div class="row"><div class="grow"><b>${esc(i.external_name || i.connection_id)}</b><div class="muted">${esc(i.provider)} · ${esc(i.state)} · channel ${esc(i.external_id_masked || 'unknown')} · verified ${i.last_verified_at ? ago(i.last_verified_at) : 'never'}${i.scopes ? ` · ${i.scopes.length} permissions` : ''}${i.token_expires_at ? ` · expires ${esc(String(i.token_expires_at).slice(0, 10))}` : ''}${i.refresh_state ? ` · renewal ${esc(i.refresh_state)}` : ''}</div></div></div>`}
+    <div class="aut-actions"><button class="btn filled" data-aut="dashconnect">Connect account</button>${id ? `<button class="btn tonal" data-aut="dashverify" data-a="${esc(id)}">Verify</button>` : ''}</div>
+    <label class="aut-fl"><span>Associate a verified, connected account with this record</span><select id="aut-assoc"><option value="">Choose…</option>${(CONNS || []).filter((c) => c.state === 'connected').map((c) => `<option value="${esc(c.connection_id)}">${esc(c.external_name || c.connection_id)} (${esc(c.provider)})</option>`).join('')}</select></label><button class="btn tonal" data-aut="dashassoc">Associate</button></div>`; }
+  if (AUT.dashTab === 'references') body = `<div class="card2"><h3>References</h3>${D.references.map((r) => `<div class="row"><div class="grow"><b>${esc(r.name)}</b> ${autTag(r.kind)} ${autTag(r.status)}</div></div>`).join('') || '<span class="muted">None yet.</span>'}<div class="aut-actions"><button class="btn filled" data-aut="open-ref" data-a="${esc(tid)}">Manage references</button></div></div>`;
+  if (AUT.dashTab === 'production') body = `<div class="card2"><h3>Production settings (effective)</h3><pre class="aut-pre">${esc(JSON.stringify({ targets: D.production_settings.targets, research: D.production_settings.research, content: D.production_settings.content, publishing: D.production_settings.publishing, basics: D.production_settings.basics }, null, 1))}</pre><div class="aut-actions"><button class="btn filled" data-aut="open-tab" data-a="${esc(tid)}">Edit in the template editor</button></div></div>`;
+  if (AUT.dashTab === 'scheduler') body = `<div class="card2"><h3>Scheduler</h3><div class="muted">${esc(D.scheduler.policy)}</div>${D.scheduler.upcoming.length ? `<table class="aut-t"><tr><th>Day</th><th>Deliverable</th><th>#</th><th>Status</th></tr>${D.scheduler.upcoming.map((w) => `<tr><td>${esc(w.local_date)}</td><td>${esc(w.deliverable)}</td><td>${w.seq}</td><td>${esc(w.status)}</td></tr>`).join('')}</table>` : '<span class="muted">Nothing planned: production is not activated.</span>'}</div>`;
+  if (AUT.dashTab === 'statistics') body = `<div class="card2"><h3>Statistics</h3>${autStatsHtml(D.statistics)}</div>`;
+  if (AUT.dashTab === 'activity') body = `<div class="card2"><h3>Activity history</h3>${D.activity.map((a) => `<div class="row"><div class="grow"><b>${esc(a.entity)} · ${esc(a.action)}</b><div class="muted">${esc(a.actor)} · ${ago(a.at)}${a.version ? ` · v${a.version}` : ''}</div></div></div>`).join('') || '<span class="muted">Nothing yet.</span>'}</div>`;
+  return `<div class="aut-back"><button class="btn text" data-aut="dashclose">← Channels</button></div>${head}${tabs}${autErrorBox()}${body}`;
+}
+async function autOpenDash(pid) { AUT.dash = await autApi('/dashboard', { query: { product_id: pid } }); AUT.tab = 'channel'; if (AUT.dash.template) { AUT.curId = AUT.dash.template.template.id; AUT.cur = await autApi(`/templates/${AUT.curId}`); } }
+
+// ---------------------------------------------------------------- AUTOMATION UI (stage 3): actions for references, schedule, the creation wizard and the channel dashboard; the unit-page section; the page; listeners
+const aut$ = (s) => document.querySelector(s);
+const WIZ_ERR = { 1: ['destination'], 2: ['type'], 3: ['details'], 4: ['template'], 5: ['brain'], 6: ['integration'], 7: ['production'] };
+const AUT_PART2 = new Set(['wizexit', 'open-ref', 'open-sched', 'refdl', 'refdone', 'refrm', 'refupload', 'reflink', 'schedload', 'wizard', 'wizard-preset', 'wizard-template', 'wizstart', 'wizgo', 'wizpreview', 'wizback', 'wiznext', 'wizdraft', 'wizcancel',
+  'wizcont', 'wizdiscard', 'mkunit', 'wizconnect', 'wizrefresh', 'wizverify', 'wizcreate', 'opendash', 'opendash-pick', 'dashtab', 'dashclose', 'dashactivate', 'dashpause', 'auth', 'deauth', 'dashconnect', 'dashverify', 'dashassoc', 'reload']);
+const AUT_NAV = new Set(['open-tab', 'openprompt', 'opendash', 'wizard', 'wizard-preset', 'wizard-template']);   // actions that may start on another page (the Structure page) and must land on Automation
+const AUT_GUARD = new Set(['open', 'open-tab', 'openprompt', 'open-ref', 'open-sched']);
+const autFlat = (o, pre = '', out = {}) => { for (const [k, v] of Object.entries(o || {})) { const p = pre ? `${pre}.${k}` : k; if (v && typeof v === 'object' && !Array.isArray(v)) autFlat(v, p, out); else out[p] = v; } return out; };
+const autRefreshCur = async () => { AUT.cur = await autApi(`/templates/${AUT.curId}`); };
+// after anything that changes the organisation: this screen and the rest of the app read it again
+async function autFresh() { AUT.org = await autApi('/org'); await autRefreshList(); AUT.unit = {}; AUT.drafts = null; if (typeof loadAll === 'function') { try { loadAll(); } catch { /* the rest of the app refreshes on its own clock */ } } }
+
+async function autSchedLoad() {
+  const sel = aut$('#aut-stgt'), rg = aut$('#aut-range');
+  if (sel) AUT.previewTarget = sel.value; if (rg) AUT.range = rg.value;
+  const t = autSplitTarget(AUT.previewTarget);
+  if (!t || !AUT.curId) { AUT.schedule = null; AUT.stats = null; return; }
+  const q = { ...t, range: AUT.range }; if (AUT.range === 'custom') { q.from = aut$('#aut-from') ? aut$('#aut-from').value : ''; q.to = aut$('#aut-to') ? aut$('#aut-to').value : ''; }
+  const [schedule, stats] = await Promise.all([autApi('/schedule', { query: { template_id: AUT.curId, ...t } }), autApi('/stats', { query: q })]);
+  AUT.schedule = schedule; AUT.stats = stats;
+}
+async function autWizEnter(n) {
+  const w = AUT.wiz; autWizCapture(); w.step = n; w.max = Math.max(w.max || 1, n); AUT.rev++;
+  if (n >= 4) await autWizPreview();
+}
+
+async function autClickPart2(a, id) {
+  // ---- references
+  if (a === 'open-ref') { AUT.tab = 'references'; return autDo(() => autOpen(id)); }
+  if (a === 'open-sched') { AUT.tab = 'schedule'; return autDo(async () => { await autOpen(id); await autSchedLoad(); }); }
+  if (a === 'refdl') return autDo(async () => { const r = await autApi(`/references/${id}/download`); window.open(r.url, '_blank', 'noopener'); });
+  if (a === 'refdone') return autDo(async () => { await autApi(`/references/${id}/complete`, { method: 'POST' }); await autRefreshCur(); }, 'The upload is confirmed');
+  if (a === 'refrm') { if (!confirm('Remove this reference? COCO stops using it; the stored file follows the storage retention rules.')) return; return autDo(async () => { await autApi(`/references/${id}/remove`, { method: 'POST' }); await autRefreshCur(); }, 'Removed'); }
+  if (a === 'refupload') {
+    const f = aut$('#aut-reffile') && aut$('#aut-reffile').files[0]; if (!f) return toast('Choose a file first');
+    const learn = learnPicked('file'); if (!learn.length) return toast('Say what COCO should learn from it');
+    const notes = aut$('#aut-refnotes') ? aut$('#aut-refnotes').value : '';
+    return autDo(async () => { toast('Uploading and checking the file…'); await autUploadFile(f, learn, notes); await autRefreshCur(); aut$('#aut-reffile').value = ''; if (aut$('#aut-refnotes')) aut$('#aut-refnotes').value = ''; }, 'Stored and verified');
+  }
+  if (a === 'reflink') {
+    const url = aut$('#aut-linkurl').value.trim(), kind = aut$('#aut-linkkind').value, learn = learnPicked('link');
+    if (!url) return toast('Paste the link first'); if (!learn.length) return toast('Say what COCO should learn from it');
+    return autDo(async () => { await autApi('/references', { method: 'POST', body: { template_id: AUT.curId, kind, url, learn } }); await autRefreshCur(); aut$('#aut-linkurl').value = ''; }, 'Link added');
+  }
+  // ---- schedule and statistics
+  if (a === 'schedload') return autDo(autSchedLoad);
+  // ---- the creation wizard
+  if (a === 'wizard') return autWizStart({ unit: id });
+  if (a === 'wizard-preset') return autWizStart({ preset: id });
+  if (a === 'wizard-template') return autWizStart({ template: id });
+  if (a === 'wizstart') { AUT.wiz = null; return autWizStart({}); }
+  if (a === 'wizexit') { AUT.wiz = null; AUT.dirty = {}; AUT.unset = new Set(); AUT.rev++; return render(); }
+  if (a === 'wizgo') { const n = Number(id), w = AUT.wiz; autWizCapture(); if (n > (w.max || 1)) return toast('Finish the earlier steps first'); return autDo(() => autWizEnter(n)); }
+  if (a === 'wizpreview') return autDo(async () => { autWizCapture(); await autWizPreview(); AUT.rev++; });
+  if (a === 'wizback') { const w = AUT.wiz; autWizCapture(); w.step = Math.max(1, w.step - 1); AUT.rev++; return render(); }
+  if (a === 'wiznext') return autDo(async () => {
+    const w = AUT.wiz; autWizCapture();
+    if (w.step === 1 && !w.destination) { AUT.error = { message: 'Choose where it belongs' }; return; }
+    if (w.step === 2 && !w.type) { AUT.error = { message: 'Choose what you are creating' }; return; }
+    if (w.step === 3 && String(w.details.name).trim().length < 2) { AUT.error = { message: 'Give it a name (at least 2 characters)' }; return; }
+    if (w.step === 4 && w.template.mode === 'copy_template' && !w.template.template_id) { AUT.error = { message: 'Choose which template to start from, or pick a preset' }; return; }
+    const pv = await autWizPreview(), mine = pv.errors.filter((e) => (WIZ_ERR[w.step] || []).includes(e.step));
+    if (mine.length) { AUT.error = { message: 'Please fix this before continuing', errors: mine.map((e) => ({ path: e.field, message: e.message })) }; return; }
+    await autWizEnter(Math.min(8, w.step + 1));
+  });
+  if (a === 'wizdraft') return autDo(async () => { autWizCapture(); const w = AUT.wiz, r = await autApi('/onboarding/create', { method: 'POST', body: { ...autWizBody(), mode: 'draft', draft_id: w.draftId || undefined } }); w.draftId = r.draft_id; w.result = { draft: true }; AUT.drafts = null; }, 'Draft saved: nothing has been created yet');
+  if (a === 'wizcancel') { if (!confirm('Leave without creating anything? You can save it as a draft first.')) return; AUT.wiz = null; AUT.dirty = {}; AUT.unset = new Set(); AUT.rev++; return render(); }
+  if (a === 'wizcont') {
+    const d = (AUT.drafts || []).find((x) => String(x.id) === String(id)); if (!d) return;
+    const p = d.payload || {}; autWizStart({ unit: (p.destination && p.destination.unit_id) || '' });
+    const w = AUT.wiz; w.draftId = d.id; w.type = p.type || ''; Object.assign(w.details, p.details || {}); w.agents = p.agents || []; w.connection_id = (p.integration && p.integration.connection_id) || '';
+    if (p.template) { w.template = { mode: p.template.mode || 'preset', template_id: p.template.template_id || '', preset: p.template.preset || '' }; AUT.dirty = autFlat(p.template.patch); AUT.unset = new Set(p.template.unset || []); }
+    w.step = w.destination ? (w.type ? 3 : 2) : 1; w.max = 8; return render();
+  }
+  if (a === 'wizdiscard') { if (!confirm('Discard this draft? Nothing has been created from it.')) return; return autDo(async () => { await autApi(`/onboarding/drafts/${id}/discard`, { method: 'POST' }); AUT.drafts = null; }, 'Draft discarded'); }
+  if (a === 'mkunit') return autDo(async () => {
+    const w = AUT.wiz, kind = aut$('#aut-ukind').value, name = aut$('#aut-uname').value.trim();
+    const r = await autApi('/units', { method: 'POST', body: { parent_id: w.destination, kind, name } });
+    await autFresh(); w.destination = r.unit.id; w.type = ''; w.step = 2; w.max = 2; w.preview = null; w.agentsList = null; AUT.rev++;
+  }, 'Created, with its own Brain connected to its parent. Now choose what to create inside it');
+  if (a === 'wizconnect') { toast('Connect the account in Integrations, press Verify there, then come back to Create new.'); location.hash = '#connections'; return; }
+  if (a === 'wizrefresh') return autDo(async () => { if (typeof loadAll === 'function') await loadAll(); AUT.rev++; }, 'Accounts refreshed');
+  if (a === 'wizverify') return autDo(async () => { await connectionVerify(AUT.wiz.connection_id); AUT.wiz.preview = null; AUT.rev++; });
+  if (a === 'wizcreate') {
+    autWizCapture(); const w = AUT.wiz;
+    return autDo(async () => {
+      const r = await autApi('/onboarding/create', { method: 'POST', body: { ...autWizBody(), mode: id, draft_id: w.draftId || undefined } });
+      w.result = r; AUT.dash = null; await autFresh(); return r;
+    }, (r) => `${r.product.name} was created. Production is not activated and nothing is public.`);
+  }
+  // ---- the channel dashboard
+  if (a === 'opendash') { const [pid0, tab0] = String(id).split('|'); return autDo(async () => { await autOpenDash(pid0); AUT.dashTab = tab0 || 'overview'; }); }
+  if (a === 'opendash-pick') { const v = aut$('#aut-dashpick') && aut$('#aut-dashpick').value; if (!v) return toast('Choose a channel or product'); return autClickPart2('opendash', v); }
+  if (a === 'dashtab') { AUT.dashTab = id; AUT.error = null; return render(); }
+  if (a === 'dashclose') { AUT.dash = null; AUT.error = null; return render(); }
+  const D = AUT.dash, pid = D && D.overview.product.id, tid = D && D.template && D.template.template.id;
+  if (a === 'dashactivate' || a === 'dashpause') {
+    if (!tid) return toast('There is no template to activate');
+    if (a === 'dashactivate' && !confirm(`Activate production for ${D.overview.product.name}?\n\nThis starts planning work from its targets. Nothing is published without approval unless you separately authorise it.`)) return;
+    return autDo(async () => { await autApi(`/templates/${tid}/status`, { method: 'POST', body: { action: a === 'dashactivate' ? 'activate' : 'pause' } }); await autOpenDash(pid); }, a === 'dashactivate' ? 'Production activated' : 'Production paused');
+  }
+  if (a === 'auth') {
+    const vis = aut$('#aut-authvis').value, lim = Number(aut$('#aut-authlim').value);
+    if (!confirm(`Allow automatic ${vis} publishing for ${D.overview.product.name}, up to ${lim} a day?\n\nThis covers this exact channel only and can be revoked at any time. Its Production Settings must also turn automatic publishing on and founder approval off.`)) return;
+    return autDo(async () => { await autApi('/publish/authorize', { method: 'POST', body: { template_id: tid, product_id: pid, visibility: vis, daily_limit: lim } }); await autOpenDash(pid); }, 'Authorised for this channel only');
+  }
+  if (a === 'deauth') { if (!confirm('Revoke automatic publishing for this channel?')) return; return autDo(async () => { await autApi('/publish/revoke', { method: 'POST', body: { id: Number(id) } }); await autOpenDash(pid); }, 'Revoked'); }
+  if (a === 'dashconnect') { toast('Connect the account in Integrations, press Verify there, then associate it here.'); location.hash = '#connections'; return; }
+  if (a === 'dashverify') return autDo(async () => { await connectionVerify(id); await autOpenDash(pid); });
+  if (a === 'dashassoc') {
+    const c = aut$('#aut-assoc') && aut$('#aut-assoc').value; if (!c) return toast('Choose a connected account first');
+    return autDo(async () => { await autApi('/onboarding/associate', { method: 'POST', body: { product_id: pid, connection_id: c } }); await autOpenDash(pid); await autFresh(); }, 'The verified account is now associated with this record');
+  }
+  if (a === 'reload') { AUT.error = null; AUT.schema = null; return autLoad(true); }
+}
+
+// ---------------------------------------------------------------- on a House, Team, Subteam or Category page: create new here, and the channels created here
+async function autUnitLoad(id) { AUT.unit[id] = 'loading'; try { AUT.unit[id] = await autApi(`/units/${encodeURIComponent(id)}/overview`); } catch (e) { AUT.unit[id] = { error: e.message }; } render(); }
+function autUnitSection(cur) {
+  const label = AUT_CREATE_LABEL[cur.kind]; if (!label || !NOVA) return '';
+  const o = AUT.unit[cur.id]; if (o === undefined) autUnitLoad(cur.id);
+  const head = `<div class="aut-head"><h3>Automation and new channels</h3><button class="btn filled" data-aut="wizard" data-a="${esc(cur.id)}">+ Create New</button></div><span class="muted">Create a ${esc(label)} here from a reusable template. A channel or product always gets its own independent configuration, Brain and prompt. Creating it never activates production or publishes anything.</span>`;
+  let body;
+  if (!o || o === 'loading') body = '<span class="muted">Loading what exists here…</span>';
+  else if (o.error) body = `<span class="muted">The automation overview is not available right now: ${esc(o.error)}</span>`;
+  else {
+    const prod = (p) => `<div class="row"><div class="grow"><b>${esc(p.name)}</b><div class="muted">${esc((p.product_type || p.kind || '').replace(/_/g, ' '))} · ${p.real_account ? 'linked to a real account' : 'organisation record'}</div>
+      <div>${autTag(p.template ? 'template: ' + p.template.name : 'no template', p.template ? 'good' : 'warn')} ${autTag('production: ' + p.production.replace(/_/g, ' '), p.production === 'active' ? 'good' : 'warn')} ${autTag('account: ' + String(p.connection.state).replace(/_/g, ' '), p.connection.state === 'connected' || p.connection.state === 'not needed' ? 'good' : 'warn')}</div></div>
+      <button class="btn tonal" data-aut="opendash" data-a="${esc(p.id)}">Dashboard</button></div>`;
+    body = `${o.templates.length ? `<h4 class="aut-h">Templates at this level</h4>${o.templates.map((t) => `<div class="row"><div class="grow"><b>${esc(t.name)}</b><div class="muted">v${t.current_version} · ${esc(t.status)}</div></div><button class="btn text" data-aut="open-tab" data-a="${esc(t.template_id)}">Open</button></div>`).join('')}` : ''}
+      <h4 class="aut-h">Channels and products created here (${o.products.length})</h4>${o.products.map(prod).join('') || '<span class="muted">Nothing is registered directly here yet.</span>'}`;
+  }
+  return `<div class="card2" style="margin-top:14px">${head}${body}</div>`;
+}
+
+// ---------------------------------------------------------------- the page
+function autView() {
+  if (!NOVA) return '<div class="card2"><h3>Automation</h3><span class="muted">This device is not connected to Nova yet, so templates cannot load. Pair this device first (Devices), then come back.</span></div>';
+  if (!AUT.schema || !AUT.org) {
+    if (!AUT.error && !AUT.loading) autLoad();
+    return AUT.error ? `${autErrorBox()}<button class="btn tonal" data-aut="reload">Try again</button>` : '<p class="muted">Loading the automation system…</p>';
+  }
+  const tabs = `<div class="tabs">${AUT_TABS.map(([k, l]) => `<button class="${AUT.tab === k ? 'on' : ''}" data-aut="tab" data-a="${k}">${esc(l)}</button>`).join('')}</div>`;
+  const bodies = { templates: autTemplatesView, prompts: autPromptView, library: autLibraryView, references: autRefsView, schedule: autScheduleView, create: autWizView, channel: autChannelView };
+  const inner = (bodies[AUT.tab] || autTemplatesView)();
+  return `<p class="muted">Templates, prompts, references, schedules and the creation of new channels and products: one system on desktop and phone. Saving never starts production and nothing publishes without approval.</p>${tabs}${['create', 'channel'].includes(AUT.tab) ? '' : autErrorBox()}<div id="aut-tab-${AUT.tab}">${inner}</div>`;
+}
+
+// ---------------------------------------------------------------- listeners (installed once; the page is patched in place, so they stay valid)
+function autDispatch(a, id, btn) {
+  if (AUT_GUARD.has(a) && id !== AUT.curId && (Object.keys(AUT.dirty).length || AUT.unset.size) && !confirm('Leave without saving your changes to this template?')) return;
+  if (AUT_NAV.has(a) && location.hash !== '#automation') location.hash = '#automation';
+  const run = AUT_PART2.has(a) ? autClickPart2 : autClickPart1;
+  Promise.resolve().then(() => run(a, id, btn)).catch((e) => { console.error(e); toast(`That did not work: ${String((e && e.message) || e).slice(0, 140)}`); });
+}
+function autWizChange(el) {
+  const w = AUT.wiz; if (!w) return; const p = el.dataset.w; autWizSet(el);
+  if (p === 'destination') { w.type = ''; w.max = w.destination ? 2 : 1; w.agents = []; w.agentsList = null; w.preview = null; AUT.rev++; render(); }
+  else if (p === 'type') { const t = AUT.schema.product_types.find((x) => x.id === w.type); if (t && w.template.mode === 'preset') w.template.preset = t.preset; w.connection_id = ''; w.preview = null; AUT.dirty = {}; AUT.unset = new Set(); AUT.rev++; render(); }
+  else if (p === 'template.mode') { w.preview = null; AUT.dirty = {}; AUT.unset = new Set(); AUT.rev++; render(); }
+  else if (p === 'template.template_id' || p === 'template.preset') { w.preview = null; AUT.dirty = {}; AUT.unset = new Set(); }   // a different base means the earlier edits no longer apply
+}
+function autOnChange(e) {
+  const el = e.target; if (!el || !el.dataset) return; const d = el.dataset;
+  if (d.autF !== undefined) { autCollect(el); if (d.autF === 'basics.content_type' || d.t === 'competitors') { autCapture(); AUT.rev++; render(); } return; }
+  if (d.autDay) { const p = d.autDay.split('|')[0]; AUT.dirty[p] = [...document.querySelectorAll('[data-aut-day]')].filter((c) => c.dataset.autDay.startsWith(`${p}|`) && c.checked).map((c) => Number(c.dataset.autDay.split('|')[1])).sort((x, y) => x - y); AUT.unset.delete(p); return; }
+  if (d.autLearn !== undefined) return;
+  if (d.w !== undefined) return autWizChange(el);
+  if (d.autApply !== undefined) {
+    if (!el.value) return; const from = d.autApply, to = el.value;
+    if (!confirm('Copy this prompt into that template as a new version? Its current prompt stays in its history and nothing is activated.')) { el.value = ''; return; }
+    return void autDo(async () => { await autApi('/prompts/apply', { method: 'POST', body: { from_prompt_id: from, to_template_id: to } }); AUT.libPrompts = null; el.value = ''; }, 'Applied as a new version: activate it from Prompt Instructions when you are ready');
+  }
+  if (el.id === 'aut-import') {
+    const f = el.files && el.files[0]; if (!f) return; if (f.size > 300 * 1024) { el.value = ''; return toast('A prompt file must be under 300 KB'); }
+    f.text().then((text) => autDo(async () => { await autApi('/prompts/import', { method: 'POST', body: { template_id: AUT.curId, text } }); AUT.prDraft = null; await autOpen(AUT.curId); }, 'Imported as a new version (not yet active)')); el.value = ''; return;
+  }
+  if (el.id === 'aut-stgt' || el.id === 'aut-range') { if (aut$('#aut-stgt')) AUT.previewTarget = aut$('#aut-stgt').value; if (aut$('#aut-range')) AUT.range = aut$('#aut-range').value; return; }
+  if (el.id === 'aut-ptarget') AUT.previewTarget = el.value;
+}
+function autWire() {
+  if (autWire.done) return; autWire.done = true;
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-aut]'); if (!b || !b.closest('#view')) return; e.preventDefault(); autDispatch(b.dataset.aut, b.dataset.a == null ? '' : b.dataset.a, b); });
+  document.addEventListener('change', autOnChange);
+  document.addEventListener('focusin', (e) => { const t = e.target; if (t && t.tagName === 'TEXTAREA' && (t.id === 'aut-full' || (t.dataset && t.dataset.autSec))) AUT.lastTa = t; });
+  document.addEventListener('input', (e) => { const t = e.target; if (t && t.dataset && t.dataset.w !== undefined && t.type !== 'radio' && t.type !== 'checkbox' && t.tagName !== 'SELECT') autWizSet(t); });
+}
+autWire();
+// ---------------------------------------------------------------- AUTOMATION UI (end)
 
 function render() {
   if (!V[page]) page = 'home';

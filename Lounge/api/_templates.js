@@ -21,7 +21,7 @@ const target = (q) => ({ unit_id: q.unit_id || null, product_id: q.product_id ||
 
 // ---------------------------------------------------------------- reference data the forms need
 route('GET', '/schema', async ({ db }) => ({
-  ...S.schemaForUi(), presets: presetSummary(), product_types: Object.entries(O.PRODUCT_TYPES).map(([id, t]) => ({ id, label: t.label, kind: t.kind, platform_id: t.platform_id, needs_account: t.needs_account, preset: t.preset })),
+  ...S.schemaForUi(), presets: presetSummary(), product_types: Object.entries(O.PRODUCT_TYPES).map(([id, t]) => ({ id, label: t.label, kind: t.kind, platform_id: t.platform_id, provider: t.provider, needs_account: t.needs_account, preset: t.preset })),
   creatable: Object.fromEntries(Object.keys(O.CREATABLE).map((k) => [k, O.creatableAt(k)])), platforms: await C.rows(db, 'SELECT id, name FROM public.platforms ORDER BY name'),
 }), { worker: true });
 route('GET', '/org', async ({ db }) => ({
