@@ -37,37 +37,44 @@ export async function handleAi(db, req, who, { json, log, fetch: f = globalThis.
     if (b.provider !== 'gemini') return json(400, { ok: false, state: 'ERROR', reason: 'provider must be gemini' });
     const denied = await guard(db, who, requestOf(req, { provider: 'gemini', capability: 'ai_generate' }), log);
     if (denied) { log(403, { device: who.device_id, ai: 'access_denied' }); return json(denied.status, denied.body); }
-    const pol = (await db.query("SELECT value FROM public.policies WHERE scope = 'company' AND key = 'gemini_generate' ORDER BY updated_at DESC LIMIT 1")).rows[0]?.value;
-    if (pol !== true && pol?.enabled !== true) return json(403, { ok: false, state: 'LOCKED', reason: 'Gemini generation is locked until a founder confirms the key is on the free tier and sets the company policy gemini_generate to true in Coco' });
-    if (!GEMINI_MODELS.has(b.model)) return json(400, { ok: false, state: 'ERROR', reason: `model must be one of ${[...GEMINI_MODELS].join(', ')}` });
-    const prompt = String(b.prompt || ''); if (!prompt || prompt.length > MAX_PROMPT_CHARS) return json(400, { ok: false, state: 'ERROR', reason: `prompt must be 1-${MAX_PROMPT_CHARS} characters` });
-    if (!String(b.purpose || '').trim()) return json(400, { ok: false, state: 'ERROR', reason: 'a generation needs a purpose' });
-    const today = (await db.query("SELECT count(*)::int AS n FROM public.ai_calls WHERE provider = 'google' AND at >= date_trunc('day', now())")).rows[0]?.n || 0;
-    if (today >= DAILY_CAP) return json(429, { ok: false, state: 'CAPPED', reason: `the daily cap of ${DAILY_CAP} Gemini calls is reached` });
-    const maxOut = Math.min(MAX_OUTPUT, Math.max(256, Number(b.max_output_tokens) || 4096));
-    const t0 = Date.now();
-    const r = await f(`${api}/models/${encodeURIComponent(b.model)}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'content-type': 'application/json' }, signal: AbortSignal.timeout(110000),
-      body: JSON.stringify({ ...(b.system ? { systemInstruction: { parts: [{ text: String(b.system).slice(0, 8000) }] } } : {}), contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxOut, temperature: 0.7, ...(b.json ? { responseMimeType: 'application/json' } : {}) } }) });
-    const text = await r.text();
-    const j = (() => { try { return JSON.parse(text); } catch { return null; } })();
-    const u = j?.usageMetadata || {};
-    const id = `AI-${new Date().toISOString().slice(0, 10)}-G${Date.now().toString(36)}`;
-    const status = r.ok && j ? 'done' : 'failed';
-    // ai_calls.run_id must be a known run: an unknown label (a GitHub run) is kept in the task text instead,
-    // so the call is ALWAYS booked. A booking that fails is logged, never swallowed in silence.
-    const known = b.run_id ? (await db.query('SELECT 1 FROM public.runs WHERE run_id = $1', [b.run_id]).then((x) => x.rows.length > 0).catch(() => false)) : false;
-    if (b.run_id && !known) b.task = `${String(b.task || '')} [run ${b.run_id}]`;
-    if (!known) b.run_id = null;
-    const out = (j?.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
-    await db.query(`INSERT INTO public.ai_calls (id, at, status, run_id, team_id, agent_id, provider, model, purpose, expected_output, claude_required, max_tokens, input_tokens, output_tokens, reasoning_tokens, cache_read_tokens, total_tokens, cost, duration_ms, over_budget, measured_by, unverified, result_summary, done_at, requested_by, fingerprint)
-      VALUES ($1, now(), $2, $3, $4, $5, 'google', $6, $7, $8, 'routine cloud writing: Gemini, not Claude (Boss 2026-11-03)', $9, $10, $11, $12, $13, $14, 0, $15, false, 'provider', false, $16, now(), $17, $18)`,
-      [id, status, b.run_id || null, b.team || null, b.agent || null, b.model, String(b.purpose).slice(0, 60), String(b.task || '').slice(0, 300), maxOut, u.promptTokenCount || 0, u.candidatesTokenCount || 0, u.thoughtsTokenCount || 0, u.cachedContentTokenCount || 0, u.totalTokenCount || 0, Date.now() - t0, status === 'done' ? out.slice(0, 300) : strip(text, key).slice(0, 300), who.device_id,
-        // the ledger's fingerprint is required: what was asked, of which model, for which purpose
-        createHash('sha256').update(`${b.model}|${b.purpose}|${prompt}`).digest('hex').slice(0, 16)]).catch((e) => log(500, { ai: 'gemini', booking_failed: String(e.message).slice(0, 160) }));
-    if (!r.ok || !j) { log(r.status, { device: who.device_id, ai: 'gemini', model: b.model, status: r.status }); return json(r.status === 429 ? 429 : 502, { ok: false, state: r.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_ERROR', status: r.status, reason: strip(text, key).slice(0, 300), ai_call_id: id }); }
-    log(200, { device: who.device_id, ai: 'gemini', model: b.model, tokens: u.totalTokenCount || 0 });
-    return json(200, { ok: true, provider: 'gemini', model: b.model, text: out, finish: j.candidates?.[0]?.finishReason || null, usage: { input_tokens: u.promptTokenCount || 0, output_tokens: u.candidatesTokenCount || 0, reasoning_tokens: u.thoughtsTokenCount || 0, cached_tokens: u.cachedContentTokenCount || 0, total_tokens: u.totalTokenCount || 0, measured_by: 'provider' }, ai_call_id: id, duration_ms: Date.now() - t0 });
+    return await generateText(db, who, b, { key, f, api, log, json });
   } catch (e) {
     return json(502, { ok: false, state: 'PROVIDER_ERROR', reason: strip(e?.message, key).slice(0, 300) });
   } finally { key = null; }
+}
+
+// Everything after the access decision: the company policy lock, the model allowlist, the daily cap, the call, and the ledger booking.
+// handleAi runs it for the cloud runtime (engine key + the access broker); the automation templates run it for a founder's sample test.
+// Same lock, same cap, same booking: a test can never use a door that production does not.
+export async function generateText(db, who, b, { key, f = globalThis.fetch, api = API, log = () => {}, json }) {
+  const pol = (await db.query("SELECT value FROM public.policies WHERE scope = 'company' AND key = 'gemini_generate' ORDER BY updated_at DESC LIMIT 1")).rows[0]?.value;
+  if (pol !== true && pol?.enabled !== true) return json(403, { ok: false, state: 'LOCKED', reason: 'Gemini generation is locked until a founder confirms the key is on the free tier and sets the company policy gemini_generate to true in Coco' });
+  if (!GEMINI_MODELS.has(b.model)) return json(400, { ok: false, state: 'ERROR', reason: `model must be one of ${[...GEMINI_MODELS].join(', ')}` });
+  const prompt = String(b.prompt || ''); if (!prompt || prompt.length > MAX_PROMPT_CHARS) return json(400, { ok: false, state: 'ERROR', reason: `prompt must be 1-${MAX_PROMPT_CHARS} characters` });
+  if (!String(b.purpose || '').trim()) return json(400, { ok: false, state: 'ERROR', reason: 'a generation needs a purpose' });
+  const today = (await db.query("SELECT count(*)::int AS n FROM public.ai_calls WHERE provider = 'google' AND at >= date_trunc('day', now())")).rows[0]?.n || 0;
+  if (today >= DAILY_CAP) return json(429, { ok: false, state: 'CAPPED', reason: `the daily cap of ${DAILY_CAP} Gemini calls is reached` });
+  const maxOut = Math.min(MAX_OUTPUT, Math.max(256, Number(b.max_output_tokens) || 4096));
+  const t0 = Date.now();
+  const r = await f(`${api}/models/${encodeURIComponent(b.model)}:generateContent`, { method: 'POST', headers: { 'x-goog-api-key': key, 'content-type': 'application/json' }, signal: AbortSignal.timeout(110000),
+    body: JSON.stringify({ ...(b.system ? { systemInstruction: { parts: [{ text: String(b.system).slice(0, 8000) }] } } : {}), contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxOut, temperature: 0.7, ...(b.json ? { responseMimeType: 'application/json' } : {}) } }) });
+  const text = await r.text();
+  const j = (() => { try { return JSON.parse(text); } catch { return null; } })();
+  const u = j?.usageMetadata || {};
+  const id = `AI-${new Date().toISOString().slice(0, 10)}-G${Date.now().toString(36)}`;
+  const status = r.ok && j ? 'done' : 'failed';
+  // ai_calls.run_id must be a known run: an unknown label (a GitHub run) is kept in the task text instead,
+  // so the call is ALWAYS booked. A booking that fails is logged, never swallowed in silence.
+  const known = b.run_id ? (await db.query('SELECT 1 FROM public.runs WHERE run_id = $1', [b.run_id]).then((x) => x.rows.length > 0).catch(() => false)) : false;
+  if (b.run_id && !known) b.task = `${String(b.task || '')} [run ${b.run_id}]`;
+  if (!known) b.run_id = null;
+  const out = (j?.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
+  await db.query(`INSERT INTO public.ai_calls (id, at, status, run_id, team_id, agent_id, provider, model, purpose, expected_output, claude_required, max_tokens, input_tokens, output_tokens, reasoning_tokens, cache_read_tokens, total_tokens, cost, duration_ms, over_budget, measured_by, unverified, result_summary, done_at, requested_by, fingerprint)
+    VALUES ($1, now(), $2, $3, $4, $5, 'google', $6, $7, $8, 'routine cloud writing: Gemini, not Claude (Boss 2026-11-03)', $9, $10, $11, $12, $13, $14, 0, $15, false, 'provider', false, $16, now(), $17, $18)`,
+    [id, status, b.run_id || null, b.team || null, b.agent || null, b.model, String(b.purpose).slice(0, 60), String(b.task || '').slice(0, 300), maxOut, u.promptTokenCount || 0, u.candidatesTokenCount || 0, u.thoughtsTokenCount || 0, u.cachedContentTokenCount || 0, u.totalTokenCount || 0, Date.now() - t0, status === 'done' ? out.slice(0, 300) : strip(text, key).slice(0, 300), who.device_id,
+      // the ledger's fingerprint is required: what was asked, of which model, for which purpose
+      createHash('sha256').update(`${b.model}|${b.purpose}|${prompt}`).digest('hex').slice(0, 16)]).catch((e) => log(500, { ai: 'gemini', booking_failed: String(e.message).slice(0, 160) }));
+  if (!r.ok || !j) { log(r.status, { device: who.device_id, ai: 'gemini', model: b.model, status: r.status }); return json(r.status === 429 ? 429 : 502, { ok: false, state: r.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_ERROR', status: r.status, reason: strip(text, key).slice(0, 300), ai_call_id: id }); }
+  log(200, { device: who.device_id, ai: 'gemini', model: b.model, tokens: u.totalTokenCount || 0 });
+  return json(200, { ok: true, provider: 'gemini', model: b.model, text: out, finish: j.candidates?.[0]?.finishReason || null, usage: { input_tokens: u.promptTokenCount || 0, output_tokens: u.candidatesTokenCount || 0, reasoning_tokens: u.thoughtsTokenCount || 0, cached_tokens: u.cachedContentTokenCount || 0, total_tokens: u.totalTokenCount || 0, measured_by: 'provider' }, ai_call_id: id, duration_ms: Date.now() - t0 });
 }

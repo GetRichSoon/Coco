@@ -14,11 +14,12 @@ import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
 import { handleAuthed as handleOauthAuthed, callback as oauthCallback, page as oauthPage } from './_oauth.js';
+import { handleAutomation } from './_templates.js';
 import { handleAi } from './_ai.js';
 import { handleOps } from './_ops.js';
 import { redactDeep } from './_redact.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer
-export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {} };
+export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {} };
 
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
@@ -271,6 +272,7 @@ export async function handle(db, req, now = Date.now()) {
     if (req.path.startsWith('/api/ai/')) return handleAi(db, req, who, { json, log, fetch: deps.fetch });
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/oauth/begin' || req.path === '/api/oauth/verify') { const out = await handleOauthAuthed(db, req, who, { json, fetch: deps.fetch, urls: deps.oauthUrls }); log(out.status, { device: who.device_id, oauth: req.path.slice(11) }); return out; }
+    if (req.path.startsWith('/api/automation/')) { const out = await handleAutomation(db, req, who, { json, log, fetch: deps.fetch, overrides: deps.automation }); log(out.status, { device: who.device_id, automation: req.path.slice(16) }); return out; }
     if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
       // The newest cloud build is the latest GitHub release of the (public) Coco repository:
