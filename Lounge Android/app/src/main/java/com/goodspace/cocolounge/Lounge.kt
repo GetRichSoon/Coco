@@ -69,6 +69,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         val chat: List<JSONObject> = emptyList(), val commands: List<JSONObject> = emptyList(), val controls: List<JSONObject> = emptyList(),
         val events: List<JSONObject> = emptyList(), val pipelines: List<JSONObject> = emptyList(),
         val integrations: List<JSONObject> = emptyList(),
+        // Settings > Integrations & Connections (0041): every account with its authorization facts, and the cloud providers
+        val accounts: List<JSONObject> = emptyList(), val cloudProviders: List<JSONObject> = emptyList(), val switches: List<JSONObject> = emptyList(),
         val agentMessages: List<JSONObject> = emptyList(),
     ) {
         val paused get() = controls.firstOrNull { it.optString("id") == "coco_paused" }?.optString("value") == "true"
@@ -235,6 +237,9 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 events = cloud.list("events", "select=*&order=due_at.asc.nullsfirst").objects(),
                 pipelines = cloud.list("pipelines", "select=*&order=house_id.asc").objects(),
                 integrations = runCatching { cloud.list("integrations", "select=*&order=platform.asc").objects() }.getOrDefault(emptyList()),
+                accounts = runCatching { cloud.list("integration_registry", "select=*&order=provider.asc").objects() }.getOrDefault(emptyList()),
+                cloudProviders = runCatching { cloud.list("cloud_providers", "select=*&order=capability.asc").objects() }.getOrDefault(emptyList()),
+                switches = runCatching { cloud.list("provider_switches", "select=*&order=created_at.desc&limit=10").objects() }.getOrDefault(emptyList()),
                 agentMessages = runCatching { cloud.list("agent_messages", "select=*&order=at.desc&limit=40").objects() }.getOrDefault(emptyList()),
             )
             lastFull = System.currentTimeMillis()
@@ -372,6 +377,15 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     }
 
     /** Emergency switch: pause or resume all of Coco's work on every device and in the cloud. */
+    /** A founder approves or rolls back a cloud provider switch. The database re-checks the founder, this paired phone,
+     *  the verified backup and the passing checks itself (0041 coco_provider_switch); this only asks and reports. */
+    fun providerSwitch(op: String, id: String) = viewModelScope.launch {
+        try {
+            cloud.rpc("coco_provider_switch", JSONObject().put("p_op", op).put("p_id", id))
+            log("provider switch $op", id); message = if (op == "approve") "Cut-over approved" else "Switch rolled back"; reload()
+        } catch (e: Exception) { fail(e) }
+    }
+
     fun setPaused(paused: Boolean) = viewModelScope.launch {
         try {
             cloud.update("controls", "id=eq.coco_paused", JSONObject().put("value", paused).put("updated_by", name).put("updated_at", Instant.now().toString()))

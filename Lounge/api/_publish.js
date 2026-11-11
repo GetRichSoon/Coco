@@ -26,6 +26,7 @@
 import { createHash } from 'node:crypto';
 
 import { guard, requestOf } from './_broker.js';
+import { createVault } from './_vault.js';
 export const MODES = ['PREPARE_ONLY', 'DRAFT', 'PUBLISH_WITH_APPROVAL', 'AUTO_PUBLISH'];
 export class PublishError extends Error { constructor(status, state, reason, extra = {}) { super(reason); this.status = status; this.state = state; this.extra = extra; } }
 
@@ -53,6 +54,10 @@ const parseJson = (text) => { try { return JSON.parse(text); } catch { return nu
 // reads the hosted callback did as the admin client.
 export function company(db, who, deviceKey, engineKey, runAs) {
   const sql = async (text, params = []) => runAs(db, who, deviceKey, { sql: text, params }, engineKey);
+  const vault = createVault(db, { actor: who?.device_id || 'nova', legacy: {
+    async secret(name) { const r = await sql('SELECT public.coco_publish_secret($1) AS v', [name]); return typeof r[0]?.v === 'string' && r[0].v ? r[0].v : null; },
+    async client(provider) { const r = await db.query('SELECT public.coco_oauth_client($1) AS v', [provider]); return r.rows[0]?.v || null; },
+  } });
   return {
     async engineOk() { const r = await sql('SELECT public.coco_engine_ok() AS ok'); return r[0]?.ok === true; },
     async account(connectionId) {
@@ -63,9 +68,10 @@ export function company(db, who, deviceKey, engineKey, runAs) {
       const r = await sql('SELECT public.coco_publish_target($1, $2, $3, $4, $5) AS v', [provider, team, subteam, category, channel]);
       const v = r[0]?.v; return v && v.connection_id ? v : null;
     },
-    // audited by name inside the function; the value lives in one variable and is dropped by the caller
-    async secret(name) { const r = await sql('SELECT public.coco_publish_secret($1) AS v', [name]); return typeof r[0]?.v === 'string' && r[0].v ? r[0].v : null; },
-    async client(provider) { const r = await db.query('SELECT public.coco_oauth_client($1) AS v', [provider]); return r.rows[0]?.v || null; },
+    // audited by name; the value lives in one variable and is dropped by the caller. Which vault answers is Nova's
+    // configuration (_vault.js), never this code's concern.
+    async secret(name) { return vault.secret(name, 'nova.publish'); },
+    async client(provider) { return vault.client(provider); },
     async existing(idempotencyKey) {
       const r = await db.query("SELECT id, status, external_id, url, at, meta FROM public.outputs WHERE meta ->> 'idempotency_key' = $1 ORDER BY at DESC LIMIT 1", [idempotencyKey]);
       return r.rows[0] || null;

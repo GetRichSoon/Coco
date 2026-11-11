@@ -94,6 +94,16 @@ fun inTime(iso: String?): String {
 fun online(d: JSONObject) = parse(d.optString("last_seen"))?.let { Duration.between(it, Instant.now()).seconds < 150 } ?: false
 private fun JSONObject.s(k: String) = optString(k).let { if (it == "null") "" else it }
 
+/** One line per account: what the platform granted, until when, how renewal went, the latest health check. Never a credential. */
+private fun accountFacts(a: JSONObject): String = listOfNotNull(
+    a.s("state").replace('_', ' '),
+    a.optJSONArray("scopes")?.length()?.takeIf { it > 0 }?.let { "$it permissions granted" },
+    a.s("token_expires_at").takeIf { it.isNotBlank() }?.let { "authorization until ${it.take(10)}" },
+    a.s("refresh_state").takeIf { it.isNotBlank() && it != "unknown" }?.let { "renewal ${it.replace('_', ' ')}" },
+    a.s("health_status").takeIf { it.isNotBlank() }?.let { "health ${it.lowercase().replace('_', ' ')}" },
+    a.s("last_success_at").takeIf { it.isNotBlank() }?.let { "last success ${it.take(10)}" },
+).joinToString(" · ")
+
 // ---------- small pieces ----------
 @Composable
 fun StatusChip(state: String, text: String? = null) {
@@ -307,6 +317,41 @@ fun LazyListScope.home(vm: Lounge, go: (Tab, MorePage?, String?) -> Unit, onMemb
                     NetLogo(LOGO_DOMAINS[c.s("id")], 30.dp); Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) { Text(c.s("platform"), style = MaterialTheme.typography.titleSmall); Muted(c.s("next_action").ifBlank { c.s("account") }, 2) }
                     StatusChip(c.s("state"))
+                }
+                d.accounts.filter { it.s("provider") == c.s("id") }.forEach { a ->
+                    Column(Modifier.padding(start = 40.dp, bottom = 6.dp)) {
+                        Text(a.s("external_name"), style = MaterialTheme.typography.bodyMedium)
+                        Muted(accountFacts(a), 3)
+                        if (a.s("reconnect_steps").isNotBlank()) Muted("To reconnect: ${a.s("reconnect_steps")}", 2)
+                    }
+                }
+            }
+        }
+    }
+    item(key = "provh") { Section("Cloud providers") }
+    item(key = "prov") {
+        var armed by remember { mutableStateOf("") }   // approve / roll back need a second tap
+        Card {
+            if (d.cloudProviders.isEmpty()) Muted("No cloud providers are registered yet.")
+            d.cloudProviders.forEach { p ->
+                Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text(p.s("label"), style = MaterialTheme.typography.titleSmall); Muted("${p.s("capability")} · ${p.s("role")}", 1) }
+                    StatusChip(p.s("state"))
+                }
+            }
+            d.switches.forEach { s ->
+                val id = s.s("id"); val st = s.s("state")
+                Column(Modifier.padding(top = 8.dp)) {
+                    Text("${s.s("capability")}: ${s.s("from_provider").ifBlank { "none" }} → ${s.s("to_provider")}", style = MaterialTheme.typography.titleSmall)
+                    Muted("${st.replace('_', ' ')} · backup ${if (s.optBoolean("backup_verified")) "verified" else "NOT verified"}", 2)
+                    Row {
+                        if (st == "validated" && s.optBoolean("backup_verified"))
+                            TextButton({ if (armed == "approve:$id") { armed = ""; vm.providerSwitch("approve", id) } else armed = "approve:$id" }) {
+                                Text(if (armed == "approve:$id") "Tap again to approve" else "Approve cut-over") }
+                        if (st in listOf("planned", "exported", "imported", "validated", "approved", "cut_over"))
+                            TextButton({ if (armed == "rollback:$id") { armed = ""; vm.providerSwitch("rollback", id) } else armed = "rollback:$id" }) {
+                                Text(if (armed == "rollback:$id") "Tap again to roll back" else "Roll back") }
+                    }
                 }
             }
         }
