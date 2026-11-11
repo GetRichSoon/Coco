@@ -94,6 +94,11 @@
 - [Show video when created](feedback_show_video_when_created.md) — open every created video/animation for Boss right away, with its full path
 - [Neon + B2 target](project_neon_b2_target.md) — 2026-11-10 decision: Neon only (core/staging/dev), B2 only (3 buckets); Supabase legacy, one verified migration; setup state + blockers
 - [Test once](feedback_test_once.md) — never re-run passing tests; test once at the end, rerun only failures (max 2 fixes)
-- [Orbi 2.10 RC](project_orbi_210_rc.md) — rc-2.10 in Projects/Orbi-rc; Vercel API + Nhost (A1); prices, decisions, name stays Orbi, payments last, spend nothing
-- [The Last Star pilot](project_the_last_star.md) — 90 s film: branch studio/the-last-star (local), Kaggle kernel v6 run 2026-11-10, report.json gate, B2 waits on admin key
+- [Orbi 3.1 RC](project_orbi_210_rc.md) — rc-3.1 in Projects/Orbi-rc (was 2.10); local test build only, original icon, Roboto, Vercel API + Nhost (A1), no domain purchase, payments last, creator platform plan
+- [Orbi dark only](feedback_orbi_dark_only.md) — no light theme or toggle anywhere in Orbi extension or site (2026-11-11)
+- [Orbi original content only](feedback_orbi_original_content_only.md) — editorial/default wallpapers = original AI art from an approved provider; external catalogue held for rights review (2026-11-11)
+- [The Last Star pilot](project_the_last_star.md) — 90 s film: branch studio/the-last-star (local); Kaggle cancelled the render twice 2026-11-11 (no MP4); render location is the founder's call
+- [Integration hub](project_integration_hub.md) — 2026-11-11 COCO hub + portability: 0041 portable vault, provider registry, gated switch; local commits 1e578d7 / e69db7c; live steps wait for YES
 - [Shield Ad Blocker 5.0](project_shield_ad_blocker.md) — RC on PR 1, not in store; payment replay bug fixed in Extension PR 2 (not deployed); founder YES list in docs/release
+- [Automation templates](project_automation_templates.md) — 2026-11-11 template system + wizard + dashboard, local only; real-browser e2e in CocoMaison scripts/ops; deploy, 0041/0042 apply, B2 and Gemini tests wait for YES
+- [LIVE-IDLE target](project_live_idle.md) — 2026-11-11 production state found, weekly audit routine paused, blockers and ordered approval path
