@@ -45,11 +45,12 @@ export const PROVIDERS = {
   },
   gumroad: {
     name: 'Gumroad', authorize: 'https://gumroad.com/oauth/authorize', token: 'https://api.gumroad.com/oauth/token', api: 'https://api.gumroad.com',
-    scope: 'edit_products view_profile', extra: {},
+    // view_sales is what GET /v2/sales needs: without it the revenue sync is refused with insufficient_scope
+    scope: 'edit_products view_profile view_sales', extra: {},
     secretName: (c) => `gumroad_access_token_${slug(c)}`, secretShape: /^gumroad_access_token_[a-z0-9_]+$/,
   },
 };
-const urlsOf = (provider, over = {}) => ({ authorize: PROVIDERS[provider].authorize, token: PROVIDERS[provider].token, api: PROVIDERS[provider].api, ...(over[provider] || {}) });
+export const urlsOf = (provider, over = {}) => ({ authorize: PROVIDERS[provider].authorize, token: PROVIDERS[provider].token, api: PROVIDERS[provider].api, ...(over[provider] || {}) });
 export const publicUrl = (env = process.env) => String(env.COCO_PUBLIC_URL || 'https://cocolounge.vercel.app').replace(/\/+$/, '');
 export const redirectUri = (provider, env) => `${publicUrl(env)}/api/oauth/${provider}/callback`;
 const FORM = { 'content-type': 'application/x-www-form-urlencoded' };
@@ -91,7 +92,7 @@ async function ytAccess(f, token, client, refresh) {
   if (!tok?.access_token) throw new Error('google returned no access token');
   return { token: tok.access_token, scope: String(tok.scope ?? '') };
 }
-async function gumUser(f, api, token) {
+export async function gumUser(f, api, token) {
   const res = await f(`${api}/v2/user`, { headers: { authorization: `Bearer ${token}` } });
   const text = await res.text();
   if (res.status === 401 || res.status === 403) throw Object.assign(new Error(`gumroad refused the credential (${res.status})`), { denied: true });
@@ -109,7 +110,8 @@ export async function begin(db, who, body, { env = process.env, vault = null } =
   // connecting a platform is a founder's act at a founder's device; a worker never starts one
   if (ACCESS_POLICY.workflow_devices.includes(who.device_id)) throw new OauthError(403, 'a cloud worker cannot start a connection; a founder does that from Coco');
   const v = vault || vaultOf(db, { env, actor: who.device_id });
-  const client = await v.client(provider);
+  // today's vault answers a missing client with a database exception: that is a 409 the founder can act on, not a crash
+  const client = await v.client(provider).catch((e) => { if (e && e.code === 'P0001') throw new OauthError(409, `${provider} client credentials are not in the vault yet: store the OAuth client before connecting`); throw e; });
   if (!client?.client_id) throw new OauthError(409, `${provider}_client_id is not in the vault yet: store the OAuth client before connecting`);
   const state = randomBytes(32).toString('base64url'), redirect = redirectUri(provider, env);
   await db.query('INSERT INTO public.oauth_states (state, provider, connection_id, team_id, subteam_id, requested_by, scope) VALUES ($1, $2, $3, $4, $5, $6, $7)',
@@ -191,6 +193,12 @@ async function connectGumroad({ db, v, f, U, tok, conn, claimed }) {
   const user = await gumUser(f, U.api, tok.access_token);
   const name = PROVIDERS.gumroad.secretName(conn), scopes = String(claimed.scope ?? '').split(/\s+/).filter(Boolean);
   const had = (await db.query('SELECT secret_ref FROM public.integration_accounts WHERE connection_id = $1', [conn])).rows[0];
+  // one Gumroad account belongs to one connection (the revenue ledger keeps a sale under one connection only)
+  const clash = String(user.user_id ?? user.id ?? '') && (await db.query("SELECT connection_id, external_name FROM public.integration_accounts WHERE provider = 'gumroad' AND external_id = $1 AND connection_id <> $2 LIMIT 1", [String(user.user_id ?? user.id), conn])).rows[0];
+  if (clash) throw new Error(`that Gumroad account is already connected in Coco as "${clash.external_name}" (${clash.connection_id}). One account belongs to one connection, so nothing was stored. Reconnect that one instead.`);
+  // Gumroad hands the same token back until the application is revoked by hand. Compare BEFORE overwriting: an unchanged token
+  // means an exposed one is still live, so the alert about it must stay.
+  const same = had?.secret_ref === name && (await v.secret(name, 'nova.oauth').catch(() => null)) === tok.access_token;
   await v.put(name, tok.access_token, { consumers: CONSUMERS, op: had?.secret_ref === name ? 'rotate' : 'create' });
   if (tok.refresh_token) await v.put(name.replace('_access_token_', '_refresh_token_'), tok.refresh_token, { consumers: ['nova.oauth'], op: 'rotate' });
   const label = user.email ?? user.name ?? conn;
@@ -213,10 +221,13 @@ async function connectGumroad({ db, v, f, U, tok, conn, claimed }) {
       WHERE NOT EXISTS (SELECT 1 FROM public.integration_links WHERE integration_id = 'gumroad' AND connection_id = $1 AND team_id = $2 AND coalesce(subteam_id, '') = coalesce($3, ''))`,
       [conn, claimed.team_id, claimed.subteam_id, scopes, claimed.requested_by]);
   }
+  // a rotated token settles the old "this token was exposed" alert on the legacy row of this connection (gumroad-<connection>); an unchanged one does not
+  if (!same) await db.query("UPDATE public.integrations SET state = 'connected', error = NULL, next_action = NULL, last_check_at = now(), last_ok_at = now(), updated_at = now() WHERE id = $1", ['gumroad-' + conn]);
   await activity(db, claimed.requested_by, 'platform connected',
-    `Gumroad: connection ${conn} verified as ${label}${claimed.team_id ? ` and assigned to ${claimed.subteam_id ?? claimed.team_id}` : ''}. The credential is in the vault under a name only the publishing worker can read. Publishing stays in PUBLISH_WITH_APPROVAL.`);
-  return { result: 'connected', title: 'Gumroad is connected', lines: [['Signed in as ', { code: label }, ', and verified from the cloud.'],
+    `Gumroad: connection ${conn} verified as ${label}${claimed.team_id ? ` and assigned to ${claimed.subteam_id ?? claimed.team_id}` : ''}.${same ? ' Gumroad returned the SAME access token as before.' : ''} The credential is in the vault under a name only the publishing worker can read. Publishing stays in PUBLISH_WITH_APPROVAL.`);
+  return { result: same ? 'connected (same token)' : 'connected', title: 'Gumroad is connected', lines: [['Signed in as ', { code: label }, ', and verified from the cloud.'],
     'The credential is stored encrypted in the Coco vault. Coco can now use this connection with your PC switched off.',
+    ...(same ? ['Gumroad gave back the same access token as before. If that token was ever exposed it is still live: in Gumroad open Settings, Advanced, Applications, revoke this application, then press Connect in Coco again to get a new one.'] : []),
     ['Publishing remains in ', { code: 'PUBLISH_WITH_APPROVAL' }, ': nothing goes on sale without you saying yes to that title.']] };
 }
 
@@ -236,7 +247,8 @@ export async function verify(db, who, body, { fetch: f = globalThis.fetch, env =
 
   const record = async (status, detail, extra = {}) => {
     const good = status === 'CONNECTED_VERIFIED' || status === 'NOT_ASSIGNED';
-    await db.query(`UPDATE public.integration_accounts SET state = $2, ${good ? 'last_verified_at = now(),' : ''} updated_at = now() WHERE connection_id = $1`, [conn, good ? 'connected' : 'error']);
+    // a check of something that was never connected does not turn "not connected" into "error"
+    await db.query(`UPDATE public.integration_accounts SET state = CASE WHEN $2 THEN 'connected' WHEN state = 'not_connected' AND $3 = 'NOT_CONNECTED' THEN state ELSE 'error' END, ${good ? 'last_verified_at = now(),' : ''} updated_at = now() WHERE connection_id = $1`, [conn, good, status]);
     await hub(db, 'UPDATE public.integration_accounts SET last_error = $2, last_success_at = CASE WHEN $3 THEN now() ELSE last_success_at END, refresh_state = CASE WHEN $4 THEN \'revoked\' ELSE refresh_state END WHERE connection_id = $1',
       [conn, good ? null : String(detail).slice(0, 300), good, status === 'CONNECTED_EXPIRED']);
     await hub(db, `INSERT INTO public.integration_health (id, integration_id, account_id, status, detail, run_label) VALUES ($1, $2, $3, $4, $5, 'oauth-verify') ON CONFLICT (id) DO NOTHING`,
