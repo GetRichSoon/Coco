@@ -1,6 +1,6 @@
 # Over-the-air updates for the Coco Lounge phone app: no store, no cable, no Supabase storage.
-# A push that touches the Android app builds it with the same debug key the phones already run
-# (ANDROID_DEBUG_KEYSTORE_BASE64, the pattern android.yml already uses) and publishes the APK as a
+# A push that touches the Android app builds it signed with the release key (ANDROID_KEYSTORE_BASE64,
+# the same secret android.yml uses) and publishes the APK as a
 # GitHub release of this public repository, sha256 in the notes. Nova serves the latest release at
 # /api/apk/latest to a paired device; the phone checks the sha256 before Android installs. No bucket,
 # no storage secret, no link committed into the tree.
@@ -31,25 +31,33 @@ jobs:
         with: { node-version: '22' }
       - name: one Coco version across all four clients
         run: node Lounge/release.test.js
-      - name: the phones' debug key, so this build installs over what they run
+      # The release key, held as a secret (the same one android.yml signs with): the ONLY key every later update can be signed with. Up to 2.10.0
+      # this step built a debug APK, and every run signed it with a different throwaway certificate, so no phone could ever take a second update
+      # (2.9.2, 2.9.3 and 2.10.0 carry three different certificates). A phone that carries the release key updates in place, keeping its data.
+      - name: the release key, so every build installs over the one before it
         env:
-          DEBUG_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+          B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          test -n "$DEBUG_B64" || { echo "ANDROID_DEBUG_KEYSTORE_BASE64 is not set"; exit 1; }
-          mkdir -p ~/.android && printf '%s' "$DEBUG_B64" | base64 -d > ~/.android/debug.keystore && test -s ~/.android/debug.keystore
-      - name: build
+          test -n "$B64" || { echo "ANDROID_KEYSTORE_BASE64 is not set"; exit 1; }
+          printf '%s' "$B64" | base64 -d > "$RUNNER_TEMP/coco-release.jks" && test -s "$RUNNER_TEMP/coco-release.jks"
+      - name: build the signed release APK
         working-directory: 'Lounge Android'
-        run: ./gradlew assembleDebug --no-daemon -q
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/coco-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: ./gradlew assembleRelease --no-daemon -q
       - name: publish the APK as a GitHub release (tag android-<version>-<code>, sha256 in the notes)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          meta=$(node "Lounge Android/scripts/ota-publish.mjs" "Lounge Android/app/build/outputs/apk/debug/app-debug.apk")
+          apk="Lounge Android/app/build/outputs/apk/release/app-release.apk"
+          meta=$(node "Lounge Android/scripts/ota-publish.mjs" "$apk")
           echo "$meta"
           code=$(echo "$meta" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).versionCode))")
           name=$(echo "$meta" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).versionName))")
           sha=$(echo "$meta" | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).sha256))")
-          cp "Lounge Android/app/build/outputs/apk/debug/app-debug.apk" "coco-lounge-$code.apk"
+          cp "$apk" "coco-lounge-$code.apk"
           gh release delete "android-$name-$code" -y --cleanup-tag 2>/dev/null || true
-          printf 'versionCode %s\nsha256 %s\nBuilt by android-ota from %s with the phones debug key. Installed by the app itself after a checksum.\n' "$code" "$sha" "$GITHUB_SHA" > notes.txt
+          printf 'versionCode %s\nsha256 %s\nBuilt by android-ota from %s, signed with the release key. Installed by the app itself after a checksum.\n' "$code" "$sha" "$GITHUB_SHA" > notes.txt
           gh release create "android-$name-$code" "coco-lounge-$code.apk" --target "$GITHUB_SHA" --title "Coco Lounge $name ($code)" --notes-file notes.txt
