@@ -105,7 +105,7 @@ export async function fetchGumroadSales(accessToken, opts = {}, fetchImpl = glob
 
 // ---------------------------------------------------------------- sales -> ledger rows
 const usd = (cents) => { const v = Math.round(cents) / 100; return v === 0 ? 0 : v; };       // integer cents -> major units, never -0
-const decimal = (s) => { const n = Number(String(s ?? '').replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
+const decimal = (s) => { if (s === null || s === undefined || String(s).trim() === '') return null; const n = Number(String(s).replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
 
 // What was given back for a sale: { cents (USD), reason, unknown? } or null. A chargeback takes the whole sale; a partial refund
 // is exact for a USD listing and unknown for any other (Gumroad gives the remainder only in the listing currency).

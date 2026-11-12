@@ -14,7 +14,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
-import { handle, deps, invalidate, sha256, resetUpstream, buildWrite, pgRefusal, isUpstream, RPCS, TABLES, READ_ONLY } from './api/_nova.js';
+import { handle, deps, invalidate, sha256, resetUpstream, buildWrite, buildRpc, pgRefusal, isUpstream, RPCS, TABLES, READ_ONLY } from './api/_nova.js';
 import { fold, normalise, PROVIDERS, loadConnector, _resetSync } from './api/_connect.js';
 import { PROVIDERS as OAUTH } from './api/_oauth.js';
 
@@ -111,7 +111,7 @@ const seed = async () => {
       ('gumroad_client_id', 'gum-client-id-123456'), ('gumroad_client_secret', 'csecret-OAUTH-CLIENT-SECRET'), ('youtube_client_id', 'yt-client-id-123456'), ('youtube_client_secret', 'yt-client-secret-OAUTH-9999');
     insert into public.jobs (id, idempotency_key, type, team_id, status, attempt, error, errors) values
       ('JOB-failed', 'k1', 't', 'x', 'failed', 3, '{"kind":"boom"}', '[{"kind":"boom"}]'), ('JOB-cancelled', 'k2', 't', 'x', 'cancelled', 1, '{"kind":"cancelled"}', '[]'),
-      ('JOB-done', 'k3', 't', 'x', 'done', 1, '{}', '[]'), ('JOB-queued', 'k4', 't', 'x', 'queued', 0, '{}', '[]'), ('JOB-failed2', 'k6', 't', 'x', 'failed', 2, '{"kind":"boom"}', '[]');
+      ('JOB-done', 'k3', 't', 'x', 'done', 1, '{}', '[]'), ('JOB-queued', 'k4', 't', 'x', 'queued', 0, '{}', '[]'), ('JOB-failed2', 'k6', 't', 'x', 'failed', 2, '{"kind":"boom"}', '[]'), ('JOB-failed3', 'k7', 't', 'x', 'failed', 1, '{"kind":"boom"}', '[]');
     insert into public.jobs (id, idempotency_key, type, team_id, status, attempt, lease_owner, lease_until) values ('JOB-running', 'k5', 't', 'x', 'running', 1, 'w', now() + interval '5 minutes');`);
 };
 await seed();
@@ -276,13 +276,20 @@ await t('10 revenue_events and revenue_sync: GET works for a paired founder; eve
 });
 
 await t('11 the RPC allow-list has what the clients call, and none of the vault functions; a missing function is a clean 404', async () => {
-  for (const n of ['coco_job_submit', 'coco_job_cancel', 'coco_job_block', 'coco_job_recover', 'coco_job_status', 'coco_job_retry', 'coco_request_run', 'coco_connection_checked', 'coco_connection', 'coco_integration', 'coco_oauth_begin',
-    'coco_structure', 'coco_approval', 'submit_task', 'claim_task']) assert.ok(RPCS.has(n), `${n} must be callable`);
-  for (const n of ['coco_callback_secret', 'coco_store_publish_secret', 'coco_publish_secret', 'coco_oauth_client', 'coco_store_oauth_client', 'coco_secret', 'coco_revenue_upsert', 'coco_revenue_sync_set']) assert.ok(!RPCS.has(n), `${n} must stay off the list`);
+  for (const n of ['coco_job_submit', 'coco_job_cancel', 'coco_job_block', 'coco_job_recover', 'coco_job_status', 'coco_job_retry', 'coco_request_run', 'coco_connection_checked', 'coco_connection', 'coco_integration',
+    'coco_structure', 'coco_approval', 'submit_task', 'claim_task', 'coco_task_enqueue', 'coco_run_request_cancel']) assert.ok(RPCS.has(n), `${n} must be callable`);
+  for (const n of ['coco_callback_secret', 'coco_store_publish_secret', 'coco_publish_secret', 'coco_oauth_client', 'coco_store_oauth_client', 'coco_secret', 'coco_revenue_upsert', 'coco_revenue_sync_set', 'coco_oauth_begin']) assert.ok(!RPCS.has(n), `${n} must stay off the list`);
   const r = await call('POST', '/rest/v1/rpc/coco_job_retry', { body: { p_id: 'JOB-failed2' } }); assert.equal(r.status, 200); assert.equal(r.body.ok, true); assert.equal(r.body.job.status, 'queued');
   assert.equal((await call('POST', '/rest/v1/rpc/coco_job_retry', { body: { p_id: 'JOB-nope' } })).body.ok, false);
+  // the phone (build 2.11.0) sends p_by with p_id; the database function takes p_id only, so Nova drops the extra argument instead of answering "function does not exist"
+  const phone = await call('POST', '/rest/v1/rpc/coco_job_retry', { body: { p_id: 'JOB-failed3', p_by: 'Boss' } }); assert.equal(phone.status, 200, phone.raw); assert.equal(phone.body.ok, true); assert.equal(phone.body.job.status, 'queued');
+  assert.deepEqual(buildRpc('coco_job_retry', { p_id: 'x', p_by: 'y', p_reason: 'z' }).params, ['x'], 'only p_id reaches the database'); assert.deepEqual(buildRpc('coco_job_cancel', { p_id: 'x', p_by: 'y' }).params, ['x', 'y'], 'other functions keep every argument');
   assert.equal((await call('POST', '/rest/v1/rpc/coco_revenue_upsert', { body: { p_rows: [] } })).status, 404, 'the ledger writer is not a client door');
   assert.equal((await call('POST', '/rest/v1/rpc/coco_callback_secret', { body: { p_name: 'gumroad_access_token_poppy' } })).status, 404);
+  // the raw coco_oauth_begin would let a cloud worker's device open a connection that POST /api/oauth/begin refuses it: Nova does not carry it any more
+  const raw = await call('POST', '/rest/v1/rpc/coco_oauth_begin', { key: WORKER, body: { p_provider: 'youtube', p_connection_id: 'yt-x' } }); assert.equal(raw.status, 404); assert.match(raw.body.message, /no such function/);
+  // the two names prepared for the proposed task-start migration answer "not installed" until it is applied, never a 500
+  for (const [fn, body] of [['coco_task_enqueue', { p_task: '00000000-0000-0000-0000-000000000000', p_job_type: 'filter-rank' }], ['coco_run_request_cancel', { p_id: 1 }]]) { const r = await call('POST', `/rest/v1/rpc/${fn}`, { body }); assert.equal(r.status, 404, fn); assert.equal(r.body.state, 'NOT_INSTALLED', fn); }
 });
 
 await t('12 a database refusal is a 4xx the app can show; only Nova\'s own failure is a 500; a RAISE EXCEPTION never trips the outage breaker', async () => {
@@ -458,7 +465,7 @@ await t('23 revenue/sync, first sync of Gumroad with ZERO sales: a successful sy
   noSecrets(r.raw, post.raw, await everything());
 });
 
-await t('24 revenue/sync with sales and a refund: rows land once, a refund is a positive amount of kind refund, totals are sales minus refunds, a repeat adds nothing and reads from just before last_ok_at; no buyer data reaches the ledger', async () => {
+await t('24 revenue/sync with sales and a refund: rows land once, a refund is a positive amount of kind refund, totals are sales minus refunds, a repeat adds nothing and looks back 35 days from last_ok_at; no buyer data reaches the ledger', async () => {
   await ok(`delete from public.revenue_events where source = 'gumroad'`);
   reset(); G.sales = [sale('s1', 4900, '2026-11-09T09:00:00Z'), sale('s2', 2900, '2026-11-10T09:00:00Z'), sale('s3', 1900, '2026-11-11T09:00:00Z'), sale('r1', 9900, '2026-11-11T10:00:00Z', { refunded: true })];
   const r = await call('POST', '/api/revenue/sync', { body: {} }); const g = r.body.sources.find((s) => s.connection_id === 'poppy');
@@ -469,7 +476,8 @@ await t('24 revenue/sync with sales and a refund: rows land once, a refund is a 
   assert.deepEqual(r.body.sources.map((s) => s.connection_id).sort(), ['poppy', 'poppy-two'], 'with no id every Gumroad connection is synced');
   const again = await call('POST', '/api/revenue/sync', { body: { connection_id: 'poppy' } }); const g2 = again.body.sources[0];
   assert.deepEqual([g2.inserted, g2.updated, g2.revenue], [0, 5, { USD: 97 }]); assert.equal(await count(`select count(*)::int n from public.revenue_events where source = 'gumroad'`), 5);
-  const after = G.calls.filter((c) => c.url.includes('/v2/sales')).at(-1).url.match(/after=(\d{4}-\d{2}-\d{2})/)?.[1]; assert.ok(after && Date.now() - new Date(after).getTime() < 4 * 86400000, `the repeat reads from just before the last good sync (${after})`);
+  const after = G.calls.filter((c) => c.url.includes('/v2/sales')).at(-1).url.match(/after=(\d{4}-\d{2}-\d{2})/)?.[1]; const days = (Date.now() - new Date(after).getTime()) / 86400000;
+  assert.ok(after && days > 34 && days < 37, `the repeat looks back about 35 days from the last good sync, so a refund of an older sale is seen (${after}, ${days.toFixed(1)} days ago)`);
   const sum = await call('GET', '/api/revenue/summary'); const gs = sum.body.sources.find((x) => x.connection_id === 'poppy');
   assert.deepEqual([gs.revenue, gs.sales, gs.refunds, gs.orders, gs.refund_count], [{ USD: 97 }, { USD: 196 }, { USD: 99 }, 4, 1]); assert.equal(gs.last_sale_at, '2026-11-11T10:00:00.000Z'); assert.equal(gs.house_id, 'poppy'); assert.equal(gs.connect, 'oauth');
   assert.equal(sum.body.totals.USD, 97); assert.ok(sum.body.sources.find((x) => x.connection_id === 'poppy-two'), 'every connected source is listed');

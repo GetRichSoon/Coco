@@ -240,8 +240,9 @@ async function syncOne({ db, who, run, src, f, load, now, cooldownMs, opts }) {
   try {
     secret = await readSecret(db, src.secret_ref).catch(() => null);
     if (!secret) return await fail('the vault holds no credential for this connection: connect it again');
-    // a little overlap catches a refund or an edit made after the last look; the ledger upsert makes the repeat harmless
-    const after = prev?.last_ok_at ? new Date(new Date(prev.last_ok_at).getTime() - 2 * 86400000).toISOString() : null;
+    // Gumroad dates a sale by when it was MADE and changes it in place when it is refunded, so a refund of an older sale is only seen by reading the older sales
+    // again: look back 35 days (the usual refund window); the ledger upsert makes the repeat harmless
+    const after = prev?.last_ok_at ? new Date(new Date(prev.last_ok_at).getTime() - 35 * 86400000).toISOString() : null;
     let got;
     try { got = await P.rows({ mod, secret, after, ctx: { connection_id: conn, house_id: src.house_id || null }, fetch: f, opts }); }
     catch (e) { return await fail(safe(e instanceof Error ? e.message : e, secret)); }

@@ -11,9 +11,9 @@ import { handle } from './api/_nova.js';
 const NOW = Date.now();
 const ago = (min) => new Date(NOW - min * 60000).toISOString();
 // the live company the engine reads; structure and policies change as the stand-in RPCs run
-let STRUCTURE, POLICIES;
+let STRUCTURE, POLICIES, EXTRA_DEVICES = [];
 const WORLD = () => ({ approvals: [{ id: 7, code: 'A-777', team: 'youtube', what: 'Publish the Short', state: 'waiting' }],
-  devices: [{ id: 'boss-pc', name: 'Boss PC', last_seen: ago(1), active: true }, { id: 'boss-phone', name: 'Boss phone', last_seen: ago(90), active: true }],
+  devices: [{ id: 'boss-pc', name: 'Boss PC', last_seen: ago(1), active: true }, { id: 'boss-phone', name: 'Boss phone', last_seen: ago(90), active: true }, ...EXTRA_DEVICES],
   integrations: [], policies: POLICIES, structure: STRUCTURE,
   conns: [{ connection_id: 'yt-the-flow', provider: 'youtube', external_name: 'The Flow – Daily Science', state: 'connected' }], links: [],
   outputs: [{ id: 'OUT-9', team_id: 'youtube', kind: 'video', title: 'Eye floaters', status: 'qa_passed', at: ago(30) },
@@ -24,7 +24,7 @@ const WORLD = () => ({ approvals: [{ id: 7, code: 'A-777', team: 'youtube', what
   run_requests: [], activity: [{ id: 1, actor: 'coco', action: 'published', detail: 'youtube: Mantis shrimp', at: ago(10) }],
   brain: [], runs: [], release: null, founders: [{ email: 'boss@example.com', name: 'Mangesh', call_me: 'Boss' }] });
 let CHAT, RPCS, nextId;
-const reset = () => { CHAT = []; RPCS = []; nextId = 1; STRUCTURE = []; POLICIES = []; forgetWorlds(); };
+const reset = () => { CHAT = []; RPCS = []; nextId = 1; STRUCTURE = []; POLICIES = []; EXTRA_DEVICES = []; forgetWorlds(); };
 const run = async ({ sql, params }) => {
   if (/^SELECT\s+\(SELECT coalesce/.test(sql)) return [WORLD()];
   if (/SELECT role, body, meta, created_at FROM public\.chat WHERE scope = \$1/.test(sql)) return CHAT.filter((r) => r.scope === params[0]).slice(-8).reverse();
@@ -183,6 +183,14 @@ await t('live questions answer from cloud rows: running, pending, failed and why
   assert.ok(/YouTube Studio is (live|paused): .*running/.test(reply(await say('coco', 'what is YouTube Studio doing?'))));
   assert.ok(/A-777/.test(reply(await say('coco', 'what should I work on today?'))));
   assert.strictEqual(RPCS.length, 0, 'questions never change anything');
+});
+
+await t('a cloud device is judged by its schedule: seen within 12 hours is online, the device of a person only within minutes', async () => {
+  EXTRA_DEVICES = [{ id: 'cloud-worker-1', name: 'Cloud worker', last_seen: ago(180), active: true, cloud: true }, { id: 'cloud-stale', name: 'Stale cloud', last_seen: ago(60 * 20), active: true, cloud: true }];
+  const r = reply(await say('coco', 'how many devices are connected?'));
+  assert.ok(/2 devices online of 4 paired: Boss PC, Cloud worker/.test(r), r);
+  assert.ok(!/Stale cloud/.test(r) && !/Boss phone/.test(r), r);
+  assert.strictEqual(RPCS.length, 0);
 });
 
 await t('"go to YouTube Studio" moves the chat there', async () => {
