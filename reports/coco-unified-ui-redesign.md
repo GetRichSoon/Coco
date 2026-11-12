@@ -21,6 +21,31 @@ One navigation, one design system, one theme engine, all existing features kept.
 
 ---
 
+## 0b. Operations round (2026-11-12 evening): COCO 2.12.0
+
+Brief: operate the company from the phone or the Desktop, not just view it. Root cause of the empty Houses: the redesign read a new `org_*` registry that does not exist in production, while the real organisation lives in the original tables; every screen now reads those.
+
+| Area | What changed | Verified |
+|---|---|---|
+| Home | Simple working view: open tasks, running now, waiting for YES, alerts, needs attention, quick actions. Revenue, House cards, HQ and Team talk moved to their sections. | UI suite 67/67 |
+| Tasks | Work > Tasks: real list, filters, detail, create, assign, pause, resume, retry, cancel, notes, priority, jobs and cloud-run requests. Start asks the cloud for a run (`coco_request_run`) and says "waiting for the next cloud run"; it never claims "running". Zero-AI work can be queued as a cloud job (`coco_task_enqueue`). | On the real Desktop with real production data: a labelled test task was created, paused, resumed and cancelled through the real path (it stays as one `stopped` row, "[COCO TEST] desktop check 10:56:37") |
+| Approvals | Open with the full request and Approve/Reject (the existing guarded logic). None is waiting today, so nothing real was decided. | stand-in tests |
+| Houses | All seven load real teams/subteams, categories, channels and products, Brains, agents, pipelines, connections from houses, structure, categories, offerings, members, brain_items, pipelines, integrations. Add category/channel, assign member, structure additions. | Real Desktop: no "not loaded" anywhere; Gigi shows its 14 categories, real channels, agents and Brain records; Poppy 20 Brain records; Lulu 39 channels |
+| Connections | Real status, last checked, error, next action; Connect, Reconnect, Verify (OAuth) and Check now. PickTheory is the YouTube connection `yt-app-web`: the channel does not exist yet. | Real Desktop shows Gumroad with its token-leak alert and PickTheory |
+| Revenue and analytics | YouTube views/subscribers per channel with last sync (real: 8,720 views, 13 subscribers, synced 23 h ago). Revenue per source with Sync now; Gumroad money is USD, refunds subtract; "Connected, but no sync has finished yet" until the first sync. | Real Desktop; Gumroad needs a reconnect before any sync can succeed |
+| Backend (production) | Migrations `revenue_connections_20261112`, `vault_name_rule_back_20261112b`, `task_enqueue_20261112c` (all additive, rollback files in `Lounge/api/migrations/`); Nova deployed (commit c2d52a0, rollback b4081c0 then 55e5d75) with `/api/connect/key`, `/api/connect/check`, `/api/revenue/sync`, `/api/revenue/summary`, OAuth callbacks, read-only `revenue_events` and `revenue_sync`, clean 4xx for what the database refuses. | Health ok, devices kept beating, 254 API checks |
+| Android | 2.12.0 (23): the same screens natively, 150 unit tests, pairing gate shows why a code was rejected. Built and release-signed. | Not yet seen on the real phone (not on USB); it arrives through the in-app update once GitHub has built it |
+
+Tests: 43 node files, 67 browser checks (browser and desktop-bridge modes), 38 theme checks (both modes), 7 real-Electron checks, 150 Android unit tests.
+
+**What is not done, and why**
+- Gumroad revenue cannot sync yet: the stored token leaked and must be revoked by hand in Gumroad, then reconnected in COCO (the scope now includes `view_sales`). Redirect URIs to add: Google Cloud YouTube client `https://cocolounge.vercel.app/api/oauth/youtube/callback`, Gumroad application `https://cocolounge.vercel.app/api/oauth/gumroad/callback`.
+- PickTheory: create the brand channel first (a YouTube channel under the founders' Google account), then Connect `yt-app-web`.
+- Start/Run for AI team tasks waits for the twice-daily cloud cycle and is subject to the AI limits (the agent monthly limit, the Anthropic credit); the cloud worker itself is healthy (24 of 24 runs) but never refreshes its "last seen", so COCO now judges it by schedule ("last run 10 d ago"). The one-line heartbeat fix for the company repo is in `reports/ops-connectors-worker.md`.
+- The device-sync GitHub workflow fails every run because the repository secret `NOVA_ENGINE_KEY` does not exist (the workflow now ends green with a warning until it is set).
+
+---
+
 ## 0. Result at a glance
 
 Legend: **PASS** = executed here and passed. **PARTIAL** = part executed, the rest named. **BLOCKED** = cannot be done without something that is not mine to do. Nothing below is marked PASS unless a test or a screenshot run actually executed it.
