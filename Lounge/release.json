@@ -2,25 +2,25 @@
   "_": "The one Coco version. Every client shows this number; nothing else is user-facing.",
   "_why": "The clients had drifted into three unrelated numbers - root package.json said 1.1.0, the desktop app said 1.0.4 and the phone said 2.8.2 - so 'is everyone on the latest Coco?' had no answer. They are one number now, and release.test.js fails the build if they come apart again.",
   "_number": "2.9.0, not 1.2.0. Two schemes existed and the phone's was the furthest along at 2.8.2; starting a unified line below that would have shown the founders a downgrade on the device they look at most. So the unified line continues from the highest user-facing number, and this release is a minor bump on it.",
-  "version": "2.11.0",
-  "name": "Coco 2.11.0",
-  "released": "2026-11-11",
-  "release_id": "coco-2.11.0",
-  "commit": "ui/unified-redesign (not merged, not published)",
+  "version": "2.12.0",
+  "name": "Coco 2.12.0",
+  "released": "2026-11-12",
+  "release_id": "coco-2.12.0",
+  "commit": "cloud-foundation",
   "notes": [
-    "One application on desktop, phone and Android: eight sections (Home, Houses, Work, Automation, Brains & Agents, Insights, Connections, System) instead of twenty tabs, with Ask COCO and Remote Control on every screen.",
-    "A revenue-first Home with filters: revenue is never invented, an estimate is never shown as an actual, and missing data says Unavailable instead of zero.",
-    "Seven House workspaces (Gigi Social, Lulu Software, Poppy Ebooks, Mochi Comics, Fifi Courses, Zaza Games, Tilly Commerce), each with the same twenty tabs.",
-    "Six Material You themes in light and dark: Original Signature (locked), Electric Cobalt, Royal Violet, Emerald Energy, Tangerine Fusion and Digital Orchid, in Space Grotesk, switchable without a refresh.",
-    "Automatic theme rotation: every time COCO opens, every 5 or 7 hours, daily, weekly, monthly or manual only; sequential or random; lock a theme; the choice follows you across your devices.",
-    "The Android app now covers every page of the web Lounge from the same navigation contract, keeps the Coco Island and every device command, and uses the same six themes."
+    "Home is now the working view: open tasks, what is running, approvals waiting for your YES and alerts. Revenue, House cards, HQ and Team talk moved to their own sections.",
+    "Tasks you can operate: create, assign, pause, resume, cancel, add notes, and ask the cloud to run a task, on the phone and on the desktop. COCO says \"waiting for the next cloud run\" instead of pretending something is running.",
+    "Approvals open with the full request and Approve or Reject.",
+    "All seven Houses show their real teams, categories, channels and products, Brains and agents, with controls to add and assign.",
+    "Connections show their real status with Connect, Reconnect, Verify and Check now. Gumroad revenue is read from your sales (USD, refunds subtracted) with Sync now; YouTube views and subscribers show their last sync.",
+    "The pairing screen now tells you when a code was wrong or has expired."
   ],
   "_builds": "Internal build numbers stay per platform, because each store and each installer needs its own monotonic counter. They are not shown to the founders.",
   "builds": {
     "desktop": "1.1.0",
     "android": {
-      "versionName": "2.11.0",
-      "versionCode": 22
+      "versionName": "2.12.0",
+      "versionCode": 23
     },
     "lounge": "served from main"
   },
@@ -174,6 +174,12 @@
       "versionCode": 22,
       "date": "2026-11-11",
       "commit": "ui/unified-redesign"
+    },
+    {
+      "version": "2.12.0",
+      "versionCode": 23,
+      "date": "2026-11-12",
+      "commit": "cloud-foundation"
     }
   ],
   "_rollback": "A bad release is undone with a normal git revert on main. Every desktop fast-forwards this repo every 30 minutes, so the revert reaches both of them within half an hour with no installer, no store and nothing to uninstall. The phones are the exception: they carry a built APK, so rolling them back needs a rebuilt APK, which is the signing work that is deliberately not done yet.",

@@ -156,13 +156,20 @@ fun GateCard(title: String, eyebrow: String, content: @Composable ColumnScope.()
     }
 }
 
+/** Why the last code was refused, on the gate itself (the snackbar of the app shell is not on screen here). */
+@Composable
+fun GateError(vm: Lounge) {
+    vm.gateMessage?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
+}
+
 @Composable
 fun SignIn(vm: Lounge) {
     var code by remember { mutableStateOf("") }
     GateCard("Coco Lounge", "Good Space") {
         Muted("Private to the founders of Good Space, on their four devices only. Ask for the pairing code from Coco on a device that is already open - it works once and lasts ten minutes.")
-        OutlinedTextField(code, { code = it.uppercase().take(20) }, label = { Text("Pairing code") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        MuButton({ vm.connect(code) }, enabled = !vm.busy && code.length >= 8, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Connect this device") }
+        OutlinedTextField(code, { code = it.uppercase().take(20); vm.gateMessage = null }, label = { Text("Pairing code") }, singleLine = true, isError = vm.gateMessage != null, modifier = Modifier.fillMaxWidth())
+        GateError(vm)
+        MuButton({ vm.connect(code) }, enabled = !vm.busy && code.length >= 8, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(if (vm.busy) "Connecting…" else "Connect this device") }
     }
 }
 
@@ -171,9 +178,11 @@ fun Pair(vm: Lounge) {
     var code by remember { mutableStateOf("") }
     GateCard("Pair this phone", "One of four") {
         Muted("Good Space opens only on your PC and your phone. Type the 8-letter pairing code for this phone.")
-        OutlinedTextField(code, { code = it.uppercase().take(12) }, label = { Text("Pairing code") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        MuButton({ vm.pair(code) }, enabled = !vm.busy && code.length >= 6, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text("Pair phone") }
-        TextButton({ vm.signOut() }, modifier = Modifier.fillMaxWidth()) { Text("Sign out") }
+        OutlinedTextField(code, { code = it.uppercase().take(12); vm.gateMessage = null }, label = { Text("Pairing code") }, singleLine = true, isError = vm.gateMessage != null, modifier = Modifier.fillMaxWidth())
+        GateError(vm)
+        MuButton({ vm.pair(code) }, enabled = !vm.busy && code.length >= 6, modifier = Modifier.fillMaxWidth().height(52.dp)) { Text(if (vm.busy) "Pairing…" else "Pair phone") }
+        // With Nova on, the pairing code is the whole credential: the old sign-in gate is a direct database call that cannot work, so there is no way back to it from here.
+        if (!Cloud.viaNova) TextButton({ vm.signOut() }, modifier = Modifier.fillMaxWidth()) { Text("Sign out") }
     }
 }
 
@@ -190,10 +199,12 @@ fun LoungeApp(vm: Lounge) {
     var teamHouse by rememberSaveable { mutableStateOf("gigi") }
     var global by rememberSaveable { mutableStateOf<String?>(null) }    // Ask COCO / Remote Control, over everything
     var member by rememberSaveable { mutableStateOf<String?>(null) }
+    var detail by rememberSaveable { mutableStateOf<String?>(null) }     // a task, approval, job or connection opened over the page ("task:<id>")
+    var newTask by remember { mutableStateOf<NewTaskSeed?>(null) }
     val snack = remember { SnackbarHostState() }
     LaunchedEffect(vm.message) { vm.message?.let { snack.showSnackbar(it); vm.message = null } }
     LaunchedEffect(Unit) { vm.loadExtra() }
-    val waiting = vm.data.approvals.count { it.s("state") == "waiting" }
+    val waiting = Attention.pending(vm.data.approvals).size
     val sectionId = when (tab) { Tab.More -> sec; else -> tab.id }
     val section = sectionId?.let(nav::section)
     val page = section?.pages?.firstOrNull { it.id == pageOf } ?: section?.pages?.firstOrNull()
@@ -201,17 +212,19 @@ fun LoungeApp(vm: Lounge) {
     /** Any page id the web Lounge uses (the contract's legacy_pages) opens its Android destination. */
     fun go(id: String) {
         val (s, p) = nav.resolve(id) ?: return
-        if (s == "global") { global = p; return }
-        global = null; house = null
+        if (s == "global") { global = p; detail = null; return }
+        global = null; house = null; detail = null
         tab = Tab.entries.firstOrNull { it.id == s } ?: Tab.More
         sec = if (tab == Tab.More) s else null
         pageOf = p
     }
-    val openHouse: (String) -> Unit = { global = null; tab = Tab.Houses; house = it; houseTab = "overview" }
-    androidx.activity.compose.BackHandler(global != null || house != null || (tab == Tab.More && sec != null) || tab != Tab.Home) {
-        when { global != null -> global = null; house != null -> house = null; tab == Tab.More && sec != null -> sec = null; else -> tab = Tab.Home }
+    val openHouse: (String) -> Unit = { global = null; detail = null; tab = Tab.Houses; house = it; houseTab = "overview" }
+    val ui = UiNav(nav, ::go, openHouse, { global = it; detail = null }, { detail = it }, { newTask = NewTaskSeed(it) })
+    androidx.activity.compose.BackHandler(detail != null || global != null || house != null || (tab == Tab.More && sec != null) || tab != Tab.Home) {
+        when { detail != null -> detail = null; global != null -> global = null; house != null -> house = null; tab == Tab.More && sec != null -> sec = null; else -> tab = Tab.Home }
     }
     val title = when {
+        detail != null -> detailTitle(detail!!)
         global != null -> nav.globalLabel(global!!)
         house != null -> nav.house(house!!)?.label ?: house!!
         tab == Tab.More && sec == null -> "More"
@@ -228,7 +241,7 @@ fun LoungeApp(vm: Lounge) {
         snackbarHost = { SnackbarHost(snack) },
         topBar = {
             CocoPanel { TopAppBar(
-                navigationIcon = { if (global != null || house != null || (tab == Tab.More && sec != null)) IconButton({ when { global != null -> global = null; house != null -> house = null; else -> sec = null } }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
+                navigationIcon = { if (detail != null || global != null || house != null || (tab == Tab.More && sec != null)) IconButton({ when { detail != null -> detail = null; global != null -> global = null; house != null -> house = null; else -> sec = null } }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
                 title = {
                     Column {
                         Text("Good Space · ${if (vm.data.paused) "paused" else if (vm.live) "live" else "reconnecting"}".uppercase(), style = MaterialTheme.typography.labelMedium, color = if (vm.data.paused) MaterialTheme.colorScheme.error else LocalCocoRoles.current.link)
@@ -250,19 +263,20 @@ fun LoungeApp(vm: Lounge) {
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
             ) }
         },
-        bottomBar = { FloatingNav(tab, waiting, { t -> global = null; house = null; tab = t; pageOf = ""; if (t == Tab.More) sec = null },
+        bottomBar = { FloatingNav(tab, waiting, { t -> global = null; house = null; detail = null; tab = t; pageOf = ""; if (t == Tab.More) sec = null },
             labels = { t -> nav.section(t.id)?.label ?: t.label }) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { pad ->
       Box(Modifier.fillMaxSize()) {
-        val key = listOf(global, house, tab.name, sec).joinToString("/")
+        val key = listOf(detail, global, house, tab.name, sec).joinToString("/")
         AnimatedContent(key, Modifier.padding(pad).consumeWindowInsets(pad), transitionSpec = {
             if (vm.calm) fadeIn(tween(0)) togetherWith fadeOut(tween(0)) else fadeIn(tween(200, delayMillis = 40)) togetherWith fadeOut(tween(90))
         }, label = "screens") { _ ->
             when {
                 global == "chat" -> ChatScreen(vm)
                 global == "remote" -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { remote(vm) }
-                house != null -> Column(Modifier.fillMaxSize()) { NotReadBanner(vm); nav.house(house!!)?.let { HouseWorkspace(vm, nav, it, houseTab) { t -> houseTab = t } } }
+                detail != null -> Column(Modifier.fillMaxSize()) { NotReadBanner(vm); DetailScreen(vm, ui, detail!!) }
+                house != null -> Column(Modifier.fillMaxSize()) { NotReadBanner(vm); nav.house(house!!)?.let { HouseWorkspace(vm, ui, it, houseTab) { t -> houseTab = t } } }
                 else -> Column(Modifier.fillMaxSize()) {
                     if (!(tab == Tab.More && sec == null)) NotReadBanner(vm)
                     val pages = section?.pages.orEmpty()
@@ -280,7 +294,7 @@ fun LoungeApp(vm: Lounge) {
                             tab == Tab.More && sec == null -> moreMenu(vm, nav, { s -> sec = s; pageOf = "" }, { g -> global = g })
                             tab == Tab.More && sec == "island" -> islandPage()
                             page?.id == "themes" -> appearance(vm)
-                            page != null -> page(vm, nav, page.id, ::go, openHouse, teamHouse, { teamHouse = it }) { member = it }
+                            page != null -> page(vm, ui, page.id, teamHouse, { teamHouse = it }) { member = it }
                         }
                     }
                 }
@@ -291,6 +305,7 @@ fun LoungeApp(vm: Lounge) {
       }
     }
     member?.let { MemberSheet(vm, it) { member = null } }
+    newTask?.let { NewTaskDialog(vm, ui, it) { newTask = null } }
     Dialogs(vm)
 }
 
@@ -364,7 +379,7 @@ fun LazyListScope.teams(vm: Lounge, house: String, pick: (String) -> Unit) {
 }
 
 @Composable
-fun OfferingCard(o: JSONObject) {
+fun OfferingCard(o: JSONObject, extra: (@Composable ColumnScope.() -> Unit)? = null) {
     val ctx = LocalContext.current
     Card {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -377,6 +392,7 @@ fun OfferingCard(o: JSONObject) {
             o.s("last_post_url").takeIf { u -> u.isNotBlank() }?.let { u -> TextButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u))) }) { Text("Watch") } }
         } }
         o.s("next_post_title").takeIf { it.isNotBlank() }?.let { Text("Next: $it · ${inTime(o.s("next_post_at"))}", style = MaterialTheme.typography.bodyMedium, color = LocalCocoRoles.current.link, fontWeight = FontWeight.Bold) }
+        extra?.invoke(this)
     }
 }
 
@@ -600,70 +616,6 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
         dismissButton = { TextButton({ confirm = null }) { Text("Keep it on") } }) }
 }
 
-fun LazyListScope.approvals(vm: Lounge) {
-    item(key = "anote") { Muted("Your YES is recorded with your name and device. Nothing goes public, costs money or gets deleted without it.") }
-    val w = vm.data.approvals.filter { it.s("state") == "waiting" }; val r = vm.data.approvals.filter { it.s("state") != "waiting" }
-    item(key = "wh") { Section("Waiting (${w.size})") }
-    items(w, key = { "aw-" + it.s("id") }) { a -> Box(Modifier.animateItem()) { ApprovalCard(vm, a) } }
-    item(key = "rh") { Section("Decided") }
-    items(r, key = { "ar-" + it.s("id") }) { a -> Box(Modifier.animateItem()) { ApprovalCard(vm, a) } }
-}
-
-@Composable
-fun ApprovalCard(vm: Lounge, a: JSONObject) {
-    Card {
-        Row(verticalAlignment = Alignment.CenterVertically) { Text("${a.s("code")} · ${a.s("team")}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f)); StatusChip(a.s("state")) }
-        Text(a.s("what"), style = MaterialTheme.typography.bodyMedium)
-        // The same decision the PCs show: who, when, and the approval's own id. There is one approval
-        // row in the cloud for all four devices, so a phone opening a decided request sees it decided.
-        Muted(listOfNotNull(
-            a.s("raised_on").takeIf { it.isNotBlank() },
-            a.s("decided_by").takeIf { it.isNotBlank() }?.let { (if (a.s("state") == "rejected") "No" else "YES") + " by $it" },
-            a.s("decided_at").takeIf { it.isNotBlank() }?.take(16)?.replace('T', ' '),
-            a.s("id").takeIf { it.isNotBlank() },
-        ).joinToString(" · "), maxLines = 2)
-        if (a.s("state") == "waiting") Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { MuButton({ vm.decide(a, true) }) { Text("YES") }; TextButton({ vm.decide(a, false) }) { Text("No") } }
-    }
-}
-
-fun LazyListScope.board(vm: Lounge) {
-    item(key = "form") {
-        var title by remember { mutableStateOf("") }; var house by remember { mutableStateOf("gigi") }; var needs by remember { mutableStateOf("any") }
-        Card {
-            Text("Give Coco a task", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(title, { title = it }, label = { Text("What should be done?") }, modifier = Modifier.fillMaxWidth())
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                vm.data.houses.forEach { h -> FilterChip(house == h.s("id"), { house = h.s("id") }, { Text(h.s("name")) }, leadingIcon = { LivingMark(Marks.houses[h.s("id")] ?: Marks.coco, 22.dp) }) }
-            }
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) { listOf("any" to "Anywhere", "cloud" to "Cloud", "pc" to "PC").forEachIndexed { i, (v, l) -> SegmentedButton(needs == v, { needs = v }, SegmentedButtonDefaults.itemShape(i, 3), colors = segmentedColors()) { Text(l) } } }
-            MuButton({ if (title.isNotBlank()) { vm.submitTask(title.trim(), null, house, needs); title = "" } }, enabled = title.isNotBlank()) { Text("Send to Coco") }
-        }
-    }
-    val open = vm.data.tasks.filter { it.s("status") !in setOf("done", "stopped", "merged") }
-    item(key = "oh") { Section("Open (${open.size})") }
-    items(open, key = { "t-" + it.s("id") }) { t -> Box(Modifier.animateItem()) { TaskCard(vm, t) } }
-    val done = vm.data.tasks.filter { it.s("status") in setOf("done", "stopped") }.take(15)
-    item(key = "dh") { Section("Finished") }
-    items(done, key = { "td-" + it.s("id") }) { t -> Box(Modifier.animateItem()) { TaskCard(vm, t) } }
-}
-
-@Composable
-fun TaskCard(vm: Lounge, t: JSONObject) {
-    val id = t.s("id")
-    Card {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LivingMark(Marks.members[t.s("member_id")] ?: Marks.houses[t.s("house_id")] ?: Marks.coco, 36.dp); Spacer(Modifier.width(10.dp))
-            Text(t.s("title"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f)); StatusChip(t.s("status"))
-        }
-        Muted("${vm.houseName(t.s("house_id"))} · by ${t.s("created_by")} · ${ago(t.s("created_at"))}${t.s("claimed_by_device").takeIf { it.isNotBlank() }?.let { " · working on " + vm.deviceName(it) } ?: ""}")
-        vm.data.notes.filter { it.s("task_id") == id }.forEach { Muted("+ ${it.s("note")} (${it.s("by_email")})") }
-        t.s("result").takeIf { it.isNotBlank() }?.let { Text("Result: $it", color = LocalCocoRoles.current.link, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold) }
-        if (t.s("status") in setOf("queued", "running", "waiting_pc", "needs_yes")) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            MuTonal({ vm.dialog = Lounge.Dialog.AddPoints(id, t.s("title")) }) { Text("Add points") }; TextButton({ vm.stopTask(id, t.s("title")) }) { Text("Stop") }
-        }
-    }
-}
-
 fun LazyListScope.rules(vm: Lounge) {
     item(key = "ruleform") {
         var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }
@@ -697,7 +649,7 @@ fun LazyListScope.devices(vm: Lounge) {
 }
 
 fun LazyListScope.settings(vm: Lounge, go: (String) -> Unit = {}) {
-    item(key = "s-account") { Card { Eyebrow("Account"); Text("${vm.name} · ${vm.callMe}", style = MaterialTheme.typography.titleLarge); Muted(vm.cloud.email.orEmpty()); MuOutlined({ vm.signOut() }) { Text("Sign out") } } }
+    item(key = "s-account") { Card { Eyebrow("Account"); Text("${vm.name} · ${vm.callMe}", style = MaterialTheme.typography.titleLarge); Muted(vm.cloud.email.orEmpty()); if (!Cloud.viaNova) MuOutlined({ vm.signOut() }) { Text("Sign out") } } }
     item(key = "s-notify") { Card {
         Eyebrow("Notifications")
         key(vm.notifyTick) { listOf("approvals" to "Approvals waiting for YES", "done" to "Tasks finished", "merged" to "Coco merged a task", "tasks" to "Tasks from the other founder", "rules" to "New rules").forEach { (k, label) ->

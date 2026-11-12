@@ -43,7 +43,7 @@ const readJson = (f) => { try { return JSON.parse(fs.readFileSync(path.join(ROOT
 // no key hashes, no secret refs.
 const WORLD_SQL = `SELECT
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, code, team, what, state, raised_on, decided_by, decided_at FROM public.approvals ORDER BY raised_on DESC NULLS LAST, id DESC LIMIT 60) x) AS approvals,
-  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, name, app_version, last_seen, active FROM public.devices ORDER BY id) x) AS devices,
+  (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, name, app_version, last_seen, active, coalesce(info ->> 'cloud', 'false') = 'true' AS cloud FROM public.devices ORDER BY id) x) AS devices,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, platform, state FROM public.integrations) x) AS integrations,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT scope, scope_id, key, value FROM public.policies) x) AS policies,
   (SELECT coalesce(json_agg(x), '[]') FROM (SELECT id, kind, parent_id, name, state, description FROM public.structure ORDER BY created_at) x) AS structure,
@@ -108,7 +108,8 @@ export async function engineFor({ run, rpc, email, device, now = Date.now() }) {
     CP, null, { approvals: w.approvals || [], devices: w.devices || [], integrations: w.integrations || [] },
     w.outputs || [], w.conns || [], w.links || [], w.structure || [], POLICIES, readJson('identity.json'), readJson('release.json'), w.release || null,
     esc, ago, (n) => Number(n || 0).toLocaleString('en-IN'),
-    (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000,
+    // a person's device beats every few seconds; the cloud worker runs a few times a day, so it is judged by its schedule (seen within 12 hours), not by a heartbeat it never sends
+    (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < (d.cloud ? 12 * 3600 * 1000 : 150000),
     (d) => String(d.app_version || '').replace(/^(desktop|web|android|lounge)-/, '') || '?',
     { get: () => null, set: () => {}, del: () => {} }, sb,
     (m) => { if (m && !SAID_OK.test(String(m))) notes.push(String(m)); }, async () => {}, policyOf, effective,

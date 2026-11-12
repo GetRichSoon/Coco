@@ -118,7 +118,7 @@ const MEASURE = () => {
   return { check, fail };
 };
 const runMeasure = (page, sels) => page.evaluate(([src, q]) => { const t = (0, eval)('(' + src + ')')(); q.forEach((x) => t.check(x)); return t.fail; }, [MEASURE.toString(), sels]);
-const HOME_TEXT = ['#title', '.crumbs', '.nav a.on', '.nav a:not(.on)', '.nav .grp', '.kpi header span', '.kpi .kv', '.kpi .kl', '.kpi footer', '.chip.good', '.chip.warn', '.chip.bad', '#askBtn', '.btn.text', '.housecard h3', '.housecard .muted', '.hm', '.fsum', '.fsel span', '.fnote', '.ops h3', '.opsgrid .muted', '.opsgrid .btn.filled', '#remoteChip', '.row b'];
+const HOME_TEXT = ['#title', '.crumbs', '.nav a.on', '.nav a:not(.on)', '.nav .grp', '.tile b', '.tile > span', '.tbadge', '.qa .btn', '.wpill', '.sech', '.arow b', '.arow .muted', '.arow .btn', '.chip.good', '.chip.warn', '.chip.bad', '#askBtn', '.btn.text', '.count', '#remoteChip', '.row b'];
 s = await fresh();
 await check('every theme, both modes: text on the real Home page reaches WCAG AA (4.5:1, 3:1 for large text)', async () => {
   const problems = [];
@@ -131,7 +131,7 @@ await check('every theme, both modes: text on the real Home page reaches WCAG AA
 });
 await check('every theme, both modes: a House workspace, Insights, the Appearance page and Settings read at AA too', async () => {
   const problems = [];
-  const pages = [['house:poppy', ['.househead h2', '.htabs button', '.htabs button.on', '.hcard h3', '.hcard .row b', '.hcard .muted', '.btn.filled', '.btn.tonal', '.chip', '.stat b', '.stat span']], ['insights', ['.homehead h2', '.hcard h3', '.dt th', '.dt td', '.muted', '.chip', '.kv']], ['themes', ['.th-hero h2', '.th-facts dt', '.th-facts dd', '.th-meta b', '.th-meta small', '.th-actions .btn', '.seg button', '.seg button[aria-pressed="true"]', '.th-lock', '.eyebrow']], ['settings', ['.card2 h3', '.card2 .muted', '.btn.tonal', '.settings-row span']]];
+  const pages = [['house:poppy', ['.househead h2', '.htabs button', '.htabs button.on', '.hcard h3', '.hcard .row b', '.hcard .muted', '.btn.filled', '.btn.tonal', '.chip', '.stat b', '.stat span']], ['insights', ['.homehead h2', '.hcard h3', '.dt th', '.dt td', '.muted', '.chip', '.kv', '.stat b']], ['tasks', ['.tabs button', '.tabs button.on', '.fchips button', '.fchips button.on', '.row b', '.muted', '.wait', '.errline', '.banner', '.chip', '.btn.filled']], ['tasks:00000001-0000-4000-8000-000000000102', ['.tktitle', '.card2.errbox b', '.card2.errbox div', '.btn.filled', '.btn.tonal', '.kvrow', '.hcard h3', '.muted']], ['connections:gumroad-poppy', ['.tktitle', '.card2.errbox b', '.nextbox b', '.nextbox div', '.btn.filled', '.btn.tonal', '.kvrow > span', '.kvrow > div', '.hcard h3']], ['themes', ['.th-hero h2', '.th-facts dt', '.th-facts dd', '.th-meta b', '.th-meta small', '.th-actions .btn', '.seg button', '.seg button[aria-pressed="true"]', '.th-lock', '.eyebrow']], ['settings', ['.card2 h3', '.card2 .muted', '.btn.tonal', '.settings-row span']]];
   for (const id of ['signature', 'cobalt', 'tangerine']) for (const mode of MODES) {
     await s.page.evaluate(([i, m]) => { window.CocoTheme.apply(i); window.CocoTheme.setAppearance(m); }, [id, mode]);
     for (const [hash, sels] of pages) { await goHash(s.page, hash); await settle(s.page, 500); const fails = await runMeasure(s.page, sels); problems.push(...fails.map((f) => `${id}/${mode}/${hash} ${f}`)); }
@@ -143,7 +143,7 @@ await check('no screen keeps a colour system of its own: none of the old hardcod
   const hits = new Set();
   for (const [id, mode] of [['signature', 'light'], ['violet', 'dark'], ['emerald', 'light']]) {
     await s.page.evaluate(([i, m]) => { window.CocoTheme.apply(i); window.CocoTheme.setAppearance(m); }, [id, mode]);
-    for (const hash of ['home', 'houses', 'house:lulu', 'insights', 'hierarchy', 'board', 'approvals', 'automation', 'connections', 'control', 'devices', 'settings', 'themes', 'structure']) {
+    for (const hash of ['home', 'houses', 'house:lulu', 'insights', 'hierarchy', 'board', 'tasks', 'approvals', 'automation', 'connections', 'connections:picktheory', 'control', 'devices', 'settings', 'themes', 'structure']) {
       await goHash(s.page, hash); await settle(s.page, 220);
       const found = await s.page.evaluate((banned) => { const out = []; for (const el of document.querySelectorAll('#app *')) { if (el.closest('.htile, .logo, .mk, .cm, svg defs')) continue; const cs = getComputedStyle(el); for (const p of ['color', 'backgroundColor', 'borderTopColor', 'outlineColor']) { const v = cs[p].replace(/\s+/g, ' '); if (banned.includes(v)) out.push(`${el.tagName}.${String(el.className).slice(0, 24)} ${p}=${v}`); } } return out.slice(0, 4); }, BANNED);
       found.forEach((f) => hits.add(`${id}/${mode}/${hash}: ${f}`));
@@ -160,7 +160,7 @@ for (const [name, w, h] of [['desktop', 1440, 900], ['phone', 390, 844]]) {
     const bad = [];
     for (const id of IDS) for (const mode of MODES) {
       await s.page.evaluate(([i, m]) => { window.CocoTheme.apply(i); window.CocoTheme.setAppearance(m); }, [id, mode]);
-      for (const hash of ['home', 'house:gigi', 'insights', 'themes', 'board', 'settings']) { await goHash(s.page, hash); await settle(s.page, 220); const wd = await s.page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]); if (wd[0] > wd[1] + 1) bad.push(`${id}/${mode}/${hash}: ${wd[0]} > ${wd[1]}`); }
+      for (const hash of ['home', 'house:gigi', 'insights', 'themes', 'board', 'tasks', 'settings']) { await goHash(s.page, hash); await settle(s.page, 220); const wd = await s.page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]); if (wd[0] > wd[1] + 1) bad.push(`${id}/${mode}/${hash}: ${wd[0]} > ${wd[1]}`); }
     }
     eq(bad.length, 0, bad.slice(0, 6).join(' | ')); eq(s.c.errors.length, 0, s.c.errors.join(' | '));
   });
@@ -260,7 +260,7 @@ await check('Apply next theme now steps in the chosen order and says so; Lock st
   await s.page.click('[data-th-freq="5h"]'); await s.page.click('[data-th-order="sequential"]'); await settle(s.page, 300);
   const before = (await saved(s.page)).themeId; await s.page.click('[data-th="next"]'); await settle(s.page, 500); const after = (await saved(s.page)); eq(after.themeId, IDS[(IDS.indexOf(before) + 1) % 6]); eq(after.previousThemeId, before); ok(/Apply next/i.test(await text(s.page, '.th-hero')), 'last switched says how');
   await s.page.check('#thLock'); await settle(s.page, 300); eq((await saved(s.page)).locked, true); ok(/Locked/i.test(await text(s.page, '.th-hero')) && /locked/i.test(await text(s.page, '.th-hero')), 'locked is shown');
-  s.page.once('dialog', (d) => d.accept()); await s.page.click('[data-th="reset"]'); await settle(s.page, 500); const r = await saved(s.page); eq(r.themeId, 'signature'); eq(r.appearance, 'system'); eq(r.rotation.enabled, false); eq(r.locked, false); eq(r.reason, 'reset');
+  await s.page.click('[data-th="reset"]'); await settle(s.page, 500); const r = await saved(s.page); eq(r.themeId, 'signature'); eq(r.appearance, 'system'); eq(r.rotation.enabled, false); eq(r.locked, false); eq(r.reason, 'reset');
 });
 await check('Preview paints the whole app without saving; Cancel puts the saved theme back; Apply in the bar commits', async () => {
   await openThemes(s.page); const before = (await saved(s.page)) || { themeId: 'signature' };

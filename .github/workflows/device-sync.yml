@@ -1,6 +1,13 @@
 # The ONE shared four-device sync scheduler (Boss order 2026-11-04). Every 15 minutes, one job, never two at once.
 # NOT ACTIVE until: (1) this file is on the default branch (GitHub only runs schedules from there), (2) migration 0037 is applied,
-# (3) Nova is deployed with the device_sync_audit table, (4) the secrets below exist. Runs --apply only when APPLY is "true".
+# (3) Nova is deployed with the device_sync_audit table, (4) the secret below exists. Runs --apply only when APPLY is "true".
+#
+# Why it failed every run until 2026-11-12 (run 43130284178 and the ones before it): neither NOVA_DEVICE_KEY nor NOVA_ENGINE_KEY existed
+# in this repository, so Cloud/Device Sync.mjs printed "Set NOVA_DEVICE_KEY ... Nothing was called." and exited 2. Now:
+#   * ONE secret is enough. NOVA_ENGINE_KEY (or SUPABASE_ENGINE_KEY, the name CocoMaison uses) holds the engine key; the cloud worker's device
+#     key is derived from it exactly as scripts/lib/cloud-creds.mjs does (HMAC-SHA256 of the device id, base64url), masked, never stored twice.
+#     NOVA_DEVICE_KEY may still be set by hand and then wins.
+#   * Without a key the run ends GREEN WITH A WARNING that says what to add, instead of failing red every 15 minutes. Nothing was called.
 name: device sync
 
 on:
@@ -19,12 +26,36 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    env:
+      NOVA_ENGINE_KEY: ${{ secrets.NOVA_ENGINE_KEY || secrets.SUPABASE_ENGINE_KEY }}
+      NOVA_DEVICE_KEY: ${{ secrets.NOVA_DEVICE_KEY }}
     steps:
+      - name: Is the sync configured?
+        id: cfg
+        run: |
+          if [ -z "$NOVA_DEVICE_KEY" ] && [ -z "$NOVA_ENGINE_KEY" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=device sync is not configured::Add the repository secret NOVA_ENGINE_KEY (same value as CocoMaison's SUPABASE_ENGINE_KEY). Nothing was called."
+            {
+              echo "### device sync did not run"
+              echo "This repository has no NOVA_ENGINE_KEY (or NOVA_DEVICE_KEY) secret. Add NOVA_ENGINE_KEY under Settings, Secrets and variables, Actions; the device key is derived from it."
+              echo "It also needs migration 0037 (device_sync_audit) before --apply can keep its state."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.cfg.outputs.run == 'true'
       - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.run == 'true'
         with: { node-version: '20' }
       - name: One sync cycle (dry run unless APPLY is true)
-        env:
-          NOVA_DEVICE_KEY: ${{ secrets.NOVA_DEVICE_KEY }}
-          NOVA_ENGINE_KEY: ${{ secrets.NOVA_ENGINE_KEY }}
-        run: node "Cloud/Device Sync.mjs" ${{ vars.DEVICE_SYNC_APPLY == 'true' && '--apply' || '' }}
+        if: steps.cfg.outputs.run == 'true'
+        run: |
+          if [ -z "$NOVA_DEVICE_KEY" ]; then
+            # the cloud worker's device key is derived from the engine key, never stored; masked before anything could print it
+            NOVA_DEVICE_KEY="$(node -p "require('node:crypto').createHmac('sha256', process.env.NOVA_ENGINE_KEY).update('cloud-worker-1').digest('base64url')")"
+            echo "::add-mask::$NOVA_DEVICE_KEY"
+            export NOVA_DEVICE_KEY
+          fi
+          node "Cloud/Device Sync.mjs" ${{ vars.DEVICE_SYNC_APPLY == 'true' && '--apply' || '' }}

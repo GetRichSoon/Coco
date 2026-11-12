@@ -36,7 +36,7 @@ data class NavContract(
 
     companion object {
         /** Every page id Pages.kt draws (see page()). A contract page missing here is unreachable, and the test says so. */
-        val ANDROID_PAGES = setOf("themes", "home", "houses", "company", "structure", "teams", "club", "board", "notes", "approvals", "runs", "automation", "workflows",
+        val ANDROID_PAGES = setOf("themes", "home", "houses", "company", "structure", "teams", "club", "tasks", "board", "notes", "approvals", "runs", "automation", "workflows",
             "hierarchy", "brain", "agents", "insights", "ai", "connections", "control", "system", "cloud", "devices", "remote", "rules", "settings")
         val ANDROID_GLOBALS = setOf("chat", "remote")
         const val HOUSE_WORKSPACE = "house"

@@ -124,6 +124,8 @@ export async function handleAutomation(db, req, who, { json, log = () => {}, fet
     try { return json(200, (await fn({ db, who, req, m, q, body, ctx })) ?? { ok: true }); }
     catch (e) {
       if (e instanceof C.AutError) return json(e.status, { ok: false, state: e.code, reason: e.message, ...e.extra });
+      // the automation tables / functions are a later migration: until it is applied this is "not installed", not a crash
+      if (e && (e.code === '42P01' || e.code === '42883')) return json(501, { ok: false, state: 'NOT_INSTALLED', reason: 'automation templates are not installed in this database yet' });
       log(500, { automation: 'error', why: String(e?.message || e).slice(0, 160) });
       return json(500, { ok: false, state: 'ERROR', reason: 'the request could not be completed' });
     }

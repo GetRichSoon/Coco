@@ -19,8 +19,9 @@ import { handleAi } from './_ai.js';
 import { handleOps } from './_ops.js';
 import { redactDeep } from './_redact.js';
 import { handleOrbiTrending } from './_orbi_trending.js';
-// test seams: a stand-in fetch and provider hosts for the publishing layer
-export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {} };
+import { handleConnect } from './_connect.js';
+// test seams: a stand-in fetch and provider hosts for the publishing layer; connect = { load(provider) -> connector module, cooldownMs }
+export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {} };
 
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
@@ -30,8 +31,20 @@ export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms',
   // the unified organisation (0034 + 0039 + 0040); RLS: founders only, the engine key reads brains and the legacy map
   'org_units', 'org_products', 'org_agents', 'org_brains', 'org_refs', 'org_legacy_map', 'org_readiness', 'org_reconciliation_view',
   // the integration hub + cloud portability (0041): RLS lets founders read them; the engine key reads providers and switches
-  'integration_registry', 'credential_audit', 'cloud_providers', 'provider_switches']);   // every public table except engine_keys and oauth_states
-export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_oauth_begin', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status',
+  'integration_registry', 'credential_audit', 'cloud_providers', 'provider_switches',
+  // the revenue ledger (migration 20261112): founders read through RLS; nothing writes it through Nova's table door, see READ_ONLY
+  'revenue_events', 'revenue_sync']);   // every public table except engine_keys and oauth_states
+// Tables Nova serves for GET only. RLS alone would still let a database role write them; Nova refuses every other verb (405) before any
+// statement exists. The ledger is written by one path only: POST /api/revenue/sync -> coco_revenue_upsert (api/_connect.js).
+export const READ_ONLY = new Set(['revenue_events', 'revenue_sync']);
+export const RPCS = new Set(['pair_device', 'submit_task', 'coco_brain', 'coco_request_run', 'coco_structure', 'coco_control', 'coco_connection', 'claim_task', 'similar_open_tasks', 'coco_job_status',
+  // a founder's Retry on a failed or cancelled job (migration 20261112); coco_integration is the founder's add / assign / reconnect for a platform; coco_connection_checked is the cloud engine's
+  // stamp (engine key only: a founder's device is refused by Postgres, and uses POST /api/connect/check instead)
+  'coco_job_retry', 'coco_integration', 'coco_connection_checked',
+  // behind a migration that is PROPOSED, not applied (reports/ops-proposed-migration-task-enqueue.sql): a founder's Start on a task and Cancel on a waiting run request. Until it is applied Postgres answers
+  // "function does not exist" and Nova turns that into a clean 404 NOT_INSTALLED.
+  'coco_task_enqueue', 'coco_run_request_cancel',
+  // coco_oauth_begin is NOT here on purpose: its redirect points at the retired Supabase function, and through the raw RPC a cloud worker's device could open a connection that POST /api/oauth/begin refuses it
   // the cloud runtime's own functions: each one re-checks the engine key itself (private.engine_ok), so a paired device without that header is refused by Postgres, not trusted by Nova
   'coco_job_submit', 'coco_job_claim', 'coco_job_heartbeat', 'coco_job_done', 'coco_job_fail', 'coco_job_recover', 'coco_job_cancel', 'coco_job_block', 'coco_claim_output', 'coco_approval', 'pair_cloud_worker',
   // the cloud cycle's provisioner marks a built team (engine key only; it sets config.provisioned_at and nothing else)
@@ -90,6 +103,7 @@ export function buildSelect(table, query) {
   return { sql, params };
 }
 export function buildWrite(table, method, query, body, prefer = '') {
+  if (READ_ONLY.has(table)) throw new NovaError(405, `${table} is read-only through Nova`);   // before any SQL exists, for every verb
   const params = [], conds = [];
   for (const [k, v] of Object.entries(query)) { if (['select', 'order', 'limit', 'offset', 'on_conflict'].includes(k)) continue; if (k === 'or') conds.push(orGroup(params, v)); else conds.push(where(params, k, v)); }
   const returning = /return=representation/.test(prefer) ? ' RETURNING *' : '';
@@ -123,8 +137,12 @@ export function buildWrite(table, method, query, body, prefer = '') {
 export const newestAndroid = (list) => (list || []).filter((x) => /^android-\d+\.\d+\.\d+-\d+$/.test(x.tag_name) && !x.draft)
   .sort((a, b) => Number(b.tag_name.split('-').pop()) - Number(a.tag_name.split('-').pop()))[0] || null;
 
+// Functions whose database signature is narrower than what a client already out in the field sends: the extra named arguments are informational (who pressed it comes from the signed-in claims), so they are
+// dropped here instead of failing as "function does not exist". Phone build 2.11.0 sends p_by with coco_job_retry(p_id).
+const RPC_ARGS = { coco_job_retry: ['p_id'] };
 export function buildRpc(name, args = {}) {
   if (!RPCS.has(name)) throw new NovaError(404, `no such function ${name}`);
+  if (RPC_ARGS[name]) args = Object.fromEntries(Object.entries(args || {}).filter(([k]) => RPC_ARGS[name].includes(k)));
   // coco_control's value is jsonb, so a text value must travel as JSON ("daily 08:00" in quotes);
   // sent bare, Postgres read daily 08:00 as broken JSON and refused every schedule set through Nova
   if (name === 'coco_control' && typeof (args || {}).p_value === 'string') args = { ...args, p_value: JSON.stringify(args.p_value) };
@@ -145,7 +163,16 @@ const DOWN_S = Number(process.env.NOVA_NEGATIVE_CACHE_SECONDS || 10);
 export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; }
 // a failure of the database or the platform behind it (not a bad request, not RLS, not a statement timeout)
 const UPSTREAM = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|connection terminated|connection timeout|timeout exceeded when trying to connect|too many (clients|connections)|exceed_egress|quota|the database system is|no pg_hba|Tenant or user not found/i;
-export const isUpstream = (e) => !(e instanceof NovaError) && (UPSTREAM.test(String(e?.message)) || UPSTREAM.test(String(e?.code)) || /^(08|57P0[1-3]|53300)/.test(String(e?.code || '')));
+export const isUpstream = (e) => !(e instanceof NovaError) && e?.code !== 'P0001' && (UPSTREAM.test(String(e?.message)) || UPSTREAM.test(String(e?.code)) || /^(08|57P0[1-3]|53300)/.test(String(e?.code || '')));   // a RAISE EXCEPTION is a rule talking, never an outage
+// The database saying "no" (a rule the company wrote, a constraint, a piece not installed yet) is a 4xx, the way PostgREST answered it; only Nova's own failures stay 500.
+export function pgRefusal(e) {
+  const c = String(e?.code || '');
+  if (c === '42P01' || c === '42883') return { status: 404, state: 'NOT_INSTALLED' };                       // table / function missing in this database
+  if (['42703', '22P02', '22003', '22007', '22023', '23502', '23514'].includes(c)) return { status: 400 };   // unknown column, bad value, null / check violation
+  if (c === '23505' || c === '23503') return { status: 409 };                                                 // duplicate / foreign key
+  if (c === 'P0001') return { status: /^(only (a founder|the cloud|the engine)|coco_approval is for)/i.test(String(e.message)) ? 403 : 400 };   // RAISE EXCEPTION inside a company function
+  return null;
+}
 const unavailable = (reason) => json(503, { state: 'UPSTREAM_UNAVAILABLE', reason, retry_after_s: DOWN_S }, { 'retry-after': String(DOWN_S) });
 // record the failure: clear safe reason, no connection string, no stack
 export function markDown(e, now = Date.now()) { stats.upstream_failures++; down.until = now + DOWN_S * 1000; down.reason = /exceed_egress|quota/i.test(String(e?.message)) ? 'the data service is over its usage quota' : /ETIMEDOUT|timeout/i.test(String(e?.message) + e?.code) ? 'the database did not answer in time' : 'the database is not reachable'; return unavailable(down.reason); }
@@ -202,7 +229,7 @@ export async function handle(db, req, now = Date.now()) {
     if (req.path !== '/api/health' && down.until > now) { stats.negative_hits++; return unavailable(down.reason); }
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
-      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
+      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null, down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
     }
     // Orbi wallpaper "Trending": anonymous pick counts from the Orbi extension, not a Coco device (api/_orbi_trending.js)
     if (req.path.startsWith('/api/orbi/wall/')) {
@@ -253,6 +280,12 @@ export async function handle(db, req, now = Date.now()) {
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
+    // Connect a key / Check now / Sync now / revenue totals: a founder's device presses it, Nova does the provider call (api/_connect.js)
+    if (req.path.startsWith('/api/connect/') || req.path.startsWith('/api/revenue/')) {
+      const out = await handleConnect(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.oauthUrls, now, ...deps.connect });
+      if (req.method !== 'GET') invalidate();
+      return out;
+    }
     // Coco Chat: one engine and one thread per scope for every device (api/_chat.js)
     if (req.path === '/api/chat' || req.path === '/api/chat/tree') {
       const run = (stmt) => runAs(db, who, deviceKey, stmt);
@@ -340,11 +373,12 @@ export async function handle(db, req, now = Date.now()) {
   } catch (e) {
     stats.errors++;
     if (isUpstream(e)) { log(503, { upstream: 'unavailable' }); return markDown(e, now); }
-    const status = e instanceof NovaError ? e.status : /statement timeout/i.test(e.message) ? 504 : /permission denied|row-level security|violates row-level/i.test(e.message) ? 403 : 500;
+    const refused = e instanceof NovaError ? null : /statement timeout|permission denied|row-level security|violates row-level/i.test(e.message) ? null : pgRefusal(e);
+    const status = e instanceof NovaError ? e.status : /statement timeout/i.test(e.message) ? 504 : /permission denied|row-level security|violates row-level/i.test(e.message) ? 403 : refused ? refused.status : 500;
     log(status, { error: String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) });
     // a 500 stays opaque to an app, but the cloud runtime (it sent an engine key) is told the redacted cause, so a failing sync can be fixed without the platform's logs
     const detail = status === 500 && req.headers['x-engine-key'] ? String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 300) : undefined;
-    return json(status, { message: status === 500 ? 'Nova could not complete that' : e.message, hint: status === 500 ? 'check the Nova logs' : undefined, detail });
+    return json(status, { message: status === 500 ? 'Nova could not complete that' : String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>'), hint: status === 500 ? 'check the Nova logs' : undefined, detail, ...(refused ? { code: String(e.code), ...(refused.state ? { state: refused.state } : {}) } : {}) });
   }
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
@@ -359,8 +393,10 @@ let pgModule = null, pool = null;
 export async function connect() {
   if (!process.env.DATABASE_URL) throw new NovaError(503, 'Nova has no DATABASE_URL');
   pgModule ||= await import('pg');
-  pool ||= new pgModule.default.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 5000, max: 4, idleTimeoutMillis: 60000 });
-  pool.on?.('error', () => {});
+  if (!pool) {
+    pool = new pgModule.default.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 5000, max: 4, idleTimeoutMillis: 60000 });
+    pool.on?.('error', () => {});   // once per pool: one listener per request filled the pool's listener list and Node warned after 10 requests
+  }
   return pool.connect();
 }
 export async function vercel(req, res) {

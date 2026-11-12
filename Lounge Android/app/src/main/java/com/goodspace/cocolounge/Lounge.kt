@@ -45,6 +45,14 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     var live by mutableStateOf(false)
     var busy by mutableStateOf(false)
     var message by mutableStateOf<String?>(null)
+    /** What the pairing gate says when a code is refused: the snackbar is not on screen at the gates. */
+    var gateMessage by mutableStateOf<String?>(null)
+    // The Tasks screen's filters live here so Home can open the list already narrowed (a tile on Home is a link into it)
+    var taskFilter by mutableStateOf(TaskRules.Filter.Open)
+    var taskHouse by mutableStateOf<String?>(null)
+    var taskQuery by mutableStateOf("")
+    var jobFilter by mutableStateOf(JobRules.Filter.Open)
+    var tasksTab by mutableStateOf("tasks")
     var founder by mutableStateOf<JSONObject?>(null)
     var data by mutableStateOf(Data())
     /** When the company was last read in full (0 = never on this run). Until then every count is unknown, not zero. */
@@ -106,10 +114,17 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     private fun fail(e: Throwable) { if (e is kotlinx.coroutines.CancellationException) return; message = if (e is java.io.IOException) NO_LINK else e.message ?: "Something went wrong" }
 
     fun pair(code: String) = viewModelScope.launch {
-        busy = true
+        busy = true; gateMessage = null
         try { cloud.pair(code); gate = Gate.Open; message = "This phone is now one of the four"; open() }
-        catch (e: Exception) { message = if (e.message.orEmpty().contains("expired")) "That code is wrong or expired." else e.message }
+        catch (e: Exception) { gateMessage = gateFailure(e) }
         busy = false
+    }
+
+    /** The words on the gate for a refused code. Nova answers { message } (code wrong or expired, too many attempts); a dead network is not a wrong code. */
+    private fun gateFailure(e: Exception): String = when {
+        e is java.io.IOException -> NO_LINK
+        e.message.orEmpty().let { it.contains("expired", true) || it.contains("wrong", true) } -> "That code is wrong or expired. Ask for a new one on a device that is already open."
+        else -> e.message?.takeIf { it.isNotBlank() } ?: "The code did not work"
     }
 
     /**
@@ -123,13 +138,14 @@ class Lounge(app: Application) : AndroidViewModel(app) {
      * which device it belongs to.
      */
     fun connect(code: String) = viewModelScope.launch {
-        busy = true
+        busy = true; gateMessage = null
         try { cloud.recoverDevice(code); gate = Gate.Open; message = "This device is connected"; open() }
-        catch (e: Exception) { message = e.message ?: "That pairing code did not work." }
+        catch (e: Exception) { gateMessage = gateFailure(e) }
         busy = false
     }
 
-    fun signOut() { stopListening?.invoke(); heartbeat?.cancel(); cloud.signOut(); gate = Gate.SignIn }
+    /** With Nova on, the pairing code is the whole credential and the sign-in gate (a direct database call) cannot work, so there is nothing to sign out of. */
+    fun signOut() { if (Cloud.viaNova) return; stopListening?.invoke(); heartbeat?.cancel(); cloud.signOut(); gate = Gate.SignIn }
 
     private fun open() {
         viewModelScope.launch {
@@ -145,7 +161,10 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 stopListening = cloud.listen(onPulse = { topic -> quickCommands(); scheduleReload(topic) }, onState = { ok -> live = ok; if (ok) scheduleReload("*") })
                 heartbeat?.cancel()
                 heartbeat = viewModelScope.launch { var n = 0; while (true) { if (n % 12 == 0) beat(); if (!live) quickCommands(); n++; delay(5_000) } }
-            } catch (e: Cloud.CloudError) { if (e.code == 401) gate = Gate.SignIn else fail(e) } catch (e: Exception) { fail(e) }
+            } catch (e: Cloud.CloudError) {
+                // a refused device key is a pairing problem; the Supabase sign-in gate only exists when Nova is off
+                if (e.code == 401) { gate = if (Cloud.viaNova) Gate.Pair else Gate.SignIn; if (Cloud.viaNova) gateMessage = "Coco Cloud did not accept this phone (${e.message}). Pair it again with a new code." } else fail(e)
+            } catch (e: Exception) { fail(e) }
         }
     }
 
@@ -216,6 +235,9 @@ class Lounge(app: Application) : AndroidViewModel(app) {
         } finally { reloading = false }
     }
 
+    private var hub: Boolean? = null
+    private suspend fun hubOn(): Boolean { hub?.let { return it }; return runCatching { cloud.list("cloud_providers", "select=capability&limit=1"); true }.getOrDefault(false).also { hub = it } }
+
     private suspend fun readAll() {
         try {
             val d = Data(
@@ -240,9 +262,10 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 events = cloud.list("events", "select=*&order=due_at.asc.nullsfirst").objects(),
                 pipelines = cloud.list("pipelines", "select=*&order=house_id.asc").objects(),
                 integrations = runCatching { cloud.list("integrations", "select=*&order=platform.asc").objects() }.getOrDefault(emptyList()),
-                accounts = runCatching { cloud.list("integration_registry", "select=*&order=provider.asc").objects() }.getOrDefault(emptyList()),
-                cloudProviders = runCatching { cloud.list("cloud_providers", "select=*&order=capability.asc").objects() }.getOrDefault(emptyList()),
-                switches = runCatching { cloud.list("provider_switches", "select=*&order=created_at.desc&limit=10").objects() }.getOrDefault(emptyList()),
+                // the integration hub (0041) is not in production yet: ask once per run whether it is, then keep reading it only if it is
+                accounts = if (hubOn()) runCatching { cloud.list("integration_registry", "select=*&order=provider.asc").objects() }.getOrDefault(emptyList()) else emptyList(),
+                cloudProviders = if (hubOn()) runCatching { cloud.list("cloud_providers", "select=*&order=capability.asc").objects() }.getOrDefault(emptyList()) else emptyList(),
+                switches = if (hubOn()) runCatching { cloud.list("provider_switches", "select=*&order=created_at.desc&limit=10").objects() }.getOrDefault(emptyList()) else emptyList(),
                 agentMessages = runCatching { cloud.list("agent_messages", "select=*&order=at.desc&limit=40").objects() }.getOrDefault(emptyList()),
             )
             lastFull = System.currentTimeMillis()
@@ -408,16 +431,21 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     private var extBusy = false
     /** Tables the new pages read (same queries as the web Lounge). Read at most once a minute, and only with the app on
      *  screen, so the company read every pulse stays as small as before. */
+    // The ORIGINAL tables only (the org_* registry is not in production). The columns that can be large (jobs.payload / result) are left out.
     private val EXTRA = mapOf(
-        "notes" to "select=*&order=created_at.desc", "runs" to "select=*&order=opened_at.desc&limit=60", "run_events" to "select=*&order=at.asc&limit=600",
-        "ai_calls" to "select=*&order=at.desc&limit=200", "brain_items" to "select=*&retired=eq.false&order=created_at.desc&limit=200",
-        "brain_records_latest" to "select=*&order=at.desc&limit=500", "org_units" to "select=*", "org_products" to "select=*", "org_agents" to "select=*",
-        "org_brains" to "select=*", "org_refs" to "select=*", "org_metrics" to "select=*", "policies" to "select=*", "control_ops" to "select=*&order=at.desc&limit=60",
-        "releases" to "select=*&order=created_at.desc&limit=5", "jobs" to "select=id,team_id,type,status,attempt,max_attempts,created_at,run_after&order=created_at.desc&limit=500",
+        "notes" to "select=*&order=created_at.desc", "runs" to "select=*&order=opened_at.desc&limit=200", "run_events" to "select=*&order=at.asc&limit=600",
+        "ai_calls" to "select=*&order=at.desc&limit=200", "brain_items" to "select=id,kind,team_id,subteam_id,category_id,channel_id,agent_id,visibility,title,source,created_at,created_by&retired=eq.false&order=created_at.desc&limit=300",
+        "structure" to "select=*&order=id.asc", "policies" to "select=*", "control_ops" to "select=*&order=at.desc&limit=60",
+        "releases" to "select=*&order=created_at.desc&limit=5",
+        "jobs" to "select=id,type,company_id,team_id,subteam_id,category_id,channel_id,agent_id,workflow_id,run_id,priority,status,attempt,max_attempts,run_after,lease_owner,lease_until,created_at,started_at,completed_at,failed_at,updated_at,error,idempotency_key&order=created_at.desc&limit=300",
+        "run_requests" to "select=id,workflow_id,state,note,reason,run_id,result,created_at,claimed_at,finished_at&order=id.desc&limit=100",
         "integration_accounts" to "select=*&order=provider.asc", "integration_links" to "select=*", "outputs" to "select=*&order=at.desc&limit=300",
+        // YouTube lifetime totals per channel (the Data API rows), revenue per source (contract: revenue_events / revenue_sync, served by Nova once deployed)
+        "yt_stats" to "select=connection_id,at,day,kind,source,metrics&kind=eq.channel&source=eq.data_api&order=at.desc&limit=60",
+        "revenue_events" to "select=id,source,connection_id,house_id,product_id,occurred_at,amount,currency,kind&order=occurred_at.desc&limit=1000", "revenue_sync" to "select=*",
     )
     /** Nova's own read routes, kept in the same map: key to (path, array field or null for the whole object). */
-    private val NOVA_READS = mapOf("yt" to ("/api/youtube/latest" to null), "templates" to ("/api/automation/templates" to "templates"), "prompts" to ("/api/automation/prompts" to "prompts"))
+    private val NOVA_READS = mapOf("templates" to ("/api/automation/templates" to "templates"), "prompts" to ("/api/automation/prompts" to "prompts"))
 
     private var extAgain = false
     fun loadExtra(force: Boolean = false) {
@@ -468,7 +496,7 @@ class Lounge(app: Application) : AndroidViewModel(app) {
             if (provider == "gumroad") body.put("team", "ebooks").put("subteam", "ebooks/practical-skills")   // the web's OAUTH_PLATFORMS.gumroad
             val url = JSONObject(cloud.api("/api/oauth/begin", body)).optString("authorize_url")
             if (url.startsWith("https://")) open(url) else message = "Coco did not return an authorization link"
-        } catch (e: Exception) { fail(e) }
+        } catch (e: Exception) { message = said(e) }
     }
 
     /** Verify asks the platform from the cloud (web's novaOauth('verify')); this only shows the verdict. */
@@ -477,7 +505,160 @@ class Lounge(app: Application) : AndroidViewModel(app) {
             message = "Asking the platform…"
             val r = JSONObject(cloud.api("/api/oauth/verify", JSONObject().put("connection_id", connection)))
             message = "${VERIFY_SAID[r.optString("status")] ?: r.optString("status")}: ${r.optString("detail")}".take(220); loadExtra(force = true)
-        } catch (e: Exception) { fail(e) }
+        } catch (e: Exception) { message = said(e) }
+    }
+
+    // ---------------------------------------------------------------- operating the company (2.12): tasks, jobs, connections, revenue, Houses
+    fun memberName(id: String?) = data.members.firstOrNull { it.optString("id") == id }?.optString("name") ?: id.orEmpty()
+
+    /** Words for a failed call. A route or function Nova does not have yet (404 / 501 / 500) is "Not available yet", never a fake success. */
+    private fun said(e: Throwable): String = when {
+        e is java.io.IOException -> NO_LINK
+        e is Cloud.CloudError && e.code in setOf(404, 405, 500, 501, 502, 503) -> "Not available yet: ${e.message}"
+        else -> e.message?.takeIf { it.isNotBlank() } ?: "Something went wrong"
+    }
+    private fun write(e: Throwable) { if (e !is kotlinx.coroutines.CancellationException) message = if (e is java.io.IOException) NO_LINK else e.message?.takeIf { it.isNotBlank() } ?: "Something went wrong" }
+
+    class NewTask(val title: String, val details: String, val house: String?, val needs: String, val priority: Int, val member: String?, val category: String?, val platform: String?, val startNow: Boolean)
+
+    /** Create: submit_task with needs cloud and a first details line naming the team (Coco folds a twin into the task already open), then the fields submit_task
+     *  cannot carry. "Ask the cloud to run it now" is the Start move; without it the task waits, queued, until Start is pressed. */
+    fun createTask(n: NewTask, opened: (String) -> Unit = {}) = viewModelScope.launch {
+        try {
+            val details = TaskRules.withTeam(n.details, n.house)
+            val r = JSONObject(cloud.rpc("submit_task", JSONObject().put("p_title", n.title).put("p_details", details.ifBlank { JSONObject.NULL }).put("p_house", n.house ?: JSONObject.NULL)
+                .put("p_needs", n.needs).put("p_device", cloud.deviceId ?: JSONObject.NULL).put("p_by", name)))
+            if (r.optBoolean("merged")) {
+                dialog = Dialog.Merged(r.optString("title"), r.optString("status"), r.optString("device").takeIf { it.isNotBlank() && it != "null" }, r.optString("by"), r.optString("task_id")); reload(); return@launch
+            }
+            val id = r.optString("task_id"); val extra = JSONObject()
+            if (n.priority != 2) extra.put("priority", n.priority)
+            n.member?.let { extra.put("member_id", it) }; n.category?.let { extra.put("category", it) }; n.platform?.let { extra.put("platform_id", it) }
+            if (extra.length() > 0 && id.isNotBlank()) cloud.update("tasks", "id=eq.$id", extra.put("updated_at", Instant.now().toString()))
+            message = "Task created. No cloud run is asked for yet; press Start when it should run"
+            reload(); loadExtra(force = true)
+            if (id.isBlank()) return@launch
+            opened(id)
+            if (n.startNow) data.tasks.firstOrNull { it.optString("id") == id }?.let { taskAct(it, TaskRules.Act.Start) }
+        } catch (e: Exception) { write(e) }
+    }
+
+    /** One move of the state machine (TaskRules), the assignment or the priority. Written only while the task is still in a status the move applies to (a
+     *  worker may have claimed it meanwhile), so another device's change is never overwritten. */
+    private suspend fun applyToTask(t: JSONObject, c: TaskRules.Change, ok: String, logAs: String) {
+        try {
+            val id = t.s("id")
+            val filter = "id=eq.$id" + if (c.onlyIf.isEmpty()) "" else "&status=in.(${c.onlyIf.joinToString(",")})"
+            if (!cloud.claim("tasks", filter, c.patch)) { reload(); message = "\"${t.s("title")}\" changed on another device first, so nothing was changed"; return }
+            c.note?.let { n -> runCatching { cloud.insert("task_notes", JSONObject().put("task_id", id).put("note", n).put("by_email", name).put("device_id", cloud.deviceId ?: JSONObject.NULL)) } }
+            log(logAs, t.s("title")); message = ok; reload()
+        } catch (e: Exception) { write(e) }
+    }
+    /** Start / Retry = ask the cloud for a run of the task's team workflow (coco_request_run, noted "coco-task:<id> ..."). Returns the request number, or null with the
+     *  reason on screen (no team, a run already asked for, the company stopped, the workflow off or already waiting). Nothing is claimed to be running. */
+    private suspend fun requestRun(t: JSONObject): Long? {
+        val wf = TaskRules.workflowOf(t) ?: run { message = "This task has no House or team, so the cloud cannot tell which team should do it. Assign a House first."; return null }
+        RunRequests.of(t.s("id"), rows("run_requests").rows).firstOrNull { RunRequests.live(it) }?.let { message = "A cloud run is already asked for this task (request #${it.s("id")})"; return null }
+        return try {
+            val r = JSONObject(cloud.rpc("coco_request_run", JSONObject().put("p_workflow", wf).put("p_note", TaskRules.runNote(t))))
+            if (r.optBoolean("ok")) r.optLong("request_id") else { message = r.optString("reason").ifBlank { "The cloud did not accept the request" }; null }
+        } catch (e: Exception) { message = said(e); null }
+    }
+    private var cancelRunMissing = false
+    /** Stopping a task recalls the cloud run still waiting for it, so it does not run at the next cycle. Until the database has coco_run_request_cancel the run cannot be recalled, and the screen says so. */
+    private suspend fun recallRuns(t: JSONObject) {
+        val waiting = RunRequests.of(t.s("id"), rows("run_requests").rows).filter { RunRequests.live(it) }
+        if (waiting.isEmpty()) return
+        if (cancelRunMissing) { message = "Task stopped. The cloud run already asked for (request #${waiting.first().s("id")}) cannot be recalled yet and may still run."; return }
+        for (r in waiting) {
+            try { cloud.rpc("coco_run_request_cancel", JSONObject().put("p_id", r.optLong("id"))) }
+            catch (e: Cloud.CloudError) { if (e.code == 404) { cancelRunMissing = true; message = "Task stopped. The cloud run already asked for (request #${r.s("id")}) cannot be recalled yet and may still run."; return } }
+            catch (_: Exception) {}
+        }
+        loadExtra(force = true)
+    }
+    fun taskAct(t: JSONObject, act: TaskRules.Act) = viewModelScope.launch {
+        val asked: Long? = if (act == TaskRules.Act.Start || act == TaskRules.Act.Retry) (requestRun(t) ?: return@launch) else null
+        applyToTask(t, TaskRules.change(act, t, Instant.now(), asked), act.said + (asked?.let { " (request #$it)" } ?: ""), "task ${act.label.lowercase()}")
+        if (act == TaskRules.Act.Cancel) recallRuns(t)
+        if (asked != null) loadExtra(force = true)
+    }
+
+    /** "Run as cloud job": one of the five zero-AI job types for this task (coco_task_enqueue). Until the database has it the answer is "Not available yet" and the action is hidden. */
+    var enqueueMissing by mutableStateOf(false)
+    fun taskEnqueue(t: JSONObject, type: String) = viewModelScope.launch {
+        try {
+            val a = JSONObject().put("p_task", t.s("id")).put("p_job_type", type).put("p_payload", JSONObject()); TaskRules.teamOf(t)?.let { a.put("p_team", it) }
+            val r = JSONObject(cloud.rpc("coco_task_enqueue", a))
+            message = if (r.optBoolean("ok")) (if (r.optBoolean("duplicate")) "That cloud job already exists for this task" else "Cloud job queued. It runs on the next worker run") else r.optString("reason").ifBlank { "It was not queued" }
+            reload(); loadExtra(force = true)
+        } catch (e: Cloud.CloudError) { if (e.code == 404) { enqueueMissing = true; message = "Not available yet: ${e.message}" } else message = said(e) }
+        catch (e: Exception) { message = said(e) }
+    }
+
+    fun taskAssign(t: JSONObject, member: String?, house: String?, pipeline: String?) = viewModelScope.launch { applyToTask(t, TaskRules.assign(member, house, pipeline, Instant.now()), "Assignment saved", "task assigned") }
+    fun taskPriority(t: JSONObject, p: Int) = viewModelScope.launch { applyToTask(t, TaskRules.priority(p, Instant.now()), "Priority saved", "task priority") }
+
+    fun jobCancel(id: String) = viewModelScope.launch {
+        try {
+            val r = JSONObject(cloud.rpc("coco_job_cancel", JSONObject().put("p_id", id).put("p_by", name).put("p_reason", "cancelled from Coco Lounge Android")))
+            message = if (r.optBoolean("ok")) "Job cancelled" else r.optString("reason").ifBlank { "Nothing to cancel" }; loadExtra(force = true)
+        } catch (e: Exception) { message = said(e) }
+    }
+    /** Needs coco_job_retry(p_id, p_by) in Nova's allow-list and the database; until then the answer is "Not available yet". */
+    fun jobRetry(id: String) = viewModelScope.launch {
+        try {
+            val r = JSONObject(cloud.rpc("coco_job_retry", JSONObject().put("p_id", id).put("p_by", name)))
+            message = if (r.optBoolean("ok", true)) "Job queued again" else r.optString("reason").ifBlank { "It could not be queued again" }; loadExtra(force = true)
+        } catch (e: Exception) { message = said(e) }
+    }
+
+    /** Posts a Nova route and says what it answered. ok = the route's own `ok` (true when it does not say). */
+    private suspend fun novaCall(path: String, body: JSONObject, done: String): Boolean = try {
+        val r = JSONObject(cloud.api(path, body).ifBlank { "{}" }); val ok = r.optBoolean("ok", true)
+        val why = listOf("detail", "message", "reason", "status").firstNotNullOfOrNull { k -> r.optString(k).takeIf { it.isNotBlank() } }.orEmpty()
+        message = ((if (ok) done else "Not done") + if (why.isBlank()) "" else ": $why").take(220); ok
+    } catch (e: Exception) { message = said(e); false }
+
+    fun connectCheck(connection: String) = viewModelScope.launch { novaCall("/api/connect/check", JSONObject().put("connection_id", connection), "Checked"); reload(); loadExtra(force = true) }
+    /** The key goes to the cloud vault in this one call; it is not kept on the phone and not shown again. */
+    fun connectKey(provider: String, connection: String, secret: String, done: () -> Unit = {}) = viewModelScope.launch {
+        if (novaCall("/api/connect/key", JSONObject().put("provider", provider).put("connection_id", connection).put("secret", secret), "Key saved. It is not shown again")) done()
+        reload(); loadExtra(force = true)
+    }
+    fun revenueSync(connection: String) = viewModelScope.launch { novaCall("/api/revenue/sync", JSONObject().put("connection_id", connection), "Synced"); loadExtra(force = true) }
+
+    fun addCategory(house: String, name: String) = viewModelScope.launch {
+        try { cloud.insert("categories", JSONObject().put("house_id", house).put("code", HouseMap.nextCode(house, data.categories)).put("name", name)); message = "Category added"; reload() } catch (e: Exception) { write(e) }
+    }
+    fun addOffering(house: String, name: String, kind: String, platform: String?, category: String?) = viewModelScope.launch {
+        try {
+            val row = JSONObject().put("house_id", house).put("name", name).put("kind", kind).put("status", "planned")
+            platform?.let { row.put("platform_id", it) }; category?.let { row.put("category_id", it) }
+            cloud.insert("offerings", row); message = "Added"; reload()
+        } catch (e: Exception) { write(e) }
+    }
+    fun setOfferingCategory(id: String, category: String?) = viewModelScope.launch {
+        try { cloud.update("offerings", "id=eq.$id", JSONObject().put("category_id", category ?: JSONObject.NULL).put("updated_at", Instant.now().toString())); message = "Category set"; reload() } catch (e: Exception) { write(e) }
+    }
+    fun addMemberToHouse(member: String, house: String) = viewModelScope.launch {
+        try { cloud.insert("member_houses", JSONObject().put("member_id", member).put("house_id", house)); message = "${memberName(member)} now helps ${houseName(house)}"; reload() } catch (e: Exception) { write(e) }
+    }
+    /** A team nobody placed yet joins a House: coco_structure('edit') with config.house merged into the config it already has (edit replaces the whole config). */
+    fun structurePlace(row: JSONObject, house: String) = viewModelScope.launch {
+        try {
+            val cfg = JSONObject((row.optJSONObject("config") ?: JSONObject()).toString()).put("house", house)
+            cloud.rpc("coco_structure", JSONObject().put("p_op", "edit").put("p_kind", row.s("kind")).put("p_id", row.s("id")).put("p_config", cfg))
+            log("structure edited", "${row.s("id")} placed in $house"); message = "Placed in ${houseName(house)}"; loadExtra(force = true)
+        } catch (e: Exception) { write(e) }
+    }
+    /** coco_structure('create', ...): the database checks founder + paired device, and a new piece starts paused until a founder starts it. */
+    fun structureCreate(kind: String, id: String, parent: String?, name: String, description: String?, config: JSONObject? = null) = viewModelScope.launch {
+        try {
+            val a = JSONObject().put("p_op", "create").put("p_kind", kind).put("p_id", id).put("p_name", name)
+            parent?.let { a.put("p_parent", it) }; description?.takeIf { it.isNotBlank() }?.let { a.put("p_description", it) }; config?.let { a.put("p_config", it) }
+            cloud.rpc("coco_structure", a); log("structure created", "$kind $id"); message = "Created. It starts paused until you start it"; loadExtra(force = true)
+        } catch (e: Exception) { write(e) }
     }
     private val VERIFY_SAID = mapOf("CONNECTED_VERIFIED" to "Verified from the cloud", "NOT_ASSIGNED" to "Verified — assignment required",
         "CONNECTED_WRONG_CHANNEL" to "Wrong channel — not safe to publish", "CONNECTED_EXPIRED" to "Authorization expired — reconnect",

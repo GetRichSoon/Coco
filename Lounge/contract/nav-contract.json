@@ -52,8 +52,13 @@
       "icon": "task_alt",
       "pages": [
         {
+          "id": "tasks",
+          "label": "Tasks",
+          "icon": "task_alt"
+        },
+        {
           "id": "board",
-          "label": "Board",
+          "label": "Task board",
           "icon": "view_kanban"
         },
         {
@@ -449,6 +454,7 @@
     "houses": "houses/houses",
     "house": "houses/house (workspace)",
     "hierarchy": "brains/hierarchy (new)",
-    "themes": "system/themes (new: six themes and automatic rotation)"
+    "themes": "system/themes (new: six themes and automatic rotation)",
+    "tasks": "work/tasks (new: the real task list, jobs and worker status)"
   }
 }

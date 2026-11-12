@@ -486,7 +486,7 @@ main { width: 100%; max-width: 1320px; margin: 0 auto; }
 .barval { font-weight: 700; white-space: nowrap; } .barval small { display: block; font-weight: 500; color: var(--muted); }
 .legend { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); flex-wrap: wrap; } .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .empty { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 14px; padding: 14px; border-radius: 14px; background: var(--surface-2); margin-top: 8px; } .empty .ms { font-size: 24px; flex: none; } .empty.setup { box-shadow: inset 0 0 0 1px var(--warn); }
-.banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--warn-c); color: var(--warn); margin-bottom: 14px; font-size: 14px; }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--warn-c); color: var(--on-warn-c); margin-bottom: 14px; font-size: 14px; }
 .sech { margin: 24px 0 10px; font-size: 18px; }
 .housegrid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
 .housecard { gap: 12px; } .housecard header { display: flex; gap: 12px; align-items: center; } .housecard header .grow { flex: 1; min-width: 0; } .housecard header h3 { font-size: 17px; }
@@ -593,6 +593,41 @@ main { width: 100%; max-width: 1320px; margin: 0 auto; }
 .sech::before { content: ""; display: inline-block; width: 6px; height: 18px; border-radius: 3px; background: var(--secondary); margin-right: 10px; vertical-align: -3px; }
 .hcard-h h3::before { content: ""; display: inline-block; width: 5px; height: 16px; border-radius: 3px; background: var(--tertiary); margin-right: 9px; vertical-align: -2px; }
 .eyebrow { color: var(--gold); }
+/* ---- Operations (2.12): Home tiles, Needs attention, Tasks, approvals detail, House forms, connection detail. Colours come only from the theme variables. ---- */
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px; }
+.card2.tile { position: relative; gap: 2px; padding: 14px 16px; color: var(--on-surface); text-decoration: none; }
+.tile .ms { color: var(--link); font-size: 22px; } .tile b { font: 700 32px/1.1 var(--display); } .tile > span { font-size: 13px; color: var(--muted); font-weight: 700; }
+.tbadge { position: absolute; top: 12px; right: 12px; font-style: normal; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); }
+.tbadge.bad { background: var(--bad-c); color: var(--on-bad-c); } .tbadge.warn { background: var(--warn-c); color: var(--on-warn-c); }
+.qa { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 6px; }
+.wpill, .wline { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--muted); } .wline { margin-bottom: 10px; } .wpill { margin-left: auto; }
+.btn.sm { padding: 7px 14px; font-size: 13px; }
+.alist { gap: 0; }
+.arow { display: flex; gap: 10px; align-items: center; padding: 10px 0 10px 12px; border-top: 1px solid var(--outline); position: relative; }
+.arow:first-child { border-top: 0; }
+.arow::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 3px; background: transparent; }
+.arow.bad::before { background: var(--bad); } .arow.warn::before { background: var(--warn); } .arow.info::before { background: var(--outline-strong); }
+.arow .grow { min-width: 0; color: inherit; text-decoration: none; } .arow .grow b { overflow-wrap: anywhere; } .arow .actions { margin: 0; flex: none; }
+.pbar { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin-top: 6px; } .pbar i { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+.fchips { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+.fchips button { border: 1px solid var(--outline); background: transparent; color: var(--on-surface); border-radius: 999px; padding: 7px 14px; font: 700 14px var(--body); cursor: pointer; }
+.fchips button.on { background: var(--sel); color: var(--on-sel); border-color: transparent; } .fchips .count { margin-left: 4px; }
+.tkbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; } .tkbar input { flex: 1 1 220px; width: auto; } .tkbar select { flex: 0 1 190px; width: auto; }
+.wait { font-size: 12.5px; color: var(--muted); margin-top: 2px; } .errline { font-size: 12.5px; color: var(--bad); margin-top: 2px; overflow-wrap: anywhere; }
+.rcol { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; } .rcol select { width: auto; padding: 6px 10px; font-size: 13px; max-width: 170px; }
+.kvlist { display: grid; gap: 2px; } .kvrow { display: flex; gap: 12px; padding: 5px 0; border-top: 1px solid var(--outline); font-size: 14px; min-width: 0; } .kvrow:first-child { border-top: 0; }
+.kvrow > span { flex: 0 0 110px; color: var(--muted); font-size: 12.5px; font-weight: 700; text-transform: capitalize; } .kvrow > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 6px; } .inl { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; } .inl select { width: auto; padding: 6px 10px; }
+.check { display: flex; flex-direction: row; align-items: center; gap: 8px; font-weight: 600; } .check input { width: auto; }
+.opform { display: grid; gap: 10px; margin-top: 10px; } .opform .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } form.opform.form { margin-top: 0; }
+@media (max-width: 780px) { .opform .two { grid-template-columns: 1fr; } .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .wpill { margin-left: 0; } .kvrow > span { flex-basis: 84px; } }
+.tktitle { font-size: 22px; overflow-wrap: anywhere; } .tkhead { gap: 10px; }
+.card2.errbox { box-shadow: inset 0 0 0 1px var(--bad); } .card2.errbox b { color: var(--bad); } .card2.nextbox { box-shadow: inset 0 0 0 1px var(--primary); }
+.connres { font-size: 13px; font-weight: 700; color: var(--good); margin-top: 8px; } .connres.bad { color: var(--bad); } ol.steps { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 8px; } .connres.wait { color: var(--muted); } .logohead { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.brec { border-top: 1px solid var(--outline); padding: 8px 0; } .brec > summary { cursor: pointer; } .brec p { margin: 6px 0; }
+button.stat { border: 0; text-align: left; font: inherit; cursor: pointer; color: var(--on-surface); } button.stat:hover { background: var(--surface-3); } button.stat:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+.kanban { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); margin-bottom: 10px; } .card2.kcol { gap: 6px; } .kcol h4 { margin: 0; font-size: 14px; }
+.kcard { display: grid; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--surface-2); color: var(--on-surface); text-decoration: none; overflow-wrap: anywhere; } .kcard:hover { background: var(--surface-3); }
 </style>
 </head>
 <body>
@@ -698,7 +733,8 @@ function withTimeout(work, what, ms = TIMEOUT_MS) {
 const inFlight = new Set();
 const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 2600); };
 const ago = (iso) => { if (!iso) return 'never'; const s = (Date.now() - new Date(iso)) / 1000; return s < 90 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : new Date(iso).toLocaleDateString(); };
-const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < 150000;
+const isCloudDev = (d) => /cloud-worker/.test(String(d.id)) || !!(d.info && d.info.cloud === true);
+const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < (isCloudDev(d) ? 12 * 3600e3 : 150000);
 // Release Center: the four devices against the one release the cloud says is current. A device counts as
 // updated only when its own heartbeat reports that version - never inferred, never assumed, because
 // on 29 October the dashboard showed a number no desktop was actually running.
@@ -895,7 +931,7 @@ async function loadControlPlane() {
 
 // A route is #page or #page:argument (#house:gigi). Plain page names are exactly the routes the app always had.
 function routeOf() { const h = location.hash.slice(1), i = h.indexOf(':'); let arg = ''; try { arg = i < 0 ? '' : decodeURIComponent(h.slice(i + 1)); } catch {} return { page: (i < 0 ? h : h.slice(0, i)) || 'home', arg }; }
-const PAGES = [['home', 'Home', 'home'], ['houses', 'Houses', 'apartment'], ['house', 'House', 'apartment'], ['hierarchy', 'Hierarchy', 'account_tree'], ['insights', 'Insights', 'monitoring'], ['structure', 'Structure', 'schema'], ['automation', 'Automation', 'auto_mode'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['themes', 'Appearance', 'palette'], ['settings', 'Settings', 'settings']];
+const PAGES = [['home', 'Home', 'home'], ['houses', 'Houses', 'apartment'], ['house', 'House', 'apartment'], ['hierarchy', 'Hierarchy', 'account_tree'], ['insights', 'Insights', 'monitoring'], ['structure', 'Structure', 'schema'], ['automation', 'Automation', 'auto_mode'],['control', 'Control', 'dashboard'], ['board', 'Board', 'view_kanban'], ['notes', 'Notes', 'sticky_note_2'], ['remote', 'Remote', 'settings_remote'], ['tasks', 'Tasks', 'task_alt'], ['approvals', 'Approvals', 'verified'], ['company', 'Company', 'apartment'], ['teams', 'Teams', 'groups'], ['agents', 'Agents', 'smart_toy'], ['runs', 'Runs', 'timeline'], ['ai', 'AI usage', 'bolt'], ['brain', 'Brain', 'psychology'], ['workflows', 'Workflows', 'account_tree'], ['system', 'System', 'security'], ['cloud', 'Cloud', 'cloud'], ['chat', 'Ask Coco', 'forum'], ['connections', 'Integrations', 'hub'], ['club', 'Club', 'diversity_3'], ['rules', 'Rules', 'gavel'], ['devices', 'Devices', 'devices'], ['themes', 'Appearance', 'palette'], ['settings', 'Settings', 'settings']];
 
 async function boot() {
   if (!NOVA) { try { const r = await fetch('nova.json', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); if (j && j.url) { NOVA = String(j.url).replace(/\/$/, ''); store.set('gs-nova-url', NOVA); sb = makeClient(store.get('gs-device-key')); } } } catch {} }
@@ -1580,7 +1616,7 @@ async function loadAllNow() {
   // where a release is written. If the cloud has a row, it is the one that counts.
   try { const rr = await sb.from('releases').select('*').order('created_at', { ascending: false }).limit(1); if (rr.data && rr.data.length) CLOUD_RELEASE = rr.data[0]; } catch {}
   try {
-    const [rn, ev, ac, bi, po, co, st, cn, cl, ou, jb] = await Promise.all([
+    const [rn, ev, ac, bi, po, co, st, cn, cl, ou, jb, pl, ys, rq] = await Promise.all([
       sb.from('runs').select('*').order('opened_at', { ascending: false }).limit(60),
       sb.from('run_events').select('*').order('at', { ascending: true }).limit(600),
       sb.from('ai_calls').select('*').order('at', { ascending: false }).limit(200),
@@ -1594,7 +1630,11 @@ async function loadAllNow() {
       sb.from('integration_accounts').select('*').order('provider', { ascending: true }),
       sb.from('integration_links').select('*'),
       sb.from('outputs').select('*').order('at', { ascending: false }).limit(300),
-      sb.from('jobs').select('id,type,team_id,subteam_id,category_id,channel_id,status,attempt,max_attempts,created_at,updated_at').order('created_at', { ascending: false }).limit(500),
+      sb.from('jobs').select('id,idempotency_key,type,team_id,subteam_id,category_id,channel_id,agent_id,workflow_id,run_id,priority,status,attempt,max_attempts,run_after,lease_owner,lease_until,created_at,started_at,completed_at,failed_at,updated_at,error,result').order('created_at', { ascending: false }).limit(500),
+      // the original organisation tables the House workspaces and the Tasks page read (pipelines) and the YouTube channel numbers (yt_stats, channel rows only)
+      sb.from('pipelines').select('*').order('house_id', { ascending: true }),
+      sb.from('yt_stats').select('id,at,day,connection_id,channel_id,kind,source,window_days,metrics').eq('kind', 'channel').order('at', { ascending: false }).limit(400),
+      sb.from('run_requests').select('*').order('id', { ascending: false }).limit(200),
     ]);
     POLICIES = po.data || [];
     CONTROL_OPS = co.data || [];
@@ -1618,6 +1658,7 @@ async function loadAllNow() {
     OUTPUTS = ou.data || [];
     thCloudPull();   // the person's theme choice, shared between their own devices (the existing controls table)
     JOBS_ERR = !!jb.error; JOBS = jb.error ? [] : jb.data || [];
+    D.pipelines = pl.error ? [] : pl.data || []; D.ytStats = ys.error ? [] : ys.data || []; D.ytStatsErr = ys.error ? String(ys.error.message || 'unreadable') : null; D.runRequests = rq.error ? [] : rq.data || [];
     LIVE = (rn.data || ev.data || ac.data || bi.data) ? { runs: rn.data || [], events: ev.data || [], calls: ac.data || [], brain: bi.data || [] } : null;
     if (LIVE) CP = cpMerge(CP, LIVE);
   } catch { LIVE = null; }
@@ -1738,7 +1779,7 @@ function brainIsland(R, open, focus) {
 function renderBrainIsland() {
   const el = $('#brainIsland'); if (!el) return;
   const html = brainIsland(BRAINS, BI_OPEN, BI_FOCUS);
-  el.hidden = !html; el.classList.toggle('open', BI_OPEN);
+  el.hidden = !html || page === 'home'; el.classList.toggle('open', BI_OPEN);
   if (html && el.innerHTML !== html) el.innerHTML = html;
 }
 function renderStrip() {
@@ -1754,7 +1795,7 @@ function renderStrip() {
 if (window.cocoDesktop && window.cocoDesktop.onIsland) window.cocoDesktop.onIsland(v => { const c = document.getElementById('showIsland'); if (c) c.checked = v; });
 // One decide path for every YES/NO (Approvals page buttons AND the island pill, Boss 2026-10-26).
 async function decideApproval(id, yes) {
-  const a = (D.approvals || []).find(x => String(x.id) === String(id)); if (!a || !['waiting', 'on-hold'].includes(a.state)) return;
+  const a = (D.approvals || []).find(x => String(x.id) === String(id)); if (!a || !['waiting', 'on-hold'].includes(a.state)) return false;
   // One approval exists in the cloud for all four clients, so the decision has to be final in the
   // cloud, not just on the screen that pressed it. The state filter is what makes it final: the row
   // moves only while it is still undecided, so a second device - or this one holding a card that is
@@ -1763,15 +1804,16 @@ async function decideApproval(id, yes) {
   // could be flipped to approved on another phone.
   const done = await sb.from('approvals').update({ state: yes ? 'approved' : 'rejected', decided_by: founderName(), decided_at: new Date().toISOString() })
     .eq('id', a.id).in('state', ['waiting', 'on-hold']).select('id');
-  if (done.error) { toast('Could not save that: ' + (done.error.message || 'Coco Cloud refused it')); return; }
+  if (done.error) { toast('Could not save that: ' + (done.error.message || 'Coco Cloud refused it')); return false; }
   if (!done.data || !done.data.length) {
     await loadAll();
     const now = (D.approvals || []).find(x => String(x.id) === String(id)) || {};
     toast(now.decided_by ? `${a.code} was already ${now.state} by ${now.decided_by}` : `${a.code} was already decided on another device`);
-    return;
+    return false;
   }
   await sb.from('decisions').insert({ decided_on: new Date().toISOString().slice(0, 10), by_name: founderName(), text: `${yes ? 'YES' : 'NO'} ${a.code}: ${String(a.what || '').slice(0, 180)}` });
   await log(yes ? 'approved' : 'declined', a.code); loadAll();
+  return true;   // saved: the caller may say so (a request someone else decided first must not also say "saved")
 }
 if (window.cocoDesktop && window.cocoDesktop.onApprove) window.cocoDesktop.onApprove((d) => { if (founder) decideApproval(d.id, d.yes); });
 // A new Coco has already been downloaded in the background. It used to close the app to get into it,
@@ -1901,7 +1943,7 @@ const decidedOnDevice = (code) => {
 const founderName = () => founder ? founder.name : (me && me.email);
 async function log(action, detail) { await sb.from('activity').insert({ actor: founderName(), device_id: deviceId, action, detail }); }
 
-const chipFor = (s) => ({ new: ['', 'New'], analyzing: ['warn', 'Analyzing'], analyzed: ['good', 'Analyzed'], planned: ['', 'Planned'], need_approval: ['warn', 'Needs YES'], blocked: ['bad', 'Blocked'], verifying: ['warn', 'Verifying'], paused: ['', 'Paused'], cancelled: ['', 'Cancelled'], connected: ['good', 'Connected'], partial: ['warn', 'Partly connected'], not_connected: ['bad', 'Not connected'], error: ['bad', 'Error'], queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
+const chipFor = (s) => ({ new: ['', 'New'], analyzing: ['warn', 'Analyzing'], analyzed: ['good', 'Analyzed'], planned: ['', 'Planned'], need_approval: ['warn', 'Needs YES'], blocked: ['bad', 'Blocked'], verifying: ['warn', 'Finished: needs a check'], pending: ['warn', 'Waiting'], claimed: ['good', 'Picked up'], refused: ['bad', 'Refused'], paused: ['', 'Paused'], cancelled: ['', 'Cancelled'], connected: ['good', 'Connected'], partial: ['warn', 'Partly connected'], not_connected: ['bad', 'Not connected'], error: ['bad', 'Error'], queued: ['', 'Queued'], running: ['good', 'Running'], waiting_pc: ['warn', 'Waiting for a PC'], needs_yes: ['warn', 'Needs YES'], done: ['good', 'Done'], failed: ['bad', 'Failed'], stopped: ['', 'Stopped'], waiting: ['warn', 'Waiting for YES'], approved: ['good', 'Approved'], rejected: ['bad', 'No'], 'on-hold': ['', 'On hold'], working: ['good', 'Working'], next: ['warn', 'Next'], later: ['', 'Later'] }[s] || ['', s]);
 // ---------------------------------------------------------------- identity marks
 // The phone already had real marks: a colour pair, a Material symbol and a set of shapes the logo
 // morphs through, written by hand in Brand.kt for Coco, the houses and the helpers. The Lounge drew
@@ -2384,7 +2426,7 @@ function structurePage() {
       <form id="newStruct" data-kind="${esc(kind)}">
         ${parents}
         <label>Name<input name="name" placeholder="${kind === 'channel' ? 'Moonveil Audio' : 'What it is called'}" required></label>
-        <label>Short id<input name="id" placeholder="lower case, e.g. moonveil-audio" required pattern="[a-z0-9][a-z0-9._/-]{1,80}"></label>
+        <label>Short id<input name="id" placeholder="lower case, e.g. moonveil-audio" required></label>
         <label>What it is for<input name="description" placeholder="One line (optional)"></label>
         ${kind === 'team' ? '<div class="muted">A team is provisioned by the cloud: sub-teams, a head, permissions, a budget, a Claude policy and a Brain scope. It starts <b>paused</b> until you start it.</div>'
                           : '<div class="muted">It is created paused, under the parent you chose, and appears on every Coco straight away.</div>'}
@@ -4977,7 +5019,7 @@ const V = {
             `<option value="${esc(p.id)}">${esc(p.platform)}</option>`).join('')}</select></label>
           <label>Account or channel name<input name="name" placeholder="Moonveil Audio" required></label>
           <label>Short id<input name="id" placeholder="yt-moonveil-audio" required pattern="[a-z0-9][a-z0-9._-]{1,60}"></label>
-          <label>Signing-in account <span class="muted">(optional)</span><input name="label" placeholder="sampleshoppp@gmail.com"></label>
+          <label>Signing-in account <span class="muted">(optional)</span><input name="label" placeholder="your YouTube Google account"></label>
           <label>Where its token is kept<input name="secret" placeholder="~/.nova-secrets/youtube-moonveil.env"></label>
           <div class="muted">Coco records <b>where</b> the token lives, never the token. Authorise on the paired PC with the platform's own login, then record it here and assign it.</div>
           <div class="muted">A path like this is a file on that one PC, so the cloud cannot use it and the
@@ -5863,7 +5905,7 @@ function render() {
   if (page === 'chat') chatSync($('#view').dataset.page !== 'chat');
   ensureShapeDefs();
   nav();
-  $('#title').textContent = pageLabel();
+  $('#title').textContent = page === 'home' ? greeting() : pageLabel();
   $('#who').textContent = `Good Space · ${founder ? founder.call_me : ''}`;
   const view = $('#view'); const changed = view.dataset.page !== page;
   if (changed) view.innerHTML = V[page]();      // a different page IS a new screen: build it outright
@@ -5936,7 +5978,6 @@ const TASK_OPEN = ['queued', 'planned', 'running', 'working', 'verifying', 'need
 const orgUnits = () => (ORG && ORG.units) || [];
 const orgProducts = () => (ORG && ORG.products) || [];
 const cloudOrg = () => !!(ORG && ORG.source === 'cloud');
-const orgMetrics = () => (cloudOrg() ? ORG.metrics || [] : []);        // the development structure never carries numbers
 const unitName = (id) => { const u = orgUnits().find((x) => x.id === id); return u ? u.short_name || u.display_name : id; };
 const houseIdOfUnit = (id) => { const U = orgUnits(); let u = U.find((x) => x.id === id), n = 0; while (u && n++ < 12) { if (u.kind === 'house') return u.house_id || u.id; u = U.find((x) => x.id === u.parent_id); } return null; };
 const taggedIn = (names, r) => !names || [r.team_id, r.subteam_id, r.category_id, r.channel_id].some((v) => v && names.has(String(v)));
@@ -5944,9 +5985,6 @@ const hrow = (main, sub, right = '', href = '') => `<div class="row">${href ? `<
 const hcard = (title, body, actions = '', cls = '') => `<div class="card2 hcard ${cls}"><div class="hcard-h"><h3>${esc(title)}</h3>${actions}</div>${body}</div>`;
 const hnone = (msg, ic = 'inbox') => `<div class="empty"><i class="ms">${ic}</i><span>${esc(msg)}</span></div>`;
 const setup = (what, dep) => `<div class="empty setup"><i class="ms">build_circle</i><span><b>${esc(what)}</b><br>${esc(dep)}</span></div>`;
-const metricsUnread = () => (cloudOrg() && ORG.metrics_error ? ORG.metrics_error : null);
-const UNREAD_LINE = (why) => `The records cannot be read from here yet (${esc(why)}). That does not mean there are none.`;
-const orgBanner = () => (metricsUnread() ? `<div class="banner"><i class="ms">cloud_off</i><span><b>The metrics cannot be read yet.</b> ${esc(metricsUnread())}. Revenue, views, sales and audience stay Unavailable until Coco Cloud lets this app read them; nothing is estimated or shown as zero.</span></div>` : '') + (ORG && ORG.source === 'dev' ? `<div class="banner"><i class="ms">science</i><span><b>Planned structure.</b> Coco Cloud does not hold the company structure yet, so this shows the planned tree. No numbers exist for it.</span></div>` : ORG && ORG.source === 'none' ? `<div class="banner"><i class="ms">cloud_off</i><span><b>Structure not loaded.</b> Only the seven Houses are known; their teams, channels and numbers appear once the company structure loads.</span></div>` : '');
 
 // ---------------------------------------------------------------- the shell: sidebar, phone bar, section tabs, breadcrumb, device chip, bell
 function nav() {
@@ -5980,9 +6018,9 @@ function nav() {
 function notifications() {
   const out = [], now = Date.now();
   if (CP && CP.system && CP.system.stopped) out.push({ tone: 'bad', ic: 'report', t: 'Everything is stopped', s: CP.system.stopped.reason || '', href: '#system' });
-  (D.approvals || []).filter((a) => a.state === 'waiting').slice(0, 8).forEach((a) => out.push({ tone: 'warn', ic: 'verified', t: `${a.code}: ${a.what}`, s: 'Waiting for your YES', href: '#approvals' }));
-  (JOBS || []).filter((j) => ['failed', 'blocked'].includes(j.status) && now - new Date(j.updated_at || j.created_at) < 3 * 864e5).slice(0, 6).forEach((j) => out.push({ tone: 'bad', ic: 'error', t: `Job ${j.status}: ${j.type}`, s: `${j.team_id || ''} · ${ago(j.updated_at || j.created_at)}`, href: '#cloud' }));
-  (D.devices || []).filter((d) => d.active !== false && !online(d)).forEach((d) => out.push({ tone: '', ic: 'devices_off', t: `${devLabel(d)} is offline`, s: d.last_seen ? `last seen ${ago(d.last_seen)}` : 'never seen', href: '#remote' }));
+  (D.approvals || []).filter((a) => a.state === 'waiting').slice(0, 8).forEach((a) => out.push({ tone: 'warn', ic: 'verified', t: `${a.code}: ${a.what}`, s: 'Waiting for your YES', href: '#approvals:' + a.id }));
+  (JOBS || []).filter((j) => ['failed', 'blocked'].includes(j.status) && now - new Date(j.updated_at || j.created_at) < 3 * 864e5).slice(0, 6).forEach((j) => out.push({ tone: 'bad', ic: 'error', t: `Job ${j.status}: ${j.type}`, s: `${j.team_id || ''} · ${ago(j.updated_at || j.created_at)}`, href: '#tasks' }));
+  (D.devices || []).filter((d) => d.active !== false && !online(d)).forEach((d) => out.push(isCloudDev(d) ? { tone: '', ic: 'schedule', t: `Cloud worker: last run ${d.last_seen ? UK.ago(d.last_seen) : 'never'}`, s: 'It runs on a schedule and checks in only when it runs', href: '#cloud' } : { tone: '', ic: 'devices_off', t: `${devLabel(d)} is offline`, s: d.last_seen ? `last seen ${ago(d.last_seen)}` : 'never seen', href: '#remote' }));
   (CONNS || []).filter((c) => ['error', 'partial'].includes(c.state)).slice(0, 5).forEach((c) => out.push({ tone: 'warn', ic: 'link_off', t: `${c.provider}: ${c.external_name || c.connection_id} needs attention`, s: c.state === 'error' ? 'Connection error' : 'Partly connected', href: '#connections' }));
   return out;
 }
@@ -6011,8 +6049,8 @@ function searchItems() {
   NAV.sections.forEach((s) => s.pages.forEach((p) => it.push({ t: p.label, s: s.label, href: '#' + p.id, ic: p.icon })));
   NAV.global.forEach((g) => it.push({ t: g.label, s: 'Global', href: '#' + g.id, ic: g.icon }));
   NAV.houses.forEach((h) => it.push({ t: h.label, s: 'House', href: '#house:' + h.id, ic: h.icon }));
-  (D.tasks || []).slice(0, 250).forEach((t) => it.push({ t: t.title, s: 'Task · ' + t.status, href: '#board', ic: 'task_alt' }));
-  (D.approvals || []).filter((a) => a.state === 'waiting').forEach((a) => it.push({ t: `${a.code} ${a.what}`, s: 'Approval', href: '#approvals', ic: 'verified' }));
+  (D.tasks || []).slice(0, 250).forEach((t) => it.push({ t: t.title, s: 'Task · ' + t.status, href: '#tasks:' + t.id, ic: 'task_alt' }));
+  (D.approvals || []).filter((a) => a.state === 'waiting').forEach((a) => it.push({ t: `${a.code} ${a.what}`, s: 'Approval', href: '#approvals:' + a.id, ic: 'verified' }));
   orgProducts().forEach((p) => { const h = houseIdOfUnit(p.unit_id); it.push({ t: p.name, s: 'Channel or product', href: h ? '#house:' + h : '#structure', ic: 'tag' }); });
   ((ORG && ORG.agents) || []).filter((a) => a.status !== 'placeholder').slice(0, 300).forEach((a) => it.push({ t: a.name, s: 'Agent', href: '#hierarchy', ic: 'smart_toy' }));
   return it;
@@ -6038,184 +6076,315 @@ function hfSet(k, v) {
   if ((k === 'from' || k === 'to') && HF.from && HF.to) HF.period = 'custom';
   hfSave(); render();
 }
-const hfActive = () => ['house', 'team', 'category', 'channel', 'platform', 'account'].some((k) => HF[k] && HF[k] !== 'all') || HF.currency !== 'all' || HF.period !== '28d';
 const hfRange = () => UK.periodRange(HF.period, new Date(), { from: HF.from, to: HF.to });
-function hfScope() {
-  const U = orgUnits(), units = UK.scopeUnits(U, HF);
-  let productIds = null;
-  if (HF.channel) productIds = new Set([HF.channel]);
-  else if (HF.platform || HF.account) {
-    const acc = HF.account ? (CONNS || []).find((c) => c.connection_id === HF.account) : null;
-    productIds = new Set(orgProducts().filter((p) => (!HF.platform || String(p.platform_id || '').toLowerCase() === HF.platform.toLowerCase())
-      && (!acc || (acc.external_id && p.external_ref === acc.external_id))).map((p) => p.id));
-  }
-  return { units, productIds, names: UK.scopeNames(U, units) };
+
+// ================================================================ OPERATIONS (2.12)
+// ---------------------------------------------------------------- Operations (2.12): Home, Tasks, Approvals, Houses, Connections and Revenue on the ORIGINAL tables
+// Everything here reads houses, structure, categories, offerings, members, member_houses, pipelines, brain_items, tasks, jobs, runs, outputs, approvals, integrations,
+// integration_accounts, yt_stats and (when Nova serves them) revenue_events / revenue_sync. No org_* table is needed. Pure decisions live in ui-kit.js.
+let JOBS = [], JOBS_ERR = false;       // jobs table, read with the rest in loadAllNow
+const chipTxt = (tone, t) => `<span class="chip ${tone}">${esc(t)}</span>`;
+const ops = () => ({ now: Date.now(), tasks: D.tasks || [], jobs: JOBS || [], approvals: D.approvals || [], integrations: D.integrations || [], accounts: CONNS || [], devices: D.devices || [], runRequests: D.runRequests || [], policies: POLICIES || [] });
+const houseName = (id) => (id ? (houseOf(id) || { label: String(id) }).label : 'No House');
+const memberName = (id) => (id ? ((D.members || []).find((m) => m.id === id) || { name: id }).name : '');
+const teamHouse = (id) => UK.houseOfTeam(NAV, id);
+const greeting = () => { const hr = new Date().getHours(); return `Good ${hr < 12 ? 'morning' : hr < 18 ? 'afternoon' : 'evening'}, ${(founder && (founder.call_me || founder.name)) || 'Boss'}`; };
+const fmtDay = (d) => (d ? new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+const mini = (label, html) => (html ? `<div class="kvrow"><span>${esc(label)}</span><div>${html}</div></div>` : '');
+// A Nova route that is not deployed yet (404, 501) or broken (500) is said plainly - "Not available yet: <why>" - and is never shown as success.
+async function novaRoute(method, path, body) {
+  if (!NOVA) return { ok: false, status: 0, unavailable: true, why: 'this device is not paired with Nova' };
+  try {
+    const r = await withTimeout(novaFetch(path, { method, body: body === undefined ? undefined : JSON.stringify(body) }), path);
+    const j = await r.json().catch(() => null);
+    if (r.ok) return { ok: true, status: r.status, data: j };
+    // a 404/501/500 from a route that is not deployed (or broken) is "not available yet"; a 404 that carries the connect routes' own answer ({ok:false, reason}) is a real answer
+    return { ok: false, status: r.status, unavailable: (r.status === 404 && !(j && 'ok' in j)) || r.status === 501 || r.status >= 500, why: (j && (j.reason || j.detail || j.message || j.error)) || `Nova answered ${r.status}`, data: j };
+  } catch (e) { return { ok: false, status: 0, unavailable: !!(e && e.timeout), why: e && e.message ? e.message : String(e) }; }
 }
-function hfOptions() {
-  const U = orgUnits(), P = orgProducts(), hu = HF.house !== 'all' ? UK.houseUnit(U, HF.house) : null;
-  const within = (root) => (root ? UK.descendants(U, root) : null);
-  const inHouse = within(hu && hu.id), inTeam = within(HF.team || null), inCat = within(HF.category || null);
-  const teams = U.filter((u) => ['team', 'subteam'].includes(u.kind) && (!inHouse || inHouse.has(u.id)));
-  const cats = U.filter((u) => u.kind === 'category' && (inTeam ? inTeam.has(u.id) : !inHouse || inHouse.has(u.id)));
-  const scope = inCat || inTeam || inHouse;
-  const prods = P.filter((p) => (!scope || scope.has(p.unit_id)));
-  const plats = [...new Map([...(D.platforms || []).map((p) => [String(p.id).toLowerCase(), p.name || p.id]), ...(CONNS || []).map((c) => [String(c.provider).toLowerCase(), c.provider])]).entries()];
-  const accts = (CONNS || []).filter((c) => !HF.platform || String(c.provider).toLowerCase() === HF.platform.toLowerCase());
-  const cur = [...new Set(orgMetrics().map((m) => String(m.unit)).filter((u) => /^[A-Z]{3}$/.test(u)))].sort();
-  return { teams, cats, prods, plats, accts, cur };
+async function opRpc(name, args) {
+  try {
+    const r = await withTimeout(sb.rpc(name, args), name), m = r.error ? String(r.error.message || r.error) : '';
+    if (r.error) return { ok: false, why: m, unavailable: r.status === 404 || /no such function|could not find the function|does not exist/i.test(m) };
+    return { ok: true, data: r.data };
+  } catch (e) { return { ok: false, why: e && e.message ? e.message : String(e), unavailable: !!(e && e.timeout) }; }
 }
-function filterBar() {
-  const wide = typeof innerWidth === 'number' ? innerWidth > 780 : true;   // the person's own open/closed choice survives refreshes (the patcher leaves it alone)
-  const o = hfOptions(), opt = (v, l, cur) => `<option value="${esc(v)}"${String(cur) === String(v) ? ' selected' : ''}>${esc(l)}</option>`;
-  const sel = (key, label, all, items, extra = '') => `<label class="fsel"><span>${esc(label)}</span><select data-hf="${key}" aria-label="${esc(label)}"${extra}>${opt(key === 'house' ? 'all' : '', all, HF[key] || (key === 'house' ? 'all' : ''))}${items}</select></label>`;
-  const range = hfRange(), houseName = HF.house === 'all' ? 'All Houses' : (houseOf(HF.house) || { label: HF.house }).label;
-  return `<details class="fwrap"${wide ? ' open' : ''}><summary><i class="ms">tune</i><b>Filters</b><span class="fsum">${esc(houseName)} \u00b7 ${esc(range.label)}</span>${hfActive() ? chipTxt('', 'active') : ''}</summary><div class="filters" role="group" aria-label="Filters">
-    ${sel('house', 'House', 'All Houses', NAV.houses.map((h) => opt(h.id, h.label, HF.house)).join(''))}
-    ${sel('team', 'Team', 'All Teams', o.teams.map((u) => opt(u.id, u.short_name || u.display_name, HF.team)).join(''), o.teams.length ? '' : ' disabled')}
-    ${sel('category', 'Category', 'All Categories', o.cats.map((u) => opt(u.id, u.short_name || u.display_name, HF.category)).join(''), o.cats.length ? '' : ' disabled')}
-    ${sel('channel', 'Channel / product', 'All', o.prods.map((p) => opt(p.id, p.name, HF.channel)).join(''), o.prods.length ? '' : ' disabled')}
-    ${sel('platform', 'Platform', 'All platforms', o.plats.map(([id, n]) => opt(id, n, HF.platform)).join(''))}
-    ${sel('account', 'Account', 'All accounts', o.accts.map((c) => opt(c.connection_id, `${c.provider}: ${c.external_name || c.connection_id}`, HF.account)).join(''), o.accts.length ? '' : ' disabled')}
-    <label class="fsel"><span>Period</span><select data-hf="period" aria-label="Period">${UK.PERIODS.map(([k, l]) => opt(k, l, HF.period)).join('')}</select></label>
-    ${HF.period === 'custom' ? `<label class="fsel"><span>From</span><input type="date" data-hf="from" value="${esc(HF.from)}"></label><label class="fsel"><span>To</span><input type="date" data-hf="to" value="${esc(HF.to)}"></label>` : ''}
-    <label class="fsel"><span>Currency</span><select data-hf="currency" aria-label="Reporting currency">${opt('all', 'All currencies', HF.currency)}${o.cur.map((c) => opt(c, c, HF.currency)).join('')}</select></label>
-    <button class="btn text" data-hf-reset="1"${hfActive() ? '' : ' disabled'}><i class="ms">restart_alt</i>Reset filters</button>
-    <span class="fnote">${esc(range.label)} (${esc(range.from)} to ${esc(range.to)}) · compared with ${esc(range.prevFrom)} to ${esc(range.prevTo)} · currencies are never converted or added together</span>
-  </div></details>`;
+const said = (r) => (r.unavailable ? `Not available yet: ${r.why}` : r.why);
+
+// ---------------------------------------------------------------- Home: four tiles, what needs the founder, what is running
+function attentionRow(a) {
+  const btn = (act) => {
+    if (a.kind === 'approval') return act === 'approve' ? `<button class="btn filled sm" data-yes="${esc(a.id)}">Approve</button>` : `<button class="btn text sm" data-no="${esc(a.id)}">Reject</button>`;
+    if (a.kind === 'task') return act === 'retry' ? `<button class="btn tonal sm" data-tk="retry" data-id="${esc(a.id)}">Retry</button>` : act === 'done' ? `<button class="btn filled sm" data-tk="done" data-id="${esc(a.id)}">Mark done</button>` : `<button class="btn text sm" data-tk="cancel" data-id="${esc(a.id)}">Cancel</button>`;
+    if (a.kind === 'job') return act === 'retry' ? `<button class="btn tonal sm" data-job="retry" data-id="${esc(a.id)}">Retry</button>` : `<button class="btn text sm" data-job="cancel" data-id="${esc(a.id)}">Cancel</button>`;
+    if (a.kind === 'integration') return `<button class="btn tonal sm" data-reconnect="${esc(a.id)}" data-provider="${esc(a.provider || '')}">Reconnect</button>`;
+    return '';
+  };
+  return `<div class="arow ${a.tone}"><a class="grow rlink" href="${esc(a.href)}"${a.kind === 'runreq' ? ' data-tktab="jobs"' : ''}><b>${esc(a.title)}</b><div class="muted">${esc(a.sub || '')}</div></a><span class="actions">${a.actions.map(btn).join('')}</span></div>`;
+}
+function activeWork() {
+  const W = UK.workerStatus(D.devices, Date.now(), JOBS), tasks = (D.tasks || []).filter((t) => UK.T_RUNNING.includes(t.status)), jobs = (JOBS || []).filter((j) => j.status === 'running');
+  const trow = (t) => { const p = UK.taskProgress(t, D.pipelines); return `<div class="arow"><a class="grow rlink" href="#tasks:${esc(t.id)}"><b>${esc(t.title)}</b><div class="muted">${esc([memberName(t.member_id) || 'Unassigned', houseName(t.house_id), p ? `${p.pipeline} · ${p.label}` : null, t.claimed_by_device ? 'on ' + deviceName(t.claimed_by_device) : null, t.heartbeat_at ? 'alive ' + ago(t.heartbeat_at) : null].filter(Boolean).join(' · '))}</div>${p && p.ratio !== null ? `<div class="pbar"><i style="width:${Math.round(p.ratio * 100)}%"></i></div>` : ''}</a>${chip(t.status)}</div>`; };
+  const jrow = (j) => `<div class="arow"><a class="grow rlink" href="#tasks" data-tktab="jobs"><b>Job: ${esc(j.type)}</b><div class="muted">${esc([j.team_id, `attempt ${j.attempt} of ${j.max_attempts}`, j.lease_owner ? 'worker ' + j.lease_owner : null, j.started_at ? 'started ' + ago(j.started_at) : null].filter(Boolean).join(' · '))}</div></a>${chip('running')}</div>`;
+  const body = tasks.map(trow).join('') + jobs.map(jrow).join('');
+  return body || hnone(`Nothing is running right now.${W.cloud && !W.cloud.online ? ` Cloud work waits for the next scheduled cloud run (the cloud last ran ${UK.ago(W.cloud.lastSeen)}).` : ''}`, 'hourglass_empty');
+}
+function homeView() {
+  const S = ops(), tl = UK.homeTiles(S), att = UK.attention(S), W = UK.workerStatus(D.devices, Date.now(), JOBS);
+  const tile = (href, icon, n, label, attrs = '', badge = '') => `<a class="card2 tile" href="${href}" ${attrs}><i class="ms">${icon}</i><b>${n}</b><span>${label}</span>${badge}</a>`;
+  const shown = att.slice(0, 12);
+  return `<div class="tiles">${tile('#tasks', 'task_alt', tl.open, 'Open tasks', 'data-tkf="open"', tl.failed ? `<em class="tbadge bad">${tl.failed} failed</em>` : '')}${tile('#tasks', 'play_circle', tl.running, 'Running now', 'data-tkf="running"')}${tile('#approvals', 'verified', tl.yes, 'Waiting for YES', '', tl.yes ? '<em class="tbadge warn">needs you</em>' : '')}${tile('#home', 'notification_important', tl.alerts, 'Alerts', 'data-scroll="attn"', tl.alerts ? '<em class="tbadge bad">look</em>' : '')}</div>
+    <div class="qa"><a class="btn filled" href="#tasks" data-tkn="1"><i class="ms">add</i>New task</a><button class="btn tonal" data-askopen="1"><i class="ms">forum</i>Ask COCO</button><a class="btn tonal" href="#remote"><i class="ms">settings_remote</i>Remote</a>${!W.cloud ? '' : `<span class="wpill ${W.cloud.online ? 'ok' : 'off'}"><i class="dot${W.cloud.online ? ' on' : ''}"></i>Cloud worker ${W.cloud.online ? 'active' : 'last run ' + esc(UK.ago(W.cloud.lastSeen))}</span>`}</div>
+    <h3 class="sech" id="attn">Needs attention <span class="count">${att.filter((a) => a.tone !== 'info').length}</span></h3>
+    <div class="card2 alist">${shown.map(attentionRow).join('') || hnone('Nothing needs you right now.', 'task_alt')}${att.length > shown.length ? `<a class="btn text" href="#tasks">${att.length - shown.length} more in Tasks</a>` : ''}</div>
+    <h3 class="sech">Active work</h3><div class="card2 alist">${activeWork()}</div>`;
 }
 
-// ---------------------------------------------------------------- Home: the founder's business overview, revenue first
-let JOBS = [], JOBS_ERR = false;       // jobs table, read with the rest in loadAllNow
-const PROD = {};                       // production target vs actual from /api/automation/stats, per scope
-const REV_PLATFORMS = ['gumroad', 'shopify', 'kdp', 'google_books', 'apple_books', 'udemy', 'skillshare', 'coursera', 'roblox', 'razorpay', 'paypal', 'stripe'];
-const chipTxt = (tone, t) => `<span class="chip ${tone}">${esc(t)}</span>`;
-const BASIS = { actual: ['good', 'Actual'], estimated: ['warn', 'Estimated'], mixed: ['warn', 'Actual + estimated'], unavailable: ['', 'Unavailable'], none_in_period: ['', 'No records in period'] };
-const basisChip = (st) => chipTxt(...(BASIS[st] || ['', st]));
-const metricValue = (h, fmt) => h.totals.map((t) => `<span class="kvn">${esc(fmt(t))}</span>`).join('');
-const deltaLine = (h, range) => (h.delta && h.delta.length ? h.delta.map((d) => `<span class="chip ${d.pct >= 0 ? 'good' : 'warn'}">${esc(UK.fmtPct(d.pct))}</span> <span class="muted">vs ${esc(range.prevFrom)} to ${esc(range.prevTo)}${h.delta.length > 1 ? ' (' + esc(d.unit) + ')' : ''}</span>`).join('<br>') : `<span class="muted">No comparable earlier period</span>`);
-const srcFoot = (h) => (h.sources && h.sources.length ? `Source: ${esc(h.sources.join(', '))} · latest record ${esc(UK.ago(h.latest))} · ${h.coverage} record${h.coverage === 1 ? '' : 's'}` : '');
-const kpi = ({ icon, label, value, na = false, lines = [], chips = '', foot = '', cls = '' }) => `<section class="kpi ${cls}" aria-label="${esc(label)}"><header><i class="ms">${icon}</i><span>${esc(label)}</span>${chips}</header><div class="kv${na ? ' na' : ''}">${value}</div>${lines.map((l) => `<div class="kl">${l}</div>`).join('')}${foot ? `<footer>${foot}</footer>` : ''}</section>`;
-function revenueCoverage() {
-  const accts = (CONNS || []).filter((c) => REV_PLATFORMS.includes(String(c.provider).toLowerCase())), ok = accts.filter((c) => c.state === 'connected');
-  const expected = [...new Set(NAV.houses.flatMap((h) => h.platforms).filter((p) => REV_PLATFORMS.includes(p)))];
-  const have = new Set(accts.map((c) => String(c.provider).toLowerCase())), missing = expected.filter((p) => !have.has(p));
-  return { accts, ok, missing };
-}
-function revenueFoot(h) {
-  const c = revenueCoverage();
-  const parts = [c.accts.length ? `Revenue accounts: ${c.ok.length} of ${c.accts.length} connected (${esc([...new Set(c.accts.map((a) => a.provider))].join(', '))})` : 'No revenue account is connected yet'];
-  if (c.missing.length) parts.push(`No account yet for: ${esc(c.missing.join(', '))}`);
-  return (h.state === 'unavailable' || h.state === 'none_in_period' ? '' : srcFoot(h) + '<br>') + parts.join('<br>');
-}
-function homeKpis(range, sc) {
-  const M = orgMetrics(), base = { units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency };
-  const rev = UK.headline(M, 'revenue', range, base), vw = UK.headline(M, 'views', range, base), sl = UK.headline(M, 'sales', range, base), gr = UK.growth(M.filter((m) => !HF.currency || HF.currency === 'all' || m.unit === HF.currency || !/^[A-Z]{3}$/.test(String(m.unit))), range, { units: sc.units });
-  const revCard = kpi({ cls: 'revenue', icon: 'payments', label: 'Total revenue', chips: basisChip(rev.state),
-    value: rev.totals.length ? metricValue(rev, (t) => UK.fmtMoney(t.total, t.unit)) : rev.state === 'none_in_period' ? 'No records' : 'Unavailable', na: !rev.totals.length,
-    lines: [rev.totals.length ? deltaLine(rev, range) : metricsUnread() ? UNREAD_LINE(metricsUnread()) : rev.state === 'none_in_period' ? `Earlier records exist from ${esc(rev.sources.join(', '))}, none in this period. This is not a confirmed zero.` : 'Coco holds no revenue records for this selection. This is not a confirmed zero.',
-      rev.state === 'mixed' ? `Estimates are kept out of this total: ${esc(rev.totals.filter((x) => x.estimated).map((x) => UK.fmtMoney(x.estimated, x.unit)).join(' \u00b7 '))} estimated, listed separately in Insights.` : ''].filter(Boolean), foot: revenueFoot(rev) });
-  const yt = D.ytLatest && D.ytLatest.channel && ['all', 'gigi'].includes(HF.house) && !HF.team && !HF.category && !HF.channel && !HF.platform && !HF.account ? D.ytLatest : null;
-  const ytLine = yt ? `YouTube ${esc(yt.channel.title || 'channel')}, lifetime: ${esc(UK.fmtNum(yt.channel.views))} views · ${esc(UK.fmtNum(yt.channel.subscribers))} subscribers · collected ${esc(UK.ago(yt.collected_at))}${yt.stale ? ' (stale)' : ''}` : '';
-  const viewsCard = kpi({ icon: 'visibility', label: 'Total views', chips: basisChip(vw.state), value: vw.totals.length ? metricValue(vw, (t) => UK.fmtNum(t.total)) : vw.state === 'none_in_period' ? 'No records' : 'Unavailable', na: !vw.totals.length,
-    lines: [vw.totals.length ? deltaLine(vw, range) : '', ytLine].filter(Boolean), foot: srcFoot(vw) });
-  const salesCard = kpi({ icon: 'shopping_bag', label: 'Total sales', chips: basisChip(sl.state), value: sl.totals.length ? metricValue(sl, (t) => UK.fmtNum(t.total)) : sl.state === 'none_in_period' ? 'No records' : 'Unavailable', na: !sl.totals.length,
-    lines: [sl.totals.length ? deltaLine(sl, range) : metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'Sales, orders and purchases recorded in Coco. None exist for this selection.'], foot: srcFoot(sl) });
-  const grCard = kpi({ icon: 'trending_up', label: 'Audience growth', chips: gr.state === 'delta' ? chipTxt('good', 'Actual') : chipTxt('', gr.state === 'single' ? 'One record' : 'Unavailable'),
-    value: gr.state === 'delta' ? `<span class="kvn">${gr.value >= 0 ? '+' : '−'}${esc(UK.fmtNum(Math.abs(gr.value)))}</span>` : gr.state === 'single' ? `<span class="kvn">${esc(UK.fmtNum(gr.value))}</span>` : 'Unavailable', na: gr.state === 'unavailable',
-    lines: [gr.state === 'delta' ? `Net change of subscribers, followers and players across ${gr.series} channel${gr.series === 1 ? '' : 's'}` : gr.state === 'single' ? 'Only one record in the period, so no growth can be stated' : metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'No audience records for this selection'], foot: gr.source ? `Source: ${esc(gr.source)}` : '' });
-  const outs = (OUTPUTS || []).filter((o) => taggedIn(sc.names, o) && UK.within(o.at, range.from, range.to)), pub = outs.filter((o) => o.status === 'published');
-  const outCard = kpi({ icon: 'publish', label: 'Published outputs', chips: chipTxt('good', 'Actual'), value: `<span class="kvn">${pub.length}</span>`, na: false,
-    lines: [`${outs.length} created in the period · ${outs.filter((o) => o.status === 'scheduled').length} scheduled · ${outs.filter((o) => o.status === 'failed').length} failed`], foot: `Source: Coco outputs log (latest 300), matched to the selection by team name${sc.productIds ? '. Not narrowed by channel or platform.' : ''}` });
-  const jb = JOBS.filter((j) => taggedIn(sc.names, j)), run = jb.filter((j) => j.status === 'running').length, q = jb.filter((j) => j.status === 'queued').length;
-  const bad = jb.filter((j) => ['failed', 'blocked'].includes(j.status) && UK.within(j.updated_at || j.created_at, range.from, range.to)).length;
-  const jobCard = JOBS_ERR ? kpi({ cls: 'wide', icon: 'memory', label: 'Active jobs', value: 'Unavailable', na: true, chips: chipTxt('', 'Unavailable'), lines: ['The job queue could not be read from Coco Cloud.'] })
-    : kpi({ cls: 'wide', icon: 'memory', label: 'Active jobs', chips: bad ? chipTxt('bad', bad + ' failed or blocked') : chipTxt('good', 'Actual'), value: `<span class="kvn">${run + q}</span>`, lines: [`${run} running · ${q} queued`], foot: 'Source: job queue (latest 500)' });
-  return `<div class="kpis">${revCard}${viewsCard}${salesCard}${grCard}${outCard}${jobCard}</div>`;
-}
-function chartsHtml(range, sc) {
-  const M = orgMetrics(), sel = (kind, extra = {}) => UK.selectMetrics(M, { kind, units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency, from: range.from, to: range.to, ...extra });
-  const card = (title, sub, body) => `<div class="card2 chartcard"><h3>${esc(title)}</h3><div class="muted">${esc(sub)}</div>${body}</div>`;
-  const revRows = sel('revenue'), cur = [...new Set(revRows.map((m) => String(m.unit)))].slice(0, 2);
-  const c1 = cur.length ? cur.map((u) => `<div class="cunit">${esc(u)}</div>${UK.lineChart(UK.seriesByDay(revRows, range, u), { label: 'Revenue over time in ' + u, fmt: (v) => UK.fmtMoney(v, u), color: cur.indexOf(u) === 0 ? 'var(--chart-1)' : 'var(--chart-2)' })}`).join('') : hnone('No revenue records to chart. Nothing is drawn, because an empty line would look like zero.', 'show_chart');
-  const per = NAV.houses.map((h) => { const hu = UK.houseUnit(orgUnits(), h.id); const set = hu ? UK.descendants(orgUnits(), hu.id) : null;
-    const hd = set ? UK.headline(M, 'revenue', range, { units: set, currency: HF.currency }) : { totals: [] }; return { h, hd }; }).filter((x) => x.hd.totals.length);
-  const curs = [...new Set(per.flatMap((x) => x.hd.totals.map((t) => t.unit)))];
-  const c2 = per.length ? curs.slice(0, 2).map((u) => `<div class="cunit">${esc(u)}</div>${UK.barChart(per.map((x) => ({ label: x.h.label, value: (x.hd.totals.find((t) => t.unit === u) || {}).total, color: x.h.color })), { label: 'Revenue by House in ' + u, fmt: (v) => UK.fmtMoney(v, u) })}`).join('') + (curs.length > 2 ? `<div class="muted">${curs.length - 2} more currencies are in Insights.</div>` : '') : hnone('No House has revenue records in this period.', 'bar_chart');
-  const vRows = sel('views'), vUnit = (vRows[0] || {}).unit, aRows = UK.selectMetrics(M, { kind: 'audience', units: sc.units, productIds: sc.productIds, productId: HF.channel || null }), aUnit = (UK.selectMetrics(aRows, { from: range.from, to: range.to })[0] || {}).unit;
-  const vs = vRows.length ? UK.lineChart(UK.seriesByDay(vRows, range, String(vUnit)), { label: 'Views over time', color: 'var(--chart-1)' }) : '', as = aUnit ? UK.lineChart(UK.audienceSeries(aRows, range, String(aUnit)), { label: 'Audience over time', color: 'var(--chart-2)' }) : '';
-  const c3 = vs || as ? (vs ? `<div class="cunit">Views per day</div>${vs}` : '') + (as ? `<div class="cunit">Audience (latest reported count per channel, summed)</div>${as}` : '') : hnone('No views or audience records to chart.', 'timeline');
-  const unit = (HF.category || HF.team || (HF.house !== 'all' ? (UK.houseUnit(orgUnits(), HF.house) || {}).id : null) || 'coco');
-  const key = `${HF.channel ? 'p:' + HF.channel : 'u:' + unit}|${range.key}|${range.from}|${range.to}`, ps = PROD[key];
-  if (NOVA && (!ps || (!ps.loading && Date.now() - ps.at > 60000))) prodLoad(key, range, unit);
-  let c4;
-  if (!ps || ps.loading) c4 = `<p class="muted">Reading the production schedule…</p>`;
-  else if (!ps.ok) c4 = setup('Production targets are not readable yet', ps.err || 'The automation schedule is not set up in Coco Cloud.');
-  else { const rows = ((ps.data.production || {}).rows || []).map((r) => ({ label: r.deliverable, planned: r.planned, actual: r.created })); c4 = rows.length ? UK.targetChart(rows, { label: 'Production target against actual' }) + `<div class="muted">Source: COCO planned work. Target = planned slots in the period; actual = slots that produced an output.</div>` : hnone('No production is planned in this period. Targets come from automation schedules; none exist for this selection.', 'event_busy'); }
-  return `<div class="charts">${card('Revenue over time', 'Provider-reported and estimated revenue are never blended into one line', c1)}${card('Revenue by House', 'Contribution in the selected period and currency', c2)}${card('Views and audience growth', 'From recorded platform metrics', c3)}${card('Production: target and actual', 'Planned against created, from automation schedules', c4)}</div>`;
-}
-async function prodLoad(key, range, unit) {
-  PROD[key] = { at: Date.now(), loading: true };
-  try {
-    const query = HF.channel ? { product_id: HF.channel, range: range.key } : { unit_id: unit, range: range.key };
-    if (range.key === 'custom') { query.from = range.from; query.to = range.to; }
-    PROD[key] = { at: Date.now(), ok: true, data: await autApi('/stats', { query }) };
-  } catch (e) { PROD[key] = { at: Date.now(), ok: false, err: e.message }; }
-  if (['home', 'insights', 'house'].includes(page)) render();
-}
-// one House as a card: only the metrics that mean something for that House (Social: views and followers; Software: installs; ...)
-function houseCard(h, range) {
-  const hu = UK.houseUnit(orgUnits(), h.id), set = hu ? UK.descendants(orgUnits(), hu.id) : null, names = set ? UK.scopeNames(orgUnits(), set) : new Set([h.id]);
-  const M = orgMetrics(), rev = set ? UK.headline(M, 'revenue', range, { units: set, currency: HF.currency }) : { state: 'unavailable', totals: [] };
-  const rel = h.metrics.map((name) => { const kinds = { views: 'views', subscribers: 'audience', followers: 'audience', engagement: null, installs: 'installs', users: 'audience', purchases: 'sales', subscriptions: null, sales: 'sales', downloads: 'sales', revenue: null, episodes: null, audience: 'audience', enrollments: null, completions: null, players: 'audience', orders: 'sales' };
-    const x = set ? UK.headline(M, null, range, { units: set, names: [name], currency: 'all' }) : { totals: [] };
-    return x.totals.length ? `<div class="hm"><span>${esc(name)}</span><b>${esc(x.totals.map((t) => UK.fmtNum(t.total)).join(' · '))}</b></div>` : ''; }).join('');
-  const noMetrics = h.metrics.filter((n) => !(set && UK.headline(M, null, range, { units: set, names: [n] }).totals.length));
-  const prods = set ? orgProducts().filter((p) => set.has(p.unit_id)) : [], outs = (OUTPUTS || []).filter((o) => taggedIn(names, o) && o.status === 'published' && UK.within(o.at, range.from, range.to)).length;
-  const jb = JOBS.filter((j) => taggedIn(names, j) && ['running', 'queued'].includes(j.status)).length;
-  const brain = brainOfUnit(hu && hu.id), links = (CONN_LINKS || []).filter((l) => l.enabled && names && names.has(String(l.team_id))).length;
-  const live = D.houses.find((x) => x.id === h.id);
-  return `<article class="card2 housecard"><header>${htile(h)}<div class="grow"><h3>${esc(h.label)}</h3><span class="muted">${esc(h.domain)}</span></div>${live ? chip(live.state) : ''}</header>
-    <div class="hrev"><span>Revenue</span>${rev.totals.length ? `<b>${esc(rev.totals.map((t) => UK.fmtMoney(t.total, t.unit)).join(' · '))}</b> ${basisChip(rev.state)}` : `<b class="na">${rev.state === 'none_in_period' ? 'No records' : 'Unavailable'}</b>`}</div>
-    <div class="hms">${rel || `<span class="muted">No ${esc(h.metrics.slice(0, 3).join(', '))} records yet</span>`}</div>
-    ${rel && noMetrics.length ? `<div class="muted" style="font-size:12px">Not tracked yet: ${esc(noMetrics.join(', '))}</div>` : ''}
-    <div class="hstats"><span><b>${prods.length}</b> ${h.id === 'lulu' ? 'products' : 'channels / products'}</span><span><b>${outs}</b> published</span><span><b>${jb}</b> active jobs</span></div>
-    <div class="hstat2"><span>Brain ${brain ? chipTxt(brain.health === 'ok' ? 'good' : ['degraded', 'failed'].includes(brain.health) ? 'bad' : '', brain.health) : chipTxt('', 'not set up')}</span><span>Connections ${links ? chipTxt('good', links + ' linked') : chipTxt('', 'none linked')}</span></div>
-    <a class="btn tonal" href="#house:${h.id}">Open House<i class="ms">arrow_forward</i></a></article>`;
-}
-function liveOps() {
-  const run = JOBS.filter((j) => j.status === 'running'), fail = JOBS.filter((j) => j.status === 'failed' && Date.now() - new Date(j.updated_at || j.created_at) < 3 * 864e5), blk = JOBS.filter((j) => j.status === 'blocked');
-  const waiting = D.approvals.filter((a) => a.state === 'waiting'), tasks = D.tasks.filter((t) => TASK_OPEN.includes(t.status));
-  const worker = (D.devices || []).find((d) => /cloud-worker/.test(d.id)), bad = (CONNS || []).filter((c) => ['error', 'partial'].includes(c.state));
-  const jrow = (j) => hrow(j.type, `${esc(j.team_id || '')}${j.channel_id ? ' · ' + esc(j.channel_id) : ''} · attempt ${j.attempt}/${j.max_attempts} · ${esc(ago(j.updated_at || j.created_at))}`, chip(j.status), '#cloud');
-  const sec = (title, n, body, href, cls = '') => `<div class="card2 ops ${cls}"><div class="hcard-h"><h3>${esc(title)} <span class="count">${n}</span></h3>${href ? `<a class="btn text" href="${href}">Open</a>` : ''}</div>${body}</div>`;
-  return `<div class="opsgrid">
-    ${sec('Waiting for your YES', waiting.length, waiting.slice(0, 4).map((a) => `<div class="row"><div class="grow"><b>${esc(a.code)}</b> <span class="muted">${esc(a.team || '')}</span><div>${esc(a.what)}</div></div><span class="actions"><button class="btn filled" data-yes="${a.id}">YES</button><button class="btn text" data-no="${a.id}">No</button></span></div>`).join('') || hnone('Nothing waits for you.', 'task_alt'), '#approvals', waiting.length ? 'warn' : '')}
-    ${sec('Running jobs', run.length, JOBS_ERR ? hnone('The job queue could not be read.', 'cloud_off') : run.slice(0, 4).map(jrow).join('') || hnone('No job is running.', 'hourglass_empty'), '#cloud')}
-    ${sec('Pending tasks', tasks.length, tasks.slice(0, 4).map((t) => hrow(t.title, esc(t.status), chip(t.status), '#board')).join('') || hnone('No open tasks.', 'task_alt'), '#board')}
-    ${sec('Failed jobs', fail.length, fail.slice(0, 4).map(jrow).join('') || hnone(JOBS_ERR ? 'Unavailable.' : 'No failures in the last 3 days.', 'check_circle'), '#cloud', fail.length ? 'bad' : '')}
-    ${sec('Blocked jobs', blk.length, blk.slice(0, 4).map(jrow).join('') || hnone(JOBS_ERR ? 'Unavailable.' : 'Nothing is blocked.', 'check_circle'), '#cloud', blk.length ? 'warn' : '')}
-    ${sec('Cloud worker', worker ? (online(worker) ? 1 : 0) : 0, worker ? hrow(devLabel(worker), `last seen ${esc(ago(worker.last_seen))} · version ${esc(devVersion(worker))}`, online(worker) ? chipTxt('good', 'Online') : chipTxt('bad', 'Offline'), '#cloud') : hnone('No cloud worker device is paired.', 'cloud_off'), '#cloud', worker && !online(worker) ? 'bad' : '')}
-    ${sec('Integration problems', bad.length, bad.slice(0, 4).map((c) => hrow(`${c.provider}: ${c.external_name || c.connection_id}`, c.state === 'error' ? 'Connection error' : 'Partly connected', chip(c.state), '#connections')).join('') || hnone('No connection reports a problem.', 'link'), '#connections', bad.length ? 'bad' : '')}
-  </div>`;
-}
-// ---------------------------------------------------------------- Brains, loaded on demand (org_brains: level, state, health, objectives)
+// ---------------------------------------------------------------- Brains, loaded on demand (org_brains: level, state, health, objectives) - the hierarchy page reads them
 let BR = null, brAt = 0, brBusy = false;
 async function brLoad(force) {
   if (brBusy || (!force && BR && Date.now() - brAt < 60000)) return;
   brBusy = true;
   try { const r = await sb.from('org_brains').select('id,level,unit_id,product_id,parent_brain_id,state,health,last_activity_at,objectives,kpis,tools,policies').limit(3000); BR = r.error ? { err: r.error.message || 'unreadable' } : { rows: r.data || [] }; } catch (e) { BR = { err: String(e.message || e) }; }
-  brAt = Date.now(); brBusy = false; if (['home', 'house', 'hierarchy', 'houses'].includes(page)) render();
-}
-const brainOfUnit = (unitId) => (BR && BR.rows && unitId ? BR.rows.find((b) => b.unit_id === unitId) || null : null);
-function homeView() {
-  brLoad();
-  const range = hfRange(), sc = hfScope();
-  return `${orgBanner()}${filterBar()}${homeKpis(range, sc)}${chartsHtml(range, sc)}
-    <h3 class="sech">House performance</h3><div class="housegrid">${NAV.houses.filter((h) => HF.house === 'all' || HF.house === h.id).map((h) => houseCard(h, range)).join('')}</div>
-    <h3 class="sech">Live operations</h3>${liveOps()}`;
+  brAt = Date.now(); brBusy = false; if (['house', 'hierarchy'].includes(page)) render();
 }
 
-// ---------------------------------------------------------------- Houses and the House workspace
+// ---------------------------------------------------------------- Tasks (Work > Tasks): the real list, the detail, every action, and the jobs behind them
+const TK = { tab: 'tasks', filter: 'open', q: '', house: 'all', creating: false, newHouse: '', newPipeline: '', jobs: 'open' };
+const TK_FILTERS = [['open', 'Open'], ['running', 'Running'], ['failed', 'Failed'], ['done', 'Done'], ['stopped', 'Stopped']];
+const tkIn = (t, f) => (f === 'running' ? UK.T_RUNNING.includes(t.status) : UK.taskGroup(t.status) === f);
+const TK_DONE = { start: 'Queued', done: 'Marked done', pause: 'Paused', resume: 'Resumed: back in the queue', retry: 'Retrying: back in the queue', cancel: 'Cancelled', priority: 'Priority saved', assign: 'Assignment saved' };
+const TK_BTN = { done: ['task_alt', 'Mark done', 'filled'], start: ['play_arrow', 'Start', 'filled'], resume: ['play_arrow', 'Resume', 'filled'], retry: ['replay', 'Retry', 'filled'], pause: ['pause', 'Pause', 'tonal'], cancel: ['stop_circle', 'Cancel', 'text'] };
+const tkBtn = (a, id) => `<button class="btn ${TK_BTN[a][2]} sm" data-tk="${a}" data-id="${esc(id)}"><i class="ms">${TK_BTN[a][0]}</i>${TK_BTN[a][1]}</button>`;
+const prioChip = (p) => (Number(p) === 2 || p == null ? '' : chipTxt(Number(p) === 1 ? 'warn' : '', UK.priorityName(p) + ' priority'));
+// Start asks the cloud for a run (coco_request_run for the House's team workflow); the task then waits for the next cloud run. It is never shown as running until a worker claims it.
+async function taskDo(id, action, o = {}) {
+  const t = (D.tasks || []).find((x) => String(x.id) === String(id)); if (!t) return toast('That task is not loaded any more');
+  const key = `task:${action}:${t.id}`; if (inFlight.has(key)) return toast('Still working on that one'); inFlight.add(key);
+  let req = null;
+  try {
+    if (action === 'start') {
+      if (UK.openRequest(D.runRequests, t.id)) return toast('A cloud run is already requested for this task: it waits for the next cloud run');
+      if ((t.needs || 'any') !== 'pc') {
+        const team = UK.teamOfTask(t); if (!team) return toast('Choose a House for this task first: the cloud needs to know which team should do it');
+        const rr = await opRpc('coco_request_run', { p_workflow: `${team}-pick`, p_note: UK.requestNote(t) });
+        if (!rr.ok) return toast(said(rr));
+        if (!rr.data || rr.data.ok !== true) { await loadAll(); return toast(`Not started: ${(rr.data && rr.data.reason) || 'the cloud refused the run'}`); }
+        req = { id: rr.data.request_id };
+      }
+      o = { ...o, request: req };
+    }
+    const ch = UK.taskChange(action, t, o, Date.now());
+    if (!ch.ok) return toast(ch.why);
+    let q = sb.from('tasks').update(ch.patch).eq('id', t.id); if (ch.guard) q = q.in('status', ch.guard);
+    const r = await withTimeout(q.select('id'), 'the update');
+    if (r.error) return toast('Could not save that: ' + (r.error.message || 'Coco Cloud refused it') + (req ? ` (a cloud run was already requested: request #${req.id})` : ''));
+    if (!r.data || !r.data.length) { await loadAll(); return toast(`“${t.title}” changed on another device first, so nothing was changed${req ? ` (a cloud run was already requested: request #${req.id})` : ''}`); }
+    if (ch.note) await sb.from('task_notes').insert({ task_id: t.id, note: ch.note, by_email: founderName(), device_id: deviceId });
+    await log(`task ${action}`, t.title);
+    let said2 = req ? `Asked the cloud to run it (request #${req.id}). It waits for the next cloud run.` : TK_DONE[action] || 'Saved';
+    if (action === 'cancel') {
+      const open = UK.openRequest(D.runRequests, t.id);
+      if (open) { const c = await opRpc('coco_run_request_cancel', { p_id: open.id }); said2 = c.ok && !(c.data && c.data.ok === false) ? `Stopped, and its cloud run request #${open.id} was withdrawn.` : `Stopped. The cloud run requested for it (request #${open.id}) cannot be withdrawn yet, so it may still run at the next cloud run.`; }
+    }
+    toast(said2); await loadAll();
+  } catch (e) { toast(e && e.timeout ? `${e.message}. Nothing was changed.` : `That did not go through: ${e && e.message ? e.message : e}`); } finally { inFlight.delete(key); }
+}
+async function taskCreate(form) {
+  const f = new FormData(form), g = (k) => String(f.get(k) || '').trim(), title = g('title');
+  if (!title) return toast('Give the task a title');
+  const key = 'task:create'; if (inFlight.has(key)) return toast('Still sending the last one'); inFlight.add(key);
+  try {
+    // the cloud picks the team from the first details line "Team: youtube"; it is added from the House unless the founder wrote one
+    const house = g('house') || null, tl = UK.teamLine(house); let details = g('details');
+    if (tl && !/^\s*Team:/im.test(details)) details = details ? `${tl}\n${details}` : tl;
+    const { data: r, error } = await withTimeout(sb.rpc('submit_task', { p_title: title, p_details: details || null, p_house: house, p_needs: g('needs') || 'cloud', p_device: deviceId, p_by: founderName() }), 'the new task');
+    if (error || !r) return toast(error ? error.message : 'Coco Cloud did not answer');
+    if (r.merged) { toast(`The same work is already ${chipFor(r.status)[1].toLowerCase()}: “${r.title}”. Your words were added to it as a note, so nothing runs twice.`); TK.creating = false; location.hash = '#tasks:' + r.task_id; return loadAll(); }
+    const patch = {}, prio = Number(g('priority')) || 2, after = g('after') || 'queued';
+    if (prio !== 2) patch.priority = prio;
+    if (g('member')) patch.member_id = g('member');
+    if (g('category')) patch.category = g('category');
+    if (g('pipeline')) patch.pipeline_id = g('pipeline');
+    if (after === 'planned') patch.status = 'planned';
+    if (Object.keys(patch).length) {
+      const u = await sb.from('tasks').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', r.task_id).select('id');
+      if (u.error) toast('The task was created, but its details were not saved: ' + u.error.message);
+    }
+    form.reset(); TK.creating = false; location.hash = '#tasks:' + r.task_id; await loadAll();
+    if (after === 'run') { inFlight.delete(key); await taskDo(r.task_id, 'start'); } else toast(after === 'planned' ? 'Task created as planned: press Start when it should run' : 'Task created and queued. Press Start to ask the cloud to run it.');
+  } catch (e) { toast(`That did not go through: ${e && e.message ? e.message : e}`); } finally { inFlight.delete(key); }
+}
+async function taskNote(form) {
+  const note = String(new FormData(form).get('note') || '').trim(); if (!note) return toast('Write the note first');
+  const { error } = await sb.from('task_notes').insert({ task_id: form.dataset.id, note, by_email: founderName(), device_id: deviceId });
+  if (error) return toast(error.message || 'Could not add the note');
+  form.reset(); toast('Note added'); await loadAll();
+}
+async function taskAssign(form) {
+  const f = new FormData(form), id = form.dataset.id, o = {};
+  for (const k of ['member_id', 'house_id', 'pipeline_id']) o[k] = String(f.get(k) || '');
+  await taskDo(id, 'assign', o);
+}
+async function jobDo(id, op) {
+  const j = (JOBS || []).find((x) => x.id === id); if (!j) return toast('That job is not loaded any more');
+  if (op === 'cancel') {
+    if (!['queued', 'running', 'blocked'].includes(j.status)) return toast(`A ${j.status} job cannot be cancelled`);
+    const r = await opRpc('coco_job_cancel', { p_id: id, p_by: founderName(), p_reason: `Cancelled from the app by ${founderName()}` });
+    if (!r.ok) return toast(said(r));
+    if (r.data && r.data.ok === false) return toast(`Not cancelled: ${r.data.reason || 'the job is no longer open'}`);
+    await log('job cancelled', `${j.type} (${id})`); toast('Job cancelled'); return loadAll();
+  }
+  if (!['failed', 'cancelled'].includes(j.status)) return toast(`A ${j.status} job cannot be retried`);
+  const r = await opRpc('coco_job_retry', { p_id: id });
+  if (!r.ok) return toast(said(r));
+  if (r.data && r.data.ok === false) return toast(`Not retried: ${r.data.reason || 'that job cannot be retried'}`);
+  toast('Job is back in the queue'); await loadAll();
+}
+function workerLine() {
+  const W = UK.workerStatus(D.devices, Date.now(), JOBS);
+  if (!W.cloud) return `<div class="banner"><i class="ms">cloud_off</i><span><b>No cloud worker is paired.</b> Cloud work cannot run until one is; an online PC can still claim a task that may run there.</span></div>`;
+  const last = `last run ${UK.ago(W.cloud.lastSeen)}`;
+  return W.cloud.online ? `<div class="wline"><i class="dot on"></i>Cloud worker active · ${esc(last)}${W.cloud.lastJob ? ' · latest job finished ' + esc(UK.ago(W.cloud.lastJob)) : ''}</div>`
+    : `<div class="banner"><i class="ms">schedule</i><span><b>Cloud worker: ${esc(last)}.</b> It runs on a schedule, a few times a day, and checks in only when it runs${W.cloud.lastJob ? `; the latest job finished ${esc(UK.ago(W.cloud.lastJob))}` : ''}. Cloud work waits for its next run, so nothing here is running right now.</span></div>`;
+}
+function taskRow(t, W) {
+  const p = UK.taskProgress(t, D.pipelines), wait = taskWaitText(t, W);
+  return hrow(t.title, `${esc([t.house_id ? houseName(t.house_id) : null, memberName(t.member_id) || 'Unassigned', p ? `${p.pipeline} · ${p.label}` : null, ago(t.created_at)].filter(Boolean).join(' · '))}${wait ? `<div class="wait">${esc(wait)}</div>` : ''}${t.error ? `<div class="errline">${esc(String(t.error).slice(0, 140))}</div>` : ''}`, `<span class="rcol">${chip(t.status)}${prioChip(t.priority)}</span>`, '#tasks:' + t.id);
+}
+// what a queued task is waiting for, said from the cloud's own run request when there is one
+function taskWaitText(t, W) {
+  const r = UK.openRequest(D.runRequests, t.id);
+  if (r) return UK.requestWords(r) + (W.cloud && W.cloud.lastSeen ? ` (the cloud last ran ${UK.ago(W.cloud.lastSeen)})` : '');
+  const f = UK.requestsOf(D.runRequests, t.id)[0];
+  if (f && ['failed', 'refused'].includes(f.state) && ['queued', 'failed'].includes(t.status)) return UK.requestWords(f);
+  return UK.taskWait(t, W, Date.now(), { hasOpenRequest: false });
+}
+// every cloud run request, newest first, with the cloud's own reason; a request made for a task links to it
+function runRequestsCard() {
+  const rows = (D.runRequests || []).slice().sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 25);
+  const taskOf = (r) => { const m = /^coco-task:([0-9a-f-]{36})/.exec(String(r.note || '')); return m && (D.tasks || []).find((t) => t.id === m[1]) || null; };
+  return hcard(`Cloud run requests (${(D.runRequests || []).length})`, rows.map((r) => { const t = taskOf(r); return hrow(`#${r.id} · ${r.workflow_id}`, `${esc(UK.requestWords(r))}<div class="muted">${esc([r.requested_by, r.created_at ? ago(r.created_at) : null, t ? 'for “' + t.title + '”' : null].filter(Boolean).join(' · '))}</div>`, chip(r.state), t ? '#tasks:' + t.id : ''); }).join('') || hnone('No cloud run has been requested yet. Start on a task asks for one.', 'cloud_sync'));
+}
+function jobRow(j) {
+  const prob = UK.jobProblem(j), hh = teamHouse(j.team_id), canC = ['queued', 'running', 'blocked'].includes(j.status), canR = ['failed', 'cancelled'].includes(j.status);
+  const res = j.result && typeof j.result === 'object' && Object.keys(j.result).length ? `<div class="muted">Result: ${esc(JSON.stringify(j.result).slice(0, 200))}</div>` : '';
+  return `<div class="row jobrow"><div class="grow"><b>${esc(j.type)}</b> ${chip(j.status)}<div class="muted">${esc([j.team_id, hh ? houseName(hh) : null, `attempt ${j.attempt} of ${j.max_attempts}`, ago(j.updated_at || j.created_at), j.lease_owner ? 'worker ' + j.lease_owner : null].filter(Boolean).join(' · '))}</div>${prob ? `<div class="errline">${esc(prob.slice(0, 220))}</div>` : ''}${res}${j.run_id ? `<div class="muted">run ${esc(j.run_id)}</div>` : ''}</div>
+    <span class="actions">${canR ? `<button class="btn tonal sm" data-job="retry" data-id="${esc(j.id)}">Retry</button>` : ''}${canC ? `<button class="btn text sm" data-job="cancel" data-id="${esc(j.id)}">Cancel</button>` : ''}</span></div>`;
+}
+function taskForm() {
+  const h = TK.newHouse || '', opt = (v, l, cur) => `<option value="${esc(v)}"${String(cur) === String(v) ? ' selected' : ''}>${esc(l)}</option>`;
+  const cats = NAV.houses.map((x) => [x, (D.categories || []).filter((c) => c.house_id === x.id)]).filter(([, l]) => l.length);
+  return `<form class="form opform" id="tkNew" data-opform="tk-new"><h3>New task</h3>
+    <label for="tkTitle">What should be done?<input id="tkTitle" name="title" required maxlength="200" placeholder="e.g. Make a Short about why the sky is blue"></label>
+    <label for="tkDetails">Details (optional)<textarea id="tkDetails" name="details"></textarea></label>
+    <div class="two"><label for="tkHouse">House<select id="tkHouse" name="house"><option value="">No House (whole company)</option>${NAV.houses.map((x) => opt(x.id, x.label, h)).join('')}</select></label>
+      <label for="tkCat">Category<select id="tkCat" name="category"><option value="">None</option>${cats.map(([x, l]) => `<optgroup label="${esc(x.label)}">${l.map((c) => opt(c.name, c.name, '')).join('')}</optgroup>`).join('')}</select></label></div>
+    <div class="muted">The cloud picks the team from the House (${Object.entries(UK.HOUSE_TEAM).map(([k, v]) => `${esc(houseName(k).split(' ')[0])}: ${esc(v)}`).join(', ')}). A first line “Team: …” is added to the details for you.</div>
+    <div class="two"><label for="tkMember">Assign to<select id="tkMember" name="member"><option value="">Nobody yet</option>${(D.members || []).map((m) => opt(m.id, `${m.name} · ${m.grp}`, '')).join('')}</select></label>
+      <label for="tkPrio">Priority<select id="tkPrio" name="priority">${UK.PRIORITIES.map(([v, l]) => opt(v, l, 2)).join('')}</select></label></div>
+    <div class="two"><label for="tkNeeds">Where can it run?<select id="tkNeeds" name="needs"><option value="cloud">Cloud (the team workflow)</option><option value="any">Anywhere (cloud or PC)</option><option value="pc">PC only</option></select></label>
+      <label for="tkPipe">Pipeline (optional)<select id="tkPipe" name="pipeline"><option value="">None</option>${(D.pipelines || []).map((p) => opt(p.id, `${p.name} (${houseName(p.house_id)})`, TK.newPipeline)).join('')}</select></label></div>
+    <label for="tkAfter">After creating<select id="tkAfter" name="after"><option value="queued">Leave it queued (press Start when it should run)</option><option value="run">Ask the cloud to run it now</option><option value="planned">Keep it planned (not queued yet)</option></select></label>
+    <div class="actions"><button class="btn filled" type="submit"><i class="ms">send</i>Create task</button><button class="btn text" type="button" data-tkn="0">Close</button></div></form>`;
+}
+function tasksView() {
+  if (ARG) return taskDetail(ARG);
+  const W = UK.workerStatus(D.devices), all = D.tasks || [], q = TK.q.trim().toLowerCase();
+  const counts = Object.fromEntries(TK_FILTERS.map(([k]) => [k, all.filter((t) => tkIn(t, k)).length]));
+  const rows = all.filter((t) => tkIn(t, TK.filter) && (TK.house === 'all' || (TK.house === 'none' ? !t.house_id : t.house_id === TK.house)) && (!q || `${t.title} ${t.details || ''} ${houseName(t.house_id)} ${memberName(t.member_id)} ${t.status}`.toLowerCase().includes(q)))
+    .sort((a, b) => (Number(a.priority || 2) - Number(b.priority || 2)) || String(b.created_at).localeCompare(String(a.created_at)));
+  const jobsOpen = (JOBS || []).filter((j) => ['queued', 'running', 'blocked', 'failed'].includes(j.status)).length;
+  const head = `<div class="tabs" role="tablist"><button data-tktab="tasks" class="${TK.tab === 'tasks' ? 'on' : ''}" role="tab">Tasks</button><button data-tktab="jobs" class="${TK.tab === 'jobs' ? 'on' : ''}" role="tab">Jobs (${jobsOpen})</button></div>`;
+  if (TK.tab === 'jobs') {
+    const JF = [['open', 'Open', (j) => ['queued', 'running', 'blocked'].includes(j.status)], ['failed', 'Failed', (j) => j.status === 'failed'], ['done', 'Done', (j) => j.status === 'done'], ['all', 'All', () => true]];
+    const cur = JF.find((x) => x[0] === TK.jobs) || JF[0], list = (JOBS || []).filter(cur[2]);
+    return `<div id="tk-jobs">${head}${workerLine()}<div class="fchips">${JF.map(([k, l, fn]) => `<button data-jf="${k}" class="${k === cur[0] ? 'on' : ''}">${l} <span class="count">${(JOBS || []).filter(fn).length}</span></button>`).join('')}</div>
+      <div class="card2">${JOBS_ERR ? hnone('The job queue could not be read.', 'cloud_off') : list.slice(0, 80).map(jobRow).join('') || hnone(cur[0] === 'open' ? 'No job is open.' : 'No job matches.', 'check_circle')}</div>
+      <p class="muted">Cancel works on queued, running and blocked jobs. Retry puts a failed or cancelled job back in the queue; a blocked job can only be cancelled. Both are decided by the cloud, not by this screen.</p>${runRequestsCard()}</div>`;
+  }
+  return `<div id="tk-list">${head}${workerLine()}${TK.creating ? taskForm() : ''}
+    <div class="fchips">${TK_FILTERS.map(([k, l]) => `<button data-tkf="${k}" class="${k === TK.filter ? 'on' : ''}">${l} <span class="count">${counts[k]}</span></button>`).join('')}</div>
+    <div class="tkbar"><input type="search" id="tkq" value="${esc(TK.q)}" placeholder="Search tasks" aria-label="Search tasks"><select id="tkhouse" aria-label="House"><option value="all">All Houses</option><option value="none"${TK.house === 'none' ? ' selected' : ''}>No House</option>${NAV.houses.map((h) => `<option value="${h.id}"${TK.house === h.id ? ' selected' : ''}>${esc(h.label)}</option>`).join('')}</select>${TK.creating ? '' : '<button class="btn filled" data-tkn="1"><i class="ms">add</i>New task</button>'}</div>
+    <div class="card2">${rows.slice(0, 120).map((t) => taskRow(t, W)).join('') || hnone(all.length ? 'No task matches this filter.' : 'There are no tasks yet. Press New task to create the first one.', 'task_alt')}${rows.length > 120 ? `<div class="muted">Showing 120 of ${rows.length}. Narrow it with the search or the House.</div>` : ''}</div></div>`;
+}
+const ENQUEUE_TYPES = ['filter-rank', 'package-research', 'search-memory', 'validate-output', 'title-analytics'];   // the zero-AI job types a founder may queue for a task
+let ENQUEUE_MISSING = false;   // set when Nova answers 404 to coco_task_enqueue: the action is then hidden
+function taskDetail(id) {
+  const t = (D.tasks || []).find((x) => String(x.id) === String(id));
+  const back = `<a class="btn text" href="#tasks"><i class="ms">arrow_back</i>All tasks</a>`;
+  if (!t) return `<div id="tk-detail">${back}${hcard('Task not found', hnone('This task is not in the list. It may have been removed, or it is still loading.', 'error'))}</div>`;
+  const W = UK.workerStatus(D.devices, Date.now(), JOBS), wait = taskWaitText(t, W), p = UK.taskProgress(t, D.pipelines), reqs = UK.requestsOf(D.runRequests, t.id), openReq = UK.openRequest(D.runRequests, t.id);
+  const acts = UK.taskActions(t, { hasOpenRequest: !!openReq }), ended = ['done', 'stopped', 'cancelled'].includes(t.status), team = UK.teamOfTask(t);
+  const notes = (D.notes || []).filter((n) => String(n.task_id) === String(t.id)).sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const runs = ((LIVE && LIVE.runs) || []).filter((r) => String(r.task_id) === String(t.id)), runIds = new Set(runs.map((r) => r.run_id));
+  for (const r of reqs) if (r.run_id) runIds.add(r.run_id);
+  const outs = (OUTPUTS || []).filter((o) => runIds.has(o.run_id)), jobs = (JOBS || []).filter((j) => (j.run_id && runIds.has(j.run_id)) || String(j.idempotency_key || '').startsWith('coco-task:' + t.id + ':'));
+  const opt = (v, l, cur) => `<option value="${esc(v)}"${String(cur || '') === String(v) ? ' selected' : ''}>${esc(l)}</option>`;
+  const canEnqueue = !ENQUEUE_MISSING && !ended && t.status !== 'failed' && !!team;
+  return `<div id="tk-detail">${back}
+    <div class="card2 tkhead"><div class="hcard-h"><h2 class="tktitle">${esc(t.title)}</h2><span class="rcol">${chip(t.status)}${prioChip(t.priority)}</span></div>
+      <div class="muted">${esc([t.house_id ? houseName(t.house_id) : 'No House', t.category ? 'category ' + t.category : null, t.platform_id ? 'platform ' + t.platform_id : null, `needs ${t.needs || 'any'}`, team ? 'team ' + team : null, `created ${ago(t.created_at)} by ${t.created_by || 'unknown'}${t.created_device ? ' on ' + deviceName(t.created_device) : ''}`, `updated ${ago(t.updated_at)}`].filter(Boolean).join(' · '))}</div>
+      ${wait ? `<div class="wait">${esc(wait)}</div>` : ''}${workerLine()}
+      <div class="actions">${acts.map((a) => tkBtn(a, t.id)).join('')}<label class="inl">Priority <select data-tkprio="${esc(t.id)}" aria-label="Priority">${UK.PRIORITIES.map(([v, l]) => opt(v, l, t.priority || 2)).join('')}</select></label></div></div>
+    ${t.error ? `<div class="card2 errbox"><b>Error</b><div>${esc(t.error)}</div>${t.retry_count ? `<div class="muted">Retried ${t.retry_count} time${t.retry_count === 1 ? '' : 's'}</div>` : ''}</div>` : ''}
+    ${hcard('Details', `${t.details ? `<p class="pre">${esc(t.details)}</p>` : '<p class="muted">No details were written.</p>'}${mini('Assignee', esc(memberName(t.member_id) || 'Unassigned'))}${mini('Pipeline', p ? `${esc(p.pipeline)} · ${esc(p.label)}${p.ratio !== null ? `<div class="pbar"><i style="width:${Math.round(p.ratio * 100)}%"></i></div>` : ''}` : 'None')}${mini('Claimed by', t.claimed_by_device ? `${esc(deviceName(t.claimed_by_device))} ${t.claimed_at ? esc(ago(t.claimed_at)) : ''}${t.heartbeat_at ? ' · alive ' + esc(ago(t.heartbeat_at)) : ''}` : '')}${mini('Result', t.result ? `<span class="pre">${esc(t.result)}</span>` : '')}${mini('Evidence', t.evidence ? `<span class="pre">${esc(t.evidence)}</span>` : '')}`)}
+    ${hcard(`Cloud runs (${reqs.length})`, reqs.map((r) => hrow(`Request #${r.id} · ${r.workflow_id}`, `${esc(UK.requestWords(r))}<div class="muted">${esc([r.created_at ? 'asked ' + ago(r.created_at) : null, r.finished_at ? 'finished ' + ago(r.finished_at) : null].filter(Boolean).join(' · '))}</div>`, `<span class="actions">${chip(r.state)}${r.run_id ? `<button class="btn text sm" data-cprun="${esc(r.run_id)}">Run ${esc(r.run_id)}</button>` : ''}</span>`)).join('') || hnone(team ? `No cloud run was asked for yet. Start asks the ${team} team workflow for one; it runs at the next cloud run, a few times a day.` : 'No cloud run was asked for. Give the task a House so the cloud knows which team should do it.', 'cloud_sync'))}
+    ${canEnqueue ? hcard('Run as a cloud job', `<form class="opform" data-opform="tk-enqueue" data-id="${esc(t.id)}"><div class="two"><label>Job type<select name="type">${ENQUEUE_TYPES.map((x) => `<option>${esc(x)}</option>`).join('')}</select></label><label>Payload (JSON, optional)<input name="payload" placeholder="{}" spellcheck="false"></label></div><div class="muted">Plain-data jobs that use no AI and publish nothing. They run at the next worker run.</div><div class="actions"><button class="btn tonal" type="submit">Queue the job</button></div></form>`) : ''}
+    ${ended ? '' : hcard('Assign', `<form class="opform" data-opform="tk-assign" data-id="${esc(t.id)}"><div class="two"><label>Assignee<select name="member_id"><option value="">Nobody</option>${(D.members || []).map((m) => opt(m.id, `${m.name} · ${m.grp}`, t.member_id)).join('')}</select></label>
+      <label>House<select name="house_id"><option value="">No House</option>${NAV.houses.map((h) => opt(h.id, h.label, t.house_id)).join('')}</select></label></div>
+      <label>Pipeline<select name="pipeline_id"><option value="">None</option>${(D.pipelines || []).map((x) => opt(x.id, `${x.name} (${houseName(x.house_id)})`, t.pipeline_id)).join('')}</select></label>
+      <div class="actions"><button class="btn tonal" type="submit">Save assignment</button></div></form>`)}
+    ${hcard(`Notes (${notes.length})`, `${notes.map((n) => hrow(n.note, `${esc(n.by_email || '')} · ${esc(ago(n.at))}`)).join('') || '<div class="muted">No notes yet.</div>'}<form class="opform" data-opform="tk-note" data-id="${esc(t.id)}"><label>Add a note<textarea name="note" required placeholder="A point, a correction, a decision"></textarea></label><div class="actions"><button class="btn tonal" type="submit">Add note</button></div></form>`)}
+    ${hcard(`Outputs (${outs.length})`, outs.map((o) => hrow(o.title || o.id, `${esc(o.kind)} · ${esc(ago(o.at))}${o.url ? ` · <a href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">open</a>` : ''}`, chip(o.status))).join('') || hnone(runIds.size ? 'This task has run, but no output was recorded for it.' : 'No run is linked to this task yet, so there is no output.', 'inventory_2'))}
+    ${hcard(`Related jobs (${jobs.length})`, jobs.map(jobRow).join('') || hnone('No job is linked to this task.', 'memory'), runs.length ? runs.map((r) => `<button class="btn text sm" data-cprun="${esc(r.run_id)}">Run ${esc(r.run_id)}</button>`).join('') : '')}</div>`;
+}
+async function taskEnqueue(form) {
+  const t = (D.tasks || []).find((x) => String(x.id) === String(form.dataset.id)), team = t && UK.teamOfTask(t); if (!t || !team) return toast('This task needs a House first');
+  const f = new FormData(form), raw = String(f.get('payload') || '').trim(); let payload = {};
+  if (raw) { try { payload = JSON.parse(raw); } catch { return toast('The payload must be valid JSON, or empty'); } if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return toast('The payload must be a JSON object'); }
+  const r = await opRpc('coco_task_enqueue', { p_task: t.id, p_job_type: String(f.get('type')), p_team: team, p_payload: payload });
+  if (!r.ok) { if (r.unavailable) { ENQUEUE_MISSING = true; render(); } return toast(said(r)); }
+  if (r.data && r.data.ok === false) return toast(`Not queued: ${r.data.reason || 'the cloud refused it'}`);
+  toast('Cloud job queued. It runs at the next worker run.'); await loadAll();
+}
+// the old Board route: the same tasks in columns by status, each card opens its detail
+function boardView() {
+  const cols = [['planned', 'Planned'], ['queued', 'Queued'], ['running', 'Running'], ['paused', 'Paused'], ['check', 'Needs you'], ['failed', 'Failed'], ['done', 'Done'], ['stopped', 'Stopped']];
+  const inCol = (t, k) => (k === 'running' ? UK.T_RUNNING.includes(t.status) : k === 'stopped' ? ['stopped', 'cancelled'].includes(t.status) : k === 'check' ? ['verifying', 'blocked', 'needs_yes', 'need_approval'].includes(t.status) : k === 'queued' ? ['queued', 'waiting_pc'].includes(t.status) : t.status === k);
+  return `<div class="kanban">${cols.map(([k, l]) => { const l2 = (D.tasks || []).filter((t) => inCol(t, k)); return `<section class="card2 kcol"><h4>${l} <span class="count">${l2.length}</span></h4>${l2.slice(0, 12).map((t) => `<a class="kcard" href="#tasks:${esc(t.id)}"><b>${esc(t.title)}</b><span class="muted">${esc([t.house_id ? houseName(t.house_id) : null, memberName(t.member_id)].filter(Boolean).join(' · ') || 'No House')}</span></a>`).join('') || '<span class="muted">Empty</span>'}${l2.length > 12 ? `<a class="muted" href="#tasks">${l2.length - 12} more</a>` : ''}</section>`; }).join('')}</div><p class="muted">Open a card to start, pause, retry, cancel, assign or add a note.</p>`;
+}
+
+// ---------------------------------------------------------------- Approvals: the list, and a detail with Approve / Reject (decideApproval keeps the decision final)
+const fmtVal = (v) => (v == null ? '' : typeof v === 'object' ? `<code>${esc(JSON.stringify(v))}</code>` : esc(String(v)));
+function fmtAction(raw) {
+  let v = raw; if (typeof raw === 'string') { try { v = JSON.parse(raw); } catch { return `<span class="pre">${esc(raw)}</span>`; } }
+  if (v && typeof v === 'object' && !Array.isArray(v)) return `<div class="kvlist">${Object.entries(v).map(([k, x]) => `<div class="kvrow"><span>${esc(k.replace(/_/g, ' '))}</span><div>${fmtVal(x)}</div></div>`).join('')}</div>`;
+  return fmtVal(v);
+}
+function approvalDetail(id) {
+  const a = (D.approvals || []).find((x) => String(x.id) === String(id)), back = `<a class="btn text" href="#approvals"><i class="ms">arrow_back</i>All approvals</a>`;
+  if (!a) return `<div id="ap-detail">${back}${hcard('Approval not found', hnone('This approval is not in the list. It may still be loading.', 'error'))}</div>`;
+  const pending = ['waiting', 'on-hold'].includes(a.state), hh = UK.houseOfText(NAV, a.team);
+  return `<div id="ap-detail">${back}<div class="card2"><div class="hcard-h"><h2 class="tktitle">${esc(a.code)}</h2>${chip(a.state)}</div><div>${esc(a.what)}</div>
+      <div class="muted">${esc([a.team ? 'team ' + a.team : null, hh ? houseName(hh) : null, a.raised_on ? 'raised ' + a.raised_on : null].filter(Boolean).join(' · '))}</div>
+      ${pending ? `<div class="actions"><button class="btn filled" data-yes="${esc(a.id)}"><i class="ms">check</i>Approve</button><button class="btn text" data-no="${esc(a.id)}"><i class="ms">close</i>Reject</button></div><p class="muted">One decision, final on all your devices: whoever decides first wins, and the others are told.</p>` : ''}</div>
+    ${hcard('What will happen', `${a.action ? mini('Action', fmtAction(a.action)) : '<div class="muted">No machine action is attached: approving records your decision only.</div>'}${mini('Files', a.files ? fmtAction(a.files) : '')}${mini('Release', a.release_id ? esc(a.release_id) : '')}${mini('Run', a.run_id ? `<button class="btn text sm" data-cprun="${esc(a.run_id)}">Open run ${esc(a.run_id)}</button>` : '')}`)}
+    ${hcard('Request', `${mini('Requested by', esc(a.requested_by || ''))}${mini('Requested', a.requested_at ? esc(fmtDay(a.requested_at)) + ' · ' + esc(ago(a.requested_at)) : '')}${mini('Raised on', esc(a.raised_on || ''))}${mini('Approval id', `<code>${esc(a.id)}</code>`)}`)}
+    ${a.decided_by || a.result || a.executed_at ? hcard('Decision', `${mini('Decided by', esc(a.decided_by || ''))}${mini('Decided', a.decided_at ? esc(fmtDay(a.decided_at)) + ' · ' + esc(ago(a.decided_at)) : '')}${mini('On device', decidedOnDevice(a.code) ? esc(decidedOnDevice(a.code)) : '')}${mini('Result', a.result ? `<span class="pre">${esc(a.result)}</span>` : '')}${mini('Executed', a.executed_at ? esc(fmtDay(a.executed_at)) : '')}`) : ''}</div>`;
+}
+function approvalsView() {
+  if (ARG) return approvalDetail(ARG);
+  const w = D.approvals.filter((a) => a.state === 'waiting'), hold = D.approvals.filter((a) => a.state === 'on-hold'), r = D.approvals.filter((a) => !['waiting', 'on-hold'].includes(a.state)).slice(0, 40);
+  const row = (a) => hrow(`${a.code}${a.team ? ' · ' + a.team : ''}`, `${esc(a.what)}<div class="muted">${esc(a.raised_on || '')}${a.decided_by ? ` · ${a.state === 'rejected' ? 'No' : 'YES'} by ${esc(a.decided_by)} ${a.decided_at ? esc(ago(a.decided_at)) : ''}` : ''}</div>`, ['waiting', 'on-hold'].includes(a.state) ? `<span class="actions">${chip(a.state)}<button class="btn filled sm" data-yes="${esc(a.id)}">Approve</button><button class="btn text sm" data-no="${esc(a.id)}">Reject</button></span>` : chip(a.state), '#approvals:' + a.id);
+  return `<p class="muted">One approval, every device: any founder device can decide it, and the others show the decision. Nothing goes public, costs money or gets deleted without it. Open one to see exactly what it will do.</p>
+    <h3 class="sech">Waiting for YES <span class="count">${w.length}</span></h3><div class="card2">${w.map(row).join('') || allClear()}</div>
+    ${hold.length ? `<h3 class="sech">On hold <span class="count">${hold.length}</span></h3><div class="card2">${hold.map(row).join('')}</div>` : ''}
+    <h3 class="sech">Decided</h3><div class="card2">${r.map(row).join('') || '<span class="muted">Nothing decided yet.</span>'}</div>`;
+}
+const allClear = () => hnone('All clear: nothing waits for your YES.', 'task_alt');
+
+// ---------------------------------------------------------------- Houses and the House workspace (the original tables; org_* is never required)
 const HTABS = NAV.house_tabs;
 let HTAB = store.get('gs-htab') || 'overview';
 const HX = { templates: null, prompts: null, err: null, loading: false };
@@ -6224,125 +6393,327 @@ async function hxLoad() {
   HX.loading = true;
   try { const [t, p] = await Promise.all([autApi('/templates'), autApi('/prompts')]); HX.templates = t.templates || []; HX.prompts = p.prompts || []; } catch (e) { HX.err = e.message; } finally { HX.loading = false; if (page === 'house') render(); }
 }
+// Everything a House owns, read from houses, structure (+ the bundled company snapshot), categories, offerings, members, pipelines, brain_items, integrations, tasks ...
+// A runtime team (youtube, ebooks, software ...) belongs to the House whose domain or platform it is (the navigation contract decides, ui-kit.houseOfTeam).
 function houseCtx(hid) {
-  const U = orgUnits(), hu = UK.houseUnit(U, hid), set = hu ? UK.descendants(U, hu.id) : new Set([hid]);
-  return { id: hid, h: houseOf(hid), unit: hu, set, names: UK.scopeNames(U, set) || new Set([hid]), subs: U.filter((u) => ['team', 'subteam'].includes(u.kind) && set.has(u.id)), cats: U.filter((u) => u.kind === 'category' && set.has(u.id)),
-    prods: orgProducts().filter((p) => set.has(p.unit_id)), agents: ((ORG && ORG.agents) || []).filter((a) => set.has(a.unit_id)), metrics: orgMetrics().filter((m) => set.has(m.unit_id)), live: D.houses.find((x) => x.id === hid) || null };
+  const h = houseOf(hid), tree = structureTree(), live = (D.houses || []).find((x) => x.id === hid) || null;
+  const houseOfNode = (n) => { let x = n, i = 0; while (x && i++ < 10) { const hh = teamHouse(x.id); if (hh) return hh; x = x.parent ? tree.nodes.get(x.parent) : null; } return null; };
+  const nodes = [...tree.nodes.values()].filter((n) => houseOfNode(n) === hid), by = (k) => nodes.filter((n) => n.kind === k);
+  const cp = ((CP && CP.teams) || []).filter((t) => teamHouse(t.id) === hid);
+  const agents = [...cp.flatMap((t) => (t.agents || []).map((a) => ({ id: a.id, name: a.name, role: a.role, level: a.level, model: a.model, claude: a.claude, paused: !!a.paused, team: t.id }))),
+    ...by('agent').map((n) => ({ id: n.id, name: n.name, role: 'agent', team: n.parent, paused: n.state === 'paused' }))];
+  const links = (D.memberHouses || []).filter((l) => l.house_id === hid);
+  return { id: hid, h, live, tree, nodes, cp, agents, teams: by('team'), subs: by('subteam'), scats: by('category'), chans: by('channel'), links,
+    members: links.map((l) => (D.members || []).find((m) => m.id === l.member_id)).filter(Boolean),
+    cats: (D.categories || []).filter((c) => c.house_id === hid).sort((a, b) => a.code - b.code), offs: (D.offerings || []).filter((o) => o.house_id === hid),
+    pipes: (D.pipelines || []).filter((p) => p.house_id === hid), brain: ((LIVE && LIVE.brain) || []).filter((b) => teamHouse(b.team_id) === hid),
+    integ: (D.integrations || []).filter((i) => i.house_id === hid), accts: (CONNS || []).filter((a) => (h.platforms || []).includes(String(a.provider).toLowerCase())),
+    tasks: (D.tasks || []).filter((t) => t.house_id === hid), approvals: (D.approvals || []).filter((a) => UK.houseOfText(NAV, a.team) === hid),
+    jobs: (JOBS || []).filter((j) => teamHouse(j.team_id) === hid), outs: (OUTPUTS || []).filter((o) => teamHouse(o.team_id) === hid), set: new Set([hid, ...nodes.map((n) => n.id)]) };
 }
-const createMenu = (unit) => `<details class="menu"><summary class="btn filled"><i class="ms">add</i>Create</summary><div class="menu-p">
-  ${[['team', 'Team', 'groups'], ['subteam', 'Subteam', 'account_tree'], ['category', 'Category', 'category'], ['channel', 'Channel', 'tag'], ['product', 'Product', 'inventory_2'], ['automation', 'Automation', 'auto_mode']].map(([k, l, ic]) => `<button data-create="${k}" data-unit="${esc(unit || '')}"><i class="ms">${ic}</i>${l}</button>`).join('')}
-  <button data-create="house"><i class="ms">apartment</i>House<small>fixed in the registry</small></button></div></details>`;
-function createFlow(kind, unit) {
-  if (kind === 'house') return toast('Houses are fixed in the registry. Adding one needs a registry change and a founder YES, so nothing was created.');
-  if (!NOVA) return toast('Pair this device with Nova first');
-  if (kind === 'automation') { AUT.tab = 'templates'; location.hash = '#automation'; if (page === 'automation') render(); return; }
-  autWizStart({ unit });     // the creation wizard: destination, template or preset, Brain, agents, prompt, account (separate from creating the record), review
+const agentNameOf = (id) => { for (const t of (CP && CP.teams) || []) { const a = (t.agents || []).find((x) => x.id === id); if (a) return a.name; } const r = (STRUCT || []).find((x) => x.id === id); return r ? r.name : id || ''; };
+const headOf = (id) => { const r = (STRUCT || []).find((x) => x.id === id), t = ((CP && CP.teams) || []).find((x) => x.id === id), s = ((CP && CP.teams) || []).flatMap((x) => x.subteams || []).find((x) => x.id === id); return (r && r.head_agent_id) || (t && t.head_agent_id) || (s && s.agent_id) || null; };
+const nodeState = (n) => n.state || ((((CP && CP.teams) || []).find((t) => t.id === n.id) || {}).paused ? 'paused' : 'active');
+const stateChip = (s) => chipTxt(s === 'active' || s === 'working' ? 'good' : s === 'archived' ? '' : 'warn', s === 'active' ? 'Active' : s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Paused');
+const platName = (id) => ((D.platforms || []).find((p) => p.id === id) || {}).name || id || '';
+const addMenu = (c) => `<details class="menu"><summary class="btn filled"><i class="ms">add</i>Add</summary><div class="menu-p"><button data-tkn="1" data-house="${esc(c.id)}"><i class="ms">task_alt</i>Task for ${esc(c.h.name)}</button>
+  ${[['categories', 'Category', 'category'], ['channels', 'Channel or product', 'tag'], ['teams', 'Subteam', 'account_tree'], ['agents', 'Member', 'person_add']].map(([k, l, ic]) => `<button data-hjump="${k}"><i class="ms">${ic}</i>${l}</button>`).join('')}</div></details>`;
+const structForm = (c, kind) => {
+  const parents = c.nodes.filter((n) => (kind === 'subteam' ? n.kind === 'team' : kind === 'category' ? n.kind === 'subteam' : n.kind === 'category'));
+  return parents.length ? `<form class="opform" data-opform="struct-add" data-kind="${kind}"><h4 class="subh">Add a ${kind} (kept paused until you start it)</h4><div class="two"><label>Under<select name="parent" required>${parents.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></label><label>Name<input name="name" required maxlength="80"></label></div>
+    <div class="two"><label>Short id<input name="id" required placeholder="lower case, e.g. my-${kind}"></label><label>What it is for<input name="description" placeholder="One line (optional)"></label></div><div class="actions"><button class="btn tonal" type="submit">Add ${kind}</button></div></form>`
+    : `<div class="muted">A ${kind} needs a ${kind === 'subteam' ? 'team' : kind === 'category' ? 'subteam' : 'category'} to sit under, and this House has none yet.</div>`;
+};
+const treeRows = (c, node, depth) => `<div class="trow" style="--depth:${depth}"><div class="grow"><b>${esc(node.name)}</b><span class="tkind">${esc(node.kind)}</span></div>${stateChip(nodeState(node))}</div>`
+  + c.tree.kids(node.id).filter((k) => k.kind !== 'agent' && c.nodes.includes(k)).map((k) => treeRows(c, k, depth + 1)).join('');
+const HOUSE_TAB = {
+  overview(c) {
+    const l = c.live, wait = c.approvals.filter((a) => a.state === 'waiting').length, open = c.tasks.filter((t) => UK.taskGroup(t.status) === 'open').length, bad = c.integ.filter((i) => i.state === 'error').length + c.accts.filter((a) => a.state === 'error').length;
+    const stat = (n, label, tab) => `<button class="stat" data-hjump="${tab}"><b>${n}</b><span>${label}</span></button>`;
+    return hcard('Overview', `<p>${esc((l && l.role) || c.h.domain)}</p>${l ? `<div class="kvlist">${mini('State', stateChip(l.state))}${mini('Rhythm', esc(l.cadence || ''))}${mini('Publishing rule', esc(l.publish_rule || ''))}${mini('Doing now', esc(l.doing || ''))}${mini('Next', esc(l.next || ''))}${mini('Blocked', l.blocked ? `<span class="chip warn">${esc(l.blocked)}</span>` : '')}${mini('Recently', esc(l.recent || ''))}</div>` : '<div class="muted">This House has no status row yet.</div>'}
+      <div class="stats" style="margin-top:12px">${stat(c.teams.length + c.subs.length, 'teams and subteams', 'teams')}${stat(c.cats.length + c.scats.length, 'categories', 'categories')}${stat(c.offs.length + c.chans.length, 'channels and products', 'channels')}${stat(c.agents.length + c.members.length, 'agents and members', 'agents')}${stat(c.brain.length, 'Brain records', 'brains')}${stat(open, 'open tasks', 'production')}${stat(wait, 'waiting for YES', 'approvals')}${stat(bad, 'connection problems', 'connections')}</div>`,
+      `<a class="btn filled" href="#tasks" data-tkn="1" data-house="${esc(c.id)}"><i class="ms">add</i>New task</a>`);
+  },
+  organization(c) {
+    const roots = c.nodes.filter((n) => !n.parent || !c.nodes.some((x) => x.id === n.parent)).filter((n) => n.kind !== 'agent');
+    return hcard('Organization', roots.length ? roots.map((n) => treeRows(c, n, 0)).join('') : hnone('No team is registered under this House yet.', 'account_tree'), '<a class="btn text" href="#structure">Open Structure</a>');
+  },
+  teams(c) {
+    const row = (n) => { const hd = headOf(n.id), ag = c.agents.filter((a) => a.team === n.id || (n.kind === 'team' && c.nodes.some((s) => s.id === a.team && s.parent === n.id))).length; return hrow(n.name, `${esc(n.kind)} · ${hd ? 'head ' + esc(agentNameOf(hd)) : 'no head named'} · ${ag} agent${ag === 1 ? '' : 's'}`, stateChip(nodeState(n)), '#structure'); };
+    return hcard('Teams and subteams', (c.teams.concat(c.subs).map(row).join('') || hnone('No team or subteam is registered under this House.', 'groups')) + structForm(c, 'subteam'), '<a class="btn text" href="#teams">Team controls</a>');
+  },
+  categories(c) {
+    const cnt = (id) => c.offs.filter((o) => o.category_id === id).length;
+    return hcard('Categories', (c.cats.map((x) => hrow(`${String(x.code).padStart(2, '0')} · ${x.name}`, `${x.linked_to ? 'linked to ' + esc(x.linked_to) + ' · ' : ''}${cnt(x.id)} item${cnt(x.id) === 1 ? '' : 's'}`)).join('') || hnone('No category is set up for this House yet.', 'category'))
+      + (c.scats.length ? `<h4 class="subh">Structure categories (${c.scats.length})</h4>` + c.scats.map((n) => hrow(n.name, `under ${esc((c.tree.nodes.get(n.parent) || {}).name || n.parent || '')}`, stateChip(n.state || 'active'), '#structure')).join('') : '')
+      + `<form class="opform" data-opform="cat-add" data-house="${esc(c.id)}"><h4 class="subh">Add a category</h4><div class="two"><label>Name<input name="name" required maxlength="80"></label><label>Linked to (optional)<input name="linked" maxlength="80" placeholder="e.g. another category"></label></div><div class="actions"><button class="btn tonal" type="submit">Add category</button></div></form>`);
+  },
+  channels(c) {
+    const plats = [...new Set([...(c.h.platforms || []), ...c.offs.map((o) => o.platform_id).filter(Boolean)])], kinds = [...new Set(['channel', 'product', 'extension', 'app', 'game', 'download', ...c.offs.map((o) => o.kind)])];
+    const row = (o) => hrow(o.name, `${esc(o.kind)} · ${esc(platName(o.platform_id))}${o.url ? ` · <a href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">open</a>` : ''}${o.last_post_at ? ` · last post ${esc(ago(o.last_post_at))}` : ''}${o.next_post_at ? ` · next ${esc(fmtDay(o.next_post_at))}` : ''}`,
+      `<span class="rcol">${chipTxt(o.connected ? 'good' : '', o.status || 'planned')}<select data-offcat="${esc(o.id)}" aria-label="Category of ${esc(o.name)}"><option value="">No category</option>${c.cats.map((x) => `<option value="${esc(x.id)}"${x.id === o.category_id ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></span>`);
+    return hcard('Channels and products', (c.offs.map(row).join('') || hnone('No channel or product is registered for this House yet.', 'tag'))
+      + (c.chans.length ? `<h4 class="subh">Structure channels (${c.chans.length})</h4>` + c.chans.map((n) => hrow(n.name, esc(n.platform || 'channel'), stateChip(n.state || 'active'), '#structure')).join('') : '')
+      + `<form class="opform" data-opform="off-add" data-house="${esc(c.id)}"><h4 class="subh">Add a channel or product</h4><div class="two"><label>Name<input name="name" required maxlength="80"></label><label>Kind<select name="kind">${kinds.map((k) => `<option>${esc(k)}</option>`).join('')}</select></label></div>
+        <div class="two"><label>Platform<select name="platform"><option value="">None</option>${plats.map((p) => `<option value="${esc(p)}">${esc(platName(p))}</option>`).join('')}</select></label><label>Category<select name="category"><option value="">None</option>${c.cats.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select></label></div>
+        <label>Link (optional)<input name="url" type="url" placeholder="https://"></label><div class="actions"><button class="btn tonal" type="submit">Add</button></div></form>${structForm(c, 'channel')}`);
+  },
+  brains(c) {
+    const company = ((LIVE && LIVE.brain) || []).filter((b) => !b.team_id).length;
+    return hcard('Brain records', (c.brain.slice(0, 40).map((b) => `<details class="brec"><summary><b>${esc(b.title)}</b> ${chipTxt('', b.kind)} <span class="muted">${esc(ago(b.created_at))}</span></summary><p class="pre">${esc(b.text)}</p><div class="muted">${esc([(b.tags || []).join(', '), b.source].filter(Boolean).join(' · '))}</div></details>`).join('') || hnone('No Brain record is filed for this House yet.', 'psychology'))
+      + (company ? `<div class="muted" style="margin-top:8px">${company} company-wide record${company === 1 ? '' : 's'} apply to every House.</div>` : ''), '<a class="btn text" href="#brain">All Brain records</a>');
+  },
+  agents(c) {
+    const free = (D.members || []).filter((m) => !c.links.some((l) => l.member_id === m.id));
+    return hcard('Agents', (c.agents.length ? c.agents.map((a) => hrow(a.name, `${esc(a.role || 'agent')}${a.level ? ' · ' + esc(a.level) : ''}${a.model ? ' · ' + esc(a.model) : ''}`, chipTxt(a.paused ? 'warn' : 'good', a.paused ? 'Paused' : 'Active'), '#agents')).join('') : hnone('No team agent is registered under this House.', 'smart_toy'))
+      + `<h4 class="subh">Members working for ${esc(c.h.name)} (${c.members.length})</h4>` + (c.members.map((m) => `<div class="row"><div class="grow"><b>${esc(m.name)}</b> <span class="muted">${esc(m.grp)}</span><div class="muted">${esc(m.job || '')}${m.model ? ' · ' + esc(m.model) : ''}${m.doing ? ' · ' + esc(m.doing) : ''}</div></div><button class="btn text sm" data-hmember="remove" data-member="${esc(m.id)}" data-house="${esc(c.id)}">Remove</button></div>`).join('') || hnone('No member is assigned to this House.', 'person_off'))
+      + (free.length ? `<form class="opform" data-opform="member-add" data-house="${esc(c.id)}"><div class="two"><label>Assign a member<select name="member">${free.map((m) => `<option value="${esc(m.id)}">${esc(m.name)} · ${esc(m.grp)}</option>`).join('')}</select></label><div class="actions"><button class="btn tonal" type="submit">Assign</button></div></div></form>` : ''), '<a class="btn text" href="#agents">Agent controls</a>');
+  },
+  automation(c) {
+    return hcard('Automation', c.pipes.length ? c.pipes.map((p) => `<details class="brec"><summary><b>${esc(p.name)}</b> ${chipTxt(p.active ? 'good' : '', p.active ? 'Active' : 'Off')} <span class="muted">${UK.stepsOf(p).length} steps · ${esc(p.trigger)}</span></summary>
+      ${UK.stepsOf(p).map((s, i) => `<div class="row"><div class="grow"><b>${i + 1}. ${esc(s.do || s.name || 'step')}</b><div class="muted">${esc([s.where, memberName(s.member) || s.member, (s.tools || []).join(', ')].filter(Boolean).join(' · '))}</div></div></div>`).join('')}
+      <div class="actions"><a class="btn tonal sm" href="#tasks" data-tkn="1" data-house="${esc(c.id)}" data-pipeline="${esc(p.id)}">New task with this pipeline</a></div></details>`).join('') : hnone('No pipeline is registered for this House.', 'auto_mode'), '<a class="btn tonal" href="#automation">Open Automation</a>');
+  },
+  templates(c) { return hxTab(c, 'templates'); },
+  prompts(c) { return hxTab(c, 'prompts'); },
+  connections(c) {
+    const row = (i) => hrow(i.platform || i.id, `${esc([i.account, i.last_ok_at ? 'last verified ' + ago(i.last_ok_at) : i.last_check_at ? 'checked ' + ago(i.last_check_at) : 'never checked'].filter(Boolean).join(' · '))}${i.error ? `<div class="errline">${esc(String(i.error).slice(0, 160))}</div>` : ''}${i.next_action ? `<div class="muted">Next: ${esc(i.next_action)}</div>` : ''}`, chip(i.state), '#connections:' + i.id);
+    const arow = (a) => hrow(a.external_name || a.connection_id, `${esc(a.provider)} · ${a.last_verified_at ? 'verified ' + esc(ago(a.last_verified_at)) : 'never verified'}`, chip(a.state), '#connections:' + a.connection_id);
+    return hcard('Connections', (c.integ.map(row).join('') || hnone('No integration is registered for this House.', 'hub')) + (c.accts.length ? `<h4 class="subh">Accounts on ${esc((c.h.platforms || []).join(', '))} (${c.accts.length})</h4>` + c.accts.slice(0, 20).map(arow).join('') + (c.accts.length > 20 ? `<div class="muted">${c.accts.length - 20} more in the Integration Hub.</div>` : '') : ''), '<a class="btn tonal" href="#connections">Open Integration Hub</a>');
+  },
+  references(c) {
+    const refs = c.brain.filter((b) => b.kind === 'reference');
+    return hcard('Reference assets', refs.length ? refs.map((b) => hrow(b.title, esc(String(b.text).slice(0, 160)))).join('') : hnone('No reference is filed for this House. References are Brain records of kind reference; template references are in Automation.', 'folder_open'), '<a class="btn text" href="#automation">Automation references</a>');
+  },
+  production(c) {
+    const by = (s) => c.jobs.filter((j) => j.status === s).length, open = c.tasks.filter((t) => UK.taskGroup(t.status) === 'open');
+    return hcard('Production', `<div class="stats"><div class="stat"><b>${by('running')}</b><span>jobs running</span></div><div class="stat"><b>${by('queued')}</b><span>jobs queued</span></div><div class="stat"><b>${by('failed') + by('blocked')}</b><span>failed or blocked</span></div><div class="stat"><b>${open.length}</b><span>open tasks</span></div></div>
+      ${open.slice(0, 8).map((t) => taskRow(t, UK.workerStatus(D.devices))).join('')}${c.jobs.filter((j) => j.status !== 'done').slice(0, 10).map(jobRow).join('') || (JOBS_ERR ? hnone('The job queue could not be read.', 'cloud_off') : '')}`, `<a class="btn tonal" href="#tasks" data-tkn="1" data-house="${esc(c.id)}">New task</a>`);
+  },
+  outputs(c) { return hcard('Outputs', c.outs.length ? c.outs.slice(0, 50).map((x) => hrow(x.title || x.id, `${esc(x.kind)} · ${esc(ago(x.at))}${x.url ? ` · <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">open</a>` : ''}`, chip(x.status))).join('') : hnone('No output has been logged for this House.', 'inventory_2')); },
+  scheduler(c) { return hcard('Scheduler', (c.pipes.map((p) => hrow(p.name, esc(p.trigger), chipTxt(p.active ? 'good' : '', p.active ? 'Scheduled' : 'Off'))).join('') || hnone('No pipeline with a trigger is registered for this House.', 'schedule')) + '<p class="muted">Each pipeline runs on its trigger. Per-channel production slots are in Automation, under Schedule and statistics.</p>', '<a class="btn tonal" href="#automation">Open Automation</a>'); },
+  approvals(c) { return hcard('Approvals', c.approvals.length ? c.approvals.slice(0, 40).map((x) => hrow(x.code, `${esc(x.what)}<div class="muted">${esc(x.raised_on || '')}</div>`, ['waiting', 'on-hold'].includes(x.state) ? `<span class="actions">${chip(x.state)}<button class="btn filled sm" data-yes="${esc(x.id)}">Approve</button><button class="btn text sm" data-no="${esc(x.id)}">Reject</button></span>` : chip(x.state), '#approvals:' + x.id)).join('') : hnone('No approval is tagged to this House. Approvals carry a free-text team name, matched here by House, domain and platform.', 'verified'), '<a class="btn text" href="#approvals">All approvals</a>'); },
+  analytics(c, range) {
+    const yt = c.h.platforms.includes('youtube') ? ytCard(c) : '';
+    const st = (n) => c.offs.filter((o) => o.status === n).length, statuses = [...new Set(c.offs.map((o) => o.status))];
+    const done = c.tasks.filter((t) => t.status === 'done' && UK.within(t.updated_at, range.from, range.to)).length, pub = c.outs.filter((o) => o.status === 'published' && UK.within(o.at, range.from, range.to)).length;
+    return yt + hcard(`Activity · ${range.label}`, `<div class="stats"><div class="stat"><b>${done}</b><span>tasks done</span></div><div class="stat"><b>${pub}</b><span>outputs published</span></div><div class="stat"><b>${c.jobs.filter((j) => j.status === 'done' && UK.within(j.completed_at || j.updated_at, range.from, range.to)).length}</b><span>jobs done</span></div><div class="stat"><b>${c.jobs.filter((j) => j.status === 'failed' && UK.within(j.updated_at, range.from, range.to)).length}</b><span>jobs failed</span></div></div>
+      ${statuses.length ? `<h4 class="subh">Channels and products by status</h4>${statuses.map((s) => hrow(s, '', `<b>${st(s)}</b>`)).join('')}` : ''}${c.h.platforms.includes('youtube') ? '' : `<p class="muted">No ${esc(c.h.domain.toLowerCase())} analytics source is connected yet, so only Coco's own work is counted here.</p>`}`);
+  },
+  revenue(c) { return hcard(`Revenue · ${hfRange().label}`, revenueBlock({ house: c.id })); },
+  activity(c) {
+    const re = new RegExp('\\b(' + [c.h.id, c.h.label, ...c.set].filter(Boolean).map((s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'i'), a = (D.activity || []).filter((x) => re.test(`${x.action} ${x.detail || ''}`));
+    return hcard('Activity history', a.length ? a.slice(0, 40).map((x) => hrow(x.action, `${esc(x.detail || '')} · ${esc(x.actor || '')} · ${esc(ago(x.at))}`)).join('') : hnone('No recent activity mentions this House.', 'history')) + `<div class="muted">Matched by House and team name in the latest 100 activity entries.</div>`;
+  },
+  settings(c) {
+    return hcard('Settings', hrow('Identity', `${esc(c.h.label)} · id ${esc(c.h.id)} · ${esc(c.h.domain)}`, htile(c.h)) + hrow('State', `${esc((c.live && c.live.role) || '')}`, c.live ? chip(c.live.state) : '') + hrow('Publishing rule', esc((c.live && c.live.publish_rule) || 'None recorded')) + hrow('Rhythm', esc((c.live && c.live.cadence) || 'None recorded')) + hrow('Expected platforms', esc(c.h.platforms.join(', '))) + hrow('Team controls', 'State, Claude and budget controls for each team are in Teams.', '', '#teams'), '<a class="btn text" href="#teams">Open team controls</a>');
+  },
+};
+function hxTab(c, tab) {
+  hxLoad();
+  const T = tab === 'prompts' ? 'Prompt instructions' : 'Templates';
+  if (!NOVA) return hcard(T, hnone('Pair this device with Nova to read templates.', 'link_off'));
+  if (HX.err) return hcard(T, setup('Automation templates are not readable', HX.err + ' (the automation templates may not be set up yet).'));
+  if (!HX.templates) return hcard(T, '<p class="muted">Reading…</p>');
+  const mine = HX.templates.filter((t) => (t.owner_unit_id && c.set.has(t.owner_unit_id)) || (t.owner_product_id && c.offs.some((p) => p.id === t.owner_product_id)));
+  if (tab === 'templates') return hcard(T, mine.length ? mine.map((t) => hrow(t.name, `${esc(t.kind)} · v${t.current_version} · ${t.assignments} assignment${t.assignments === 1 ? '' : 's'}`, chip(t.status), '#automation')).join('') : hnone('No template is owned by this House. Library templates are in Automation.', 'description'), '<a class="btn tonal" href="#automation">Open Automation</a>');
+  const ids = new Set(mine.map((t) => t.id)), ps = (HX.prompts || []).filter((p) => ids.has(p.template_id));
+  return hcard(T, ps.length ? ps.map((p) => hrow(p.name, `${esc(p.kind)} · version ${p.active_version || 'none active'} of ${p.current_version}`, chip(p.status), '#automation')).join('') : hnone('No prompt belongs to this House’s templates yet.', 'edit_note'), '<button class="btn tonal" data-aut="open-tab" data-a="prompts">Edit prompts</button>');
 }
-function houseTabBody(c, tab, range) {
-  const { h } = c, M = orgMetrics();
-  if (tab === 'overview') {
-    const hd = c.set.size ? UK.headline(M, 'revenue', range, { units: c.set, currency: HF.currency }) : { state: 'unavailable', totals: [] };
-    const waiting = D.approvals.filter((a) => a.state === 'waiting' && taggedIn(c.names, { team_id: a.team })).length, tasks = D.tasks.filter((t) => TASK_OPEN.includes(t.status) && (t.house_id === c.id || c.names.has(String(t.team_id || '')))).length;
-    return hcard('Overview', `<p>${esc((c.unit && (c.unit.purpose || c.unit.focus)) || (c.live && c.live.role) || h.domain)}</p>${c.live ? `<div class="muted">${esc(c.live.doing || '')}${c.live.next ? ' · Next: ' + esc(c.live.next) : ''}</div>` : ''}
-      <div class="stats" style="margin-top:12px">${[[c.subs.length, 'teams and subteams'], [c.cats.length, 'categories'], [c.prods.length, 'channels and products'], [c.agents.filter((a) => a.status !== 'placeholder').length, 'agents'], [tasks, 'open tasks'], [waiting, 'waiting for YES']].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('')}</div>`)
-      + hcard('Revenue', hd.totals.length ? `<div class="kv"><span class="kvn">${esc(hd.totals.map((t) => UK.fmtMoney(t.total, t.unit)).join(' · '))}</span></div> ${basisChip(hd.state)}<div class="muted">${srcFoot(hd)}</div>` : hnone(hd.state === 'none_in_period' ? 'No revenue records in this period. Not a confirmed zero.' : 'Revenue is unavailable: Coco holds no revenue records for this House.', 'payments'));
-  }
-  if (tab === 'organization') {
-    const depth = (u) => { let n = 0, x = u; while (x && x.parent_id && x.id !== (c.unit || {}).id && n < 8) { n++; x = orgUnits().find((y) => y.id === x.parent_id); } return n; };
-    const rows = orgUnits().filter((u) => c.set.has(u.id)).sort((a, b) => a.id.localeCompare(b.id));
-    return hcard('Organization', rows.length ? rows.map((u) => `<div class="trow" style="--depth:${depth(u)}"><div class="grow"><b>${esc(u.short_name || u.display_name)}</b><span class="tkind">${esc(u.kind)}</span></div>${chip(u.state === 'active' ? 'working' : u.state)}<a class="btn text" href="#structure" data-subgo="org:${esc(u.id)}">Open</a></div>`).join('') : hnone(cloudOrg() ? 'Nothing is registered under this House yet.' : 'The structure is not loaded.', 'account_tree'), createMenu(c.unit && c.unit.id));
-  }
-  if (tab === 'teams') return hcard('Teams and subteams', c.subs.length ? c.subs.map((u) => { const pl = ((ORG && ORG.pipelines) || []).find((p) => p.unit_id === u.id), ag = c.agents.filter((a) => a.unit_id === u.id), head = ag.find((a) => a.role === 'head');
-      return hrow(u.short_name || u.display_name, `${esc(u.kind)} · ${head ? esc(head.name) : 'no head'} · ${ag.filter((a) => a.status !== 'placeholder').length} agents`, chipTxt(pl && ['LIVE', 'TESTING'].includes(pl.status) ? 'good' : '', pl ? pl.status : 'no pipeline'), '#structure'); }).join('') : hnone('No teams or subteams are registered.', 'groups'), createMenu(c.unit && c.unit.id));
-  if (tab === 'categories') return hcard('Categories', c.cats.length ? c.cats.map((u) => hrow(u.short_name || u.display_name, `under ${esc(unitName(u.parent_id))} · ${c.prods.filter((p) => p.unit_id === u.id).length} channels or products`, chip(u.state === 'active' ? 'working' : u.state), '#structure')).join('') : hnone('No categories are registered.', 'category'), createMenu(c.unit && c.unit.id));
-  if (tab === 'channels') {
-    const legacy = (D.offerings || []).filter((o) => o.house_id === c.id), plat = (id) => ((D.platforms || []).find((p) => p.id === id) || {}).name || id || '';
-    return hcard('Channels and products', (c.prods.length ? c.prods.map((p) => hrow(p.name, `${esc(p.kind)} · ${esc(plat(p.platform_id))} · ${esc(unitName(p.unit_id))}`, `${chip(p.status)} <button class="btn text" data-aut="opendash" data-a="${esc(p.id)}">Dashboard</button>`)).join('') : '')
-      + (legacy.length ? `<h4 class="subh">Earlier offerings list (${legacy.length})</h4>` + legacy.slice(0, 40).map((o) => hrow(o.name, `${esc(plat(o.platform_id))}`, chip(o.status))).join('') : '') || hnone('No channels or products yet.', 'tag'), createMenu(c.unit && c.unit.id));
-  }
-  if (tab === 'brains') {
-    brLoad();
-    if (!BR) return hcard('Brains', '<p class="muted">Reading the Brains…</p>');
-    if (BR.err) return hcard('Brains', setup('Brains are not readable yet', 'The organisation Brain records are not set up in Coco Cloud yet. They wait for a verified backup and a founder YES. ' + BR.err));
-    const mine = BR.rows.filter((b) => (b.unit_id && c.set.has(b.unit_id)) || (b.product_id && c.prods.some((p) => p.id === b.product_id)));
-    return hcard('Brains', mine.length ? mine.map((b) => hrow(b.unit_id ? unitName(b.unit_id) : (c.prods.find((p) => p.id === b.product_id) || {}).name || b.id, `${esc(b.level)} brain · ${(b.objectives || []).length} objective${(b.objectives || []).length === 1 ? '' : 's'} · last activity ${esc(ago(b.last_activity_at))}`, chipTxt(b.state === 'active' ? 'good' : '', b.state) + ' ' + chipTxt(b.health === 'ok' ? 'good' : ['degraded', 'failed'].includes(b.health) ? 'bad' : '', b.health), '#hierarchy')).join('') : hnone('No Brain is set up under this House yet.', 'psychology'), '<a class="btn text" href="#hierarchy">Open hierarchy</a>');
-  }
-  if (tab === 'agents') return hcard('Agents', c.agents.length ? c.agents.map((a) => hrow(a.name, `${esc(unitName(a.unit_id))} · ${esc(a.role || 'agent')}${a.registry_agent ? ' · ' + esc(a.registry_agent) : ''}`, chipTxt(a.status === 'placeholder' ? 'warn' : a.status === 'active' ? 'good' : '', a.status), '#agents')).join('') : hnone('No agents are assigned under this House.', 'smart_toy'), '<a class="btn text" href="#agents">Open agent controls</a>');
-  if (tab === 'automation') {
-    const wf = ((ORG && ORG.workflows) || []).filter((w) => c.set.has(w.unit_id)), pls = ((ORG && ORG.pipelines) || []).filter((p) => c.set.has(p.unit_id) && p.designed);
-    return hcard('Automation', (pls.length ? `<h4 class="subh">Pipelines</h4>` + pls.map((p) => hrow(p.name, `${(p.stages || []).length} stages · v${esc(p.version)}`, chipTxt(['LIVE', 'TESTING'].includes(p.status) ? 'good' : '', p.status), '#structure')).join('') : '')
-      + (wf.length ? `<h4 class="subh">Workflows</h4>` + wf.map((w) => hrow(w.file, `${esc(w.repo)} · ${esc(w.schedule || 'no schedule')}`, chip(w.state))).join('') : '') || hnone('No pipeline or workflow is registered for this House.', 'auto_mode'),
-      `<a class="btn tonal" href="#automation">Open Automation</a>`);
-  }
-  if (tab === 'templates' || tab === 'prompts') {
-    hxLoad();
-    if (!NOVA) return hcard(tab === 'prompts' ? 'Prompt instructions' : 'Templates', hnone('Pair this device with Nova to read templates.', 'link_off'));
-    if (HX.err) return hcard(tab === 'prompts' ? 'Prompt instructions' : 'Templates', setup('Automation templates are not readable', HX.err + ' (the automation templates may not be set up yet).'));
-    if (!HX.templates) return hcard(tab === 'prompts' ? 'Prompt instructions' : 'Templates', '<p class="muted">Reading…</p>');
-    const mine = HX.templates.filter((t) => (t.owner_unit_id && c.set.has(t.owner_unit_id)) || (t.owner_product_id && c.prods.some((p) => p.id === t.owner_product_id)));
-    if (tab === 'templates') return hcard('Templates', mine.length ? mine.map((t) => hrow(t.name, `${esc(t.kind)} · v${t.current_version} · ${t.assignments} assignment${t.assignments === 1 ? '' : 's'}`, chip(t.status), '#automation')).join('') : hnone('No template is owned by this House. Library templates are in Automation.', 'description'), `<a class="btn tonal" href="#automation">Open Automation</a>`);
-    const ids = new Set(mine.map((t) => t.id)), ps = (HX.prompts || []).filter((p) => ids.has(p.template_id));
-    return hcard('Prompt instructions', ps.length ? ps.map((p) => hrow(p.name, `${esc(p.kind)} · version ${p.active_version || 'none active'} of ${p.current_version}`, chip(p.status), '#automation')).join('') : hnone('No prompt belongs to this House’s templates yet.', 'edit_note'), `<button class="btn tonal" data-aut="open-tab" data-a="prompts">Edit prompts</button>`);
-  }
-  if (tab === 'connections') {
-    const links = (CONN_LINKS || []).filter((l) => l.enabled && c.names.has(String(l.team_id))), provs = new Set(links.map((l) => String(l.integration_id).toLowerCase()));
-    return hcard('Connections', h.platforms.map((p) => { const accts = (CONNS || []).filter((a) => String(a.provider).toLowerCase() === p), ok = accts.filter((a) => a.state === 'connected');
-      return hrow(p, accts.length ? `${ok.length} of ${accts.length} account${accts.length === 1 ? '' : 's'} connected${provs.has(p) ? ' · linked to this House' : ''}` : 'No account added yet', ok.length ? chipTxt('good', 'Connected') : accts.length ? chipTxt('warn', 'Not connected') : chipTxt('', 'No account'), '#connections'); }).join(''), '<a class="btn tonal" href="#connections">Open Integration Hub</a>');
-  }
-  if (tab === 'references') { const refs = ((ORG && ORG.refs) || []).filter((r) => c.set.has(r.unit_id)); return hcard('Reference assets', refs.length ? refs.slice(0, 60).map((r) => hrow(r.title || r.name || r.id, esc(r.kind || r.ref_kind || ''), '', '')).join('') : hnone('No reference is recorded for this House. Template references are in Automation.', 'folder_open'), '<a class="btn text" href="#automation">Automation references</a>'); }
-  if (tab === 'production') {
-    const jb = JOBS.filter((j) => taggedIn(c.names, j)), tk = D.tasks.filter((t) => TASK_OPEN.includes(t.status) && (t.house_id === c.id));
-    const key = `u:${c.unit ? c.unit.id : c.id}|${range.key}|${range.from}|${range.to}`, ps = PROD[key]; if (NOVA && c.unit && (!ps || (!ps.loading && Date.now() - ps.at > 60000))) prodLoad(key, range, c.unit.id);
-    const tgt = !c.unit ? '' : !ps || ps.loading ? '<p class="muted">Reading targets…</p>' : !ps.ok ? setup('Targets are not readable', ps.err) : UK.targetChart(((ps.data.production || {}).rows || []).map((r) => ({ label: r.deliverable, planned: r.planned, actual: r.created })), { label: 'Target and actual' }) || hnone('No production is planned in this period.', 'event_busy');
-    return hcard('Production', `<div class="stats"><div class="stat"><b>${jb.filter((j) => j.status === 'running').length}</b><span>running</span></div><div class="stat"><b>${jb.filter((j) => j.status === 'queued').length}</b><span>queued</span></div><div class="stat"><b>${jb.filter((j) => ['failed', 'blocked'].includes(j.status)).length}</b><span>failed or blocked</span></div><div class="stat"><b>${tk.length}</b><span>open tasks</span></div></div>${tgt}`
-      + (jb.slice(0, 12).map((j) => hrow(j.type, `${esc(j.team_id)} · attempt ${j.attempt}/${j.max_attempts} · ${esc(ago(j.updated_at || j.created_at))}`, chip(j.status), '#cloud')).join('') || (JOBS_ERR ? hnone('The job queue could not be read.', 'cloud_off') : '')));
-  }
-  if (tab === 'outputs') { const o = (OUTPUTS || []).filter((x) => taggedIn(c.names, x)); return hcard('Outputs', o.length ? o.slice(0, 50).map((x) => hrow(x.title || x.id, `${esc(x.kind)} · ${esc(ago(x.at))}${x.url ? ` · <a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">open</a>` : ''}`, chip(x.status))).join('') : hnone('No output has been logged for this House.', 'inventory_2')); }
-  if (tab === 'scheduler') { const wf = ((ORG && ORG.workflows) || []).filter((w) => c.set.has(w.unit_id) && w.schedule); return hcard('Scheduler', (wf.length ? wf.map((w) => hrow(w.file, `${esc(w.repo)}`, `<code>${esc(w.schedule)}</code>`)).join('') : hnone('No scheduled workflow is registered for this House.', 'schedule')) + '<p class="muted">Per-channel production schedules (planned slots) are in Automation, under Schedule and statistics.</p>', '<a class="btn tonal" href="#automation">Open Automation</a>'); }
-  if (tab === 'approvals') { const a = D.approvals.filter((x) => taggedIn(c.names, { team_id: x.team })); return hcard('Approvals', a.length ? a.slice(0, 40).map((x) => `<div class="row"><div class="grow"><b>${esc(x.code)}</b> ${chip(x.state)}<div>${esc(x.what)}</div><div class="muted">${esc(x.raised_on || '')}</div></div>${x.state === 'waiting' ? `<span class="actions"><button class="btn filled" data-yes="${x.id}">YES</button><button class="btn text" data-no="${x.id}">No</button></span>` : ''}</div>`).join('') : hnone('No approval is tagged to this House.', 'verified'), '<a class="btn text" href="#approvals">All approvals</a>'); }
-  if (tab === 'analytics') {
-    const rows = h.metrics.map((name) => { const x = UK.headline(M, null, range, { units: c.set, names: [name] }); return hrow(name, x.totals.length ? srcFoot(x) : 'No records in Coco', x.totals.length ? `<b>${esc(x.totals.map((t) => UK.fmtNum(t.total)).join(' · '))}</b>` : chipTxt('', 'Unavailable')); }).join('');
-    const yt = c.id === 'gigi' && D.ytLatest && D.ytLatest.channel ? hrow('YouTube channel (lifetime)', `collected ${esc(ago(D.ytLatest.collected_at))}`, `<b>${esc(UK.fmtNum(D.ytLatest.channel.views))} views · ${esc(UK.fmtNum(D.ytLatest.channel.subscribers))} subscribers</b>`) : '';
-    return hcard(`Analytics · ${range.label}`, rows + yt + `<div class="muted" style="margin-top:8px">Only the measures that mean something for ${esc(h.domain)} are listed.</div>`);
-  }
-  if (tab === 'revenue') {
-    const hd = UK.headline(M, 'revenue', range, { units: c.set, currency: HF.currency }), rr = UK.selectMetrics(M, { kind: 'revenue', units: c.set, currency: HF.currency, from: range.from, to: range.to });
-    const by = new Map(); rr.forEach((m) => { const k = `${m.source}|${m.unit}|${UK.isEstimate(m) ? 'estimated' : 'actual'}`; by.set(k, (by.get(k) || 0) + Number(m.value)); });
-    return hcard(`Revenue · ${range.label}`, `<div class="kv${hd.totals.length ? '' : ' na'}">${hd.totals.length ? metricValue(hd, (t) => UK.fmtMoney(t.total, t.unit)) : hd.state === 'none_in_period' ? 'No records' : 'Unavailable'}</div> ${basisChip(hd.state)}
-      ${hd.totals.length ? deltaLine(hd, range) : `<p class="muted">${metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'Coco holds no revenue records for this House in this period. That is not a confirmed zero.'}</p>`}
-      ${[...by.entries()].map(([k, v]) => { const [src, unit, basis] = k.split('|'); return hrow(src, basis, `<b>${esc(UK.fmtMoney(v, unit))}</b>`); }).join('')}
-      ${UK.lineChart(UK.seriesByDay(rr, range, (hd.totals[0] || {}).unit), { label: 'Revenue over time', fmt: (v) => UK.fmtMoney(v, (hd.totals[0] || {}).unit) })}<div class="muted">${revenueFoot(hd)}</div>`);
-  }
-  if (tab === 'activity') { const re = new RegExp('\\b(' + [h.id, h.label, ...c.names].filter(Boolean).map((s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'i'); const a = (D.activity || []).filter((x) => re.test(`${x.action} ${x.detail || ''}`)); return hcard('Activity history', a.length ? a.slice(0, 40).map((x) => hrow(x.action, `${esc(x.detail || '')} · ${esc(x.actor || '')} · ${esc(ago(x.at))}`)).join('') : hnone('No recent activity mentions this House.', 'history'), '', '') + `<div class="muted">Matched by House and team name in the latest 100 activity entries.</div>`; }
-  if (tab === 'settings') {
-    const cpTeam = CP && (CP.teams || []).find((t) => t.id === c.id);
-    return hcard('Settings', hrow('Identity', `${esc(h.label)} · id ${esc(h.id)} · ${esc(h.domain)}`, htile(h)) + hrow('Tracked measures', esc(h.metrics.join(', '))) + hrow('Expected platforms', esc(h.platforms.join(', ')))
-      + (cpTeam ? hrow('State and Claude', `state ${esc(cpTeam.state || 'on')} · Claude ${esc(cpTeam.claude || 'on demand')}`, '', '#teams') : hrow('Controls', 'State, Claude and budget controls for each team are in Teams.', '', '#teams')), '<a class="btn text" href="#teams">Open team controls</a>');
-  }
-  return hnone('Unknown tab');
-}
+function houseTabBody(c, tab, range) { const f = HOUSE_TAB[tab]; return f ? f(c, range) : hnone('Unknown tab'); }
 function houseView() {
   const h = houseOf(ARG);
   if (!h) return hcard('House not found', hnone('That House is not in the navigation contract.', 'error')) + `<a class="btn tonal" href="#houses">All Houses</a>`;
   const c = houseCtx(h.id), range = hfRange(), tab = HTABS.some((t) => t[0] === HTAB) ? HTAB : 'overview';
-  return `<div class="househead">${htile(h, 'l')}<div class="grow"><span class="eyebrow">${esc(h.domain)} House</span><h2>${esc(h.label)}</h2><span class="muted">${esc((c.unit && c.unit.focus) || '')}</span></div>${c.live ? chip(c.live.state) : ''}${createMenu(c.unit && c.unit.id)}</div>
-    ${orgBanner()}<div class="htabs" role="tablist" aria-label="${esc(h.label)} workspace">${HTABS.map(([k, l]) => `<button role="tab" aria-selected="${k === tab}" class="${k === tab ? 'on' : ''}" data-htab="${k}">${esc(l)}</button>`).join('')}</div>
-    <div class="hbody">${['analytics', 'revenue', 'production', 'overview'].includes(tab) ? `<div class="hperiod"><label class="fsel"><span>Period</span><select data-hf="period" aria-label="Period">${UK.PERIODS.map(([k, l]) => `<option value="${k}"${HF.period === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>` : ''}${houseTabBody(c, tab, range)}</div>`;
+  return `<div class="househead">${htile(h, 'l')}<div class="grow"><span class="eyebrow">${esc(h.domain)} House</span><h2>${esc(h.label)}</h2><span class="muted">${esc((c.live && (c.live.doing || c.live.role)) || '')}</span></div>${c.live ? chip(c.live.state) : ''}${addMenu(c)}</div>
+    <div class="htabs" role="tablist" aria-label="${esc(h.label)} workspace">${HTABS.map(([k, l]) => `<button role="tab" aria-selected="${k === tab}" class="${k === tab ? 'on' : ''}" data-htab="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="hbody">${['analytics', 'revenue', 'overview'].includes(tab) ? `<div class="hperiod"><label class="fsel"><span>Period</span><select data-hf="period" aria-label="Period">${UK.PERIODS.map(([k, l]) => `<option value="${k}"${HF.period === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label></div>` : ''}${houseTabBody(c, tab, range)}</div>`;
 }
 function housesView() {
-  brLoad();
-  const range = hfRange(), core = UK.houseUnit(orgUnits(), 'core');
-  return `${orgBanner()}<p class="muted" style="margin:0 0 12px">Seven business Houses. Each opens its own operating workspace.</p>
-    <div class="housegrid">${NAV.houses.map((h) => houseCard(h, range)).join('')}</div>
-    <h3 class="sech">Central system</h3><div class="card2">${hrow('Core House', 'Central operations: the registry, shared infrastructure and the Brains. It is the system layer, not a business House.', chipTxt('', core ? core.state : 'planned'), '#company')}</div>`;
+  return `<p class="muted" style="margin:0 0 12px">Seven business Houses. Each opens its own operating workspace.</p><div class="housegrid">${NAV.houses.map((h) => {
+    const c = houseCtx(h.id), l = c.live, open = c.tasks.filter((t) => UK.taskGroup(t.status) === 'open').length, wait = c.approvals.filter((a) => a.state === 'waiting').length;
+    return `<article class="card2 housecard"><header>${htile(h)}<div class="grow"><h3>${esc(h.label)}</h3><span class="muted">${esc((l && l.role) || h.domain)}</span></div>${l ? chip(l.state) : ''}</header>
+      ${l && (l.doing || l.next || l.blocked) ? `<div class="muted">${esc([l.doing, l.next ? 'Next: ' + l.next : null].filter(Boolean).join(' · '))}</div>${l.blocked ? `<div class="chip warn" style="justify-self:start">Blocked: ${esc(l.blocked)}</div>` : ''}` : ''}
+      <div class="hstats"><span><b>${c.teams.length + c.subs.length}</b> teams</span><span><b>${c.cats.length + c.scats.length}</b> categories</span><span><b>${c.offs.length + c.chans.length}</b> channels and products</span><span><b>${c.agents.length + c.members.length}</b> agents</span><span><b>${open}</b> open tasks</span><span><b>${wait}</b> waiting</span></div>
+      <a class="btn tonal" href="#house:${h.id}">Open House<i class="ms">arrow_forward</i></a></article>`; }).join('')}</div>
+    <h3 class="sech">Central system</h3><div class="card2">${hrow('Core', 'Central operations: the registry, shared infrastructure and the Brains. It is the system layer, not a business House.', '', '#control')}</div>`;
+}
+
+// ---------------------------------------------------------------- Connections: every integration opens a detail with its real status, and a working way to connect it
+// PickTheory is a YouTube channel (connection yt-app-web), connected with Google sign-in like the other channels (api/_connect.js says so: it has no key to paste).
+// It is not in the integrations table, so the list adds it; its state is the state of that channel's account.
+const PT_CONN = 'yt-app-web';
+const pickTheory = () => {
+  const a = (CONNS || []).find((c) => c.connection_id === PT_CONN);
+  return { id: 'picktheory', house_id: null, platform: 'PickTheory', account: a ? a.external_name : null, state: a ? a.state : 'not_connected', auth_method: 'YouTube channel: Google sign-in (connection ' + PT_CONN + ')', capabilities: [], last_check_at: null, last_ok_at: a && a.state === 'connected' ? a.last_verified_at : null, error: null,
+    next_action: a && a.state === 'connected' ? null : 'Create the PickTheory channel on YouTube first. Then press Connect, sign in with Google and choose that channel, then press Verify.', virtual: true };
+};
+const KEY_PROVIDERS = ['gumroad'];   // the providers whose pasted token Nova accepts at POST /api/connect/key (the PROVIDERS table of api/_connect.js); add one here when Nova learns another
+const integProvider = (i) => String(i.id).split(/[-_]/)[0];
+// how a platform is authorised from the app: { provider, connection } for a Google or platform consent screen, else null (a manual step)
+const oauthOf = (i) => {
+  if (i.id === 'picktheory') return { provider: 'youtube', connection: PT_CONN };
+  const p = OAUTH_PLATFORMS[i.id] ? i.id : OAUTH_PLATFORMS[integProvider(i)] ? integProvider(i) : null;
+  return p ? { provider: p, connection: OAUTH_PLATFORMS[p].connection || null } : null;
+};
+const integKeyOf = (i) => (KEY_PROVIDERS.includes(i.id) ? i.id : KEY_PROVIDERS.includes(integProvider(i)) ? integProvider(i) : null);
+const integAccounts = (i) => (CONNS || []).filter((c) => (i.id === 'picktheory' ? c.connection_id === PT_CONN : c.provider === i.id || c.provider === integProvider(i) || c.connection_id === i.id));
+const integRows = () => {
+  const rows = (D.integrations || []).slice(); if (!rows.some((r) => r.id === 'picktheory')) rows.push(pickTheory());
+  const rank = { error: 0, partial: 1, paused: 2, not_connected: 3, connected: 4 };
+  return rows.sort((a, b) => (rank[a.state] ?? 5) - (rank[b.state] ?? 5) || String(a.platform).localeCompare(String(b.platform)));
+};
+const CONN_RES = {};   // the last Check now / key result per integration, shown under its buttons
+const connWords = { connected: 'Connected', partial: 'Partly connected', paused: 'Paused', not_connected: 'Not connected', error: 'Connection problem' };
+function connOverview() {
+  const rows = integRows();
+  return `<div class="card2" id="connlist"><div class="hcard-h"><h3>Integrations</h3><span class="muted">${rows.filter((r) => r.state === 'connected').length} of ${rows.length} connected</span></div>
+    ${rows.map((i) => { const acc = integAccounts(i).find((a) => a.last_verified_at); return hrow(i.platform || i.id, `${esc([connWords[i.state] || i.state, i.account, i.last_ok_at ? 'verified ' + ago(i.last_ok_at) : acc ? 'verified ' + ago(acc.last_verified_at) : i.last_check_at ? 'checked ' + ago(i.last_check_at) : 'never verified'].filter(Boolean).join(' · '))}${i.error ? `<div class="errline">${esc(String(i.error).slice(0, 160))}</div>` : ''}${i.next_action && i.state !== 'connected' ? `<div class="muted">Next: ${esc(i.next_action)}</div>` : ''}`, chip(i.state), '#connections:' + i.id); }).join('')}</div>`;
+}
+function connDetail(id) {
+  const back = `<a class="btn text" href="#connections"><i class="ms">arrow_back</i>All integrations</a>`;
+  let i = integRows().find((x) => x.id === id);
+  if (!i) { const acct = (CONNS || []).find((c) => c.connection_id === id); if (acct) i = integRows().find((x) => x.id === acct.provider || integProvider(x) === acct.provider) || { id: acct.provider, platform: acct.provider, state: acct.state, auth_method: null, capabilities: [], error: null, next_action: null }; }
+  if (!i) return `<div id="conn-detail">${back}${hcard('Not found', hnone('This integration is not in the list. It may still be loading.', 'error'))}</div>`;
+  const oauth = oauthOf(i), keyProv = integKeyOf(i), accts = integAccounts(i), res = CONN_RES[i.id];
+  const first = accts.find((a) => a.state === 'connected') || accts[0] || null, conn = (first && first.connection_id) || (oauth && oauth.connection) || i.id;
+  const verified = [i.last_ok_at, ...accts.map((a) => a.last_verified_at)].filter(Boolean).sort().pop();
+  const err = i.error || (accts.find((a) => a.state === 'error') ? 'An account of this integration reports an error. Verify it, or reconnect.' : '');
+  const next = i.next_action || (i.state === 'connected' ? 'Nothing: it is connected. Verify it to check it still works.' : oauth ? 'Press Connect, approve it on the platform, then press Verify.' : 'Follow the setup step above, then press Check now.');
+  const needsConnect = ['not_connected', 'error', 'partial'].includes(i.state) || !accts.some((a) => a.state === 'connected');
+  const oauthBtns = oauth ? `<button class="btn filled" data-oauth="${esc(oauth.provider)}" data-oauthconn="${esc(oauth.connection || conn)}"><i class="ms">link</i>${needsConnect ? 'Connect' : 'Reconnect'}</button><button class="btn tonal" data-cverify="${esc(oauth.connection || conn)}"><i class="ms">verified_user</i>Verify</button>` : '';
+  const keyForm = keyProv ? `<details class="brec"><summary>${i.state === 'connected' ? 'Replace the token' : 'Paste a token instead'}</summary><form class="opform" data-opform="conn-key" data-provider="${esc(keyProv)}" data-conn="${esc(conn)}" data-slot="${esc(i.id)}" autocomplete="off"><label>Access token<input name="secret" type="password" autocomplete="new-password" spellcheck="false" required placeholder="Paste the token"></label><div class="muted">Nova checks it with ${esc(i.platform || keyProv)} first and stores it only if it works. It goes into the cloud vault and is never shown again, not even to you.</div><div class="actions"><button class="btn filled" type="submit"><i class="ms">key</i>Save key</button></div></form></details>` : '';
+  return `<div id="conn-detail">${back}<div class="card2"><div class="hcard-h"><div class="logohead">${serviceLogo(i.id, i.platform, 'l')}<div><h2 class="tktitle">${esc(i.platform || i.id)}</h2><span class="muted">${esc(i.account || '')}</span></div></div>${chip(i.state)}</div>
+      ${mini('Status', esc(connWords[i.state] || i.state))}${mini('Last verified', verified ? `${esc(fmtDay(verified))} · ${esc(ago(verified))}` : 'Never verified')}${mini('Last checked', i.last_check_at ? esc(ago(i.last_check_at)) : '')}${mini('How it connects', i.auth_method ? esc(String(i.auth_method).slice(0, 220)) : '')}${mini('Used for', (i.capabilities || []).length ? esc(i.capabilities.join(', ')) : '')}${mini('House', i.house_id ? esc(houseName(i.house_id)) : '')}</div>
+    ${err ? `<div class="card2 errbox"><b>Error</b><div>${esc(String(err).slice(0, 400))}</div></div>` : ''}
+    ${i.id === 'picktheory' && i.state !== 'connected' ? hcard('Three steps', '<ol class="steps"><li><b>Create the channel.</b> PickTheory is a YouTube channel that does not exist yet. Create it on YouTube while signed in as the Google account that owns the other Coco channels (a new brand channel for App / Web / Product, with the name you choose).</li><li><b>Connect it here.</b> Press Connect, sign in with Google and pick the new brand channel on Google\u2019s chooser (the channel, not the account), then approve everything.</li><li><b>Verify, then assign.</b> Press Verify to confirm the channel from the cloud, then assign it to a team, or nothing publishes with it.</li></ol>') : ''}
+    <div class="card2 nextbox"><b>Next action</b><div>${esc(next)}</div>
+      <div class="actions">${oauthBtns}${oauth ? '' : `<button class="btn tonal" data-connchk="${esc(i.id)}"><i class="ms">fact_check</i>Check now</button>`}</div>${res ? `<div class="connres ${res.ok === false ? 'bad' : res.ok === null ? 'wait' : ''}">${esc(res.text)}</div>` : ''}${keyForm}</div>
+    ${hcard(`Accounts (${accts.length})`, accts.map((a) => hrow(a.external_name || a.connection_id, `${esc(a.provider)} · ${a.last_verified_at ? 'verified ' + esc(ago(a.last_verified_at)) : 'never verified'}${a.external_handle ? ' · ' + esc(a.external_handle) : ''}`, `<span class="actions">${chip(a.state)}${OAUTH_PLATFORMS[a.provider] ? `<button class="btn text sm" data-oauth="${esc(a.provider)}" data-oauthconn="${esc(a.connection_id)}">${a.state === 'connected' ? 'Reconnect' : 'Connect'}</button><button class="btn text sm" data-cverify="${esc(a.connection_id)}">Verify</button>` : ''}</span>`)).join('') || hnone(oauth ? 'No account is connected yet. Press Connect above.' : 'No account is recorded for this integration.', 'person'), '<a class="btn text" href="#connections">Accounts, assignment and the vault</a>')}</div>`;
+}
+// Check now: POST /api/connect/check. A platform with no credential the cloud can use answers CANNOT_CHECK, which is shown as the plain statement it is (not as a failure, never as a success).
+async function connCheck(id) {
+  const i = integRows().find((x) => x.id === id); if (!i) return;
+  const acct = integAccounts(i)[0], cid = acct ? acct.connection_id : id;
+  CONN_RES[id] = { ok: null, text: 'Checking…' }; render();
+  const r = await novaRoute('POST', '/api/connect/check', { connection_id: cid });
+  if (r.ok) {
+    const d = r.data || {}, neutral = d.state === 'CANNOT_CHECK', pass = d.ok !== false && d.verified !== false;
+    CONN_RES[id] = { ok: neutral ? null : pass, text: String(d.detail || d.message || d.reason || (pass ? 'The check passed.' : 'The check did not pass.')) };
+    await loadAll();
+  } else if (r.unavailable && oauthOf(i)) { delete CONN_RES[id]; await connectionVerify(cid); }
+  else CONN_RES[id] = { ok: false, text: said(r) };
+  if (CONN_RES[id]) toast(CONN_RES[id].text.slice(0, 160)); render();
+}
+// Save key: POST /api/connect/key. Nova asks the provider first and stores nothing unless the token works; a 200 can still say "stored: false".
+async function connKey(form) {
+  const f = new FormData(form), provider = form.dataset.provider, connection_id = String(form.dataset.conn || provider).trim().toLowerCase(), input = form.querySelector('input[name="secret"]');
+  const secret = String(f.get('secret') || ''); if (input) input.value = '';   // the key never stays in the page
+  const slot = form.dataset.slot || provider;
+  if (!secret.trim()) return toast('Paste the key first');
+  if (!/^[a-z0-9][a-z0-9._-]{1,60}$/.test(connection_id)) return toast('The connection id must be lower case letters, digits, dot, dash or underscore');
+  const r = await novaRoute('POST', '/api/connect/key', { provider, connection_id, secret });
+  const d = r.data || {};
+  if (!r.ok) CONN_RES[slot] = { ok: false, text: said(r) };
+  else if (d.stored === false || d.ok === false && !d.stored) CONN_RES[slot] = { ok: false, text: d.reason || d.detail || 'The key was not accepted. Nothing was stored.' };
+  else CONN_RES[slot] = { ok: d.ok !== false, text: `The key is stored in the cloud vault and is never shown again. ${d.detail || ''}`.trim() };
+  toast(CONN_RES[slot].text.slice(0, 160));
+  if (r.ok && d.stored !== false) { await log('key stored', `${provider} (${connection_id})`); await loadAll(); }
+  render();
+}
+
+// ---------------------------------------------------------------- YouTube numbers and revenue per source
+function ytCard(c) {
+  const y = UK.ytSummary(D.ytStats, CONNS), mine = y.channels;
+  if (D.ytStatsErr) return hcard('YouTube', setup('YouTube numbers cannot be read', D.ytStatsErr));
+  if (!mine.length) return hcard('YouTube', hnone('No YouTube numbers are stored yet. The daily collection fills them in.', 'analytics'));
+  return hcard('YouTube', `<div class="stats"><div class="stat"><b>${esc(UK.fmtNum(y.views))}</b><span>views, all channels</span></div><div class="stat"><b>${esc(UK.fmtNum(y.subscribers))}</b><span>subscribers</span></div><div class="stat"><b>${esc(UK.fmtNum(y.videos))}</b><span>videos</span></div></div>
+    ${mine.map((x) => hrow(x.name, `${esc(UK.fmtNum(x.views))} views · ${esc(UK.fmtNum(x.subscribers))} subscribers${x.videos != null ? ' · ' + esc(UK.fmtNum(x.videos)) + ' videos' : ''}`, `<span class="muted">${esc(ago(x.at))}</span>`)).join('')}
+    <div class="muted">Last synced ${esc(ago(y.lastSync))}${D.ytLatest && D.ytLatest.stale ? ' · the collection is stale' : ''}. Lifetime totals as reported by YouTube.</div>`);
+}
+const REV = { status: 'idle', events: [], sync: [], why: '', at: 0, busy: {} };
+async function revLoad(force) {
+  if (REV.status === 'loading' || (!force && REV.at && Date.now() - REV.at < 60000)) return;
+  REV.status = 'loading'; REV.at = Date.now();
+  try {
+    const [e, s] = await Promise.all([sb.from('revenue_events').select('*').order('occurred_at', { ascending: false }).limit(1000), sb.from('revenue_sync').select('*')]);
+    const miss = (r) => r.error && (r.status === 404 || /no such table|does not exist|42P01|not found/i.test(String(r.error.message || r.error.code || '')));
+    if (miss(e) || miss(s)) { REV.status = 'missing'; REV.events = []; REV.sync = []; }
+    else if (e.error || s.error) { REV.status = 'error'; REV.why = String((e.error || s.error).message || 'unreadable'); }
+    else { REV.status = 'ready'; REV.events = e.data || []; REV.sync = s.data || []; }
+  } catch (x) { REV.status = 'error'; REV.why = String(x && x.message || x); }
+  if (['insights', 'house'].includes(page)) render();
+}
+function revenueBlock(o = {}) {
+  revLoad();
+  if (REV.status === 'idle' || REV.status === 'loading') return '<p class="muted">Reading revenue…</p>';
+  if (REV.status === 'missing') return setup('Revenue sync is not set up yet', 'Nova does not serve the revenue tables yet, so no sale can be shown. Nothing is estimated and no zero is shown.');
+  if (REV.status === 'error') return setup('Revenue cannot be read', REV.why);
+  const range = hfRange(), house = o.house || (HF.house !== 'all' ? HF.house : null);
+  const ev = REV.events.filter((e) => UK.within(e.occurred_at, range.from, range.to) && (!house || e.house_id === house) && (HF.currency === 'all' || !HF.currency || e.currency === HF.currency));
+  const R = UK.revenueSummary(ev, REV.sync, CONNS, { always: ['gumroad'] });
+  const money = (t) => UK.fmtMoney(t.total, t.currency), tot = new Map();
+  R.sources.forEach((s) => s.totals.forEach((t) => tot.set(t.currency, (tot.get(t.currency) || 0) + t.total)));
+  const row = (s) => {
+    const name = s.source.charAt(0).toUpperCase() + s.source.slice(1), cid = s.connection_ids[0] || '', oauth = OAUTH_PLATFORMS[s.source];
+    const sync = cid ? `<button class="btn tonal sm" data-revsync="${esc(cid)}"${REV.busy[cid] ? ' disabled' : ''}><i class="ms">sync</i>${REV.busy[cid] ? 'Syncing…' : 'Sync now'}</button>` : '';
+    const when = s.lastOk ? `last successful sync ${ago(s.lastOk)}` : s.lastSynced ? `last tried ${ago(s.lastSynced)}` : 'never synced';
+    if (s.state === 'amount') return hrow(name, `${esc(s.totals.map((t) => `${t.count} sale${t.count === 1 ? '' : 's'} in ${t.currency}`).join(' · '))} · ${esc(when)}`, `<span class="actions"><b>${esc(s.totals.map(money).join(' · '))}</b>${sync}</span>`);
+    if (s.state === 'zero') return hrow(name, `Connected and verified: no sales in this period · ${esc(when)}`, `<span class="actions"><b>${esc(s.zeroCurrency ? s.zeroCurrency + ' 0' : '0')}</b>${sync}</span>`);
+    if (s.state === 'error') return hrow(name, `<span class="errline">The last sync failed: ${esc(s.error)}</span> · ${esc(when)}`, `<span class="actions">${chipTxt('bad', 'Sync failed')}${sync}</span>`);
+    if (s.state === 'never_synced') return hrow(name, 'Connected, but no sync has finished yet. Press Sync now.', `<span class="actions">${chipTxt('warn', 'Not synced yet')}${sync}</span>`);
+    return hrow(name, 'No account is connected, so there is nothing to count. This is not a zero.', `<span class="actions">${chipTxt('', 'Not connected')}${oauth ? `<button class="btn filled sm" data-oauth="${esc(s.source)}" data-oauthconn="${esc(oauth.connection || '')}">Connect</button>` : `<a class="btn filled sm" href="#connections">Connect</a>`}</span>`);
+  };
+  return `${tot.size ? `<div class="kv"><span class="kvn">${esc([...tot.entries()].map(([c, v]) => UK.fmtMoney(v, c)).join(' · '))}</span></div><div class="muted">Actual sales, one figure per currency, never added together.</div>` : ''}${R.sources.map(row).join('') || hnone('No revenue source is connected.', 'payments')}`;
+}
+async function revSync(cid) {
+  if (REV.busy[cid]) return; REV.busy[cid] = true; render();
+  const r = await novaRoute('POST', '/api/revenue/sync', { connection_id: cid });
+  REV.busy[cid] = false;
+  if (!r.ok) { toast(said(r)); return render(); }
+  const one = ((r.data && r.data.sources) || []).find((x) => x.connection_id === cid) || ((r.data && r.data.sources) || [])[0] || null;
+  toast(!one ? (r.data && (r.data.message || r.data.detail)) || 'Sync finished' : one.state === 'ok' ? (one.cooldown ? 'Synced a moment ago: showing that result' : `Synced: ${one.fetched} read, ${one.inserted} new, ${one.updated} updated`) : `The sync did not finish: ${one.error || one.state}`);
+  await revLoad(true); render();
+}
+
+// ---------------------------------------------------------------- Insights: YouTube, revenue per source, what Coco produced, AI usage
+function insightsFilter() {
+  const o = (v, l, cur) => `<option value="${esc(v)}"${String(cur) === String(v) ? ' selected' : ''}>${esc(l)}</option>`, cur = [...new Set(REV.events.map((e) => e.currency).filter(Boolean))].sort();
+  return `<details class="fwrap" open><summary><i class="ms">tune</i><b>Filters</b><span class="fsum">${esc(HF.house === 'all' ? 'All Houses' : houseName(HF.house))} · ${esc(hfRange().label)}</span></summary><div class="filters" role="group" aria-label="Filters">
+    <label class="fsel"><span>House</span><select data-hf="house" aria-label="House">${o('all', 'All Houses', HF.house)}${NAV.houses.map((h) => o(h.id, h.label, HF.house)).join('')}</select></label>
+    <label class="fsel"><span>Period</span><select data-hf="period" aria-label="Period">${UK.PERIODS.map(([k, l]) => o(k, l, HF.period)).join('')}</select></label>
+    ${HF.period === 'custom' ? `<label class="fsel"><span>From</span><input type="date" data-hf="from" value="${esc(HF.from)}"></label><label class="fsel"><span>To</span><input type="date" data-hf="to" value="${esc(HF.to)}"></label>` : ''}
+    <label class="fsel"><span>Currency</span><select data-hf="currency" aria-label="Currency">${o('all', 'All currencies', HF.currency)}${cur.map((x) => o(x, x, HF.currency)).join('')}</select></label>
+    <button class="btn text" data-hf-reset="1"><i class="ms">restart_alt</i>Reset filters</button></div></details>`;
+}
+function insightsView() {
+  const range = hfRange(), ai = CP && CP.ai ? CP.ai : null, day = ai && ai.usage ? ai.usage.day || {} : {};
+  const table = (rows, head) => rows.length ? `<div class="tscroll"><table class="dt"><thead><tr>${head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((x, i) => `<td${i === 0 ? ' class="first"' : ''}>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+  const perHouse = NAV.houses.filter((h) => HF.house === 'all' || HF.house === h.id).map((h) => { const c = houseCtx(h.id); return [`<span class="hname">${htile(h, 's')}${esc(h.label)}</span>`, String(c.tasks.filter((t) => UK.taskGroup(t.status) === 'open').length), String(c.tasks.filter((t) => t.status === 'done' && UK.within(t.updated_at, range.from, range.to)).length), String(c.outs.filter((o) => o.status === 'published' && UK.within(o.at, range.from, range.to)).length), String(c.jobs.filter((j) => j.status === 'failed' && UK.within(j.updated_at, range.from, range.to)).length)]; });
+  return `<div class="homehead"><div><h2 class="greet">Insights</h2><p class="muted">YouTube numbers, revenue per source, what Coco produced and AI usage. Every number names its source and how fresh it is.</p></div></div>${insightsFilter()}
+    ${ytCard()}${hcard('Revenue', revenueBlock({}), '<a class="btn text" href="#connections">Connections</a>')}
+    ${hcard(`Work by House · ${range.label}`, table(perHouse, ['House', 'Open tasks', 'Tasks done', 'Outputs published', 'Jobs failed']) + '<div class="muted">Counted from Coco’s own tasks, outputs and jobs.</div>')}
+    ${hcard('AI usage and budget', ai ? `<div class="stats"><div class="stat"><b>${num(day.tokens)}</b><span>Claude tokens today</span></div><div class="stat"><b>${money(day.cost)}</b><span>cost today</span></div><div class="stat"><b>${num(((ai.split || {}).claude_steps))}</b><span>Claude steps</span></div><div class="stat"><b>${num(((ai.split || {}).cloud_steps))}</b><span>cloud steps</span></div></div><p class="muted">Snapshot ${esc(CP.generated_at ? ago(CP.generated_at) : 'age unknown')}.</p>` : hnone('The control snapshot is not loaded, so budgets cannot be shown.', 'bolt'), '<a class="btn tonal" href="#ai">Open AI usage</a>')}`;
 }
 
 // ---------------------------------------------------------------- Brains & Agents: the hierarchy
 let BSEL = null;
+// The Brain tree needs org_brains. Without it the page shows what IS registered: each House with its teams, subteams, categories and channels, its agents and its Brain records.
+function hierarchyRegistered() {
+  const company = ((LIVE && LIVE.brain) || []).filter((b) => !b.team_id).length;
+  const house = (h) => {
+    const c = houseCtx(h.id), top = c.nodes.filter((n) => !n.parent || !c.nodes.some((x) => x.id === n.parent)).filter((n) => n.kind !== 'agent');
+    return `<details class="btree"><summary><span class="bnode">${htile(h, 's')}<span class="grow"><b>${esc(h.label)}</b><small>${c.teams.length + c.subs.length} teams · ${c.cats.length + c.scats.length} categories · ${c.offs.length + c.chans.length} channels and products · ${c.agents.length + c.members.length} agents · ${c.brain.length} Brain records</small></span>${c.live ? chip(c.live.state) : ''}</span></summary>
+      <div class="bkids">${top.map((n) => treeRows(c, n, 0)).join('') || hnone('No team is registered under this House.', 'account_tree')}<a class="btn text sm" href="#house:${h.id}">Open ${esc(h.name)}</a></div></details>`;
+  };
+  return `<div class="banner"><i class="ms">account_tree</i><span><b>The company as it is registered.</b> The Brain health tree is not set up (${esc(BR.err)}), so no Brain health is shown; nothing here is estimated.</span></div>
+    <div class="card2 btreewrap"><div class="hcard-h"><h3>Houses</h3><span class="muted">${company} company-wide Brain record${company === 1 ? '' : 's'}</span></div>${NAV.houses.map(house).join('')}</div>
+    <div class="card2"><h3>Brain records</h3><p class="muted">The growth Brain records and the agent controls are under Brain records and Agents.</p><a class="btn tonal" href="#brain">Open Brain records</a></div>`;
+}
 function hierarchyView() {
   brLoad();
   if (!BR) return '<p class="muted">Reading the Brains…</p>';
-  if (BR.err) return setup('The Brain hierarchy is not readable yet', 'The organisation Brain records are not set up in Coco Cloud yet; they wait for a verified backup and a founder YES. ' + BR.err) + `<div class="card2"><h3>Brain records</h3><p class="muted">The growth Brain records and the agent controls that do exist are under Brain records and Agents.</p><a class="btn tonal" href="#brain">Open Brain records</a></div>`;
+  if (BR.err) return hierarchyRegistered();
   const rows = BR.rows, byParent = new Map(); rows.forEach((b) => { const k = b.parent_brain_id || ''; (byParent.get(k) || byParent.set(k, []).get(k)).push(b); });
   const nameOf = (b) => b.unit_id ? unitName(b.unit_id) : (orgProducts().find((p) => p.id === b.product_id) || {}).name || b.id;
   const LV = { global: 'public', house: 'apartment', team: 'groups', subteam: 'account_tree', category: 'category', product: 'tag', channel: 'tag', agent: 'smart_toy' };
@@ -6367,26 +6738,97 @@ function hierarchyView() {
   return `<div class="bsplit"><div class="card2 btreewrap"><div class="hcard-h"><h3>Brain hierarchy</h3><span class="muted">${rows.length} Brains</span></div>${roots.map((b) => node(b, 0)).join('') || hnone('No Brain is registered yet.', 'psychology')}</div><div class="card2 bdetail">${detail}</div></div>`;
 }
 
-// ---------------------------------------------------------------- Insights: revenue, statistics, AI usage, platform performance
-function insightsView() {
-  const range = hfRange(), sc = hfScope(), M = orgMetrics();
-  const rr = UK.selectMetrics(M, { kind: 'revenue', units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency, from: range.from, to: range.to });
-  const by = new Map(); rr.forEach((m) => { const k = `${m.source}\u0001${m.unit}\u0001${UK.isEstimate(m) ? 'estimated' : 'actual'}`; const e = by.get(k) || { v: 0, n: 0, latest: null }; e.v += Number(m.value); e.n++; const at = m.recorded_at || m.period; if (!e.latest || at > e.latest) e.latest = at; by.set(k, e); });
-  const rev = UK.headline(M, 'revenue', range, { units: sc.units, productId: HF.channel || null, productIds: sc.productIds, currency: HF.currency });
-  const table = (rows, head) => rows.length ? `<div class="tscroll"><table class="dt"><thead><tr>${head.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((x, i) => `<td${i === 0 ? ' class="first"' : ''}>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
-  const perHouse = NAV.houses.map((h) => { const hu = UK.houseUnit(orgUnits(), h.id), set = hu ? UK.descendants(orgUnits(), hu.id) : null; const cells = h.metrics.map((n) => { const x = set ? UK.headline(M, null, range, { units: set, names: [n] }) : { totals: [] }; return x.totals.length ? `${esc(n)} <b>${esc(x.totals.map((t) => UK.fmtNum(t.total)).join(' · '))}</b>` : ''; }).filter(Boolean); return [`<span class="hname">${htile(h, 's')}${esc(h.label)}</span>`, cells.length ? cells.join('<br>') : '<span class="muted">No records</span>']; });
-  const ai = CP && CP.ai ? CP.ai : null, day = ai && ai.usage ? ai.usage.day || {} : {};
-  return `${orgBanner()}<div class="homehead"><div><h2 class="greet">Insights</h2><p class="muted">Revenue, statistics, AI usage and platform performance. Every number names its source and how fresh it is.</p></div></div>${filterBar()}
-    ${hcard('Revenue', `<div class="kv${rev.totals.length ? '' : ' na'}">${rev.totals.length ? metricValue(rev, (t) => UK.fmtMoney(t.total, t.unit)) : rev.state === 'none_in_period' ? 'No records' : 'Unavailable'}</div> ${basisChip(rev.state)}
-      <p class="muted">${rev.totals.length ? `Actual and estimated amounts are listed separately below and never added together.` : metricsUnread() ? UNREAD_LINE(metricsUnread()) : 'No revenue is recorded in Coco for this selection. Nothing is estimated or shown as zero.'}</p>
-      ${table([...by.entries()].map(([k, e]) => { const [src, unit, basis] = k.split('\u0001'); return [esc(src), basis === 'estimated' ? chipTxt('warn', 'Estimated') : chipTxt('good', 'Actual'), esc(UK.fmtMoney(e.v, unit)), String(e.n), esc(UK.ago(e.latest))]; }), ['Source', 'Basis', 'Amount', 'Records', 'Latest'])}
-      <div class="muted">${revenueFoot(rev)}</div>`)}
-    ${hcard('Performance by House', table(perHouse, ['House', `Measures recorded in ${range.label.toLowerCase()}`]) + '<div class="muted">Each House shows only the measures that apply to it.</div>')}
-    ${hcard('AI usage and budget', ai ? `<div class="stats"><div class="stat"><b>${num(day.tokens)}</b><span>Claude tokens today</span></div><div class="stat"><b>${money(day.cost)}</b><span>cost today</span></div><div class="stat"><b>${num(((ai.split || {}).claude_steps))}</b><span>Claude steps</span></div><div class="stat"><b>${num(((ai.split || {}).cloud_steps))}</b><span>cloud steps</span></div></div><p class="muted">Snapshot ${esc(CP.generated_at ? ago(CP.generated_at) : 'age unknown')}.</p>` : hnone('The control snapshot is not loaded, so budgets cannot be shown.', 'bolt'), '<a class="btn tonal" href="#ai">Open AI usage</a>')}
-    ${hcard('Platform performance', D.ytLatest && D.ytLatest.channel ? hrow('YouTube', `lifetime totals · collected ${esc(ago(D.ytLatest.collected_at))}`, `<b>${esc(UK.fmtNum(D.ytLatest.channel.views))} views · ${esc(UK.fmtNum(D.ytLatest.channel.subscribers))} subscribers</b> ${D.ytLatest.stale ? chipTxt('warn', 'Stale') : chipTxt('good', 'Fresh')}`) + '<div class="muted">Per-channel statistics are in each channel’s dashboard in Automation.</div>' : hnone('No platform statistics have been collected yet.', 'analytics'))}
-    ${hcard('Reports', hnone('No stored report can be opened from the app yet. The daily summary job is built but not enabled in the cloud.', 'description'))}`;
+// ---------------------------------------------------------------- wiring of the operations screens (installed once)
+const V_CONNECTIONS = V.connections;   // the account-level Integration Hub stays below the new list of integrations
+const connectionsView = () => (ARG ? connDetail(ARG) : connOverview() + V_CONNECTIONS.call(V));
+function opsGo(hash) { if (location.hash === hash) render(); else location.hash = hash; }
+// Reconnect: an OAuth platform starts its real flow; anything else opens the detail, which says exactly what to do
+function reconnect(id, provider) {
+  const acc = (CONNS || []).find((c) => c.connection_id === id), prov = [acc && acc.provider, provider, String(provider || '').split(/[-_]/)[0], String(id).split(/[-_]/)[0]].find((p) => p && OAUTH_PLATFORMS[p]);
+  if (prov) return oauthConnect(prov, acc ? acc.connection_id : OAUTH_PLATFORMS[prov].connection || null);
+  opsGo('#connections:' + id);
 }
-Object.assign(V, { home: homeView, houses: housesView, house: houseView, hierarchy: hierarchyView, insights: insightsView });
+async function opSubmit(form) {
+  const name = form.dataset.opform;
+  if (name === 'tk-new') return taskCreate(form);
+  if (name === 'tk-note') return taskNote(form);
+  if (name === 'tk-assign') return taskAssign(form);
+  if (name === 'tk-enqueue') return taskEnqueue(form);
+  if (name === 'conn-key') return connKey(form);
+  const f = new FormData(form), g = (k) => String(f.get(k) || '').trim(), key = `form:${name}`;
+  if (inFlight.has(key)) return toast('Still working on that one'); inFlight.add(key);
+  try {
+    if (name === 'cat-add') {
+      const hid = form.dataset.house, nm = g('name'); if (!nm) return toast('Give the category a name');
+      if ((D.categories || []).some((c) => c.house_id === hid && c.name.toLowerCase() === nm.toLowerCase())) return toast(`${nm} already exists in this House`);
+      const code = Math.max(0, ...(D.categories || []).filter((c) => c.house_id === hid).map((c) => Number(c.code) || 0)) + 1;
+      const { error } = await sb.from('categories').insert({ house_id: hid, code, name: nm, linked_to: g('linked') || null });
+      if (error) return toast(error.message || 'Could not add the category');
+      form.reset(); await log('category added', `${nm} (${hid})`); toast('Category added'); await loadAll();
+    } else if (name === 'off-add') {
+      const hid = form.dataset.house, nm = g('name'); if (!nm) return toast('Give it a name');
+      if ((D.offerings || []).some((o) => o.house_id === hid && o.name.toLowerCase() === nm.toLowerCase())) return toast(`${nm} already exists in this House`);
+      const { error } = await sb.from('offerings').insert({ house_id: hid, category_id: g('category') || null, platform_id: g('platform') || null, kind: g('kind') || 'product', name: nm, status: 'planned', url: g('url') || null });
+      if (error) return toast(error.message || 'Could not add it');
+      form.reset(); await log('offering added', `${nm} (${hid})`); toast('Added'); await loadAll();
+    } else if (name === 'member-add') {
+      const hid = form.dataset.house, mid = g('member'); if (!mid) return;
+      if ((D.memberHouses || []).some((l) => l.member_id === mid && l.house_id === hid)) return toast('That member already works for this House');
+      const { error } = await sb.from('member_houses').insert({ member_id: mid, house_id: hid });
+      if (error) return toast(error.message || 'Could not assign the member');
+      await log('member assigned', `${memberName(mid)} to ${hid}`); toast('Assigned'); await loadAll();
+    } else if (name === 'struct-add') {
+      const kind = form.dataset.kind, id = g('id').toLowerCase();
+      if (!/^[a-z0-9][a-z0-9._/-]{1,80}$/.test(id)) return toast('The short id must be lower case letters, digits, dot, dash or slash');
+      if (structureTree().nodes.has(id)) return toast(`${id} already exists`);
+      if (await structureOp('create', id, null, { p_kind: kind, p_parent: g('parent'), p_name: g('name'), p_description: g('description') || null })) form.reset();
+    }
+  } catch (e) { toast(`That did not go through: ${e && e.message ? e.message : e}`); } finally { inFlight.delete(key); }
+}
+(function wireOps() {
+  document.addEventListener('click', async (e) => {
+    const t = e.target; if (!t || !t.closest) return;
+    const tk = t.closest('[data-tk]'); if (tk) { e.preventDefault(); return void taskDo(tk.dataset.id, tk.dataset.tk); }
+    const jb = t.closest('[data-job]'); if (jb) { e.preventDefault(); return void jobDo(jb.dataset.id, jb.dataset.job); }
+    const tf = t.closest('[data-tkf]'); if (tf) { TK.filter = tf.dataset.tkf; TK.tab = 'tasks'; if (location.hash === '#tasks') render(); return; }
+    const jf = t.closest('[data-jf]'); if (jf) { TK.jobs = jf.dataset.jf; render(); return; }
+    const tt = t.closest('[data-tktab]'); if (tt) { TK.tab = tt.dataset.tktab; if (tt.tagName === 'BUTTON' || location.hash === '#tasks') opsGo('#tasks'); return; }
+    const tn = t.closest('[data-tkn]'); if (tn) {
+      TK.creating = tn.dataset.tkn === '1'; TK.tab = 'tasks'; TK.filter = TK.creating ? TK.filter : TK.filter;
+      if (tn.dataset.house !== undefined) TK.newHouse = tn.dataset.house; if (tn.dataset.pipeline !== undefined) TK.newPipeline = tn.dataset.pipeline;
+      const d = tn.closest('details'); if (d) d.open = false;
+      if (tn.tagName === 'BUTTON') { e.preventDefault(); opsGo('#tasks'); } else if (location.hash === '#tasks') render();
+      if (TK.creating) setTimeout(() => { const i = $('#tkTitle'); if (i) i.focus(); }, 120);
+      return;
+    }
+    const sc = t.closest('[data-scroll]'); if (sc) { e.preventDefault(); const el = document.getElementById(sc.dataset.scroll); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const rc = t.closest('[data-reconnect]'); if (rc) { e.preventDefault(); return void reconnect(rc.dataset.reconnect, rc.dataset.provider); }
+    const hj = t.closest('[data-hjump]'); if (hj) { const d = hj.closest('details'); if (d) d.open = false; HTAB = hj.dataset.hjump; store.set('gs-htab', HTAB); render(); return; }
+    const hm = t.closest('[data-hmember]'); if (hm) {
+      const m = (D.members || []).find((x) => x.id === hm.dataset.member); if (!m || !confirm(`Remove ${m.name} from ${houseName(hm.dataset.house)}? The member stays in the company; only this assignment goes.`)) return;
+      const { error } = await sb.from('member_houses').delete().eq('member_id', hm.dataset.member).eq('house_id', hm.dataset.house);
+      if (error) return toast(error.message || 'Could not remove the assignment');
+      await log('member unassigned', `${m.name} from ${hm.dataset.house}`); toast('Assignment removed'); return void loadAll();
+    }
+    const cc = t.closest('[data-connchk]'); if (cc) return void connCheck(cc.dataset.connchk);
+    const rs = t.closest('[data-revsync]'); if (rs) return void revSync(rs.dataset.revsync);
+  });
+  document.addEventListener('submit', (e) => { const f = e.target.closest && e.target.closest('form[data-opform]'); if (f) { e.preventDefault(); opSubmit(f); } });
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'tkq') { TK.q = e.target.value; render(); } });
+  document.addEventListener('change', async (e) => {
+    const el = e.target; if (!el || !el.closest) return;
+    if (el.id === 'tkhouse') { TK.house = el.value; render(); return; }
+    if (el.dataset.tkprio) return void taskDo(el.dataset.tkprio, 'priority', { priority: el.value });
+    if (el.dataset.offcat) {
+      const { error } = await sb.from('offerings').update({ category_id: el.value || null, updated_at: new Date().toISOString() }).eq('id', el.dataset.offcat).select('id');
+      if (error) { toast(error.message || 'Could not change the category'); return void loadAll(); }
+      toast('Category saved'); await loadAll();
+    }
+  });
+})();
+const V_STRUCTURE = V.structure;   // the org_* registry page, used only when that registry exists
+Object.assign(V, { structure: () => (cloudOrg() && ORG.units.length ? V_STRUCTURE.call(V) : structurePage()), home: homeView, houses: housesView, house: houseView, hierarchy: hierarchyView, insights: insightsView, tasks: tasksView, board: boardView, approvals: approvalsView, connections: connectionsView });
+
 
 // ---------------------------------------------------------------- wiring (installed once)
 (function wireUnified() {
@@ -6404,7 +6846,6 @@ Object.assign(V, { home: homeView, houses: housesView, house: houseView, hierarc
     const sg = t.closest('[data-subgo]'); if (sg) PENDING_SUB = sg.dataset.subgo;     // the href does the navigating
     if (t.closest('[data-hf-reset]')) { Object.assign(HF, HDEF); hfSave(); render(); return; }
     const ht = t.closest('[data-htab]'); if (ht) { HTAB = ht.dataset.htab; store.set('gs-htab', HTAB); render(); return; }
-    const cr = t.closest('[data-create]'); if (cr) { const d = cr.closest('details'); if (d) d.open = false; createFlow(cr.dataset.create, cr.dataset.unit || ''); return; }
     const bn = t.closest('[data-bnode]'); if (bn) { BSEL = bn.dataset.bnode; render(); return; }
   });
   document.addEventListener('change', (e) => { const el = e.target.closest && e.target.closest('[data-hf]'); if (el) hfSet(el.dataset.hf, el.value); });
@@ -6742,7 +7183,7 @@ document.addEventListener('click', async (e) => {
   if (ds.themeSet) { if (window.CocoTheme) window.CocoTheme.setAppearance(ds.themeSet); render(); }
   if (ds.set === 'refresh') { await loadAll(); toast('Up to date'); }
   if (ds.set === 'signout') { await sb.auth.signOut(); show('signin'); }
-  if (ds.yes || ds.no) { await decideApproval(ds.yes || ds.no, !!ds.yes); toast(ds.yes ? 'YES saved' : 'No saved'); }
+  if (ds.yes || ds.no) { if (await decideApproval(ds.yes || ds.no, !!ds.yes)) toast(ds.yes ? 'YES saved' : 'No saved'); }
   if (ds.ig) { igLocal.add(String(ds.ig)); renderStrip(); }
   if (ds.stop) { await sb.from('tasks').update({ status: 'stopped', updated_at: new Date().toISOString() }).eq('id', ds.stop); await log('task stopped', (D.tasks.find(t => t.id === ds.stop) || {}).title); loadAll(); }
   if (ds.note) {

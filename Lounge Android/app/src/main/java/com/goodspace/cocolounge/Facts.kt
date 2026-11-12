@@ -73,8 +73,10 @@ object Facts {
         val since = now.minus(java.time.Duration.ofDays(days))
         return jobs.filter { it.str("status") == "failed" && instant(it.str("updated_at") ?: it.str("created_at"))?.isAfter(since) == true }
     }
-    private fun instant(s: String?): java.time.Instant? = s?.let { v ->
-        runCatching { java.time.OffsetDateTime.parse(v.replace(' ', 'T')).toInstant() }.getOrNull() ?: runCatching { java.time.Instant.parse(v) }.getOrNull()
+    /** An ISO time from Nova or Postgres ("2026-11-12T05:39:00Z", "2026-11-02 12:59:00+00"); null for anything else, including a bare date. */
+    internal fun instant(s: String?): java.time.Instant? = s?.takeIf { it.isNotBlank() && it != "null" }?.let { v ->
+        val w = v.replace(' ', 'T').let { if (Regex("[+-]\\d\\d$").containsMatchIn(it)) "$it:00" else it }
+        runCatching { java.time.OffsetDateTime.parse(w).toInstant() }.getOrNull() ?: runCatching { java.time.Instant.parse(w) }.getOrNull()
     }
 
     /** Count of rows by a status column, for queue health. */
