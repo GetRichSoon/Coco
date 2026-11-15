@@ -71,6 +71,13 @@ object Alerts {
     class Watch(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
         override suspend fun doWork(): Result {
             val cloud = Cloud(applicationContext)
+            // YES-3: every 15 minutes, unaligned, would wake the database 96 times a day. Skip while this process's
+            // listener still reads on its slots; otherwise only while the database is awake, or every 2 hours.
+            val seen = applicationContext.getSharedPreferences("coco_watch", Context.MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            if (Cloud.viaNova && !Quiet.watchMayRead(cloud.awake(), Quiet.listenerReadAt, seen.getLong("read_at", 0), now)) return Result.success()
+            seen.edit().putLong("read_at", now).apply()
+            Quiet.quiet = !PhoneRemote.foreground
             runCatching { Updater.check(applicationContext) }
             if (!cloud.signedIn || !cloud.paired) return Result.success()
             return try {

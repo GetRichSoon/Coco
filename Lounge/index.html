@@ -821,7 +821,9 @@ const releaseDevices = () => {
 // PostgREST requests against Nova, which authenticates by the device key and serves from its cache.
 // No session, no realtime socket: the live link becomes a 15 s poll of /api/changes (one tiny row).
 let NOVA = store.get('gs-nova-url') || null;
-const novaFetch = (path, init = {}) => fetch(NOVA + path, { ...init, headers: { ...(init.headers || {}), 'x-device-key': store.get('gs-device-key') || '', 'content-type': 'application/json' } });
+// A request made while this screen is quiet says so, so Nova never counts it as a reason the database is awake (YES-3, see quietTick).
+const quietFetch = (u, o = {}) => { if (!quietSend()) return fetch(u, o); const h = new Headers(o.headers || {}); h.set('x-coco-quiet', '1'); return fetch(u, { ...o, headers: h }); };
+const novaFetch = (path, init = {}) => quietFetch(NOVA + path, { ...init, headers: { ...(init.headers || {}), 'x-device-key': store.get('gs-device-key') || '', 'content-type': 'application/json' } });
 // Nova's own connect flow (begin / verify): it answers the way the old database function and edge function did, as { data, error }.
 // The credential never comes here: the consent happens on the platform's page and the callback lands on Nova.
 async function novaOauth(op, body) {
@@ -834,7 +836,7 @@ async function novaOauth(op, body) {
 }
 let sb = makeClient(store.get('gs-device-key'));
 function makeClient(deviceKey) {
-  return supabase.createClient(NOVA || URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
+  return supabase.createClient(NOVA || URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {}, fetch: quietFetch }, auth: { persistSession: true, autoRefreshToken: true } });
 }
 let rTarget = null, rSong = '', rSay = '';
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'rSay' || e.target.id === 'rSong')) { const b = document.querySelector(e.target.id === 'rSay' ? '[data-rc="say"]' : '[data-rc="play_youtube"]'); if (b) b.click(); } });
@@ -957,8 +959,9 @@ async function boot() {
   // The approvals fallback runs every 15 s while the window is on screen and every 60 s behind it:
   // realtime already delivers an approval the instant it is raised, and notifications still need to
   // reach a hidden window, so the fallback slows down rather than stopping.
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(() => { if ((!isLive && !document.hidden) || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
-  if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
+  // Every reader below skips while this screen is quiet and the database sleeps (sleeping(), YES-3); quietTick runs them once per slot.
+  await loadAll(); listen(); heartbeat(); setInterval(() => { if (!sleeping()) heartbeat(); }, 60000); setInterval(() => { if (sleeping()) return; if ((!isLive && !document.hidden) || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(() => { if (!sleeping()) healQueue(); }, 300000);
+  if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(() => { if (!sleeping()) pushLive(); }, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
 function needHuman(which) {
@@ -1882,16 +1885,52 @@ function connectLive() {
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
     });
 }
-let novaVersion = null;
+// ---------- Neon Free plan (YES-3): the database sleeps while nobody is looking ----------
+// Neon's free compute suspends after 5 idle minutes and the plan has 100 compute-hours a month, so a reader
+// that touched the database more often than that kept it awake all day (about 182 h a month). A screen in
+// use keeps every cadence it had. A hidden or untouched one (10 min) is QUIET: its readers skip while the
+// database sleeps and run only (a) while it is awake anyway, because a founder's screen or a cloud job is
+// using it (Nova's /api/awake, which never touches the database), or (b) once per shared 30-minute
+// wall-clock slot, when every device reads at the same moment, so four devices wake it once, not four times.
+const QUIET_IDLE_MS = 10 * 60e3, QUIET_SLOT_MS = 30 * 60e3, quietSlotOf = (t) => Math.floor(t / QUIET_SLOT_MS);
+let lastInput = Date.now(), dbWarm = true, quietNova = false, quietSlot = quietSlotOf(Date.now());
+const quiet = () => Boolean(NOVA) && (document.hidden || Date.now() - lastInput > QUIET_IDLE_MS);
+const sleeping = () => quiet() && !dbWarm;
+// the header goes out only once this Nova has answered /api/awake: an older Nova does not allow it (CORS) and would refuse every request
+function quietSend() { return quietNova && quiet(); }
+async function quietTick() {
+  if (!quiet()) { dbWarm = true; return; }
+  try {
+    const r = await fetch(NOVA + '/api/awake', { cache: 'no-store' });
+    // Nova answered, so this page is connected: the desktop's 4-minute watchdog must not reload a page that is only quiet
+    if (r.status < 500 && window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat();
+    quietNova = r.ok; dbWarm = r.ok && Boolean((await r.json()).warm);
+  } catch { dbWarm = false; }
+  const s = quietSlotOf(Date.now());
+  if (dbWarm || s === quietSlot) return;
+  quietSlot = s;
+  await Promise.allSettled([heartbeat(), pollChanges(), pollApprovals(), runMyCommands(), healQueue(), window.cocoDesktop && window.cocoDesktop.liveSnapshot ? pushLive() : null]);
+}
+// Back from quiet: read at once instead of waiting for the next tick.
+function wake(back) { const was = back === true || quiet(); lastInput = Date.now(); if (was && !document.hidden) { dbWarm = true; heartbeat(); pollChanges(); } }
+let novaVersion = null, changesAt = 0;
 async function pollChanges() {
   try {
     const r = await novaFetch('/api/changes'); if (!r.ok) { setLive(false); return; }
     const c = await r.json(); setLive(true);
-    if (c.version !== novaVersion) { const first = novaVersion === null; novaVersion = c.version; if (!first) refreshFor([c.last_topic || '*']); }
+    // after a long gap (a quiet stretch) several tables may have changed but only the last topic is named: take the full read
+    const gap = Date.now() - changesAt; changesAt = Date.now();
+    if (c.version !== novaVersion) { const first = novaVersion === null; novaVersion = c.version; if (!first) refreshFor([gap > 120000 ? '*' : (c.last_topic || '*')]); }
   } catch { setLive(false); }
 }
 function listen() {
-  if (NOVA) { pollChanges(); setInterval(() => { if (!document.hidden || Date.now() - lastPoll > 60000) pollChanges(); }, 15000); setInterval(runMyCommands, 5000); return; }
+  if (NOVA) {
+    pollChanges(); setInterval(() => { if (sleeping()) return; if (!document.hidden || Date.now() - lastPoll > 60000) pollChanges(); }, 15000); setInterval(() => { if (!sleeping()) runMyCommands(); }, 5000);
+    setInterval(quietTick, 30000);
+    for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(ev, () => wake(), { capture: true, passive: true });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(true); });
+    return;
+  }
   connectLive();
   addEventListener('online', () => { connectLive(); heartbeat(); });
   addEventListener('offline', () => setLive(false));

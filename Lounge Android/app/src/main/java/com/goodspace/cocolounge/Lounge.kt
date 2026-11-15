@@ -160,7 +160,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 // changed, so that one takes the full read.
                 stopListening = cloud.listen(onPulse = { topic -> quickCommands(); scheduleReload(topic) }, onState = { ok -> live = ok; if (ok) scheduleReload("*") })
                 heartbeat?.cancel()
-                heartbeat = viewModelScope.launch { var n = 0; while (true) { if (n % 12 == 0) beat(); if (!live) quickCommands(); n++; delay(5_000) } }
+                // Quiet.mayReadNow(): behind something, only while the database is awake anyway or in a shared slot (YES-3)
+                heartbeat = viewModelScope.launch { var beatAt = 0L; while (true) { if (Quiet.mayReadNow()) { val now = System.currentTimeMillis(); if (now - beatAt >= 60_000) { beatAt = now; beat() }; if (!live) quickCommands() }; delay(5_000) } }
             } catch (e: Cloud.CloudError) {
                 // a refused device key is a pairing problem; the Supabase sign-in gate only exists when Nova is off
                 if (e.code == 401) { gate = if (Cloud.viaNova) Gate.Pair else Gate.SignIn; if (Cloud.viaNova) gateMessage = "Coco Cloud did not accept this phone (${e.message}). Pair it again with a new code." } else fail(e)

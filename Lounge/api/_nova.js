@@ -160,7 +160,14 @@ export const stats = { requests: 0, cache_hits: 0, cache_misses: 0, db_calls: 0,
 const inflight = new Map();                   // read key -> promise: N identical concurrent GETs share one database query
 const down = { until: 0, reason: '' };         // negative cache: after an upstream failure, answer 503 for a few seconds without touching the database
 const DOWN_S = Number(process.env.NOVA_NEGATIVE_CACHE_SECONDS || 10);
-export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; }
+export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; awake.at = 0; }
+// Neon Free plan (YES-3): the database suspends after 5 idle minutes. awake.at is the last time a request that was NOT quiet (a screen in
+// use, a cloud job) ran a statement on this instance. GET /api/awake answers from it without touching the database, so a hidden or idle
+// app can read while the database is awake anyway and stay away while it sleeps. A quiet request (x-coco-quiet: 1) never moves it, or
+// quiet devices would keep each other awake for ever. shortcut: per warm instance only; a request served by another instance answers
+// "not awake" and the app then waits for its 30-minute slot. Upgrade: read the compute state from the Neon API if that happens often.
+const awake = { at: 0 };
+const AWAKE_MS = 4 * 60e3;
 // a failure of the database or the platform behind it (not a bad request, not RLS, not a statement timeout)
 const UPSTREAM = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|connection terminated|connection timeout|timeout exceeded when trying to connect|too many (clients|connections)|exceed_egress|quota|the database system is|no pg_hba|Tenant or user not found/i;
 export const isUpstream = (e) => !(e instanceof NovaError) && e?.code !== 'P0001' && (UPSTREAM.test(String(e?.message)) || UPSTREAM.test(String(e?.code)) || /^(08|57P0[1-3]|53300)/.test(String(e?.code || '')));   // a RAISE EXCEPTION is a rule talking, never an outage
@@ -222,10 +229,13 @@ export async function runAs(db, who, deviceKey, { sql, params }, engineKey = nul
 // The whole request. `req` = { method, path, query, headers, body }, returns { status, headers, body }.
 export async function handle(db, req, now = Date.now()) {
   stats.requests++;
+  if (req.headers?.['x-coco-quiet'] !== '1' && db) { const inner = db; db = Object.assign(Object.create(inner), { query: (...a) => { awake.at = now; return inner.query(...a); } }); }
   const t0 = now;
   const log = (status, extra = {}) => { const ms = Date.now() - t0; observe(req.path, ms, { status, cache: extra.cache || null, device: extra.device || null }); console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms, ...extra })); };
   try {
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
+    // no key, no database: one bit, "is the database awake right now", for apps deciding whether a read would wake it
+    if (req.path === '/api/awake') return json(200, { warm: now - awake.at < AWAKE_MS });
     if (req.path !== '/api/health' && down.until > now) { stats.negative_hits++; return unavailable(down.reason); }
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
@@ -382,7 +392,7 @@ export async function handle(db, req, now = Date.now()) {
   }
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
-const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
+const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, x-coco-quiet, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
 // a null result is the JSON text `null`, never an empty body: a caller parsing a 200 must always get JSON. Only a write with return=minimal (201) sends nothing.
 function json(status, body, extra = {}) { const text = body === null && status === 201 ? '' : JSON.stringify(body ?? null); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
@@ -407,11 +417,14 @@ export async function vercel(req, res) {
   // Vercel also injects the rewrite's named segment (`path=...`) into the query; neither is a filter
   delete query.__path; delete query.path;
   let body = req.body; if (typeof body === 'string' && body) { try { body = JSON.parse(body); } catch { body = null; } }
-  let db = null;
+  // The connection is opened by the first statement, not by the request: a cache hit, /api/awake and a refusal before any SQL never
+  // open one, because a new connection is what wakes a suspended Neon compute (YES-3).
+  let client = null, opening = null;
+  const db = { query: async (...a) => { if (!client) client = await (opening ||= connect()); return client.query(...a); } };
   try {
-    try { db = await connect(); } catch (e) { if (path === '/api/health') db = { query: async () => { throw e; } }; else { const o = e instanceof NovaError ? { status: 503, headers: { 'retry-after': '10' }, body: JSON.stringify({ state: 'UPSTREAM_UNAVAILABLE', reason: 'Nova has no database configured' }) } : markDown(e); res.status(503); for (const [k, v] of Object.entries(o.headers)) res.setHeader(k, v); res.send(o.body); return; } }
+    // a failed connect now surfaces inside handle(): no DATABASE_URL is its 503 NovaError, an unreachable database its upstream 503
     const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');
-  } finally { try { db?.release?.(); } catch {} }
+  } finally { try { client?.release?.(); } catch {} }
 }

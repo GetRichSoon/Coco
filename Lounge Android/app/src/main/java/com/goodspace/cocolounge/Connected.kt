@@ -56,15 +56,18 @@ class Connected : Service() {
         // command can ride in on any pulse. It never reads the company, so it has nothing to route.
         stopListen = runCatching { cloud.listen(onPulse = { _ -> scope.launch { runQueued(cloud) } }, onState = {}) }.getOrNull()
         scope.launch {
-            var n = 0
+            // Clock-based, not tick-based: behind something the readers may only run inside the listener's short
+            // windows (Quiet.mayReadNow(), YES-3), and a tick count would miss them.
+            var beatAt = 0L; var updateAt = System.currentTimeMillis(); var sweepAt = updateAt - 4 * 60_000L
             while (true) {
-                if (cloud.signedIn && cloud.paired) {
+                val now = System.currentTimeMillis()
+                if (cloud.signedIn && cloud.paired && Quiet.mayReadNow(now)) {
                     runQueued(cloud)
-                    if (n % 4 == 0) beat(cloud)
-                    if (n % 120 == 0) runCatching { Updater.check(applicationContext) }.onFailure { Heal.note(applicationContext, cloud, "update", "Phone update check failed: ${it.message}") }
-                    if (n % 20 == 5) runCatching { Heal.sweep(cloud) }   // every 5 min: nothing may clog the queue
+                    if (now - beatAt >= 60_000) { beatAt = now; beat(cloud) }
+                    if (now - updateAt >= 30 * 60_000L) { updateAt = now; runCatching { Updater.check(applicationContext) }.onFailure { Heal.note(applicationContext, cloud, "update", "Phone update check failed: ${it.message}") } }
+                    if (now - sweepAt >= 5 * 60_000L) { sweepAt = now; runCatching { Heal.sweep(cloud) } }   // every 5 min: nothing may clog the queue
                 }
-                n++; delay(15_000)
+                delay(15_000)
             }
         }
     }
