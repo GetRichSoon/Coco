@@ -4,8 +4,12 @@
 name: device sync
 
 on:
-  schedule:
-    - cron: '7,22,37,52 * * * *'     # every 15 minutes, off the busy :00 / :30 marks
+  # SCHEDULE OFF (2026-11-19, founder order: do not run this every 15 minutes while it cannot work). Every scheduled run failed:
+  # this repository has neither NOVA_DEVICE_KEY nor NOVA_ENGINE_KEY, and migration 0037 (device_sync_audit) is not applied.
+  # It cost about 3 to 4 Actions minutes a day for zero work (run 44456154760: "Nothing was called", exit 2).
+  # Turn it back on only after both of those exist AND the founder says yes. Manual runs still work from the Actions tab.
+  # schedule:
+  #   - cron: '7,22,37,52 * * * *'     # every 15 minutes, off the busy :00 / :30 marks
   workflow_dispatch:
 
 concurrency:
