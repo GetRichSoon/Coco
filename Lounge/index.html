@@ -734,7 +734,11 @@ const inFlight = new Set();
 const toast = (t) => { const e = $('#toast'); e.textContent = t; e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 2600); };
 const ago = (iso) => { if (!iso) return 'never'; const s = (Date.now() - new Date(iso)) / 1000; return s < 90 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : new Date(iso).toLocaleDateString(); };
 const isCloudDev = (d) => /cloud-worker/.test(String(d.id)) || !!(d.info && d.info.cloud === true);
-const online = (d) => d.last_seen && (Date.now() - new Date(d.last_seen)) < (isCloudDev(d) ? 12 * 3600e3 : 150000);
+// Reachable = online (on screen, answers in seconds) or resting (quiet, answers within a minute; heal.js presence). Only a device that
+// missed the check-in it promised is offline, so a resting PC no longer shows Offline and its commands are not given up on.
+const online = (d) => isCloudDev(d) ? Boolean(d.last_seen && (Date.now() - new Date(d.last_seen)) < 12 * 3600e3) : window.CocoHeal.presence(d, Date.now()).state !== 'offline';
+const presenceLabel = (d) => isCloudDev(d) ? (online(d) ? 'online' : 'offline') : ({ online: 'online', resting: 'resting', offline: 'offline' })[window.CocoHeal.presence(d, Date.now()).state];
+const clockOf = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 // Release Center: the four devices against the one release the cloud says is current. A device counts as
 // updated only when its own heartbeat reports that version - never inferred, never assumed, because
 // on 29 October the dashboard showed a number no desktop was actually running.
@@ -821,7 +825,9 @@ const releaseDevices = () => {
 // PostgREST requests against Nova, which authenticates by the device key and serves from its cache.
 // No session, no realtime socket: the live link becomes a 15 s poll of /api/changes (one tiny row).
 let NOVA = store.get('gs-nova-url') || null;
-const novaFetch = (path, init = {}) => fetch(NOVA + path, { ...init, headers: { ...(init.headers || {}), 'x-device-key': store.get('gs-device-key') || '', 'content-type': 'application/json' } });
+// A request made while this screen is quiet says so, so Nova never counts it as a reason the database is awake (YES-3, see quietTick).
+const quietFetch = (u, o = {}) => { if (!quietSend()) return fetch(u, o); const h = new Headers(o.headers || {}); h.set('x-coco-quiet', '1'); return fetch(u, { ...o, headers: h }); };
+const novaFetch = (path, init = {}) => quietFetch(NOVA + path, { ...init, headers: { ...(init.headers || {}), 'x-device-key': store.get('gs-device-key') || '', 'content-type': 'application/json' } });
 // Nova's own connect flow (begin / verify): it answers the way the old database function and edge function did, as { data, error }.
 // The credential never comes here: the consent happens on the platform's page and the callback lands on Nova.
 async function novaOauth(op, body) {
@@ -834,7 +840,7 @@ async function novaOauth(op, body) {
 }
 let sb = makeClient(store.get('gs-device-key'));
 function makeClient(deviceKey) {
-  return supabase.createClient(NOVA || URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {} }, auth: { persistSession: true, autoRefreshToken: true } });
+  return supabase.createClient(NOVA || URL_, KEY, { global: { headers: deviceKey ? { 'x-device-key': deviceKey } : {}, fetch: quietFetch }, auth: { persistSession: true, autoRefreshToken: true } });
 }
 let rTarget = null, rSong = '', rSay = '';
 document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'rSay' || e.target.id === 'rSong')) { const b = document.querySelector(e.target.id === 'rSay' ? '[data-rc="say"]' : '[data-rc="play_youtube"]'); if (b) b.click(); } });
@@ -957,8 +963,9 @@ async function boot() {
   // The approvals fallback runs every 15 s while the window is on screen and every 60 s behind it:
   // realtime already delivers an approval the instant it is raised, and notifications still need to
   // reach a hidden window, so the fallback slows down rather than stopping.
-  await loadAll(); listen(); heartbeat(); setInterval(heartbeat, 60000); setInterval(() => { if ((!isLive && !document.hidden) || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(healQueue, 300000);
-  if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(pushLive, 60000); }
+  // Every reader below skips while this screen is quiet and the database sleeps (sleeping(), YES-3); quietTick runs them once per slot.
+  await loadAll(); listen(); heartbeat(); setInterval(() => { if (!sleeping()) heartbeat(); }, 60000); setInterval(() => { if (sleeping()) return; if ((!isLive && !document.hidden) || Date.now() - lastPoll > 60000) pollApprovals(); }, 15000); setTimeout(healQueue, 20000); setInterval(() => { if (!sleeping()) healQueue(); }, 300000);
+  if (window.cocoDesktop && window.cocoDesktop.liveSnapshot) { pushLive(); setInterval(() => { if (!sleeping()) pushLive(); }, 60000); }
 }
 // A hidden desktop app stuck on sign-in or pairing was offline without anyone knowing (bug 2026-10-23): say so loudly.
 function needHuman(which) {
@@ -1059,6 +1066,7 @@ async function report(id, patch) {
   console.error('Coco: could not report command ' + id);
 }
 async function runMyCommands() {
+  noteAlive();   // first: after a system sleep the gap must be known before an old command is judged
   if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId) return;
   // Watchdog (bug 2026-10-26: 4 phone commands sat queued while the PC showed online): a hung request kept this flag set for ever.
   if (runningCmds && Date.now() - runStarted > 180000) { console.error('Coco: command runner was stuck for 3 min, reset'); runningCmds = false; }
@@ -1071,9 +1079,12 @@ async function runMyCommands() {
       if (!got || !got.length) continue;
       runStarted = Date.now();
       const args = c.args || {};
-      if (Date.now() - new Date(c.created_at) > H.ageLimitMs(c.action)) {
-        await report(c.id, { status: 'failed', result: 'Too old (over ' + H.ageLimitMs(c.action) / 60000 + ' minutes), not run: this PC was asleep or offline' });
-        needsNono('offline', 'A phone command expired before it could run: this PC was asleep or offline (' + c.action + '). Commands older than 10 min are never run late, for safety.');
+      // A command that waited only because this PC was resting still runs; one sent while it was asleep or off keeps the safety limits.
+      // Either way the sender sees why (heal.js runVerdict): nothing expires silently.
+      const verdict = H.runVerdict(c, Date.now(), aliveSince);
+      if (!verdict.run) {
+        await report(c.id, { status: 'failed', result: verdict.result });
+        needsNono('offline', 'A phone command expired before it could run (' + c.action + '): ' + verdict.result);
         continue;
       }
       const limit = c.action === 'workspace' ? 120000 : 30000;
@@ -1097,15 +1108,18 @@ async function healQueue() {
   if (!window.cocoDesktop || !window.cocoDesktop.pcCommand || !deviceId) return;
   try {
     const mine = `target_device.eq.${deviceId},created_device.eq.${deviceId}`;   // Coco Cloud lets a device change only its own commands
-    const [open, old] = await Promise.all([
+    // the devices are read fresh: a resting device's commands wait for it, and only a fresh presence can tell resting from gone
+    const [open, old, devs] = await Promise.all([
       within(sb.from('commands').select('*').in('status', ['queued', 'running']).or(mine), 15000, 'sweep'),
       within(sb.from('commands').select('*').eq('status', 'failed').or('result.is.null,result.not.ilike.stale%').or(mine).lt('created_at', new Date(Date.now() - 864e5).toISOString()).limit(200), 15000, 'sweep'),
+      within(sb.from('devices').select('id,last_seen,info'), 15000, 'sweep'),
     ]);
-    const seen = (id) => ((D.devices || []).find((d) => d.id === id) || {}).last_seen;
+    if (devs.error || !devs.data) { console.warn('Coco sweep: cannot read the devices, nothing closed'); return; }
+    const target = (id) => devs.data.find((d) => d.id === id) || null;
     let n = 0, tried = 0;
     for (const r of [...(open.data || []), ...(old.data || [])]) {
       if (r.status === 'running' && (r.target_device !== deviceId || runningCmds)) continue;   // another device owns it, or this app is running commands right now
-      const v = H.sweepVerdict(r, Date.now(), seen(r.target_device)); if (!v) continue;
+      const v = H.sweepVerdict(r, Date.now(), target(r.target_device)); if (!v) continue;
       const { data: got } = await within(sb.from('commands').update({ ...v, ...(v.status === 'failed' ? { done_at: new Date().toISOString() } : {}) }).eq('id', r.id).eq('status', r.status).select('id'), 15000, 'sweep');
       if (got && got.length) n++; else tried++;
     }
@@ -1882,16 +1896,67 @@ function connectLive() {
       else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { setLive(false); retryTimer = setTimeout(connectLive, Math.min(30000, 2000 * 2 ** tries++)); }
     });
 }
-let novaVersion = null;
+// ---------- Neon Free plan (YES-3): the database sleeps while nobody is looking ----------
+// Neon's free compute suspends after 5 idle minutes and the plan has 100 compute-hours a month, so a reader
+// that touched the database more often than that kept it awake all day (about 182 h a month). A screen in
+// use keeps every cadence it had. A hidden or untouched one (10 min) is QUIET: its readers skip while the
+// database sleeps and run only (a) while it is awake anyway, because a founder's screen or a cloud job is
+// using it (Nova's /api/awake, which never touches the database), or (b) once per shared 30-minute
+// wall-clock slot, when every device reads at the same moment, so four devices wake it once, not four times.
+const QUIET_IDLE_MS = 10 * 60e3, QUIET_SLOT_MS = 30 * 60e3, quietSlotOf = (t) => Math.floor(t / QUIET_SLOT_MS);
+let lastInput = Date.now(), dbWarm = true, quietNova = false, quietSlot = quietSlotOf(Date.now());
+const quiet = () => Boolean(NOVA) && (document.hidden || Date.now() - lastInput > QUIET_IDLE_MS);
+const sleeping = () => quiet() && !dbWarm;
+// Was this device running the whole time? A gap of over 5 minutes between ticks is a system sleep (the desktop never throttles its
+// timers), and a command older than that gap was sent while it was away: heal.js runVerdict applies the safety limits to those only.
+let aliveSince = Date.now(), aliveTick = Date.now();
+function noteAlive() { const t = Date.now(); if (t - aliveTick > 5 * 60e3) aliveSince = t; aliveTick = t; }
+// The wake board's mail (Nova /api/awake?d=): the last time a command was written for this device. Compared in Nova's clock only.
+let mailSeen = null, presenceSent = null;
+// the header goes out only once this Nova has answered /api/awake: an older Nova does not allow it (CORS) and would refuse every request
+function quietSend() { return quietNova && quiet(); }
+async function quietTick() {
+  noteAlive();
+  if (!quiet()) { dbWarm = true; if (presenceSent === 'quiet') { presenceSent = 'active'; heartbeat(); } return; }
+  let a = null;
+  try {
+    const r = await fetch(NOVA + '/api/awake' + (deviceId ? '?d=' + encodeURIComponent(deviceId) : ''), { cache: 'no-store' });
+    // Nova answered, so this page is connected: the desktop's 4-minute watchdog must not reload a page that is only quiet
+    if (r.status < 500 && window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat();
+    quietNova = r.ok; a = r.ok ? await r.json() : null; dbWarm = Boolean(a && a.warm);
+  } catch { dbWarm = false; }
+  // A command was written for this device since it last looked: read the queue now, even while the database sleeps (a real command
+  // is a reason to wake it). The first answer after start only counts if that command is recent: the start-up read covered older ones.
+  const mail = a && a.mail_at, mailNew = mail && (mailSeen ? Date.parse(mail) > Date.parse(mailSeen) : a.now && Date.parse(a.now) - Date.parse(mail) < 15 * 60e3);
+  if (mail) mailSeen = mailSeen && Date.parse(mailSeen) > Date.parse(mail) ? mailSeen : mail;
+  if (mailNew) runMyCommands();
+  // say once that this device is resting now, so the others show Resting and keep its commands waiting instead of Offline
+  if (presenceSent !== 'quiet') { presenceSent = 'quiet'; heartbeat(); }
+  const s = quietSlotOf(Date.now());
+  if (dbWarm || s === quietSlot) return;
+  quietSlot = s;
+  await Promise.allSettled([heartbeat(), pollChanges(), pollApprovals(), runMyCommands(), healQueue(), window.cocoDesktop && window.cocoDesktop.liveSnapshot ? pushLive() : null]);
+}
+// Back from quiet: read at once instead of waiting for the next tick.
+function wake(back) { const was = back === true || quiet(); lastInput = Date.now(); if (was && !document.hidden) { dbWarm = true; heartbeat(); pollChanges(); } }
+let novaVersion = null, changesAt = 0;
 async function pollChanges() {
   try {
     const r = await novaFetch('/api/changes'); if (!r.ok) { setLive(false); return; }
     const c = await r.json(); setLive(true);
-    if (c.version !== novaVersion) { const first = novaVersion === null; novaVersion = c.version; if (!first) refreshFor([c.last_topic || '*']); }
+    // after a long gap (a quiet stretch) several tables may have changed but only the last topic is named: take the full read
+    const gap = Date.now() - changesAt; changesAt = Date.now();
+    if (c.version !== novaVersion) { const first = novaVersion === null; novaVersion = c.version; if (!first) refreshFor([gap > 120000 ? '*' : (c.last_topic || '*')]); }
   } catch { setLive(false); }
 }
 function listen() {
-  if (NOVA) { pollChanges(); setInterval(() => { if (!document.hidden || Date.now() - lastPoll > 60000) pollChanges(); }, 15000); setInterval(runMyCommands, 5000); return; }
+  if (NOVA) {
+    pollChanges(); setInterval(() => { if (sleeping()) return; if (!document.hidden || Date.now() - lastPoll > 60000) pollChanges(); }, 15000); setInterval(() => { if (!sleeping()) runMyCommands(); }, 5000);
+    setInterval(quietTick, 30000);
+    for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(ev, () => wake(), { capture: true, passive: true });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(true); });
+    return;
+  }
   connectLive();
   addEventListener('online', () => { connectLive(); heartbeat(); });
   addEventListener('offline', () => setLive(false));
@@ -1922,7 +1987,8 @@ async function heartbeat() {
     last_seen: new Date().toISOString(), last_update_check: new Date().toISOString(),
     platform: window.cocoDesktop ? 'windows' : 'web',
     ...(d.build ? { internal_build: d.build } : {}),
-    ...(reported() ? { app_version: reported() } : {}), ...(info ? { info } : {}),
+    // presence: on screen or resting, and by when this device checks in next, so the others can tell resting from offline (heal.js)
+    ...(reported() ? { app_version: reported() } : {}), info: { ...(info || {}), presence: H.presenceInfo(quiet() ? 'quiet' : 'active', Date.now()) },
     update_state: d.state || null }).eq('id', deviceId).select('id'); };
   const tryBeat = async () => { try { return await beat(); } catch (e) { return { error: e }; } };   // the query is a thenable, not a Promise: no .catch
   let res = await tryBeat();
@@ -1952,6 +2018,10 @@ const chipFor = (s) => ({ new: ['', 'New'], analyzing: ['warn', 'Analyzing'], an
 // parts that never had one. Nothing is invented at render time: a mark is looked up, so Lulu is the
 // same Lulu on both desktops, both phones and in every future release.
 const chip = (s) => { const [c, t] = chipFor(s); return `<span class="chip ${c}">${esc(t)}</span>`; };
+// a command as its sender sees it: Sending / Waiting (device resting or away) / Received / Done / Failed / Expired / Cancelled (heal.js commandState)
+const cmdState = (c) => window.CocoHeal.commandState(c, (D.devices || []).find((d) => d.id === c.target_device) || null, Date.now());
+const cmdChip = (c) => { const s = cmdState(c); return `<span class="chip ${({ done: 'good', acked: 'good', waiting: 'warn', failed: 'bad', expired: 'bad' })[s.state] || ''}">${esc(s.label)}</span>`; };
+const cmdWhy = (c) => { const s = cmdState(c); return s.state === 'waiting' || s.state === 'queued' ? ' · ' + esc(s.why + (s.by ? ', at the latest by ' + clockOf(s.by) : '')) : ''; };
 
 let IDENT = null;                                   // identity.json, loaded once at boot
 let RELEASE = null;                                 // release.json: where a release is authored
@@ -5111,8 +5181,8 @@ const V = {
       <div class="actions" style="margin:10px 0">${targets.map(d => `<button class="btn ${d.id === t.id ? 'filled' : 'tonal'}" data-rt="${d.id}"><i class="ms">${d.kind === 'pc' ? 'laptop' : 'smartphone'}</i> ${esc(d.name)}</button>`).join('')}</div>
       <div class="card2" style="margin-bottom:14px"><span class="eyebrow">Tell ${esc(t.name)} what to do</span><div style="display:flex;gap:8px"><input id="rSay" placeholder="play kesariya · open chrome · volume up · lock · ring" value="${esc(rSay)}" style="flex:1"><button class="btn" id="rMic" title="Speak (any language)"><i class="ms">mic</i></button><button class="btn filled" data-rc="say"><i class="ms">send</i> Do it</button></div><span class="muted">Plain words in English or Hinglish. It runs on that device in about a second.</span></div>
       <div class="grid">
-      <div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(t.name)}</h3><span class="live"><i class="dot ${online(t) ? 'on' : ''}"></i>${online(t) ? 'online' : 'offline'}</span></div>
-        <span class="muted">${t.key_hash ? (online(t) ? 'Coco Lounge connected' : 'runs when it comes back online within 10 minutes') : 'not paired yet'}</span>${t.info && t.info.summary ? `<span class="muted">${esc(t.info.summary)} · ${ago(t.info.at)}</span>` : ''}<div class="actions"><button class="btn text" data-rc="status">Check status</button></div></div>
+      <div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(t.name)}</h3><span class="live"><i class="dot ${online(t) ? 'on' : ''}"></i>${presenceLabel(t)}</span></div>
+        <span class="muted">${t.key_hash ? ({ online: 'Coco Lounge connected', resting: 'Coco Lounge connected, resting: it takes a command within a minute', offline: 'Offline: a command waits for it and runs when it is back; it is reported as expired if it stays away 30 minutes' })[presenceLabel(t)] : 'not paired yet'}</span>${t.info && t.info.summary ? `<span class="muted">${esc(t.info.summary)} · ${ago(t.info.at)}</span>` : ''}<div class="actions"><button class="btn text" data-rc="status">Check status</button></div></div>
       <div class="card2"><span class="eyebrow">Play on YouTube</span><div style="display:flex;gap:8px"><input id="rSong" placeholder="Song, singer or video" value="${esc(rSong)}" style="flex:1"><button class="btn filled" data-rc="play_youtube"><i class="ms">play_arrow</i> Play</button></div>
         <div class="actions">${key('prev', 'skip_previous')}${key('playpause', 'play_pause')}${key('next', 'skip_next')}${key('down', 'volume_down', 'volume')}${key('up', 'volume_up', 'volume')}${key('mute', 'volume_off', 'volume')}</div></div>
       <div class="card2"><span class="eyebrow">Open an app</span><div class="actions">${apps.map(([k, l]) => `<button class="btn tonal" data-rc="open_app" data-ra="${k}">${l}</button>`).join('')}</div>
@@ -5124,10 +5194,10 @@ const V = {
         <span class="muted">Runs on ${esc(t.name)} (the laptop), not on this device. Every close saves the session first; if the save fails nothing is closed.</span></div>` : ''}
       <div class="card2"><span class="eyebrow">${pc ? 'Power' : 'Phone'}</span><div class="actions">${pc ? `<button class="btn tonal" data-rc="lock">Lock</button><button class="btn tonal" data-rc="sleep">Sleep</button><button class="btn tonal" data-rc="restart">Restart</button><button class="btn tonal" data-rc="shutdown">Switch off</button><button class="btn text" data-rc="cancel_power">Cancel</button>` : '<button class="btn tonal" data-rc="ring"><i class="ms">notifications_active</i> Ring it</button>'}<button class="btn text" data-rc="notify">Send message</button></div></div>
       </div>
-      <h3 style="margin:22px 0 8px">Recent commands</h3><div class="card2">${(D.commands || []).map(c => `<div class="row"><div class="grow"><b>${esc(c.action.replace('_', ' '))}${c.args && (c.args.text || c.args.q || c.args.app || c.args.key) ? ' · ' + esc(c.args.text || c.args.q || c.args.app || c.args.key) : ''}</b> → ${esc(deviceName(c.target_device))}<div class="muted">${/^data:image\/jpeg;base64,/.test(c.result || '') ? `<img src="${c.result}" style="max-width:100%;border-radius:12px;margin:6px 0;display:block" alt="Screenshot">` : esc(c.result || '')} · ${esc(c.created_by || '')} · ${ago(c.created_at)}</div></div>${chip(c.status)}</div>`).join('') || '<span class="muted">Nothing sent yet.</span>'}</div>`;
+      <h3 style="margin:22px 0 8px">Recent commands</h3><div class="card2">${(D.commands || []).map(c => `<div class="row"><div class="grow"><b>${esc(c.action.replace('_', ' '))}${c.args && (c.args.text || c.args.q || c.args.app || c.args.key) ? ' · ' + esc(c.args.text || c.args.q || c.args.app || c.args.key) : ''}</b> → ${esc(deviceName(c.target_device))}<div class="muted">${/^data:image\/jpeg;base64,/.test(c.result || '') ? `<img src="${c.result}" style="max-width:100%;border-radius:12px;margin:6px 0;display:block" alt="Screenshot">` : esc(c.result || '')} · ${esc(c.created_by || '')} · ${ago(c.created_at)}${cmdWhy(c)}</div></div>${cmdChip(c)}${c.status === 'queued' ? `<button class="btn text" data-cmdcancel="${esc(c.id)}">Cancel</button>` : ''}</div>`).join('') || '<span class="muted">Nothing sent yet.</span>'}</div>`;
   },
   devices() {
-    return `<p class="muted">Only these four devices can open Good Space. A device that is switched off stops working at once.</p><div class="grid">${D.devices.map(d => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(d.name)}</h3><span class="live"><i class="dot ${online(d) ? 'on' : ''}"></i>${online(d) ? 'online' : 'offline'}</span></div>
+    return `<p class="muted">Only these four devices can open Good Space. A device that is switched off stops working at once.</p><div class="grid">${D.devices.map(d => `<div class="card2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h3>${esc(d.name)}</h3><span class="live"><i class="dot ${online(d) ? 'on' : ''}"></i>${presenceLabel(d)}</span></div>
       <span class="muted">${esc(d.kind === 'pc' ? 'PC' : 'Phone')} · ${d.key_hash ? 'paired ' + ago(d.paired_at) : 'not paired yet'} · seen ${ago(d.last_seen)}</span>${d.id === deviceId ? '<span class="chip gold" style="justify-self:start">This device</span>' : ''}
       ${d.active ? (d.id !== deviceId ? `<div class="actions"><button class="btn tonal" data-code="${d.id}">Make pairing code</button><button class="btn text" data-off="${d.id}">Switch off</button></div>` : '') : `<div class="actions"><span class="chip bad">Switched off</span><button class="btn tonal" data-on="${d.id}">Switch on</button></div>`}</div>`).join('')}</div>`;
   },
@@ -7158,10 +7228,24 @@ document.addEventListener('click', async (e) => {
       if (/^switch_/.test(ds.op) && !confirm('Switch ' + deviceName(rTarget) + ' to ' + ds.op.slice(7) + ' mode? The open windows are saved, then closed.')) return;
     }
     if ((a === 'restart' || a === 'shutdown') && !confirm((a === 'restart' ? 'Restart ' : 'Switch off ') + deviceName(rTarget) + ' in 60 seconds?')) return;
-    const { error } = await sb.from('commands').insert({ target_device: rTarget, action: a, args, created_by: founderName(), created_device: deviceId });
-    if (error) return toast('Could not send: ' + error.message);
+    // The id is made here and is the idempotency key: a retry after a lost answer is refused as a duplicate, never stored twice.
+    const row = { id: H.newCommandId(), target_device: rTarget, action: a, args, created_by: founderName(), created_device: deviceId };
+    let error = null;
+    for (let i = 0; i < 3; i++) {
+      try { ({ error } = await sb.from('commands').insert(row)); } catch (e) { error = e; }
+      if (!error || H.isDuplicate(error)) { error = null; break; }
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+    if (error) return toast('Could not send: ' + (error.message || error));
     if (a === 'play_youtube') rSong = ''; if (a === 'say') rSay = '';
-    await log('remote command', a + ' to ' + deviceName(rTarget)); toast('Sent to ' + deviceName(rTarget)); loadAll();
+    const tdev = (D.devices || []).find((d) => d.id === rTarget);
+    await log('remote command', a + ' to ' + deviceName(rTarget));
+    toast(tdev && presenceLabel(tdev) === 'resting' ? 'Sent. ' + deviceName(rTarget) + ' is resting; it picks this up within a minute' : tdev && !online(tdev) ? 'Saved. ' + deviceName(rTarget) + ' is offline; it runs when it is back' : 'Sent to ' + deviceName(rTarget)); loadAll();
+  }
+  if (ds.cmdcancel) {
+    // the sender may take back a command that is still waiting; the condition makes it lose cleanly if the device took it a moment ago
+    const { data, error } = await sb.from('commands').update({ status: 'failed', result: 'cancelled: by ' + founderName() + ' before it ran', done_at: new Date().toISOString() }).eq('id', ds.cmdcancel).eq('status', 'queued').select('id');
+    toast(error ? 'Could not cancel: ' + error.message : data && data.length ? 'Cancelled' : 'Too late: the device already took it'); loadAll();
   }
   if (ds.npin || ds.narch || ds.nplan) {
     const id = ds.npin || ds.narch || ds.nplan, n = (D.notebook || []).find(x => String(x.id) === String(id)); if (!n) return;

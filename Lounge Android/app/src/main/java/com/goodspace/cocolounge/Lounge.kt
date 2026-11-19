@@ -160,7 +160,9 @@ class Lounge(app: Application) : AndroidViewModel(app) {
                 // changed, so that one takes the full read.
                 stopListening = cloud.listen(onPulse = { topic -> quickCommands(); scheduleReload(topic) }, onState = { ok -> live = ok; if (ok) scheduleReload("*") })
                 heartbeat?.cancel()
-                heartbeat = viewModelScope.launch { var n = 0; while (true) { if (n % 12 == 0) beat(); if (!live) quickCommands(); n++; delay(5_000) } }
+                // Quiet.mayReadNow(): behind something, only while the database is awake anyway or in a shared slot (YES-3)
+                // Quiet.presenceChanged(): going behind something (or back) is told once at once, so the others show Resting, not Offline
+                heartbeat = viewModelScope.launch { var beatAt = 0L; while (true) { val now = System.currentTimeMillis(); if (Quiet.presenceChanged()) { beatAt = now; beat() } else if (Quiet.mayReadNow()) { if (now - beatAt >= 60_000) { beatAt = now; beat() }; if (!live) quickCommands() }; delay(5_000) } }
             } catch (e: Cloud.CloudError) {
                 // a refused device key is a pairing problem; the Supabase sign-in gate only exists when Nova is off
                 if (e.code == 401) { gate = if (Cloud.viaNova) Gate.Pair else Gate.SignIn; if (Cloud.viaNova) gateMessage = "Coco Cloud did not accept this phone (${e.message}). Pair it again with a new code." } else fail(e)
@@ -172,7 +174,8 @@ class Lounge(app: Application) : AndroidViewModel(app) {
 
     /** Heartbeat with this phone's own live data (battery, storage, volume), so every device sees it. */
     private suspend fun beat() { cloud.deviceId?.let { runCatching {
-        val info = JSONObject().put("summary", PhoneRemote.status(getApplication())).put("at", Instant.now().toString())
+        // presence: on screen or resting, and by when this phone checks in next, so the others can tell resting from offline (Heal.presence)
+        val info = JSONObject().put("summary", PhoneRemote.status(getApplication())).put("at", Instant.now().toString()).put("presence", Heal.presenceInfo(Quiet.quiet, System.currentTimeMillis()))
         cloud.update("devices", "id=eq.$it", JSONObject().put("last_seen", Instant.now().toString()).put("app_version", "android-" + runCatching { getApplication<android.app.Application>().let { a -> a.packageManager.getPackageInfo(a.packageName, 0).versionName } }.getOrDefault("?")).put("info", info)) } } }
 
     /** Fast path: on every cloud ping, fetch only the commands waiting for this phone and run them at once. */
@@ -400,8 +403,26 @@ class Lounge(app: Application) : AndroidViewModel(app) {
     /** PC Control mode: send a fixed command to one PC; its Coco Lounge app runs it and reports back. */
     fun sendCommand(target: String, action: String, args: JSONObject = JSONObject()) = viewModelScope.launch {
         try {
-            cloud.insert("commands", JSONObject().put("target_device", target).put("action", action).put("args", args).put("created_by", name).put("created_device", cloud.deviceId))
-            log("pc command sent", "$action to ${deviceName(target)}"); message = "Sent to ${deviceName(target)}"; reload()
+            // the id is made here and is the idempotency key: a retry after a lost answer is refused as a duplicate, never stored twice
+            val row = JSONObject().put("id", Heal.newCommandId()).put("target_device", target).put("action", action).put("args", args).put("created_by", name).put("created_device", cloud.deviceId)
+            var last: Exception? = null
+            for (i in 0 until 3) {
+                try { cloud.insert("commands", row); last = null; break }
+                catch (e: Exception) { if (Heal.isDuplicate(e)) { last = null; break }; last = e; delay(1_500L * (i + 1)) }
+            }
+            last?.let { throw it }
+            log("pc command sent", "$action to ${deviceName(target)}")
+            val p = Heal.presence(data.devices.firstOrNull { it.optString("id") == target }, System.currentTimeMillis()).state
+            message = when (p) { "resting" -> "Sent. ${deviceName(target)} is resting; it picks this up within a minute"; "offline" -> "Saved. ${deviceName(target)} is offline; it runs when it is back"; else -> "Sent to ${deviceName(target)}" }
+            reload()
+        } catch (e: Exception) { fail(e) }
+    }
+
+    /** The sender takes back a command that is still waiting; the condition makes it lose cleanly if the device took it a moment ago. */
+    fun cancelCommand(id: String) = viewModelScope.launch {
+        try {
+            val won = cloud.claim("commands", "id=eq.$id&status=eq.queued", JSONObject().put("status", "failed").put("result", "cancelled: by $name before it ran").put("done_at", Instant.now().toString()))
+            message = if (won) "Cancelled" else "Too late: the device already took it"; reload()
         } catch (e: Exception) { fail(e) }
     }
 

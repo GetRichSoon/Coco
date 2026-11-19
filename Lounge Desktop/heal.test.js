@@ -40,6 +40,24 @@ assert.deepEqual(H.sweepVerdict({ status: 'running', created_at: ago(5), action:
 assert.equal(H.sweepVerdict({ status: 'running', created_at: ago(5), action: 'lock', args: {} }, now).status, 'failed', 'interrupted + unsafe -> closed');
 assert.equal(H.sweepVerdict({ status: 'running', created_at: ago(5), action: 'status', args: { _retried: 1 } }, now).status, 'failed', 'second interruption -> closed');
 
+// YES-3 follow-up: a resting device keeps its commands; only a device that missed its promised check-in for 30 min loses them, with the reason
+const quietDev = (beatMin) => ({ last_seen: ago(beatMin), info: { presence: H.presenceInfo('quiet', now - beatMin * 60000) } });
+assert.equal(H.presence(quietDev(25), now).state, 'resting');
+assert.equal(H.sweepVerdict({ status: 'queued', created_at: ago(40), action: 'lock' }, now, quietDev(25)), null, 'queued 40 min for a RESTING PC: it waits');
+assert.equal(H.sweepVerdict({ status: 'queued', created_at: ago(80), action: 'lock' }, now, quietDev(60)), null, 'offline 25 min (missed the promise by less than 30): it waits');
+assert.match(H.sweepVerdict({ status: 'queued', created_at: ago(120), action: 'lock' }, now, quietDev(90)).result, /^stale: target device offline \(last seen 2026-10-26 10:30 UTC\)/, 'offline over 30 min: closed with the reason');
+// the runner: waited only because it rested -> runs (spoken ones never late); sent while asleep -> the safety limit, with the reason
+assert.deepEqual(H.runVerdict({ action: 'lock', created_at: ago(25) }, now, now - 3600e3), { run: true, late: true });
+assert.match(H.runVerdict({ action: 'say', created_at: ago(25) }, now, now - 3600e3).result, /^expired: arrived 25 min after it was sent; spoken requests are never run late/);
+assert.match(H.runVerdict({ action: 'lock', created_at: ago(25) }, now, now - 60000).result, /^expired: this device was off or asleep when it was sent \(25 min ago\); commands older than 10 min/);
+assert.deepEqual(H.runVerdict({ action: 'update', created_at: ago(9000) }, now, now), { run: true }, 'an update never expires');
+assert.deepEqual(H.runVerdict({ action: 'say', created_at: ago(1) }, now, now), { run: true });
+// what the sender sees
+assert.equal(H.commandState({ status: 'queued' }, quietDev(1), now).state, 'waiting'); assert.equal(H.commandState({ status: 'running' }, null, now).state, 'acked');
+assert.equal(H.commandState({ status: 'failed', result: 'stale: target device offline' }, null, now).state, 'expired'); assert.equal(H.commandState({ status: 'failed', result: 'cancelled: by Boss' }, null, now).state, 'cancelled');
+assert.ok(H.isDuplicate({ code: '23505' }) && !H.isDuplicate({ code: '42501' }) && /^[0-9a-f-]{36}$/.test(H.newCommandId()));
+for (const s of ['H.runVerdict(c, Date.now(), aliveSince)', 'id: H.newCommandId()', 'H.isDuplicate(error)', "within(sb.from('devices').select('id,last_seen,info')", 'presence: H.presenceInfo(', 'data-cmdcancel']) assert.ok(page.includes(s), 'page has ' + s);
+
 // phrases that failed as "Not understood" in the cloud log now have a rule
 const a = main.indexOf('const APP_WORDS'), b = main.indexOf('// ---------- AI planner');
 const { plan } = new Function(main.slice(a, b) + '; return { plan };')();
@@ -60,7 +78,7 @@ assert.ok(!/from\('commands'\)\.insert|\.insert\(\{\s*target_device/.test(healSr
 assert.ok(!/created_by: 'Nono'/.test(healSrc + main), 'no test payloads in app code. Tests in the cloud use inert text like "[Nono selftest]" via notify, never real utterances');
 
 // the page: watchdog, always-poll, retry, daily note, sweep, report-with-retries
-for (const s of ['runStarted > 180000', 'setInterval(runMyCommands, 5000)', 'H.canRetry', 'function needsNono', "'gs-nono-'", 'function healQueue', 'setInterval(healQueue, 300000)', '|| runningCmds)) continue', 'setTimeout(healQueue, 20000)', 'async function report', "<script src=\"heal.js\">"]) assert.ok(page.includes(s), 'page has ' + s);
+for (const s of ['runStarted > 180000', 'setInterval(runMyCommands, 5000)', 'H.canRetry', 'function needsNono', "'gs-nono-'", 'function healQueue', 'if (!sleeping()) healQueue(); }, 300000)', '|| runningCmds)) continue', 'setTimeout(healQueue, 20000)', 'async function report', "<script src=\"heal.js\">"]) assert.ok(page.includes(s), 'page has ' + s);
 assert.ok(!/if \(!isLive\) runMyCommands/.test(page), 'commands no longer depend on the live link');
 // update: restart-loop guard
 for (const s of ['startHead', 'last-update-restart.txt', '10 * 60 * 1000', 'after === startHead']) assert.ok(main.includes(s), 'update has ' + s);

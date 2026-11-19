@@ -71,6 +71,22 @@ object Alerts {
     class Watch(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
         override suspend fun doWork(): Result {
             val cloud = Cloud(applicationContext)
+            // YES-3: every 15 minutes, unaligned, would wake the database 96 times a day. Skip while this process's
+            // listener still reads on its slots; otherwise only while the database is awake, or every 2 hours.
+            val seen = applicationContext.getSharedPreferences("coco_watch", Context.MODE_PRIVATE)
+            val now = System.currentTimeMillis()
+            val wake = if (Cloud.viaNova) cloud.awake() else null
+            // a command waits for this phone (the wake board's mail, newer than the last one acted on): run the queue now
+            val mailSeen = seen.getLong("mail_at", 0).takeIf { it > 0 } ?: Quiet.mailSeen
+            val mail = wake != null && Quiet.mailIsNew(wake.mailAt, mailSeen, wake.novaNow)
+            if (Cloud.viaNova && !Quiet.watchMayRead(wake?.warm == true, Quiet.listenerReadAt, seen.getLong("read_at", 0), now, mail)) return Result.success()
+            seen.edit().putLong("read_at", now).apply { wake?.mailAt?.let { putLong("mail_at", maxOf(it, mailSeen ?: 0L)) } }.apply()
+            Quiet.quiet = !PhoneRemote.foreground
+            if (mail && cloud.signedIn && cloud.paired) runCatching {
+                val me = cloud.deviceId
+                val q = cloud.list("commands", "select=*&target_device=eq.$me&status=eq.queued&order=created_at.asc")
+                for (i in 0 until q.length()) Heal.runOne(applicationContext, cloud, q.getJSONObject(i))   // the claim inside makes a double run impossible
+            }
             runCatching { Updater.check(applicationContext) }
             if (!cloud.signedIn || !cloud.paired) return Result.success()
             return try {

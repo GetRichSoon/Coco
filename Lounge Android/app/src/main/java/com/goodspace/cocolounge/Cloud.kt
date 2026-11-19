@@ -78,6 +78,7 @@ class Cloud(context: Context) {
         val b = if (viaNova) Request.Builder().url("$NOVA/rest/v1/$path")
                 else Request.Builder().url("$URL/rest/v1/$path").header("apikey", KEY).header("Authorization", "Bearer ${token()}")
         deviceKey?.let { b.header("x-device-key", it) }
+        if (viaNova && Quiet.quiet) b.header("x-coco-quiet", "1")   // YES-3: never counts as a reason the database is awake
         prefer?.let { b.header("Prefer", it) }
         when (method) {
             "GET" -> b.get()
@@ -144,21 +145,53 @@ class Cloud(context: Context) {
         http.newCall(if (body == null) b.get().build() else b.post(body.toString().toRequestBody(JSON)).build()).execute().bodyOrThrow()
     }
 
+    /** Nova's wake board (it never touches the database, and every Nova instance shares it): is the database awake right now, and
+     *  when was a command last written for this device (Nova's clock). Anything but a clear answer is "asleep, no mail". */
+    class Wake(val warm: Boolean, val mailAt: Long?, val novaNow: Long?)
+    fun awakeNow(): Wake = runCatching {
+        val o = JSONObject(http.newCall(Request.Builder().url("$NOVA/api/awake" + (deviceId?.let { "?d=" + java.net.URLEncoder.encode(it, "UTF-8") } ?: "")).get().build()).execute().bodyOrThrow())
+        Wake(o.optBoolean("warm"), Heal.ms(o.optString("mail_at")), Heal.ms(o.optString("now")))
+    }.getOrDefault(Wake(false, null, null))
+    suspend fun awake(): Wake = withContext(Dispatchers.IO) { awakeNow() }
+
     fun listen(onPulse: (String) -> Unit, onState: (Boolean) -> Unit): () -> Unit {
         var socket: WebSocket? = null
         var closed = false
         if (viaNova) {
-            // one tiny signal every 15 s; a changed version names the topic to refresh, nothing else is read
+            // one tiny signal every 15 s on screen; behind something, only while the database is awake anyway or once per
+            // shared 30-minute slot (Quiet, YES-3). A changed version names the topic to refresh, nothing else is read;
+            // after a quiet stretch several tables may have changed, so that one takes the full read.
             var version: String? = null
+            var lastSlot = Quiet.slotOf(System.currentTimeMillis())
+            var readAt = 0L
             Thread {
                 while (!closed) {
-                    try {
-                        val b = Request.Builder().url("$NOVA/api/changes"); deviceKey?.let { b.header("x-device-key", it) }
-                        val o = JSONObject(http.newCall(b.get().build()).execute().bodyOrThrow())
-                        onState(true)
-                        val v = o.optString("version"); if (version != null && v != version) onPulse(o.optString("last_topic").ifBlank { "*" }); version = v
-                    } catch (_: Exception) { onState(false) }
-                    Thread.sleep(15_000)
+                    val fg = PhoneRemote.foreground
+                    Quiet.quiet = !fg
+                    Quiet.noteAlive()
+                    val wake = if (fg) null else awakeNow()
+                    val warm = wake?.warm == true
+                    // a command was written for this phone since it last looked: read now, even while the database sleeps (a real
+                    // command is a reason to wake it); the pulse below names "commands", so both listeners run the queue at once
+                    val mail = wake != null && Quiet.mailIsNew(wake.mailAt, Quiet.mailSeen, wake.novaNow)
+                    wake?.mailAt?.let { m -> if ((Quiet.mailSeen ?: 0L) < m) Quiet.mailSeen = m }
+                    val now = System.currentTimeMillis()
+                    val read = Quiet.mayRead(fg, warm, lastSlot, now, mail)
+                    if (read && !fg && !warm && !mail) lastSlot = Quiet.slotOf(now)
+                    if (mail) onPulse("commands")
+                    if (read) {
+                        Quiet.readUntil = now + Quiet.WINDOW_MS; Quiet.listenerReadAt = now
+                        try {
+                            val b = Request.Builder().url("$NOVA/api/changes"); deviceKey?.let { b.header("x-device-key", it) }
+                            if (Quiet.quiet) b.header("x-coco-quiet", "1")
+                            val o = JSONObject(http.newCall(b.get().build()).execute().bodyOrThrow())
+                            onState(true)
+                            val v = o.optString("version")
+                            if (version != null && v != version) onPulse(if (now - readAt > 120_000) "*" else o.optString("last_topic").ifBlank { "*" })
+                            version = v; readAt = now
+                        } catch (_: Exception) { onState(false) }
+                    }
+                    Thread.sleep(if (fg) 15_000 else 30_000)
                 }
             }.start()
             return { closed = true }
