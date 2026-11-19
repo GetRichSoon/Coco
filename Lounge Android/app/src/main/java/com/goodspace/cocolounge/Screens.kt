@@ -87,7 +87,9 @@ fun inTime(iso: String?): String {
     return when { s < 0 -> "was due ${ago(iso)}"; s < 3600 -> "in ${s / 60} min"; sameDay -> "today $clock"; tomorrow -> "tomorrow $clock"
         else -> DateTimeFormatter.ofPattern("EEE d MMM, h:mm a").withZone(zone).format(t) }
 }
-fun online(d: JSONObject) = parse(d.optString("last_seen"))?.let { Duration.between(it, Instant.now()).seconds < 150 } ?: false
+/** Reachable: online (on screen) or resting (behind something; it answers within a minute). Offline only once it missed its promised check-in. */
+fun online(d: JSONObject) = Heal.presence(d, System.currentTimeMillis()).state != "offline"
+fun presenceLabel(d: JSONObject) = when (Heal.presence(d, System.currentTimeMillis()).state) { "online" -> "Online"; "resting" -> "Resting"; else -> "Offline" }
 internal fun JSONObject.s(k: String) = optString(k).let { if (it == "null") "" else it }
 
 /** One line per account: what the platform granted, until when, how renewal went, the latest health check. Never a credential. */
@@ -425,9 +427,14 @@ fun LazyListScope.remote(vm: Lounge) {
                         Text("${c.s("action").replace('_', ' ')}${if (what.isNotBlank()) " · $what" else ""} → ${vm.deviceName(c.s("target_device"))}", style = MaterialTheme.typography.titleMedium)
                         Muted("${c.s("created_by")} · ${ago(c.s("created_at"))}")
                     }
-                    StatusChip(c.s("status"), mapOf("queued" to "Waiting", "running" to "Running", "done" to "Done", "failed" to "Failed")[c.s("status")])
+                    // the command as its sender sees it (Heal.commandState): Sending / Waiting / Received / Done / Failed / Expired / Cancelled
+                    val st = Heal.commandState(c, vm.data.devices.firstOrNull { it.s("id") == c.s("target_device") }, System.currentTimeMillis())
+                    StatusChip(mapOf("done" to "done", "acked" to "running", "failed" to "failed", "expired" to "failed")[st.state] ?: "queued", st.label)
                 }
+                val st = Heal.commandState(c, vm.data.devices.firstOrNull { it.s("id") == c.s("target_device") }, System.currentTimeMillis())
+                if (st.state == "waiting" || st.state == "queued") Muted(st.why + (st.by?.let { ", at the latest by " + DateTimeFormatter.ofPattern("h:mm a").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(it)) } ?: ""))
                 c.s("result").takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                if (c.s("status") == "queued") TextButton(onClick = { vm.cancelCommand(c.s("id")) }) { Text("Cancel") }
             }
         }
     }
@@ -536,8 +543,8 @@ fun RemotePanel(vm: Lounge, dev: JSONObject) {
         Card {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(if (pc) Icons.Rounded.Computer else Icons.Rounded.PhoneAndroid, null, Modifier.size(30.dp), tint = LocalCocoRoles.current.link); Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) { Text(dev.s("name"), style = MaterialTheme.typography.titleLarge); Muted(if (online(dev)) "online · Coco Lounge connected" else if (dev.s("key_hash").isBlank()) "not paired yet" else "offline · seen ${ago(dev.s("last_seen"))} · runs if back within 10 min"); dev.optJSONObject("info")?.optString("summary")?.takeIf { it.isNotBlank() }?.let { Muted("$it · ${ago(dev.optJSONObject("info")?.optString("at"))}") } }
-                StatusChip(if (online(dev)) "live" else "off", if (online(dev)) "Online" else "Offline")
+                Column(Modifier.weight(1f)) { Text(dev.s("name"), style = MaterialTheme.typography.titleLarge); Muted(if (dev.s("key_hash").isBlank()) "not paired yet" else when (presenceLabel(dev)) { "Online" -> "online · Coco Lounge connected"; "Resting" -> "resting · takes a command within a minute"; else -> "offline · seen ${ago(dev.s("last_seen"))} · a command waits for it; expired if it stays away 30 min" }); dev.optJSONObject("info")?.optString("summary")?.takeIf { it.isNotBlank() }?.let { Muted("$it · ${ago(dev.optJSONObject("info")?.optString("at"))}") } }
+                StatusChip(if (online(dev)) "live" else "off", presenceLabel(dev))
             }
             TextButton({ send("status", JSONObject()) }) { Icon(Icons.Rounded.MonitorHeart, null); Spacer(Modifier.width(6.dp)); Text("Check status") }
         }

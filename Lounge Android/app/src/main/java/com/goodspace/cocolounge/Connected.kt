@@ -61,6 +61,8 @@ class Connected : Service() {
             var beatAt = 0L; var updateAt = System.currentTimeMillis(); var sweepAt = updateAt - 4 * 60_000L
             while (true) {
                 val now = System.currentTimeMillis()
+                // going behind something (or back) is told once, at once: the others show Resting and keep this phone's commands waiting
+                if (cloud.signedIn && cloud.paired && Quiet.presenceChanged()) { beatAt = now; beat(cloud) }
                 if (cloud.signedIn && cloud.paired && Quiet.mayReadNow(now)) {
                     runQueued(cloud)
                     if (now - beatAt >= 60_000) { beatAt = now; beat(cloud) }
@@ -77,6 +79,7 @@ class Connected : Service() {
         val version = runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: "?"
         runCatching {
             val info = JSONObject().put("summary", PhoneRemote.status(applicationContext)).put("at", Instant.now().toString()).put("version", version).put("connected", "service")
+                .put("presence", Heal.presenceInfo(Quiet.quiet, System.currentTimeMillis()))
             // Platform and internal build are what let the cloud tell four devices apart: one
             // user-facing Coco version, but a phone's build is its versionCode and a desktop's is a
             // commit. update_state is deliberately not sent here - the cloud decides UPDATE_REQUIRED

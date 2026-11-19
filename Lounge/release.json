@@ -8,7 +8,7 @@
   "release_id": "coco-2.12.1",
   "commit": "cloud-foundation",
   "notes": [
-    "Coco rests while nobody is looking at it, so it keeps running at no cost. A screen you are using updates as quickly as before; a device left in the background checks in every 30 minutes, or within half a minute while another device is in use.",
+    "Coco rests while nobody is looking at it, so it keeps running at no cost. A screen you are using updates as quickly as before; a device left in the background checks in every 30 minutes, or within half a minute while another device is in use. A command sent to a resting device waits for it, shows Waiting, Received, Done or the reason it could not run, and can be cancelled while it waits.",
     "Home is now the working view: open tasks, what is running, approvals waiting for your YES and alerts. Revenue, House cards, HQ and Team talk moved to their own sections.",
     "Tasks you can operate: create, assign, pause, resume, cancel, add notes, and ask the cloud to run a task, on the phone and on the desktop. COCO says \"waiting for the next cloud run\" instead of pretending something is running.",
     "Approvals open with the full request and Approve or Reject.",

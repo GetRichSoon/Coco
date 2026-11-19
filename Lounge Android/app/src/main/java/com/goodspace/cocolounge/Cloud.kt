@@ -145,9 +145,14 @@ class Cloud(context: Context) {
         http.newCall(if (body == null) b.get().build() else b.post(body.toString().toRequestBody(JSON)).build()).execute().bodyOrThrow()
     }
 
-    /** Nova's one bit, "is the database awake right now"; it never touches the database. Anything but a clear yes is no. */
-    fun awakeNow(): Boolean = runCatching { JSONObject(http.newCall(Request.Builder().url("$NOVA/api/awake").get().build()).execute().bodyOrThrow()).optBoolean("warm") }.getOrDefault(false)
-    suspend fun awake(): Boolean = withContext(Dispatchers.IO) { awakeNow() }
+    /** Nova's wake board (it never touches the database, and every Nova instance shares it): is the database awake right now, and
+     *  when was a command last written for this device (Nova's clock). Anything but a clear answer is "asleep, no mail". */
+    class Wake(val warm: Boolean, val mailAt: Long?, val novaNow: Long?)
+    fun awakeNow(): Wake = runCatching {
+        val o = JSONObject(http.newCall(Request.Builder().url("$NOVA/api/awake" + (deviceId?.let { "?d=" + java.net.URLEncoder.encode(it, "UTF-8") } ?: "")).get().build()).execute().bodyOrThrow())
+        Wake(o.optBoolean("warm"), Heal.ms(o.optString("mail_at")), Heal.ms(o.optString("now")))
+    }.getOrDefault(Wake(false, null, null))
+    suspend fun awake(): Wake = withContext(Dispatchers.IO) { awakeNow() }
 
     fun listen(onPulse: (String) -> Unit, onState: (Boolean) -> Unit): () -> Unit {
         var socket: WebSocket? = null
@@ -163,10 +168,17 @@ class Cloud(context: Context) {
                 while (!closed) {
                     val fg = PhoneRemote.foreground
                     Quiet.quiet = !fg
-                    val warm = !fg && awakeNow()
+                    Quiet.noteAlive()
+                    val wake = if (fg) null else awakeNow()
+                    val warm = wake?.warm == true
+                    // a command was written for this phone since it last looked: read now, even while the database sleeps (a real
+                    // command is a reason to wake it); the pulse below names "commands", so both listeners run the queue at once
+                    val mail = wake != null && Quiet.mailIsNew(wake.mailAt, Quiet.mailSeen, wake.novaNow)
+                    wake?.mailAt?.let { m -> if ((Quiet.mailSeen ?: 0L) < m) Quiet.mailSeen = m }
                     val now = System.currentTimeMillis()
-                    val read = Quiet.mayRead(fg, warm, lastSlot, now)
-                    if (read && !fg && !warm) lastSlot = Quiet.slotOf(now)
+                    val read = Quiet.mayRead(fg, warm, lastSlot, now, mail)
+                    if (read && !fg && !warm && !mail) lastSlot = Quiet.slotOf(now)
+                    if (mail) onPulse("commands")
                     if (read) {
                         Quiet.readUntil = now + Quiet.WINDOW_MS; Quiet.listenerReadAt = now
                         try {
