@@ -3,7 +3,7 @@
 // It replaces three Supabase-specific pieces with provider-independent code:
 //   SQL coco_oauth_begin()                 read the client id from Supabase Vault inside SQL     -> begin()
 //   Edge Functions youtube-oauth/gumroad-oauth  /callback (and YouTube /verify)                  -> callback() / verify()
-// Credentials go through Nova's vault (api/_vault.js): the portable Coco vault, or today's Supabase Vault until it is moved.
+// Credentials go through Nova's vault (api/_vault.js): the portable Coco vault only; without it these routes fail closed (vault not configured).
 // Nothing here prints, logs or returns a credential, and no page ever receives one.
 //
 // Routes (api/_nova.js):
@@ -14,7 +14,7 @@
 // The redirect URI is fixed by COCO_PUBLIC_URL, never taken from a request, and must be registered once in each provider's console:
 //   <COCO_PUBLIC_URL>/api/oauth/youtube/callback        <COCO_PUBLIC_URL>/api/oauth/gumroad/callback
 import { randomBytes } from 'node:crypto';
-import { createVault, legacySupabase } from './_vault.js';
+import { createVault } from './_vault.js';
 import { ACCESS_POLICY } from './_access_policy.js';
 import { redact, maskId } from './_publish.js';
 
@@ -71,7 +71,7 @@ export function page(status, title, lines) {
 // 0041 added fields to integration_accounts and 0035 a health table; before they are applied these statements are skipped, not fatal
 const hub = (db, sql, params) => db.query(sql, params).catch((e) => { if (e && (e.code === '42703' || e.code === '42P01')) return null; throw e; });
 const activity = (db, actor, action, detail) => db.query('INSERT INTO public.activity (actor, action, detail) VALUES ($1, $2, $3)', [actor, action, String(detail).slice(0, 1500)]);
-const vaultOf = (db, { env, actor }) => createVault(db, { env, actor, legacy: legacySupabase(db) });
+const vaultOf = (db, { env, actor }) => createVault(db, { env, actor });
 
 // ---------------------------------------------------------------- talking to the platforms
 async function ytWhoami(f, api, token) {

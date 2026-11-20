@@ -1,12 +1,12 @@
 // Run: node nova.test.js   (no network, no database: a scripted stand-in records every statement)
 //
 // What Nova must hold: nobody without a paired device key gets in; every statement runs as
-// `authenticated` with the founder's claims and the device header set, inside one transaction;
+// `coco_member` (0043) with the founder's claims and the device header set, inside one transaction;
 // identifiers that are not plain names are refused before they reach SQL; reads are cached and a
 // write to a table empties that table's cache; a device is rate limited; no error ever echoes a
 // connection string.
 import assert from 'node:assert/strict';
-import { handle, buildSelect, buildWrite, buildRpc, sha256, invalidate, rateOk, resetUpstream, NovaError } from './api/_nova.js';
+import { handle, vercel, buildSelect, buildWrite, buildRpc, sha256, invalidate, rateOk, resetUpstream, NovaError } from './api/_nova.js';
 
 let pass = 0, fail = 0;
 const t = async (name, fn) => { resetUpstream(); try { await fn(); pass++; console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} — ${e.message}`); } };
@@ -26,12 +26,12 @@ await t('1 auth: no key, a wrong key and an unpaired device are 401; a paired fo
   const me = await handle(db, req('GET', '/api/me')); assert.equal(me.status, 200); assert.deepEqual(JSON.parse(me.body), { email: 'boss@example.com', device_id: 'boss-pc', name: 'Boss PC' });
 });
 
-await t('2 every statement runs as authenticated with the claims and the device header, in one transaction', async () => {
+await t('2 every statement runs as coco_member with the claims and the device header, in one transaction', async () => {
   const db = fakeDb([{ id: 'h1' }]); invalidate();
   const r = await handle(db, req('GET', '/rest/v1/houses', { query: { select: '*', order: 'sort.asc' } }));
   assert.equal(r.status, 200); assert.deepEqual(JSON.parse(r.body), [{ id: 'h1' }]);
   const seq = db.sql.slice(-5).map((s) => s.text);
-  assert.ok(seq[0] === 'BEGIN' && seq[1].startsWith("SELECT set_config('request.jwt.claims'") && seq[2] === 'SET LOCAL ROLE authenticated' && seq[3].startsWith('SELECT * FROM') && seq[4] === 'COMMIT', `sequence was ${seq.map((x) => x.slice(0, 30)).join(' | ')}`);
+  assert.ok(seq[0] === 'BEGIN' && seq[1].startsWith("SELECT set_config('request.jwt.claims'") && seq[2] === 'SET LOCAL ROLE coco_member' && seq[3].startsWith('SELECT * FROM') && seq[4] === 'COMMIT', `sequence was ${seq.map((x) => x.slice(0, 30)).join(' | ')}`);
   const cfg = db.sql.find((s) => /set_config/.test(s.text)); assert.match(cfg.params[0], /"email":"boss@example.com"/); assert.match(cfg.params[1], /x-device-key/);
 });
 
@@ -94,12 +94,38 @@ await t('7 errors: RLS refusals are 403, timeouts 504, a database outage 503 UPS
 });
 
 await t('8 pairing is the only call allowed without a device key, and it runs with no claims', async () => {
-  const base = fakeDb([{ value: 'phone-1' }]); const db = { sql: base.sql, query: async (t, p) => /FROM public\.pairing_codes c JOIN/.test(t) ? { rows: p[0] === '123456' ? [{ owner_email: 'boss@example.com' }] : [] } : base.query(t, p) }; invalidate();
+  const base = fakeDb([{ value: 'phone-1' }]); const db = { sql: base.sql, query: async (t, p) => /FROM public\.pairing_codes c JOIN/.test(t) ? { rows: p[0] === sha256('123456') ? [{ owner_email: 'boss@example.com' }] : [] } : base.query(t, p) }; invalidate();
   const r = await handle(db, req('POST', '/rest/v1/rpc/pair_device', { key: '', body: { p_code: '123456', p_device_key: 'new-key-0123456789abcdef' } }));
   assert.equal(r.status, 200, r.body); assert.equal(JSON.parse(r.body), 'phone-1');
   const cfg = db.sql.find((x) => /set_config/.test(x.text)); assert.match(cfg.params[0], /"email":"boss@example.com"/, 'the code names the device, the device names the founder');
   assert.equal((await handle(db, req('POST', '/rest/v1/rpc/pair_device', { key: '', body: { p_code: '000000', p_device_key: 'new-key-0123456789abcdef' } }))).status, 400, 'a wrong code is a 400, not a founder lookup');
   assert.equal((await handle(db, req('POST', '/rest/v1/rpc/submit_task', { key: '', body: {} }))).status, 401, 'every other rpc still needs the device key');
+});
+
+await t('9 Neon Free (YES-3): /api/awake needs no key and no database; only a statement from a request that is not quiet makes it warm, for 4 minutes', async () => {
+  const T0 = Date.now() + 3600e3, T1 = T0 + 600e3;   // later than the earlier tests' clocks, so their rate buckets and caches do not interfere
+  const never = { query: async () => { throw new Error('the database was touched'); } };
+  const awake = async (now) => JSON.parse((await handle(never, req('GET', '/api/awake', { key: '' }), now)).body).warm;
+  assert.equal(await awake(T0), false, 'nothing has run yet');
+  const quiet = req('GET', '/rest/v1/tasks', { query: { select: '*' } }); quiet.headers['x-coco-quiet'] = '1';
+  invalidate(); assert.equal((await handle(fakeDb([{ id: 't' }]), quiet, T0)).status, 200);
+  assert.equal(await awake(T0 + 1000), false, 'a quiet read never says the database is awake (quiet devices would keep each other up)');
+  invalidate(); assert.equal((await handle(fakeDb([{ id: 't' }]), req('GET', '/rest/v1/tasks', { query: { select: '*' } }), T1)).status, 200);
+  assert.equal(await awake(T1 + 239e3), true, 'a screen in use read it: awake');
+  assert.equal(await awake(T1 + 241e3), false, 'four minutes later it may be suspending');
+  const hit = await handle(never, req('GET', '/rest/v1/tasks', { query: { select: '*' } }), T1 + 1000);
+  assert.equal(hit.headers['x-nova-cache'], 'hit', 'a cached read runs no statement (the auth cache covers the key)');
+});
+
+await t('10 the Vercel adapter opens no database connection for a request that runs no statement', async () => {
+  const had = process.env.DATABASE_URL; delete process.env.DATABASE_URL;   // connect() refuses without it, so any attempt shows up as a 503
+  const res = () => ({ code: 0, h: {}, out: '', status(c) { this.code = c; return this; }, setHeader(k, v) { this.h[k] = v; }, send(b) { this.out = b; } });
+  const a = res(); await vercel({ url: '/api/nova?__path=api/awake', method: 'GET', headers: {}, body: null }, a);
+  assert.equal(a.code, 200, a.out); assert.equal(typeof JSON.parse(a.out).warm, 'boolean');
+  assert.match(a.h['access-control-allow-headers'], /x-coco-quiet/, 'browsers may send the quiet header');
+  const b = res(); await vercel({ url: '/api/nova?__path=api/me', method: 'GET', headers: { 'x-device-key': 'some-unknown-key-0123456789' }, body: null }, b);
+  assert.equal(b.code, 503, 'a request that needs the database still says it has none');
+  if (had !== undefined) process.env.DATABASE_URL = had;
 });
 
 console.log(`\nnova.test: ${pass} passed, ${fail} failed`);

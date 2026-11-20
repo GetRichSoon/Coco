@@ -4,12 +4,13 @@
 //
 // It speaks the PostgREST subset the apps already use, so a client changes its base URL and nothing
 // else. Security is the database's own: Nova verifies the device key hash against `devices`, then
-// runs every statement as role `authenticated` with the same request.jwt.claims and request.headers
-// PostgREST would have set, so RLS, is_founder() and device_ok() decide exactly as before. The
-// database password lives only in Nova's environment; the apps never see it.
+// runs every statement as role `coco_member` (CocoMaison migration 0043) with the same request.jwt.claims and request.headers
+// it always set, read by private.claims(), so RLS, is_founder() and device_ok() decide exactly as before. No Supabase role, schema,
+// REST, Storage or Edge Function is used. The database password lives only in Nova's environment; the apps never see it.
 //
-// Env: DATABASE_URL (pooler connection string, transaction mode), NOVA_CACHE_SECONDS (15),
-//      NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000)
+// Env: DATABASE_URL (Neon pooled connection string of the LOGIN role `nova_app` from 0043: member of coco_member and coco_vault,
+//      set by the account owner, never in git), NOVA_CACHE_SECONDS (15), NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000),
+//      NOVA_ENGINE_KEY (the job door, worker tokens; api/_door.js), COCO_VAULT_* (api/_vault.js)
 import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
@@ -20,8 +21,11 @@ import { handleOps } from './_ops.js';
 import { redactDeep } from './_redact.js';
 import { handleOrbiTrending } from './_orbi_trending.js';
 import { handleConnect } from './_connect.js';
+import { PREFIX as DOOR, handleDoor, handleWorkerToken, handleBoard } from './_door.js';
+import { createWake, runtimeStore } from './_wake.js';
+import { VaultNotConfigured } from './_vault.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer; connect = { load(provider) -> connector module, cooldownMs }
-export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {} };
+export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {}, wakeStore: undefined };   // wakeStore: the shared board in tests (null = none)
 
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
@@ -33,7 +37,9 @@ export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms',
   // the integration hub + cloud portability (0041): RLS lets founders read them; the engine key reads providers and switches
   'integration_registry', 'credential_audit', 'cloud_providers', 'provider_switches',
   // the revenue ledger (migration 20261112): founders read through RLS; nothing writes it through Nova's table door, see READ_ONLY
-  'revenue_events', 'revenue_sync']);   // every public table except engine_keys and oauth_states
+  'revenue_events', 'revenue_sync',
+  // 0034 company structure, 0035 integration health, 0037 worker registry (0043 grants coco_member on them; integration_health: select, insert)
+  'org_repos', 'org_workflows', 'org_access', 'org_metrics', 'integration_health', 'worker_registry']);   // every public table except engine_keys and oauth_states
 // Tables Nova serves for GET only. RLS alone would still let a database role write them; Nova refuses every other verb (405) before any
 // statement exists. The ledger is written by one path only: POST /api/revenue/sync -> coco_revenue_upsert (api/_connect.js).
 export const READ_ONLY = new Set(['revenue_events', 'revenue_sync']);
@@ -160,7 +166,14 @@ export const stats = { requests: 0, cache_hits: 0, cache_misses: 0, db_calls: 0,
 const inflight = new Map();                   // read key -> promise: N identical concurrent GETs share one database query
 const down = { until: 0, reason: '' };         // negative cache: after an upstream failure, answer 503 for a few seconds without touching the database
 const DOWN_S = Number(process.env.NOVA_NEGATIVE_CACHE_SECONDS || 10);
-export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; }
+export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; wake.reset(); }
+// Neon Free plan (YES-3): the database suspends after 5 idle minutes. A request that is NOT quiet (a screen in use, a cloud job) and ran a
+// statement marks it awake; a new command marks its target device's mail. GET /api/awake answers from the wake board (api/_wake.js)
+// without touching the database, so a hidden or idle app reads while the database is awake anyway, or at once when a command waits for
+// it, and stays away while it sleeps. The board is shared by every Nova instance (Vercel Runtime Cache), so a phone served by one
+// instance and a PC served by another still see each other. A quiet request (x-coco-quiet: 1) never marks it awake, or quiet devices
+// would keep each other awake for ever.
+export const wake = createWake({ store: () => (deps.wakeStore !== undefined ? deps.wakeStore : runtimeStore()) });
 // a failure of the database or the platform behind it (not a bad request, not RLS, not a statement timeout)
 const UPSTREAM = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|connection terminated|connection timeout|timeout exceeded when trying to connect|too many (clients|connections)|exceed_egress|quota|the database system is|no pg_hba|Tenant or user not found/i;
 export const isUpstream = (e) => !(e instanceof NovaError) && e?.code !== 'P0001' && (UPSTREAM.test(String(e?.message)) || UPSTREAM.test(String(e?.code)) || /^(08|57P0[1-3]|53300)/.test(String(e?.code || '')));   // a RAISE EXCEPTION is a rule talking, never an outage
@@ -184,9 +197,9 @@ export function timings() {
   return { sample: ms.length, p50_ms: q(0.5), p95_ms: q(0.95), max_ms: ms.at(-1) ?? null, slow: recent.filter((r) => r.ms >= 2000).slice(-10), by_path: Object.entries(recent.reduce((m, r) => { (m[r.path] ||= []).push(r.ms); return m; }, {})).map(([p, l]) => ({ path: p, n: l.length, avg_ms: Math.round(l.reduce((a, b) => a + b, 0) / l.length) })).sort((a, b) => b.n - a.n).slice(0, 12) };
 }
 
-export function rateOk(id, now = Date.now()) {
-  const b = buckets.get(id) || { tokens: RATE, at: now };
-  b.tokens = Math.min(RATE, b.tokens + ((now - b.at) / 60000) * RATE); b.at = now;
+export function rateOk(id, now = Date.now(), rate = RATE) {
+  const b = buckets.get(id) || { tokens: rate, at: now };
+  b.tokens = Math.min(rate, b.tokens + ((now - b.at) / 60000) * rate); b.at = now;
   if (b.tokens < 1) { buckets.set(id, b); return false; }
   b.tokens -= 1; buckets.set(id, b); return true;
 }
@@ -202,17 +215,18 @@ export async function authenticate(db, deviceKey, now = Date.now()) {
   authCache.set(h, { at: now, who }); return who;
 }
 
-// Run one statement the way PostgREST would have: as `authenticated`, with the founder's claims
-// and the device header visible to the SQL functions, inside one transaction (pooler-safe).
+// Run one statement as the request role (0043: coco_member, which replaced Supabase's role), with the founder's claims in
+// request.jwt.claims (private.claims() reads them) and the device header in request.headers, inside one transaction (pooler-safe).
+export const MEMBER_ROLE = 'coco_member';
 export async function runAs(db, who, deviceKey, { sql, params }, engineKey = null) {
   stats.db_calls++;
-  const claims = JSON.stringify({ email: who.email, role: 'authenticated', sub: who.email });
+  const claims = JSON.stringify({ email: who.email, role: MEMBER_ROLE, sub: who.email });
   // the engine key rides along when the caller sent one: the queue and policy RLS read it from request.headers exactly as PostgREST would have set it
   const headers = JSON.stringify(engineKey ? { 'x-device-key': deviceKey, 'x-engine-key': engineKey } : { 'x-device-key': deviceKey });
   await db.query('BEGIN');
   try {
     await db.query(`SELECT set_config('request.jwt.claims', $1, true), set_config('request.headers', $2, true), set_config('statement_timeout', $3, true)`, [claims, headers, String(TIMEOUT)]);
-    await db.query('SET LOCAL ROLE authenticated');
+    await db.query(`SET LOCAL ROLE ${MEMBER_ROLE}`);
     const r = await db.query(sql, params);
     await db.query('COMMIT');
     return r.rows;
@@ -221,15 +235,28 @@ export async function runAs(db, who, deviceKey, { sql, params }, engineKey = nul
 
 // The whole request. `req` = { method, path, query, headers, body }, returns { status, headers, body }.
 export async function handle(db, req, now = Date.now()) {
+  // a statement from a request that is not quiet tells the wake board the database is awake (once the answer is ready, at most once a minute)
+  let ran = false;
+  if (req.headers?.['x-coco-quiet'] !== '1' && db) { const inner = db; db = Object.assign(Object.create(inner), { query: (...a) => { ran = true; return inner.query(...a); } }); }
+  const out = await handleOne(db, req, now);
+  if (ran) await wake.touched(now);
+  return out;
+}
+async function handleOne(db, req, now) {
   stats.requests++;
   const t0 = now;
   const log = (status, extra = {}) => { const ms = Date.now() - t0; observe(req.path, ms, { status, cache: extra.cache || null, device: extra.device || null }); console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms, ...extra })); };
   try {
+    // the job door: a worker token, never a device key; no CORS and no negative cache in front of it (api/_door.js). Logged: status and path only.
+    if (req.path === DOOR || req.path.startsWith(DOOR + '/')) { const out = await handleDoor(db, req, { runAs, buildRpc, buildSelect, buildWrite, rateOk }, now); log(out.status); return out; }
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
+    // no key, no database: one bit, "is the database awake right now", for apps deciding whether a read would wake it
+    // ?d=<device id> adds mail_at: when a command was last written for that device (a hint only; the device then reads the queue itself)
+    if (req.path === '/api/awake') return json(200, await wake.answer(String(req.query?.d || '').slice(0, 80) || null, now));
     if (req.path !== '/api/health' && down.until > now) { stats.negative_hits++; return unavailable(down.reason); }
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
-      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null, down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
+      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null, down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, wake: wake.stats, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
     }
     // Orbi wallpaper "Trending": anonymous pick counts from the Orbi extension, not a Coco device (api/_orbi_trending.js)
     if (req.path.startsWith('/api/orbi/wall/')) {
@@ -239,7 +266,7 @@ export async function handle(db, req, now = Date.now()) {
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself
-    // (hashed, single use, expiring) and runs as plain `authenticated` with no claims, like PostgREST.
+    // (hashed, single use, expiring) and runs as coco_member with the code's owner in the claims.
     if (req.path.endsWith('/rest/rpc/pair_device') || req.path.endsWith('/rest/v1/rpc/pair_device')) {
       if (req.method !== 'POST') return json(405, { message: 'rpc is POST' });
       if (!rateOk('pair:' + (req.headers['x-forwarded-for'] || 'unknown'), now)) return json(429, { message: 'too many pairing attempts' });
@@ -247,7 +274,7 @@ export async function handle(db, req, now = Date.now()) {
       if (!code || newKey.length < 16) return json(400, { message: 'pairing needs p_code and p_device_key' });
       // The code is the credential. It names one device, whose owner is the founder pair_device() must
       // see; the function then checks the hash, the expiry and single use itself, exactly as before.
-      const owner = await db.query(`SELECT d.owner_email FROM public.pairing_codes c JOIN public.devices d ON d.id = c.device_id WHERE c.code_hash = encode(extensions.digest($1, 'sha256'), 'hex') AND c.used_at IS NULL AND c.revoked_at IS NULL AND c.expires_at > now() LIMIT 1`, [code]);
+      const owner = await db.query(`SELECT d.owner_email FROM public.pairing_codes c JOIN public.devices d ON d.id = c.device_id WHERE c.code_hash = $1 AND c.used_at IS NULL AND c.revoked_at IS NULL AND c.expires_at > now() LIMIT 1`, [sha256(code)]);   // hashed here: no extension schema needed
       if (!owner.rows.length) { log(400, { rpc: 'pair_device', why: 'code wrong or expired' }); return json(400, { message: 'code wrong or expired' }); }
       let rows;
       try { rows = await runAs(db, { email: owner.rows[0].owner_email }, newKey, buildRpc('pair_device', { p_code: code, p_device_key: newKey })); }
@@ -280,6 +307,10 @@ export async function handle(db, req, now = Date.now()) {
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
+    // a founder's device mints a worker's first job token (the answer carries it once; the log never does), and reads the company task board
+    if (req.path === '/api/workers/token') { const out = await handleWorkerToken(db, req, who, deviceKey, { runAs, buildRpc, buildSelect, buildWrite, json }); log(out.status, { device: who.device_id, worker_token: String(req.body?.worker_id || '').slice(0, 64) }); return out; }
+    if (req.path === '/api/board') { const key = `${who.email}|board|`, c = req.method === 'GET' && cache.get(key); if (c && now - c.at < CACHE_S * 1000) { stats.cache_hits++; log(200, { device: who.device_id, board: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
+      const out = await handleBoard(db, req, who, deviceKey, { runAs, buildSelect, json }); if (out.status === 200) cache.set(key, { at: now, body: JSON.parse(out.body) }); log(out.status, { device: who.device_id, board: 'miss' }); return out; }
     // Connect a key / Check now / Sync now / revenue totals: a founder's device presses it, Nova does the provider call (api/_connect.js)
     if (req.path.startsWith('/api/connect/') || req.path.startsWith('/api/revenue/')) {
       const out = await handleConnect(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.oauthUrls, now, ...deps.connect });
@@ -309,11 +340,11 @@ export async function handle(db, req, now = Date.now()) {
     if (um) { const rows = await runAs(db, who, deviceKey, { sql: 'SELECT public.coco_run_usage($1) AS v', params: [um[1]] }, req.headers['x-engine-key'] || null); log(200, { device: who.device_id, usage: um[1] }); return json(200, rows[0]?.v ?? null); }
     // the AI door for routine cloud writing (Gemini), locked until a founder enables it
     if (req.path.startsWith('/api/ops/')) return await handleOps(req, who, { json, log, read: async (name) => (await runAs(db, who, deviceKey, { sql: 'SELECT payload, collected_at FROM public.ops_snapshots WHERE name = $1', params: [name] }, req.headers['x-engine-key'] || null))[0] || null }); // authenticated internal snapshots (never static files)
-    if (req.path.startsWith('/api/ai/')) return handleAi(db, req, who, { json, log, fetch: deps.fetch });
+    if (req.path.startsWith('/api/ai/')) return await handleAi(db, req, who, { json, log, fetch: deps.fetch });
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/oauth/begin' || req.path === '/api/oauth/verify') { const out = await handleOauthAuthed(db, req, who, { json, fetch: deps.fetch, urls: deps.oauthUrls }); log(out.status, { device: who.device_id, oauth: req.path.slice(11) }); return out; }
     if (req.path.startsWith('/api/automation/')) { const out = await handleAutomation(db, req, who, { json, log, fetch: deps.fetch, overrides: deps.automation }); log(out.status, { device: who.device_id, automation: req.path.slice(16) }); return out; }
-    if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
+    if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return await handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
       // The newest cloud build is the latest GitHub release of the (public) Coco repository:
       // tag android-<version>-<code>, the APK as its asset, the sha256 in its notes.
@@ -368,12 +399,20 @@ export async function handle(db, req, now = Date.now()) {
     let safe;
     try { safe = redactDeep(req.body); } catch { throw new NovaError(500, 'the redaction gate failed, so the write was refused'); }
     const rows = await runAs(db, who, deviceKey, buildWrite(name, req.method, req.query, safe.value, req.headers.prefer || ''), req.headers['x-engine-key'] || null);
-    invalidate(name); log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length, ...(safe.findings.length ? { redacted: safe.findings.length, redacted_types: [...new Set(safe.findings)].join(',') } : {}) });
+    invalidate(name);
+    // a command is real activity: tell its device to look now (an insert, or a sweeper putting one back in the queue)
+    if (name === 'commands') {
+      const targets = req.method === 'POST' ? (Array.isArray(safe.value) ? safe.value : [safe.value]).map((r) => r && r.target_device)
+        : req.method === 'PATCH' && safe.value && safe.value.status === 'queued' ? rows.map((r) => r.target_device) : [];
+      if (targets.some(Boolean)) await wake.mail(targets, now);
+    }
+    log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length, ...(safe.findings.length ? { redacted: safe.findings.length, redacted_types: [...new Set(safe.findings)].join(',') } : {}) });
     return json(/return=representation/.test(req.headers.prefer || '') ? 200 : 201, /return=representation/.test(req.headers.prefer || '') ? rows : null);
   } catch (e) {
     stats.errors++;
     if (isUpstream(e)) { log(503, { upstream: 'unavailable' }); return markDown(e, now); }
     const refused = e instanceof NovaError ? null : /statement timeout|permission denied|row-level security|violates row-level/i.test(e.message) ? null : pgRefusal(e);
+    if (e instanceof VaultNotConfigured) { log(503, { vault: 'not configured' }); return json(503, { ok: false, state: e.state, message: e.message }); }
     const status = e instanceof NovaError ? e.status : /statement timeout/i.test(e.message) ? 504 : /permission denied|row-level security|violates row-level/i.test(e.message) ? 403 : refused ? refused.status : 500;
     log(status, { error: String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) });
     // a 500 stays opaque to an app, but the cloud runtime (it sent an engine key) is told the redacted cause, so a failing sync can be fixed without the platform's logs
@@ -382,7 +421,7 @@ export async function handle(db, req, now = Date.now()) {
   }
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
-const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
+const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, x-coco-quiet, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
 // a null result is the JSON text `null`, never an empty body: a caller parsing a 200 must always get JSON. Only a write with return=minimal (201) sends nothing.
 function json(status, body, extra = {}) { const text = body === null && status === 201 ? '' : JSON.stringify(body ?? null); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
@@ -407,11 +446,14 @@ export async function vercel(req, res) {
   // Vercel also injects the rewrite's named segment (`path=...`) into the query; neither is a filter
   delete query.__path; delete query.path;
   let body = req.body; if (typeof body === 'string' && body) { try { body = JSON.parse(body); } catch { body = null; } }
-  let db = null;
+  // The connection is opened by the first statement, not by the request: a cache hit, /api/awake and a refusal before any SQL never
+  // open one, because a new connection is what wakes a suspended Neon compute (YES-3).
+  let client = null, opening = null;
+  const db = { query: async (...a) => { if (!client) client = await (opening ||= connect()); return client.query(...a); } };
   try {
-    try { db = await connect(); } catch (e) { if (path === '/api/health') db = { query: async () => { throw e; } }; else { const o = e instanceof NovaError ? { status: 503, headers: { 'retry-after': '10' }, body: JSON.stringify({ state: 'UPSTREAM_UNAVAILABLE', reason: 'Nova has no database configured' }) } : markDown(e); res.status(503); for (const [k, v] of Object.entries(o.headers)) res.setHeader(k, v); res.send(o.body); return; } }
+    // a failed connect now surfaces inside handle(): no DATABASE_URL is its 503 NovaError, an unreachable database its upstream 503
     const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');
-  } finally { try { db?.release?.(); } catch {} }
+  } finally { try { client?.release?.(); } catch {} }
 }

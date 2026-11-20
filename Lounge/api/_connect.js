@@ -9,7 +9,7 @@
 // YouTube channels, PickTheory included, connect with Google's consent screen only (/api/oauth/begin); "Check now" for them is the real check in api/_oauth.js.
 //
 // Where things live (nothing here invents a door):
-//   * the credential: the vault functions Nova already uses (coco_store_publish_secret / coco_callback_secret, postgres-only). The secret is
+//   * the credential: Nova's portable vault (api/_vault.js; fails closed with 'vault not configured' without it). The secret is
 //     held in one variable, never returned, never logged, never put in activity or in an error text.
 //   * the provider calls: api/_conn_*.js (the connectors), imported lazily; a missing connector answers 501 {error:'connector not installed'}.
 //   * the ledger: public.revenue_events / revenue_sync, written ONLY through coco_revenue_upsert / coco_revenue_sync_set, which the database
@@ -18,6 +18,7 @@
 //     so after a real provider call it stamps the same columns itself, exactly as api/_oauth.js does.
 import { ACCESS_POLICY } from './_access_policy.js';
 import { redact } from './_publish.js';
+import { createVault, VaultNotConfigured } from './_vault.js';
 import { verify as oauthVerify, OauthError } from './_oauth.js';
 
 const CONN_ID = /^[a-z0-9][a-z0-9._-]{1,60}$/;
@@ -68,7 +69,9 @@ class ConnectError extends Error { constructor(status, state, reason, extra = {}
 const NOT_INSTALLED = (e) => e && (e.code === '42P01' || e.code === '42883');
 const safe = (v, ...secrets) => redact(String(v ?? ''), ...secrets).slice(0, 300);
 const activity = (db, who, action, detail) => db.query('INSERT INTO public.activity (actor, device_id, action, detail) VALUES ($1, $2, $3, $4)', [who.email, who.device_id, action, String(detail).slice(0, 1500)]);
-const readSecret = async (db, name) => { const r = await db.query('SELECT public.coco_callback_secret($1) AS v', [name]); return typeof r.rows[0]?.v === 'string' && r.rows[0].v ? r.rows[0].v : null; };
+// a credential that cannot be read is "nothing stored" (null), except a missing vault: that fails the route closed
+const readSecret = (db, name, actor) => createVault(db, { actor }).secret(name, 'nova.publish').catch((e) => { if (e instanceof VaultNotConfigured) throw e; return null; });
+const CONSUMERS = ['nova.publish', 'nova.oauth'];   // the same readers api/_oauth.js gives a connection's credential
 const isWorker = (who) => ACCESS_POLICY.workflow_devices.includes(who.device_id);
 const missingConnector = (provider) => new ConnectError(501, 'NOT_INSTALLED', 'connector not installed', { error: 'connector not installed', provider });
 
@@ -125,10 +128,10 @@ async function connectKey({ db, who, body, f, load, opts }) {
   // what the connection is called: the founder's label, else what it already was, else what the provider says it is
   const account = label || had?.external_name || v.account || P.label;
   // Gumroad hands the same token back until the app is revoked: a token that did not change must not settle the alert about an exposed one
-  const same = !!had && (await readSecret(db, name).catch(() => null)) === secret;
+  const same = !!had && (await readSecret(db, name, who.device_id)) === secret;
   await db.query('BEGIN');
   try {
-    await db.query('SELECT public.coco_store_publish_secret($1, $2)', [name, secret]);
+    await createVault(db, { actor: who.device_id, tx: true }).put(name, secret, { consumers: CONSUMERS, op: had?.secret_ref === name ? 'rotate' : 'create' });
     if (!same) await db.query("UPDATE public.integrations SET state = 'connected', error = NULL, next_action = NULL, last_check_at = now(), last_ok_at = now(), updated_at = now() WHERE id = $1", [`${provider}-${conn}`]);
     await db.query(`INSERT INTO public.integrations (id, house_id, platform, account, state, auth_method, capabilities, last_check_at, last_ok_at, error, next_action, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, now(), now(), NULL, NULL, now())
@@ -172,7 +175,7 @@ async function connectCheck({ db, who, body, f, env, urls, load, opts }) {
   }
   let secret = null;
   try {
-    secret = await readSecret(db, acc.secret_ref).catch(() => null);
+    secret = await readSecret(db, acc.secret_ref, who.device_id);
     if (!secret) { await recordCheck(db, who, acc, 'error', 'the vault holds nothing under that name'); return out('NOT_CONNECTED', 'the vault holds nothing under that name. Connect it again.'); }
     const mod = await load(acc.provider);
     if (!mod) throw missingConnector(acc.provider);
@@ -238,7 +241,7 @@ async function syncOne({ db, who, run, src, f, load, now, cooldownMs, opts }) {
   if (!mod) return { ...base, state: 'error', revenue: null, orders: 0, ...none, last_ok_at: iso(prev?.last_ok_at), error: 'connector not installed' };
   let secret = null;
   try {
-    secret = await readSecret(db, src.secret_ref).catch(() => null);
+    secret = await readSecret(db, src.secret_ref, who.device_id);
     if (!secret) return await fail('the vault holds no credential for this connection: connect it again');
     // Gumroad dates a sale by when it was MADE and changes it in place when it is refunded, so a refund of an older sale is only seen by reading the older sales
     // again: look back 35 days (the usual refund window); the ledger upsert makes the repeat harmless
