@@ -21,8 +21,9 @@ import { redactDeep } from './_redact.js';
 import { handleOrbiTrending } from './_orbi_trending.js';
 import { handleConnect } from './_connect.js';
 import { PREFIX as DOOR, handleDoor, handleWorkerToken, handleBoard } from './_door.js';
+import { createWake, runtimeStore } from './_wake.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer; connect = { load(provider) -> connector module, cooldownMs }
-export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {} };
+export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {}, wakeStore: undefined };   // wakeStore: the shared board in tests (null = none)
 
 const IDENT = /^[a-z_][a-z0-9_]*$/;
 export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms', 'members', 'member_houses', 'tools', 'member_tools', 'tasks', 'task_notes', 'approvals', 'devices',
@@ -161,7 +162,14 @@ export const stats = { requests: 0, cache_hits: 0, cache_misses: 0, db_calls: 0,
 const inflight = new Map();                   // read key -> promise: N identical concurrent GETs share one database query
 const down = { until: 0, reason: '' };         // negative cache: after an upstream failure, answer 503 for a few seconds without touching the database
 const DOWN_S = Number(process.env.NOVA_NEGATIVE_CACHE_SECONDS || 10);
-export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; }
+export function resetUpstream() { inflight.clear(); down.until = 0; down.reason = ''; wake.reset(); }
+// Neon Free plan (YES-3): the database suspends after 5 idle minutes. A request that is NOT quiet (a screen in use, a cloud job) and ran a
+// statement marks it awake; a new command marks its target device's mail. GET /api/awake answers from the wake board (api/_wake.js)
+// without touching the database, so a hidden or idle app reads while the database is awake anyway, or at once when a command waits for
+// it, and stays away while it sleeps. The board is shared by every Nova instance (Vercel Runtime Cache), so a phone served by one
+// instance and a PC served by another still see each other. A quiet request (x-coco-quiet: 1) never marks it awake, or quiet devices
+// would keep each other awake for ever.
+export const wake = createWake({ store: () => (deps.wakeStore !== undefined ? deps.wakeStore : runtimeStore()) });
 // a failure of the database or the platform behind it (not a bad request, not RLS, not a statement timeout)
 const UPSTREAM = /ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|connection terminated|connection timeout|timeout exceeded when trying to connect|too many (clients|connections)|exceed_egress|quota|the database system is|no pg_hba|Tenant or user not found/i;
 export const isUpstream = (e) => !(e instanceof NovaError) && e?.code !== 'P0001' && (UPSTREAM.test(String(e?.message)) || UPSTREAM.test(String(e?.code)) || /^(08|57P0[1-3]|53300)/.test(String(e?.code || '')));   // a RAISE EXCEPTION is a rule talking, never an outage
@@ -222,6 +230,14 @@ export async function runAs(db, who, deviceKey, { sql, params }, engineKey = nul
 
 // The whole request. `req` = { method, path, query, headers, body }, returns { status, headers, body }.
 export async function handle(db, req, now = Date.now()) {
+  // a statement from a request that is not quiet tells the wake board the database is awake (once the answer is ready, at most once a minute)
+  let ran = false;
+  if (req.headers?.['x-coco-quiet'] !== '1' && db) { const inner = db; db = Object.assign(Object.create(inner), { query: (...a) => { ran = true; return inner.query(...a); } }); }
+  const out = await handleOne(db, req, now);
+  if (ran) await wake.touched(now);
+  return out;
+}
+async function handleOne(db, req, now) {
   stats.requests++;
   const t0 = now;
   const log = (status, extra = {}) => { const ms = Date.now() - t0; observe(req.path, ms, { status, cache: extra.cache || null, device: extra.device || null }); console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms, ...extra })); };
@@ -229,10 +245,13 @@ export async function handle(db, req, now = Date.now()) {
     // the job door: a worker token, never a device key; no CORS and no negative cache in front of it (api/_door.js). Logged: status and path only.
     if (req.path === DOOR || req.path.startsWith(DOOR + '/')) { const out = await handleDoor(db, req, { runAs, buildRpc, buildSelect, buildWrite, rateOk }, now); log(out.status); return out; }
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
+    // no key, no database: one bit, "is the database awake right now", for apps deciding whether a read would wake it
+    // ?d=<device id> adds mail_at: when a command was last written for that device (a hint only; the device then reads the queue itself)
+    if (req.path === '/api/awake') return json(200, await wake.answer(String(req.query?.d || '').slice(0, 80) || null, now));
     if (req.path !== '/api/health' && down.until > now) { stats.negative_hits++; return unavailable(down.reason); }
     if (req.path === '/api/health') {
       let dbOk = false; try { dbOk = (await db.query('SELECT 1 AS ok')).rows[0].ok === 1; } catch {}
-      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null, down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
+      return json(200, { ok: true, db: dbOk ? 'ok' : 'unavailable', commit: (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || null, down_for_s: Math.max(0, Math.ceil((down.until - now) / 1000)), cache_entries: cache.size, wake: wake.stats, uptime_s: Math.round((now - stats.started) / 1000), stats, timings: timings() });
     }
     // Orbi wallpaper "Trending": anonymous pick counts from the Orbi extension, not a Coco device (api/_orbi_trending.js)
     if (req.path.startsWith('/api/orbi/wall/')) {
@@ -375,7 +394,14 @@ export async function handle(db, req, now = Date.now()) {
     let safe;
     try { safe = redactDeep(req.body); } catch { throw new NovaError(500, 'the redaction gate failed, so the write was refused'); }
     const rows = await runAs(db, who, deviceKey, buildWrite(name, req.method, req.query, safe.value, req.headers.prefer || ''), req.headers['x-engine-key'] || null);
-    invalidate(name); log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length, ...(safe.findings.length ? { redacted: safe.findings.length, redacted_types: [...new Set(safe.findings)].join(',') } : {}) });
+    invalidate(name);
+    // a command is real activity: tell its device to look now (an insert, or a sweeper putting one back in the queue)
+    if (name === 'commands') {
+      const targets = req.method === 'POST' ? (Array.isArray(safe.value) ? safe.value : [safe.value]).map((r) => r && r.target_device)
+        : req.method === 'PATCH' && safe.value && safe.value.status === 'queued' ? rows.map((r) => r.target_device) : [];
+      if (targets.some(Boolean)) await wake.mail(targets, now);
+    }
+    log(200, { device: who.device_id, table: name, write: req.method, rows: rows.length, ...(safe.findings.length ? { redacted: safe.findings.length, redacted_types: [...new Set(safe.findings)].join(',') } : {}) });
     return json(/return=representation/.test(req.headers.prefer || '') ? 200 : 201, /return=representation/.test(req.headers.prefer || '') ? rows : null);
   } catch (e) {
     stats.errors++;
@@ -389,7 +415,7 @@ export async function handle(db, req, now = Date.now()) {
   }
 }
 export function invalidate(table = null) { for (const k of cache.keys()) if (!table || k.split('|')[1] === table || k === 'changes') cache.delete(k); }
-const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
+const cors = () => ({ 'access-control-allow-origin': '*', 'access-control-allow-headers': 'x-device-key, x-engine-key, x-coco-quiet, apikey, authorization, content-type, prefer', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS' });
 // a null result is the JSON text `null`, never an empty body: a caller parsing a 200 must always get JSON. Only a write with return=minimal (201) sends nothing.
 function json(status, body, extra = {}) { const text = body === null && status === 201 ? '' : JSON.stringify(body ?? null); stats.bytes_out += text.length; return { status, headers: { ...cors(), 'content-type': 'application/json', 'x-nova-bytes': String(text.length), ...extra }, body: text }; }
 
@@ -414,11 +440,14 @@ export async function vercel(req, res) {
   // Vercel also injects the rewrite's named segment (`path=...`) into the query; neither is a filter
   delete query.__path; delete query.path;
   let body = req.body; if (typeof body === 'string' && body) { try { body = JSON.parse(body); } catch { body = null; } }
-  let db = null;
+  // The connection is opened by the first statement, not by the request: a cache hit, /api/awake and a refusal before any SQL never
+  // open one, because a new connection is what wakes a suspended Neon compute (YES-3).
+  let client = null, opening = null;
+  const db = { query: async (...a) => { if (!client) client = await (opening ||= connect()); return client.query(...a); } };
   try {
-    try { db = await connect(); } catch (e) { if (path === '/api/health') db = { query: async () => { throw e; } }; else { const o = e instanceof NovaError ? { status: 503, headers: { 'retry-after': '10' }, body: JSON.stringify({ state: 'UPSTREAM_UNAVAILABLE', reason: 'Nova has no database configured' }) } : markDown(e); res.status(503); for (const [k, v] of Object.entries(o.headers)) res.setHeader(k, v); res.send(o.body); return; } }
+    // a failed connect now surfaces inside handle(): no DATABASE_URL is its 503 NovaError, an unreachable database its upstream 503
     const out = await handle(db, { method: req.method, path, query, headers: Object.fromEntries(Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), v])), body });
     res.status(out.status); for (const [k, v] of Object.entries(out.headers)) res.setHeader(k, v);
     res.send(out.body ?? '');
-  } finally { try { db?.release?.(); } catch {} }
+  } finally { try { client?.release?.(); } catch {} }
 }
