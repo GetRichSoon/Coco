@@ -12,8 +12,8 @@ package com.goodspace.cocolounge
  */
 object Quiet {
     const val SLOT_MS = 30 * 60 * 1000L
-    /** How long one decision to read stays open: a little over one background check (30 s). */
-    const val WINDOW_MS = 35_000L
+    /** How long one decision to read stays open: a little over one background check (60 s, +10% jitter). */
+    const val WINDOW_MS = 70_000L
     /** The background check of the 15-minute WorkManager job, which cannot keep a wall-clock slot. */
     const val WATCH_EVERY_MS = 2 * 60 * 60 * 1000L
     /** A gap this long between the listener's ticks is the phone asleep or the process gone, not resting. */
@@ -32,6 +32,20 @@ object Quiet {
     /** Is this mail new? Compared in Nova's clock only. The first answer in a process counts if the command is under 15 min old
      *  (the start-up read covered older ones). */
     fun mailIsNew(mailAt: Long?, seen: Long?, novaNow: Long?) = mailAt != null && if (seen != null) mailAt > seen else novaNow != null && novaNow - mailAt < 15 * 60_000L
+
+    /** Every /api/awake ping is a function call on Vercel's free plan (1M a month for all of Nova), the same rule as the web Lounge's
+     *  awakeDue: it is asked only where Nova has it. A 4xx or an answer without { warm, mail_at, now } is an older Nova, asked again
+     *  in 6 hours (Cloud keeps that in its prefs, so a new process does not ask again) while the shared slot reads go on as before.
+     *  Background checks are a minute apart (+/-10%), and after 10 failed pings in a row, 5 minutes. */
+    const val AWAKE_EVERY_MS = 60_000L
+    const val AWAKE_OFF_MS = 6 * 60 * 60_000L
+    const val AWAKE_SLOW_MS = 5 * 60_000L
+    @Volatile var awakeFails = 0
+    @Volatile var awakeAskedAt = 0L
+    fun awakeDue(now: Long, offUntil: Long) = now >= offUntil && (awakeFails < 10 || now - awakeAskedAt >= AWAKE_SLOW_MS)
+    /** One answer to /api/awake: true = this Nova has the wake board, false = an older one without it (a 4xx, or another shape), null = no answer (5xx). */
+    fun awakeSupported(code: Int, shaped: Boolean): Boolean? = if (code in 200..299 && shaped) true else if (code < 500) false else null
+    fun jittered(ms: Long, r: Double = Math.random()) = (ms * (0.9 + 0.2 * r)).toLong()
 
     /** The app is behind something: requests carry x-coco-quiet. */
     @Volatile var quiet = false

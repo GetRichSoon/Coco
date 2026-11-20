@@ -11,8 +11,8 @@ android {
         applicationId = "com.goodspace.cocolounge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 24
-        versionName = "2.12.1"
+        versionCode = 25
+        versionName = "2.12.2"
     }
     // The release key (Boss, 2026-10-29). It lives in Coco Vault on the laptop and in GitHub as
     // ANDROID_KEYSTORE_BASE64, so the cloud can sign a release with every PC switched off. Without the

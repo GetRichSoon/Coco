@@ -1915,16 +1915,34 @@ function noteAlive() { const t = Date.now(); if (t - aliveTick > 5 * 60e3) alive
 let mailSeen = null, presenceSent = null;
 // the header goes out only once this Nova has answered /api/awake: an older Nova does not allow it (CORS) and would refuse every request
 function quietSend() { return quietNova && quiet(); }
+// Every ping is a function call on Vercel's free plan (1M a month for all of Nova). So /api/awake is asked only where Nova has it:
+// a 4xx or an answer without { warm, mail_at, now } is an older Nova, asked again in 6 h (stored, so a reload does not ask again);
+// meanwhile the shared slot reads go on as before. Ticks are a minute apart (+/-10%), and after 10 failed pings in a row, 5 minutes.
+const AWAKE_EVERY_MS = 60e3, AWAKE_OFF_MS = 6 * 3600e3, AWAKE_SLOW_MS = 5 * 60e3;
+let awakeFails = 0, awakeAskedAt = 0;
+const awakeOffUntil = () => Number(store.get('gs-awake-off')) || 0;
+const awakeDue = (t) => t >= awakeOffUntil() && (awakeFails < 10 || t - awakeAskedAt >= AWAKE_SLOW_MS);
+const beatDesktop = () => { if (window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat(); };
 async function quietTick() {
   noteAlive();
   if (!quiet()) { dbWarm = true; if (presenceSent === 'quiet') { presenceSent = 'active'; heartbeat(); } return; }
   let a = null;
-  try {
+  const t = Date.now();
+  if (!awakeDue(t)) {
+    dbWarm = false;
+    // this Nova answered (without a wake board) and the page is ticking: the desktop's watchdog must not reload a page that is only quiet
+    if (t < awakeOffUntil()) beatDesktop();
+  } else try {
+    awakeAskedAt = t;
     const r = await fetch(NOVA + '/api/awake' + (deviceId ? '?d=' + encodeURIComponent(deviceId) : ''), { cache: 'no-store' });
     // Nova answered, so this page is connected: the desktop's 4-minute watchdog must not reload a page that is only quiet
-    if (r.status < 500 && window.cocoDesktop && window.cocoDesktop.beat) window.cocoDesktop.beat();
-    quietNova = r.ok; a = r.ok ? await r.json() : null; dbWarm = Boolean(a && a.warm);
-  } catch { dbWarm = false; }
+    if (r.status < 500) beatDesktop();
+    const j = r.ok ? await r.json().catch(() => null) : null;
+    if (j && typeof j.warm === 'boolean' && 'mail_at' in j && j.now) { a = j; quietNova = true; awakeFails = 0; }
+    else if (r.status < 500) { quietNova = false; awakeFails = 0; store.set('gs-awake-off', String(t + AWAKE_OFF_MS)); }
+    else awakeFails++;
+    dbWarm = Boolean(a && a.warm);
+  } catch { dbWarm = false; awakeFails++; }
   // A command was written for this device since it last looked: read the queue now, even while the database sleeps (a real command
   // is a reason to wake it). The first answer after start only counts if that command is recent: the start-up read covered older ones.
   const mail = a && a.mail_at, mailNew = mail && (mailSeen ? Date.parse(mail) > Date.parse(mailSeen) : a.now && Date.parse(a.now) - Date.parse(mail) < 15 * 60e3);
@@ -1952,7 +1970,7 @@ async function pollChanges() {
 function listen() {
   if (NOVA) {
     pollChanges(); setInterval(() => { if (sleeping()) return; if (!document.hidden || Date.now() - lastPoll > 60000) pollChanges(); }, 15000); setInterval(() => { if (!sleeping()) runMyCommands(); }, 5000);
-    setInterval(quietTick, 30000);
+    (function next() { setTimeout(() => quietTick().finally(next), AWAKE_EVERY_MS * (0.9 + Math.random() * 0.2)); })();
     for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(ev, () => wake(), { capture: true, passive: true });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(true); });
     return;

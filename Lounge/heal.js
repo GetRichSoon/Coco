@@ -39,7 +39,7 @@
   const ageLimitMs = (action) => (action === 'update' ? Infinity : LATE_OK.has(action) ? 120 * MIN : VOICE.has(action) ? 2 * MIN : 10 * MIN);
   // ---------- Delivery while devices rest (YES-3 follow-up): a command never vanishes because its device is quiet ----------
   // A device says in its heartbeat (devices.info.presence) whether it is on screen ('active') or resting ('quiet') and by when it
-  // will check in next. A resting device reads at least once per shared 30-minute slot and within about half a minute of a command
+  // will check in next. A resting device reads at least once per shared 30-minute slot and within about a minute of a command
   // being sent to it (Nova's wake board, GET /api/awake?d=<device>). So "not seen for 3 minutes" no longer means "gone".
   const SLOT_MS = 30 * MIN, ACTIVE_GRACE_MS = 150000, QUIET_GRACE_MS = 5 * MIN, OFFLINE_EXPIRE_MS = 30 * MIN;
   const nextCheckBy = (mode, now) => (mode === 'quiet' ? (Math.floor(now / SLOT_MS) + 1) * SLOT_MS + QUIET_GRACE_MS : now + ACTIVE_GRACE_MS);
