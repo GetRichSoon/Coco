@@ -98,8 +98,7 @@ route('POST', '/onboarding/associate', ({ db, who, body }) => W.associateConnect
 
 // ---------------------------------------------------------------- the AI door for a founder's sample test: the same lock, cap and booking as production
 async function geminiKey(db, env) {
-  if (env.COCO_VAULT_BACKEND === 'coco') return createVault(db, { env, actor: 'nova.ai' }).secret('gemini_api_key', 'nova.ai');
-  return (await db.query("SELECT public.coco_secret('gemini_api_key') AS v")).rows[0]?.v || null;
+  return createVault(db, { env, actor: 'nova.ai' }).secret('gemini_api_key', 'nova.ai');
 }
 const aiDoor = (db, who, { env, fetch: f, log }) => async (r) => {
   let key = null;
@@ -108,7 +107,7 @@ const aiDoor = (db, who, { env, fetch: f, log }) => async (r) => {
     if (!key) return { ok: false, state: 'NOT_CONNECTED', reason: 'no Gemini key in the vault' };
     const out = await generateText(db, who, { provider: 'gemini', ...r, run_id: null }, { key, f, log, json: (status, body) => ({ status, body }) });
     return out.body;
-  } catch (e) { return { ok: false, state: 'PROVIDER_ERROR', reason: String(e?.message || e).replace(key || '\u0000', '[redacted]').slice(0, 200) }; }
+  } catch (e) { return { ok: false, state: e?.state || 'PROVIDER_ERROR', reason: String(e?.message || e).replace(key || '\u0000', '[redacted]').slice(0, 200) }; }
   finally { key = null; }
 };
 

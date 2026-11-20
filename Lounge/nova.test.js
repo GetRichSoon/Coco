@@ -1,7 +1,7 @@
 // Run: node nova.test.js   (no network, no database: a scripted stand-in records every statement)
 //
 // What Nova must hold: nobody without a paired device key gets in; every statement runs as
-// `authenticated` with the founder's claims and the device header set, inside one transaction;
+// `coco_member` (0043) with the founder's claims and the device header set, inside one transaction;
 // identifiers that are not plain names are refused before they reach SQL; reads are cached and a
 // write to a table empties that table's cache; a device is rate limited; no error ever echoes a
 // connection string.
@@ -26,12 +26,12 @@ await t('1 auth: no key, a wrong key and an unpaired device are 401; a paired fo
   const me = await handle(db, req('GET', '/api/me')); assert.equal(me.status, 200); assert.deepEqual(JSON.parse(me.body), { email: 'boss@example.com', device_id: 'boss-pc', name: 'Boss PC' });
 });
 
-await t('2 every statement runs as authenticated with the claims and the device header, in one transaction', async () => {
+await t('2 every statement runs as coco_member with the claims and the device header, in one transaction', async () => {
   const db = fakeDb([{ id: 'h1' }]); invalidate();
   const r = await handle(db, req('GET', '/rest/v1/houses', { query: { select: '*', order: 'sort.asc' } }));
   assert.equal(r.status, 200); assert.deepEqual(JSON.parse(r.body), [{ id: 'h1' }]);
   const seq = db.sql.slice(-5).map((s) => s.text);
-  assert.ok(seq[0] === 'BEGIN' && seq[1].startsWith("SELECT set_config('request.jwt.claims'") && seq[2] === 'SET LOCAL ROLE authenticated' && seq[3].startsWith('SELECT * FROM') && seq[4] === 'COMMIT', `sequence was ${seq.map((x) => x.slice(0, 30)).join(' | ')}`);
+  assert.ok(seq[0] === 'BEGIN' && seq[1].startsWith("SELECT set_config('request.jwt.claims'") && seq[2] === 'SET LOCAL ROLE coco_member' && seq[3].startsWith('SELECT * FROM') && seq[4] === 'COMMIT', `sequence was ${seq.map((x) => x.slice(0, 30)).join(' | ')}`);
   const cfg = db.sql.find((s) => /set_config/.test(s.text)); assert.match(cfg.params[0], /"email":"boss@example.com"/); assert.match(cfg.params[1], /x-device-key/);
 });
 
@@ -94,7 +94,7 @@ await t('7 errors: RLS refusals are 403, timeouts 504, a database outage 503 UPS
 });
 
 await t('8 pairing is the only call allowed without a device key, and it runs with no claims', async () => {
-  const base = fakeDb([{ value: 'phone-1' }]); const db = { sql: base.sql, query: async (t, p) => /FROM public\.pairing_codes c JOIN/.test(t) ? { rows: p[0] === '123456' ? [{ owner_email: 'boss@example.com' }] : [] } : base.query(t, p) }; invalidate();
+  const base = fakeDb([{ value: 'phone-1' }]); const db = { sql: base.sql, query: async (t, p) => /FROM public\.pairing_codes c JOIN/.test(t) ? { rows: p[0] === sha256('123456') ? [{ owner_email: 'boss@example.com' }] : [] } : base.query(t, p) }; invalidate();
   const r = await handle(db, req('POST', '/rest/v1/rpc/pair_device', { key: '', body: { p_code: '123456', p_device_key: 'new-key-0123456789abcdef' } }));
   assert.equal(r.status, 200, r.body); assert.equal(JSON.parse(r.body), 'phone-1');
   const cfg = db.sql.find((x) => /set_config/.test(x.text)); assert.match(cfg.params[0], /"email":"boss@example.com"/, 'the code names the device, the device names the founder');

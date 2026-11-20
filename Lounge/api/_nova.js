@@ -4,12 +4,13 @@
 //
 // It speaks the PostgREST subset the apps already use, so a client changes its base URL and nothing
 // else. Security is the database's own: Nova verifies the device key hash against `devices`, then
-// runs every statement as role `authenticated` with the same request.jwt.claims and request.headers
-// PostgREST would have set, so RLS, is_founder() and device_ok() decide exactly as before. The
-// database password lives only in Nova's environment; the apps never see it.
+// runs every statement as role `coco_member` (CocoMaison migration 0043) with the same request.jwt.claims and request.headers
+// it always set, read by private.claims(), so RLS, is_founder() and device_ok() decide exactly as before. No Supabase role, schema,
+// REST, Storage or Edge Function is used. The database password lives only in Nova's environment; the apps never see it.
 //
-// Env: DATABASE_URL (pooler connection string, transaction mode), NOVA_CACHE_SECONDS (15),
-//      NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000), SUPABASE_ENGINE_KEY (the job door, worker tokens; api/_door.js)
+// Env: DATABASE_URL (Neon pooled connection string of the LOGIN role `nova_app` from 0043: member of coco_member and coco_vault,
+//      set by the account owner, never in git), NOVA_CACHE_SECONDS (15), NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000),
+//      NOVA_ENGINE_KEY (the job door, worker tokens; api/_door.js), COCO_VAULT_* (api/_vault.js)
 import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
@@ -22,6 +23,7 @@ import { handleOrbiTrending } from './_orbi_trending.js';
 import { handleConnect } from './_connect.js';
 import { PREFIX as DOOR, handleDoor, handleWorkerToken, handleBoard } from './_door.js';
 import { createWake, runtimeStore } from './_wake.js';
+import { VaultNotConfigured } from './_vault.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer; connect = { load(provider) -> connector module, cooldownMs }
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {}, wakeStore: undefined };   // wakeStore: the shared board in tests (null = none)
 
@@ -35,7 +37,9 @@ export const TABLES = new Set(['houses', 'categories', 'offerings', 'platforms',
   // the integration hub + cloud portability (0041): RLS lets founders read them; the engine key reads providers and switches
   'integration_registry', 'credential_audit', 'cloud_providers', 'provider_switches',
   // the revenue ledger (migration 20261112): founders read through RLS; nothing writes it through Nova's table door, see READ_ONLY
-  'revenue_events', 'revenue_sync']);   // every public table except engine_keys and oauth_states
+  'revenue_events', 'revenue_sync',
+  // 0034 company structure, 0035 integration health, 0037 worker registry (0043 grants coco_member on them; integration_health: select, insert)
+  'org_repos', 'org_workflows', 'org_access', 'org_metrics', 'integration_health', 'worker_registry']);   // every public table except engine_keys and oauth_states
 // Tables Nova serves for GET only. RLS alone would still let a database role write them; Nova refuses every other verb (405) before any
 // statement exists. The ledger is written by one path only: POST /api/revenue/sync -> coco_revenue_upsert (api/_connect.js).
 export const READ_ONLY = new Set(['revenue_events', 'revenue_sync']);
@@ -211,17 +215,18 @@ export async function authenticate(db, deviceKey, now = Date.now()) {
   authCache.set(h, { at: now, who }); return who;
 }
 
-// Run one statement the way PostgREST would have: as `authenticated`, with the founder's claims
-// and the device header visible to the SQL functions, inside one transaction (pooler-safe).
+// Run one statement as the request role (0043: coco_member, which replaced Supabase's role), with the founder's claims in
+// request.jwt.claims (private.claims() reads them) and the device header in request.headers, inside one transaction (pooler-safe).
+export const MEMBER_ROLE = 'coco_member';
 export async function runAs(db, who, deviceKey, { sql, params }, engineKey = null) {
   stats.db_calls++;
-  const claims = JSON.stringify({ email: who.email, role: 'authenticated', sub: who.email });
+  const claims = JSON.stringify({ email: who.email, role: MEMBER_ROLE, sub: who.email });
   // the engine key rides along when the caller sent one: the queue and policy RLS read it from request.headers exactly as PostgREST would have set it
   const headers = JSON.stringify(engineKey ? { 'x-device-key': deviceKey, 'x-engine-key': engineKey } : { 'x-device-key': deviceKey });
   await db.query('BEGIN');
   try {
     await db.query(`SELECT set_config('request.jwt.claims', $1, true), set_config('request.headers', $2, true), set_config('statement_timeout', $3, true)`, [claims, headers, String(TIMEOUT)]);
-    await db.query('SET LOCAL ROLE authenticated');
+    await db.query(`SET LOCAL ROLE ${MEMBER_ROLE}`);
     const r = await db.query(sql, params);
     await db.query('COMMIT');
     return r.rows;
@@ -261,7 +266,7 @@ async function handleOne(db, req, now) {
     }
     const deviceKey = req.headers['x-device-key'];
     // Pairing is the one call made before a device has a key: pair_device checks the code itself
-    // (hashed, single use, expiring) and runs as plain `authenticated` with no claims, like PostgREST.
+    // (hashed, single use, expiring) and runs as coco_member with the code's owner in the claims.
     if (req.path.endsWith('/rest/rpc/pair_device') || req.path.endsWith('/rest/v1/rpc/pair_device')) {
       if (req.method !== 'POST') return json(405, { message: 'rpc is POST' });
       if (!rateOk('pair:' + (req.headers['x-forwarded-for'] || 'unknown'), now)) return json(429, { message: 'too many pairing attempts' });
@@ -269,7 +274,7 @@ async function handleOne(db, req, now) {
       if (!code || newKey.length < 16) return json(400, { message: 'pairing needs p_code and p_device_key' });
       // The code is the credential. It names one device, whose owner is the founder pair_device() must
       // see; the function then checks the hash, the expiry and single use itself, exactly as before.
-      const owner = await db.query(`SELECT d.owner_email FROM public.pairing_codes c JOIN public.devices d ON d.id = c.device_id WHERE c.code_hash = encode(extensions.digest($1, 'sha256'), 'hex') AND c.used_at IS NULL AND c.revoked_at IS NULL AND c.expires_at > now() LIMIT 1`, [code]);
+      const owner = await db.query(`SELECT d.owner_email FROM public.pairing_codes c JOIN public.devices d ON d.id = c.device_id WHERE c.code_hash = $1 AND c.used_at IS NULL AND c.revoked_at IS NULL AND c.expires_at > now() LIMIT 1`, [sha256(code)]);   // hashed here: no extension schema needed
       if (!owner.rows.length) { log(400, { rpc: 'pair_device', why: 'code wrong or expired' }); return json(400, { message: 'code wrong or expired' }); }
       let rows;
       try { rows = await runAs(db, { email: owner.rows[0].owner_email }, newKey, buildRpc('pair_device', { p_code: code, p_device_key: newKey })); }
@@ -335,11 +340,11 @@ async function handleOne(db, req, now) {
     if (um) { const rows = await runAs(db, who, deviceKey, { sql: 'SELECT public.coco_run_usage($1) AS v', params: [um[1]] }, req.headers['x-engine-key'] || null); log(200, { device: who.device_id, usage: um[1] }); return json(200, rows[0]?.v ?? null); }
     // the AI door for routine cloud writing (Gemini), locked until a founder enables it
     if (req.path.startsWith('/api/ops/')) return await handleOps(req, who, { json, log, read: async (name) => (await runAs(db, who, deviceKey, { sql: 'SELECT payload, collected_at FROM public.ops_snapshots WHERE name = $1', params: [name] }, req.headers['x-engine-key'] || null))[0] || null }); // authenticated internal snapshots (never static files)
-    if (req.path.startsWith('/api/ai/')) return handleAi(db, req, who, { json, log, fetch: deps.fetch });
+    if (req.path.startsWith('/api/ai/')) return await handleAi(db, req, who, { json, log, fetch: deps.fetch });
     // the universal publishing layer: COCO app -> cloud worker -> Nova -> platform adapter -> provider
     if (req.path === '/api/oauth/begin' || req.path === '/api/oauth/verify') { const out = await handleOauthAuthed(db, req, who, { json, fetch: deps.fetch, urls: deps.oauthUrls }); log(out.status, { device: who.device_id, oauth: req.path.slice(11) }); return out; }
     if (req.path.startsWith('/api/automation/')) { const out = await handleAutomation(db, req, who, { json, log, fetch: deps.fetch, overrides: deps.automation }); log(out.status, { device: who.device_id, automation: req.path.slice(16) }); return out; }
-    if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
+    if (req.path === '/api/publish' || req.path.startsWith('/api/publish/')) return await handlePublish(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.publishUrls });
     if (req.path === '/api/apk/latest') {
       // The newest cloud build is the latest GitHub release of the (public) Coco repository:
       // tag android-<version>-<code>, the APK as its asset, the sha256 in its notes.
@@ -407,6 +412,7 @@ async function handleOne(db, req, now) {
     stats.errors++;
     if (isUpstream(e)) { log(503, { upstream: 'unavailable' }); return markDown(e, now); }
     const refused = e instanceof NovaError ? null : /statement timeout|permission denied|row-level security|violates row-level/i.test(e.message) ? null : pgRefusal(e);
+    if (e instanceof VaultNotConfigured) { log(503, { vault: 'not configured' }); return json(503, { ok: false, state: e.state, message: e.message }); }
     const status = e instanceof NovaError ? e.status : /statement timeout/i.test(e.message) ? 504 : /permission denied|row-level security|violates row-level/i.test(e.message) ? 403 : refused ? refused.status : 500;
     log(status, { error: String(e.message).replace(/postgres(ql)?:\/\/\S+/g, '<conn>').slice(0, 200) });
     // a 500 stays opaque to an app, but the cloud runtime (it sent an engine key) is told the redacted cause, so a failing sync can be fixed without the platform's logs

@@ -11,12 +11,14 @@
 //     response, a log line, an activity row or an error
 //   * PickTheory is a YouTube channel (yt-app-web): "Check now" is the real Google check, and a "key" for it is refused with the way to connect
 //   * /api/oauth/begin asks Gumroad for view_sales, and a missing OAuth client is a 409, not a crash
+//   * all of it after CocoMaison's 0043_nova_roles converted the production-shaped schema: Nova runs as coco_member (plan step 4)
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { handle, deps, invalidate, sha256, resetUpstream, buildWrite, buildRpc, pgRefusal, isUpstream, RPCS, TABLES, READ_ONLY } from './api/_nova.js';
 import { fold, normalise, PROVIDERS, loadConnector, _resetSync } from './api/_connect.js';
 import { PROVIDERS as OAUTH } from './api/_oauth.js';
+import { testVault } from './api/_vault.js';
 
 let pass = 0, fail = 0;
 const t = async (name, fn) => { resetUpstream(); invalidate(); try { await fn(); pass++; console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} - ${e.stack?.split('\n').slice(0, 12).join(' | ') || e.message}`); } };
@@ -133,14 +135,23 @@ await seed();
 // both files in the order they were applied to production: the revenue ledger first, then the vault name rule put back
 const file = (n) => readFileSync(new URL(`./api/migrations/${n}`, import.meta.url), 'utf8');
 const MIGRATION = file('20261112_revenue_connections.sql') + '\n' + file('20261112b_vault_name_rule_back.sql') + '\n' + file('20261112c_task_enqueue.sql');
-await db.exec(MIGRATION);
+// 0043 runs after every schema change (it is re-runnable): it moves the legacy role's grants and policies to coco_member, Nova's request role
+const ROLES = readFileSync(new URL('../Cloud/Migrations/CocoMaison/0043_nova_roles.sql', import.meta.url), 'utf8');
+const migrate = async () => { await db.exec(MIGRATION); await db.exec(ROLES); };
+await migrate();
+// the vault: the portable vault is tested in vault.test.js and nova.roles.test.js; here the fixture's table-backed stand-in (name rule, activity trail)
+testVault.make = (d) => ({
+  secret: async (name) => (await d.query('SELECT public.coco_callback_secret($1) AS v', [name])).rows[0]?.v ?? null,
+  client: async (provider) => (await d.query('SELECT public.coco_oauth_client($1) AS v', [provider])).rows[0]?.v ?? null,
+  put: async (name, value) => (await d.query('SELECT public.coco_store_publish_secret($1, $2) AS v', [name, value])).rows[0]?.v,
+});
 
-// run SQL the way Nova's runAs does: as `authenticated`, with a founder's claims and a device header
+// run SQL the way Nova's runAs does: as `coco_member`, with a founder's claims and a device header
 const as = async (email, deviceKey, sql, params = [], engineKey = null) => {
   await db.query('BEGIN');
   try {
-    await db.query(`SELECT set_config('request.jwt.claims', $1, true), set_config('request.headers', $2, true)`, [JSON.stringify({ email, role: 'authenticated', sub: email }), JSON.stringify({ 'x-device-key': deviceKey, ...(engineKey ? { 'x-engine-key': engineKey } : {}) })]);
-    await db.query('SET LOCAL ROLE authenticated');
+    await db.query(`SELECT set_config('request.jwt.claims', $1, true), set_config('request.headers', $2, true)`, [JSON.stringify({ email, role: 'coco_member', sub: email }), JSON.stringify({ 'x-device-key': deviceKey, ...(engineKey ? { 'x-engine-key': engineKey } : {}) })]);
+    await db.query('SET LOCAL ROLE coco_member');
     const r = await db.query(sql, params); await db.query('COMMIT'); return r.rows;
   } catch (e) { try { await db.query('ROLLBACK'); } catch {} throw e; }
 };
@@ -150,7 +161,7 @@ const row = (n, over = {}) => ({ source: 'gumroad', connection_id: 'poppy', hous
 
 // ------------------------------------------------------------------------------------------------ 1-9: the migration
 await t('1 the migration is safe to run twice, and the new things exist with RLS on', async () => {
-  await db.exec(MIGRATION);
+  await migrate();
   const r = await ok(`select c.relname, c.relrowsecurity from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relname in ('revenue_events', 'revenue_sync') order by 1`);
   assert.deepEqual(r.rows.map((x) => [x.relname, x.relrowsecurity]), [['revenue_events', true], ['revenue_sync', true]]);
   const f = await ok(`select proname from pg_proc where pronamespace = 'public'::regnamespace and proname in ('coco_revenue_upsert', 'coco_revenue_sync_set', 'coco_job_retry') order by 1`);
@@ -180,7 +191,7 @@ await t('3 only a founder on a paired device may write: another email, a founder
   assert.equal((await ok(`select count(*)::int n from public.revenue_sync`)).rows[0].n, 0);
 });
 
-await t('4 nobody writes the tables directly (no insert / update / delete / truncate for authenticated), anon sees and runs nothing', async () => {
+await t('4 nobody writes the tables directly (no insert / update / delete / truncate for coco_member), anon sees and runs nothing', async () => {
   const claims = ['boss@example.com', KEY];
   for (const sql of [`insert into public.revenue_events (source, occurred_at, amount, currency, kind, external_id) values ('x', now(), 1, 'INR', 'sale', 'z')`,
     `update public.revenue_events set amount = 1`, `delete from public.revenue_events`, `truncate public.revenue_events`, `insert into public.revenue_sync (connection_id) values ('zz')`, `update public.revenue_sync set error = 'x'`, `delete from public.revenue_sync`])
@@ -665,7 +676,7 @@ await t('39 the rollback files remove what the migrations created and restore th
   assert.equal(await count(`select count(*)::int n from pg_proc where proname in ('coco_revenue_upsert', 'coco_revenue_sync_set', 'coco_job_retry')`), 0);
   assert.equal((await ok(`select private.publishing_secret_name_ok('gumroad_access_token_poppy') as v`)).rows[0].v, true);
   assert.equal(await count(`select count(*)::int n from public.integration_accounts`), accountsBefore, 'nothing that existed before was touched');
-  await db.exec(MIGRATION);
+  await migrate();
   assert.equal(await count(`select count(*)::int n from pg_class where relname in ('revenue_events', 'revenue_sync')`), 2);
 });
 

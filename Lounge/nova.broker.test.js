@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { handle, sha256, deps, invalidate } from './api/_nova.js';
 import { decide, evaluate, guard, readMode, requestOf } from './api/_broker.js';
 import { ACCESS_POLICY } from './api/_access_policy.js';
+import { testVault } from './api/_vault.js';
 
 let pass = 0, fail = 0;
 const t = async (n, f) => { try { await f(); pass++; console.log(`PASS ${n}`); } catch (e) { fail++; console.log(`FAIL ${n} - ${e.message}`); } };
@@ -25,21 +26,22 @@ const jobs = {
 };
 function fakeDb({ mode, brokenJobs = false, brokenInsert = false, device = 'cloud-worker-1' } = {}) {
   const uses = [], vault = [];
-  return { uses, vault, async query(text, params = []) {
+  // the vault (api/_vault.js, tested in vault.test.js) stood in for; every read is recorded by name
+  const stand = { secret: async (name) => { vault.push(name); return name === 'gemini_api_key' ? GKEY : name.includes('gumroad') ? GUM : REFRESH; } };
+  return { uses, vault, stand, async query(text, params = []) {
     if (/FROM public\.devices d JOIN/.test(text)) return { rows: params[0] === sha256(KEY) ? [{ id: device, owner_email: 'b@x', name: 'w' }] : [] };
     if (/coco_engine_ok/.test(text)) return { rows: [{ ok: true }] };
-    if (/FROM public\.engine_keys/.test(text)) return { rows: [{ ok: params[0] === ENGINE }] };
+    if (/FROM public\.engine_keys/.test(text)) return { rows: [{ ok: params[0] === sha256(ENGINE) }] };
     if (/key = 'access_broker_mode'/.test(text)) return { rows: mode === undefined ? [] : [{ value: mode }] };
     if (/FROM public\.jobs WHERE id/.test(text)) { if (brokenJobs) throw new Error('db down'); return { rows: jobs[params[0]] ? [jobs[params[0]]] : [] }; }
     if (/INSERT INTO public\.capability_uses/.test(text)) { if (brokenInsert) throw new Error('insert failed'); uses.push({ capability_id: params[1], run_id: params[2], team_id: params[3], ok: params[4], note: JSON.parse(params[5]) }); return { rows: [] }; }
     if (/FROM public\.integration_accounts WHERE connection_id/.test(text)) return { rows: accounts[params[0]] ? [accounts[params[0]]] : [] };
-    if (/coco_publish_secret/.test(text)) { vault.push(params[0]); return { rows: [{ v: params[0].includes('gumroad') ? GUM : REFRESH }] }; }
-    if (/coco_secret\('gemini_api_key'\)/.test(text)) return { rows: [{ v: GKEY }] };
     if (/key = 'gemini_generate'/.test(text)) return { rows: [{ value: true }] };
     if (/count\(\*\)::int AS n FROM public\.ai_calls/.test(text)) return { rows: [{ n: 0 }] };
     return { rows: [] };
   } };
 }
+testVault.make = (db) => db.stand;
 const post = (path, body) => ({ method: 'POST', path, query: {}, headers: { 'x-device-key': KEY, 'x-engine-key': ENGINE }, body });
 const token = (job, worker, connection_id, extra = {}) => post('/api/publish/token', { connection_id, job_id: job, worker, ...extra });
 const res = (status, body) => ({ ok: status < 300, status, headers: { get: () => null }, text: async () => JSON.stringify(body) });

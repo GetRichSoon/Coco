@@ -12,6 +12,7 @@ import { createHash } from 'node:crypto';
 //
 // Every generation is booked in ai_calls with the provider's own usage numbers (measured_by 'provider').
 import { guard, requestOf } from './_broker.js';
+import { createVault } from './_vault.js';
 export const GEMINI_MODELS = new Set(['gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-2.5-flash-lite']);
 export const DAILY_CAP = 40, MAX_OUTPUT = 8192, MAX_PROMPT_CHARS = 40000;
 const API = 'https://generativelanguage.googleapis.com/v1beta';
@@ -19,9 +20,9 @@ const strip = (text, key) => String(text ?? '').split(key || '\u0000').join('[re
 
 export async function handleAi(db, req, who, { json, log, fetch: f = globalThis.fetch, api = API }) {
   const engineKey = String(req.headers['x-engine-key'] || '');
-  const ok = await db.query("SELECT EXISTS (SELECT 1 FROM public.engine_keys k WHERE k.active AND k.key_hash = encode(extensions.digest($1, 'sha256'), 'hex')) AS ok", [engineKey]).then((r) => r.rows[0]?.ok === true).catch(() => false);
+  const ok = await db.query('SELECT EXISTS (SELECT 1 FROM public.engine_keys k WHERE k.active AND k.key_hash = $1) AS ok', [createHash('sha256').update(engineKey).digest('hex')]).then((r) => r.rows[0]?.ok === true).catch(() => false);
   if (!engineKey || !ok) return json(403, { ok: false, state: 'AUTH_REQUIRED', reason: 'the AI door needs the cloud runtime (a live engine key) on a paired device' });
-  let key = (await db.query("SELECT public.coco_secret('gemini_api_key') AS v")).rows[0]?.v || null;
+  let key = await createVault(db, { actor: 'nova.ai' }).secret('gemini_api_key', 'nova.ai');
   if (!key) return json(503, { ok: false, state: 'NOT_CONNECTED', reason: 'no Gemini key in the vault' });
   try {
     if (req.path === '/api/ai/gemini/models' && req.method === 'GET') {

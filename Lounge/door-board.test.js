@@ -11,7 +11,7 @@ import { mintToken, readToken } from './vendor/cocomaison/scripts/ai/job-door.mj
 let pass = 0, fail = 0;
 const t = async (n, f) => { try { await f(); pass++; console.log(`PASS ${n}`); } catch (e) { fail++; console.log(`FAIL ${n} — ${e.message}`); } };
 const ENGINE = 'engine-key-abcdefghijklmnop', DEVICE = 'device-key-0123456789abcdef', QUEUE_SECRET = 'queue-internal-words-xyz';
-process.env.SUPABASE_ENGINE_KEY = ENGINE;
+process.env.NOVA_ENGINE_KEY = ENGINE;
 
 // what Nova writes to its log, so the test can prove no token, key or body ever reaches it
 const logged = []; const realLog = console.log; console.log = (...a) => { const s = a.join(' '); if (s.startsWith('{')) logged.push(s); else realLog(...a); };
@@ -104,8 +104,8 @@ await t('7 answers never carry the engine key, a token or the queue\'s own words
 });
 await t('8 the route refuses to run without a real engine key, and over plain http', async () => {
   const db = fakeDb({ workers: [row('oracle-a1-1')] }), tk = tok();
-  for (const k of [undefined, 'short-key']) { if (k === undefined) delete process.env.SUPABASE_ENGINE_KEY; else process.env.SUPABASE_ENGINE_KEY = k; assert.equal((await door(db, 'GET', '/me', { token: tk })).status, 503); assert.equal((await dev(db, 'POST', '/api/workers/token', { worker_id: 'oracle-a1-1' })).status, 503); }
-  process.env.SUPABASE_ENGINE_KEY = ENGINE;
+  for (const k of [undefined, 'short-key']) { if (k === undefined) delete process.env.NOVA_ENGINE_KEY; else process.env.NOVA_ENGINE_KEY = k; assert.equal((await door(db, 'GET', '/me', { token: tk })).status, 503); assert.equal((await dev(db, 'POST', '/api/workers/token', { worker_id: 'oracle-a1-1' })).status, 503); }
+  process.env.NOVA_ENGINE_KEY = ENGINE;
   assert.equal((await door(db, 'GET', '/me', { token: tk, proto: 'http' })).status, 400);
 });
 await t('9 renew through the door: a new token for the same worker and chain, which then works', async () => {
@@ -147,7 +147,7 @@ await t('12 the board: ownership, missing assignments, duplicates, blocked with 
   assert.deepEqual(b.blocked, [{ task: 'T3', title: 'Write ebook', reason: 'no cover art', owner: 'brain:poppy', recovery_action: 'order a cover' }]);
   assert.deepEqual(b.overdue.map((o) => o.task), ['T1']);
   assert.ok(db.sql.some((s) => /FROM public\."agent_messages".* LIMIT 5000$/.test(s)), 'all 5000 handoff rows are asked for');
-  assert.ok(db.sql.includes('SET LOCAL ROLE authenticated'), 'read as authenticated, under RLS');
+  assert.ok(db.sql.includes('SET LOCAL ROLE coco_member'), 'read as coco_member, under RLS');
   assert.equal((await dev(db, 'POST', '/api/board', {})).status, 405);
   assert.equal((await dev(fakeDb(), 'GET', '/api/board', null, null)).status, 401);
 });

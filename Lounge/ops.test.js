@@ -56,11 +56,11 @@ await t('6 an authed device gets the payload itself, with the collection time in
   const db = mk('rows', PAYLOADS);
   for (const n of NAMES) { const r = await handle(db, req('/api/ops/' + n)); assert.equal(r.status, 200); assert.deepEqual(JSON.parse(r.body), PAYLOADS[n]); assert.equal(r.headers['x-collected-at'], AT.toISOString()); }
 });
-await t('7 the read runs as the authenticated founder, so row-level security applies', async () => {
+await t('7 the read runs as the founder (coco_member), so row-level security applies', async () => {
   const db = mk('rows', PAYLOADS); await handle(db, req('/api/ops/ops-status'));
   const i = db.log.findIndex((s) => /FROM public\.ops_snapshots WHERE name = \$1/.test(s));
   assert.ok(i > 0); const before = db.log.slice(0, i);
-  assert.ok(before.includes('BEGIN') && before.includes('SET LOCAL ROLE authenticated'), 'SET LOCAL ROLE authenticated must run before the read');
+  assert.ok(before.includes('BEGIN') && before.includes('SET LOCAL ROLE coco_member'), 'SET LOCAL ROLE coco_member must run before the read');
   assert.equal(db.log[i + 1], 'COMMIT');
 });
 await t('8 no response contains a secret-looking value', async () => {

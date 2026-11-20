@@ -37,25 +37,25 @@ const PC = 'boss-pc', PHONE = 'boss-phone', PCKEY = 'boss-pc-key-0123456789abcde
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 const db = new PGlite();
 await db.exec(`
-create role authenticated nologin;
-create schema private; create schema auth;
-grant usage on schema private, auth, public to authenticated;
-create function auth.jwt() returns jsonb language sql stable as $$ select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
+create role coco_member nologin;
+create schema private;
+grant usage on schema private, public to coco_member;
+create function private.claims() returns jsonb language sql stable as $$ select nullif(current_setting('request.jwt.claims', true), '')::jsonb $$;
 create table public.founders (email text primary key, name text);
 create table public.devices (id text primary key, name text, owner_email text, key_hash text, kind text, active boolean not null default true, last_seen timestamptz, info jsonb);
-create function private.is_founder() returns boolean language sql stable security definer set search_path = public as $$ select exists (select 1 from public.founders f where lower(f.email) = lower(coalesce(auth.jwt() ->> 'email', ''))) $$;
+create function private.is_founder() returns boolean language sql stable security definer set search_path = public as $$ select exists (select 1 from public.founders f where lower(f.email) = lower(coalesce(private.claims() ->> 'email', ''))) $$;
 create function private.device_ok() returns boolean language sql stable security definer set search_path = public as $$ select exists (select 1 from public.devices d where d.active and d.key_hash is not null
-  and lower(d.owner_email) = lower(coalesce(auth.jwt() ->> 'email', '')) and d.key_hash = encode(sha256(convert_to(coalesce(current_setting('request.headers', true)::json ->> 'x-device-key', ''), 'UTF8')), 'hex')) $$;
-grant execute on all functions in schema private, auth to authenticated;
+  and lower(d.owner_email) = lower(coalesce(private.claims() ->> 'email', '')) and d.key_hash = encode(sha256(convert_to(coalesce(current_setting('request.headers', true)::json ->> 'x-device-key', ''), 'UTF8')), 'hex')) $$;
+grant execute on all functions in schema private to coco_member;
 create table public.commands (id uuid primary key default gen_random_uuid(), target_device text not null references public.devices(id),
   action text not null check (action = any (array['status','lock','sleep','restart','shutdown','open_url','notify','play_youtube','media','volume','open_app','ring','say','workspace','update'])),
   args jsonb not null default '{}'::jsonb, status text not null default 'queued' check (status in ('queued','running','done','failed')), result text,
   created_by text not null, created_device text references public.devices(id), created_at timestamptz not null default now(), done_at timestamptz);
 alter table public.commands enable row level security; alter table public.devices enable row level security; alter table public.founders enable row level security;
-create policy "founders only" on public.commands for all to authenticated using (private.is_founder() and private.device_ok()) with check (private.is_founder() and private.device_ok());
-create policy "founders only" on public.devices for all to authenticated using (private.is_founder() and private.device_ok()) with check (private.is_founder() and private.device_ok());
-create policy "founders read" on public.founders for select to authenticated using (true);
-grant select, insert, update on public.commands, public.devices to authenticated; grant select on public.founders to authenticated;
+create policy "founders only" on public.commands for all to coco_member using (private.is_founder() and private.device_ok()) with check (private.is_founder() and private.device_ok());
+create policy "founders only" on public.devices for all to coco_member using (private.is_founder() and private.device_ok()) with check (private.is_founder() and private.device_ok());
+create policy "founders read" on public.founders for select to coco_member using (true);
+grant select, insert, update on public.commands, public.devices to coco_member; grant select on public.founders to coco_member;
 insert into public.founders values ('boss@example.com', 'Boss');
 `);
 await db.query(`insert into public.devices (id, name, owner_email, key_hash, kind) values ($1, 'Boss PC', 'boss@example.com', $2, 'pc'), ($3, 'Boss Phone', 'boss@example.com', $4, 'phone')`, [PC, sha(PCKEY), PHONE, sha(PHONEKEY)]);

@@ -4,9 +4,9 @@
 //   POST /api/workers/token  a founder's paired device: mints a short-lived token for a registered, active ai worker (no PC needed)
 //   GET  /api/board          a founder's paired device: CocoMaison scripts/brains/board.mjs over Nova's own database connection
 //
-// Database: Nova's direct Postgres connection and runAs, like every other route. The door's queue and registry calls run as `authenticated` with the
+// Database: Nova's direct Postgres connection and runAs, like every other route. The door's queue and registry calls run as `coco_member` with the
 // engine key in request.headers, so private.engine_ok() and the worker_registry RLS decide, exactly as through the old gateway. No new client.
-// Env: SUPABASE_ENGINE_KEY (at least 16 characters; signs worker tokens and proves the runtime to Postgres). Without it these routes answer 503.
+// Env: NOVA_ENGINE_KEY (at least 16 characters; signs worker tokens and proves the runtime to Postgres). Without it these routes answer 503.
 // Nothing here logs a token, a request body or a result: the caller logs status and path only.
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { door, fetchHandler, mintToken, verifyToken, DEFAULT_TTL_S, SCOPE } from '../vendor/cocomaison/scripts/ai/job-door.mjs';
@@ -15,7 +15,7 @@ import { board } from '../vendor/cocomaison/scripts/brains/board.mjs';
 
 export const PREFIX = '/api/ai-door';
 const DOOR_RATE = 60;                               // requests per minute per worker id (the spec's limit)
-const engineKey = () => { const k = process.env.SUPABASE_ENGINE_KEY; return typeof k === 'string' && k.length >= 16 ? k : null; };
+const engineKey = () => { const k = process.env.NOVA_ENGINE_KEY; return typeof k === 'string' && k.length >= 16 ? k : null; };
 const plain = (status, o) => ({ status, headers: { 'content-type': 'application/json' }, body: JSON.stringify(o) });   // no CORS: the worker is not a browser
 const ctx = new AsyncLocalStorage();                // the request's database connection, so one door (and its claimed-jobs map) serves every request of a warm instance
 

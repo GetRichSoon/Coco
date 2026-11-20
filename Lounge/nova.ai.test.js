@@ -4,6 +4,7 @@
 // only free-tier models; a daily cap; the provider's usage booked in ai_calls; the key never in a reply.
 import assert from 'node:assert/strict';
 import { handle, sha256, deps } from './api/_nova.js';
+import { testVault } from './api/_vault.js';
 
 let pass = 0, fail = 0;
 const t = async (n, f) => { try { await f(); pass++; console.log(`PASS ${n}`); } catch (e) { fail++; console.log(`FAIL ${n} — ${e.message}`); } };
@@ -12,14 +13,15 @@ function fakeDb({ engine = true, policy = null, today = 0 } = {}) {
   const calls = [];
   return { calls, async query(text, params = []) {
     if (/FROM public\.devices d JOIN/.test(text)) return { rows: params[0] === sha256(KEY) ? [{ id: 'cloud-worker-1', owner_email: 'b@x', name: 'w' }] : [] };
-    if (/FROM public\.engine_keys/.test(text)) return { rows: [{ ok: engine && params[0] === ENGINE }] };
-    if (/coco_secret\('gemini_api_key'\)/.test(text)) return { rows: [{ v: GKEY }] };
+    if (/FROM public\.engine_keys/.test(text)) return { rows: [{ ok: engine && params[0] === sha256(ENGINE) }] };
     if (/FROM public\.policies WHERE scope = 'company' AND key = 'gemini_generate'/.test(text)) return { rows: policy === null ? [] : [{ value: policy }] };
     if (/count\(\*\)::int AS n FROM public\.ai_calls/.test(text)) return { rows: [{ n: today }] };
     if (/INSERT INTO public\.ai_calls/.test(text)) { calls.push(params); return { rows: [] }; }
     return { rows: [] };
   } };
 }
+// the vault (api/_vault.js, tested in vault.test.js) stood in for: it holds the Gemini key
+testVault.make = () => ({ secret: async (name, consumer) => (name === 'gemini_api_key' && consumer === 'nova.ai' ? GKEY : null) });
 const req = (method, path, body = null, engine = ENGINE) => ({ method, path, query: {}, headers: { 'x-device-key': KEY, ...(engine ? { 'x-engine-key': engine } : {}) }, body });
 const res = (status, body) => ({ ok: status < 300, status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) });
 const noKey = (s) => assert.ok(!String(s).includes(GKEY), 'the Gemini key leaked');

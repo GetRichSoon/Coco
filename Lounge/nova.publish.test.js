@@ -9,6 +9,7 @@
 import assert from 'node:assert/strict';
 import { handle, sha256, deps, invalidate } from './api/_nova.js';
 import { redact, wantsPublic, productPayload } from './api/_publish.js';
+import { testVault } from './api/_vault.js';
 
 let pass = 0, fail = 0;
 const t = async (name, fn) => { try { await fn(); pass++; console.log(`PASS ${name}`); } catch (e) { fail++; console.log(`FAIL ${name} — ${e.message}`); } };
@@ -21,15 +22,15 @@ const accounts = {
 };
 function fakeDb({ engine = true, vault = { youtube_refresh_token_yt_the_flow: REFRESH, gumroad_access_token_poppy: GUM }, existing = null, stopped = false } = {}) {
   const sql = [], outputs = [], activity = [];
-  return { sql, outputs, activity, async query(text, params = []) {
+  // the vault (api/_vault.js, tested in vault.test.js) stood in for; every read is recorded by name
+  const stand = { secret: async (name) => { sql.push({ text: 'vault.secret', params: [name] }); return vault[name] ?? null; }, client: async () => ({ client_id: 'cid', client_secret: 'csecret-SECRET-xyz' }) };
+  return { sql, outputs, activity, stand, async query(text, params = []) {
     sql.push({ text, params });
     if (/FROM public\.devices d JOIN/.test(text)) return { rows: params[0] === sha256(KEY) ? [{ id: 'cloud-worker-1', owner_email: 'boss@example.com', name: 'worker' }] : [] };
     if (/coco_engine_ok/.test(text)) return { rows: [{ ok: engine }] };
     if (/FROM public.policies WHERE scope = 'company'/.test(text)) return { rows: stopped ? [{ value: true }] : [] };
     if (/FROM public\.integration_accounts WHERE connection_id/.test(text)) return { rows: accounts[params[0]] ? [accounts[params[0]]] : [] };
     if (/coco_publish_target/.test(text)) return { rows: [{ v: params[0] === 'youtube' && params[1] === 'youtube' ? { connection_id: 'yt-the-flow' } : params[0] === 'gumroad' && params[1] === 'ebooks' ? { connection_id: 'poppy' } : null }] };
-    if (/coco_publish_secret/.test(text)) return { rows: [{ v: vault[params[0]] ?? null }] };
-    if (/coco_oauth_client/.test(text)) return { rows: [{ v: { client_id: 'cid', client_secret: 'csecret-SECRET-xyz' } }] };
     if (/FROM public\.outputs WHERE meta/.test(text)) return { rows: existing && existing.key === params[0] ? [existing.row] : [] };
     if (/INSERT INTO public\.outputs/.test(text)) { outputs.push(params); return { rows: [] }; }
     if (/INSERT INTO public\.activity/.test(text)) { activity.push(params); return { rows: [] }; }
@@ -37,6 +38,7 @@ function fakeDb({ engine = true, vault = { youtube_refresh_token_yt_the_flow: RE
     return { rows: [] };
   } };
 }
+testVault.make = (db) => db.stand;
 const req = (method, path, { body = null, key = KEY, engine = ENGINE } = {}) => ({ method, path, query: {}, headers: { 'x-device-key': key, ...(engine ? { 'x-engine-key': engine } : {}) }, body });
 const res = (status, body, headers = {}) => ({ ok: status >= 200 && status < 300, status, headers: { get: (k) => headers[k.toLowerCase()] ?? null }, text: async () => typeof body === 'string' ? body : JSON.stringify(body), arrayBuffer: async () => Buffer.from(typeof body === 'string' ? body : JSON.stringify(body)), json: async () => JSON.parse(typeof body === 'string' ? body : JSON.stringify(body)) });
 // a scripted provider: a map from "METHOD url-fragment" to a response (or a function of the request)
@@ -68,7 +70,7 @@ await t('3 credential lookup: the account the company assigns is used; an empty 
   provider({});
   const r = await handle(db, req('POST', '/api/publish/token', { body: { platform: 'youtube', team: 'youtube', channel: 'the-flow' } }));
   assert.equal(r.status, 409); assert.equal(JSON.parse(r.body).state, 'NOT_CONNECTED');
-  assert.ok(db.sql.some((s) => /coco_publish_secret/.test(s.text) && s.params[0] === 'youtube_refresh_token_yt_the_flow'), 'the vault was asked by the recorded secret name');
+  assert.ok(db.sql.some((s) => s.text === 'vault.secret' && s.params[0] === 'youtube_refresh_token_yt_the_flow'), 'the vault was asked by the recorded secret name');
 });
 
 await t('4 youtube token: Google refreshes, the channel identity is checked, a token for the right channel is issued and no secret leaks', async () => {
