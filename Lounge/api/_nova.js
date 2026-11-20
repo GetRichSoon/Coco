@@ -9,7 +9,7 @@
 // database password lives only in Nova's environment; the apps never see it.
 //
 // Env: DATABASE_URL (pooler connection string, transaction mode), NOVA_CACHE_SECONDS (15),
-//      NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000)
+//      NOVA_RATE_PER_MINUTE (120), NOVA_STATEMENT_TIMEOUT_MS (5000), SUPABASE_ENGINE_KEY (the job door, worker tokens; api/_door.js)
 import { createHash } from 'node:crypto';
 import { chatTurn, chatTree } from './_chat.js';
 import { handlePublish } from './_publish.js';
@@ -20,6 +20,7 @@ import { handleOps } from './_ops.js';
 import { redactDeep } from './_redact.js';
 import { handleOrbiTrending } from './_orbi_trending.js';
 import { handleConnect } from './_connect.js';
+import { PREFIX as DOOR, handleDoor, handleWorkerToken, handleBoard } from './_door.js';
 // test seams: a stand-in fetch and provider hosts for the publishing layer; connect = { load(provider) -> connector module, cooldownMs }
 export const deps = { fetch: (...a) => globalThis.fetch(...a), publishUrls: {}, oauthUrls: {}, automation: {}, connect: {} };
 
@@ -184,9 +185,9 @@ export function timings() {
   return { sample: ms.length, p50_ms: q(0.5), p95_ms: q(0.95), max_ms: ms.at(-1) ?? null, slow: recent.filter((r) => r.ms >= 2000).slice(-10), by_path: Object.entries(recent.reduce((m, r) => { (m[r.path] ||= []).push(r.ms); return m; }, {})).map(([p, l]) => ({ path: p, n: l.length, avg_ms: Math.round(l.reduce((a, b) => a + b, 0) / l.length) })).sort((a, b) => b.n - a.n).slice(0, 12) };
 }
 
-export function rateOk(id, now = Date.now()) {
-  const b = buckets.get(id) || { tokens: RATE, at: now };
-  b.tokens = Math.min(RATE, b.tokens + ((now - b.at) / 60000) * RATE); b.at = now;
+export function rateOk(id, now = Date.now(), rate = RATE) {
+  const b = buckets.get(id) || { tokens: rate, at: now };
+  b.tokens = Math.min(rate, b.tokens + ((now - b.at) / 60000) * rate); b.at = now;
   if (b.tokens < 1) { buckets.set(id, b); return false; }
   b.tokens -= 1; buckets.set(id, b); return true;
 }
@@ -225,6 +226,8 @@ export async function handle(db, req, now = Date.now()) {
   const t0 = now;
   const log = (status, extra = {}) => { const ms = Date.now() - t0; observe(req.path, ms, { status, cache: extra.cache || null, device: extra.device || null }); console.log(JSON.stringify({ t: new Date(now).toISOString(), method: req.method, path: req.path, status, ms, ...extra })); };
   try {
+    // the job door: a worker token, never a device key; no CORS and no negative cache in front of it (api/_door.js). Logged: status and path only.
+    if (req.path === DOOR || req.path.startsWith(DOOR + '/')) { const out = await handleDoor(db, req, { runAs, buildRpc, buildSelect, buildWrite, rateOk }, now); log(out.status); return out; }
     if (req.method === 'OPTIONS') return { status: 204, headers: cors(), body: null };
     if (req.path !== '/api/health' && down.until > now) { stats.negative_hits++; return unavailable(down.reason); }
     if (req.path === '/api/health') {
@@ -280,6 +283,10 @@ export async function handle(db, req, now = Date.now()) {
     const who = await authenticate(db, deviceKey, now);
     if (!rateOk(who.device_id, now)) { log(429, { device: who.device_id }); return json(429, { message: 'too many requests from this device; slow down' }); }
     if (req.path === '/api/me') { log(200, { device: who.device_id }); return json(200, { email: who.email, device_id: who.device_id, name: who.name }); }
+    // a founder's device mints a worker's first job token (the answer carries it once; the log never does), and reads the company task board
+    if (req.path === '/api/workers/token') { const out = await handleWorkerToken(db, req, who, deviceKey, { runAs, buildRpc, buildSelect, buildWrite, json }); log(out.status, { device: who.device_id, worker_token: String(req.body?.worker_id || '').slice(0, 64) }); return out; }
+    if (req.path === '/api/board') { const key = `${who.email}|board|`, c = req.method === 'GET' && cache.get(key); if (c && now - c.at < CACHE_S * 1000) { stats.cache_hits++; log(200, { device: who.device_id, board: 'hit' }); return json(200, c.body, { 'x-nova-cache': 'hit' }); }
+      const out = await handleBoard(db, req, who, deviceKey, { runAs, buildSelect, json }); if (out.status === 200) cache.set(key, { at: now, body: JSON.parse(out.body) }); log(out.status, { device: who.device_id, board: 'miss' }); return out; }
     // Connect a key / Check now / Sync now / revenue totals: a founder's device presses it, Nova does the provider call (api/_connect.js)
     if (req.path.startsWith('/api/connect/') || req.path.startsWith('/api/revenue/')) {
       const out = await handleConnect(db, req, who, deviceKey, { runAs, json, log, fetch: deps.fetch, urls: deps.oauthUrls, now, ...deps.connect });
