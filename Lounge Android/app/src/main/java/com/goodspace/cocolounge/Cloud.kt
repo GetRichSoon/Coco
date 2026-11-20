@@ -148,10 +148,22 @@ class Cloud(context: Context) {
     /** Nova's wake board (it never touches the database, and every Nova instance shares it): is the database awake right now, and
      *  when was a command last written for this device (Nova's clock). Anything but a clear answer is "asleep, no mail". */
     class Wake(val warm: Boolean, val mailAt: Long?, val novaNow: Long?)
-    fun awakeNow(): Wake = runCatching {
-        val o = JSONObject(http.newCall(Request.Builder().url("$NOVA/api/awake" + (deviceId?.let { "?d=" + java.net.URLEncoder.encode(it, "UTF-8") } ?: "")).get().build()).execute().bodyOrThrow())
-        Wake(o.optBoolean("warm"), Heal.ms(o.optString("mail_at")), Heal.ms(o.optString("now")))
-    }.getOrDefault(Wake(false, null, null))
+    fun awakeNow(): Wake {
+        val asleep = Wake(false, null, null)
+        val now = System.currentTimeMillis()
+        if (!Quiet.awakeDue(now, prefs.getLong("awake_off_until", 0))) return asleep   // an older Nova, or backing off (Quiet.awakeDue)
+        Quiet.awakeAskedAt = now
+        return try {
+            http.newCall(Request.Builder().url("$NOVA/api/awake" + (deviceId?.let { "?d=" + java.net.URLEncoder.encode(it, "UTF-8") } ?: "")).get().build()).execute().use { r ->
+                val o = if (r.isSuccessful) runCatching { JSONObject(r.body?.string().orEmpty()) }.getOrNull() else null
+                when (Quiet.awakeSupported(r.code, o != null && o.opt("warm") is Boolean && o.has("mail_at") && o.has("now"))) {
+                    true -> { Quiet.awakeFails = 0; Wake(o!!.optBoolean("warm"), Heal.ms(o.optString("mail_at")), Heal.ms(o.optString("now"))) }
+                    false -> { Quiet.awakeFails = 0; prefs.edit().putLong("awake_off_until", now + Quiet.AWAKE_OFF_MS).apply(); asleep }
+                    null -> { Quiet.awakeFails++; asleep }
+                }
+            }
+        } catch (_: Exception) { Quiet.awakeFails++; asleep }
+    }
     suspend fun awake(): Wake = withContext(Dispatchers.IO) { awakeNow() }
 
     fun listen(onPulse: (String) -> Unit, onState: (Boolean) -> Unit): () -> Unit {
@@ -191,7 +203,7 @@ class Cloud(context: Context) {
                             version = v; readAt = now
                         } catch (_: Exception) { onState(false) }
                     }
-                    Thread.sleep(if (fg) 15_000 else 30_000)
+                    Thread.sleep(if (fg) 15_000 else Quiet.jittered(Quiet.AWAKE_EVERY_MS))
                 }
             }.start()
             return { closed = true }
